@@ -81,7 +81,7 @@ export default function MenuSection() {
 
         setLoading(false);
       } catch (error) {
-        console.error("Failed to fetch dishes:", error);
+        // console.error("Failed to fetch dishes:", error);
         setLoading(false);
       }
     };

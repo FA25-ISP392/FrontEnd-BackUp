@@ -23,6 +23,14 @@ export default function PersonalizationModal({
     { id: "gain", name: "Tăng cân", description: "Muốn tăng cân" },
   ];
 
+  const exerciseLevels = [
+    { id: "sedentary", name: "Rất ít hoặc không hoạt động thể dục", description: "Ít hoặc không tập thể dục" },
+    { id: "light", name: "1-3 ngày/tuần", description: "Tập nhẹ 1-3 ngày mỗi tuần" },
+    { id: "moderate", name: "3-5 ngày/tuần", description: "Tập vừa phải 3-5 ngày mỗi tuần" },
+    { id: "active", name: "6-7 ngày/tuần", description: "Tập thường xuyên 6-7 ngày mỗi tuần" },
+    { id: "very_active", name: "Tập luyện mỗi ngày với hơn 90 phút/lần tập", description: "Tập cường độ cao mỗi ngày" },
+  ];
+
   const calculateBMI = (height, weight) => {
     const heightInMeters = height / 100;
     return (weight / (heightInMeters * heightInMeters)).toFixed(1);
@@ -122,6 +130,104 @@ export default function PersonalizationModal({
                 }
                 className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer slider"
               />
+            </div>
+          </div>
+
+          {/* Gender */}
+          <div className="mb-6">
+            <h3 className="text-lg font-bold text-neutral-900 mb-4">
+              Giới tính
+            </h3>
+            <div className="flex gap-4">
+              <label className="flex items-center space-x-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 cursor-pointer transition-colors">
+                <input
+                  type="radio"
+                  name="gender"
+                  value="male"
+                  checked={personalizationForm.gender === "male"}
+                  onChange={(e) =>
+                    setPersonalizationForm((prev) => ({
+                      ...prev,
+                      gender: e.target.value,
+                    }))
+                  }
+                  className="w-5 h-5 text-purple-500 border-neutral-300 focus:ring-purple-500"
+                />
+                <span className="font-medium text-neutral-900">Nam</span>
+              </label>
+              <label className="flex items-center space-x-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 cursor-pointer transition-colors">
+                <input
+                  type="radio"
+                  name="gender"
+                  value="female"
+                  checked={personalizationForm.gender === "female"}
+                  onChange={(e) =>
+                    setPersonalizationForm((prev) => ({
+                      ...prev,
+                      gender: e.target.value,
+                    }))
+                  }
+                  className="w-5 h-5 text-purple-500 border-neutral-300 focus:ring-purple-500"
+                />
+                <span className="font-medium text-neutral-900">Nữ</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Age */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-neutral-700 mb-3">
+              Tuổi: {personalizationForm.age} tuổi
+            </label>
+            <input
+              type="range"
+              min="16"
+              max="80"
+              value={personalizationForm.age}
+              onChange={(e) =>
+                setPersonalizationForm((prev) => ({
+                  ...prev,
+                  age: parseInt(e.target.value),
+                }))
+              }
+              className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer slider"
+            />
+          </div>
+
+          {/* Exercise Level */}
+          <div className="mb-6">
+            <h3 className="text-lg font-bold text-neutral-900 mb-4">
+              Lượng tập thể dục trong tuần
+            </h3>
+            <div className="space-y-3">
+              {exerciseLevels.map((level) => (
+                <label
+                  key={level.id}
+                  className="flex items-center space-x-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 cursor-pointer transition-colors"
+                >
+                  <input
+                    type="radio"
+                    name="exerciseLevel"
+                    value={level.id}
+                    checked={personalizationForm.exerciseLevel === level.id}
+                    onChange={(e) =>
+                      setPersonalizationForm((prev) => ({
+                        ...prev,
+                        exerciseLevel: e.target.value,
+                      }))
+                    }
+                    className="w-5 h-5 text-purple-500 border-neutral-300 focus:ring-purple-500"
+                  />
+                  <div>
+                    <div className="font-medium text-neutral-900">
+                      {level.name}
+                    </div>
+                    <div className="text-sm text-neutral-600">
+                      {level.description}
+                    </div>
+                  </div>
+                </label>
+              ))}
             </div>
           </div>
 

@@ -1,8 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import Header from "./components/Header.jsx";
 import HomeHeader from "./components/HomeHeader.jsx";
-import MenuHeader from "./components/MenuHeader.jsx";
-import AdminHeader from "./components/AdminHeader.jsx";
 import Footer from "./components/Footer.jsx";
 import Login from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
@@ -30,8 +27,8 @@ export default function App() {
           }
         />
         <Route path="/menu" element={<Menu />} />
-        <Route path="/staff" element={<Staff />} />
-        <Route path="/staff-dashboard" element={<StaffPage />} />
+        <Route path="/staff-dashboard" element={<Staff />} />
+        <Route path="/staff" element={<StaffPage />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/manager" element={<Manager />} />
         <Route path="/chef" element={<Chef />} />

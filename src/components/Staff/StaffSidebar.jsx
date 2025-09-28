@@ -1,0 +1,52 @@
+import { Users, ClipboardList, Home } from "lucide-react";
+
+export default function StaffSidebar({ activeSection, setActiveSection }) {
+  const sidebarItems = [
+    { id: "dashboard", label: "Dashboard", icon: Users },
+    { id: "tables", label: "Table Overview", icon: ClipboardList },
+    { id: "orders", label: "Orders by Table", icon: ClipboardList },
+  ];
+
+  return (
+    <div className="w-64 bg-white/80 backdrop-blur-sm border-r border-white/20 min-h-screen">
+      <div className="p-6">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+            <Users className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-neutral-900">Staff Panel</h2>
+            <p className="text-xs text-neutral-600">Service Management</p>
+          </div>
+        </div>
+
+        <nav className="space-y-2">
+          {sidebarItems.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveSection(id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+                activeSection === id
+                  ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg"
+                  : "text-neutral-700 hover:bg-green-50 hover:text-green-700"
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+              <span className="font-medium">{label}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="mt-8 pt-6 border-t border-neutral-200">
+          <button
+            onClick={() => window.location.href = "/"}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-neutral-700 hover:bg-neutral-100 transition-all duration-300"
+          >
+            <Home className="h-5 w-5" />
+            <span className="font-medium">Back to Home</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

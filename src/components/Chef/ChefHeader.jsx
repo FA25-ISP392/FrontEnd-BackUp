@@ -1,42 +1,111 @@
-import { ChefHat, Bell, Settings } from "lucide-react";
+import { ChefHat, Bell, Settings, X, LogOut } from "lucide-react";
+import { useState } from "react";
+// (khuyến nghị) nếu dùng react-router-dom:
+// import { useNavigate } from "react-router-dom";
 
-export default function ChefHeader({ chefName }) {
+export default function ChefHeader({ chefName = "Chef" }) {
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  // const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // navigate("/", { replace: true }); // SPA-friendly
+    window.location.href = "/";          // nếu chưa dùng router
+  };
+
+  const initial = (chefName?.charAt(0) || "C").toUpperCase();
+
   return (
-    <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-white/20 sticky top-0 z-30">
-      <div className="px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-              <ChefHat className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-neutral-900">
-                Chef Dashboard
-              </h1>
-              <p className="text-sm text-neutral-600">
-                Quản lý bếp và đơn hàng
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <button className="p-2 hover:bg-neutral-100 rounded-lg transition">
-              <Bell className="h-5 w-5 text-neutral-600" />
-            </button>
-            <button className="p-2 hover:bg-neutral-100 rounded-lg transition">
-              <Settings className="h-5 w-5 text-neutral-600" />
-            </button>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-sm font-semibold">C</span>
+    <>
+      <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-white/20 sticky top-0 z-30">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+                <ChefHat className="h-6 w-6 text-white" />
               </div>
-              <span className="text-sm font-medium text-neutral-700">
-                {chefName}
-              </span>
+              <div>
+                <h1 className="text-xl font-bold text-neutral-900">Chef Dashboard</h1>
+                <p className="text-sm text-neutral-600">Quản lý bếp và đơn hàng</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <button className="p-2 hover:bg-neutral-100 rounded-lg transition" aria-label="Notifications">
+                <Bell className="h-5 w-5 text-neutral-600" />
+              </button>
+              <button className="p-2 hover:bg-neutral-100 rounded-lg transition" aria-label="Settings">
+                <Settings className="h-5 w-5 text-neutral-600" />
+              </button>
+              <button
+                onClick={() => setIsProfileOpen(true)}
+                className="flex items-center gap-3 hover:bg-neutral-100 rounded-lg p-2 transition"
+              >
+                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-semibold">{initial}</span>
+                </div>
+                <span className="text-sm font-medium text-neutral-700">{chefName}</span>
+              </button>
             </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Profile Modal */}
+      {isProfileOpen && (
+        <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true">
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setIsProfileOpen(false)}
+            aria-label="Close overlay"
+          />
+          <div className="relative ml-auto w-full max-w-md bg-white shadow-xl">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">Chef Profile</h2>
+              <button
+                onClick={() => setIsProfileOpen(false)}
+                className="p-2 hover:bg-neutral-100 rounded-lg transition"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-4">
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-500 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-2xl font-bold">
+                  {initial}
+                </div>
+                <h3 className="font-semibold text-lg">{chefName}</h3>
+                <p className="text-neutral-600 text-sm">Chef</p>
+                <p className="text-neutral-500 text-xs mt-1">Chef ID: CHF001</p>
+              </div>
+
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600">Department:</span>
+                  <span className="font-medium">Kitchen</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600">Access Level:</span>
+                  <span className="font-medium">Chef Access</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-600">Last Login:</span>
+                  <span className="font-medium">{new Date().toLocaleString()}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition font-medium flex items-center justify-center gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

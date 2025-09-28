@@ -56,26 +56,36 @@ export default function MenuContent({
               <div className="text-sm text-neutral-600">Cal đã thêm</div>
             </div>
             <div className="w-16 h-16 relative">
-              <svg
-                className="w-16 h-16 transform -rotate-90"
-                viewBox="0 0 36 36"
-              >
-                <path
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none"
-                  stroke="#E5E7EB"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none"
-                  stroke="#F97316"
-                  strokeWidth="2"
-                  strokeDasharray={`${
-                    (caloriesConsumed / estimatedCalories) * 100
-                  }, 100`}
-                />
-              </svg>
+              {(() => {
+                const percentage = (caloriesConsumed / estimatedCalories) * 100;
+                let strokeColor = "#10B981"; // Green
+                if (percentage >= 80 && percentage <= 100) {
+                  strokeColor = "#F97316"; // Orange
+                } else if (percentage > 100) {
+                  strokeColor = "#EF4444"; // Red
+                }
+                
+                return (
+                  <svg
+                    className="w-16 h-16 transform -rotate-90"
+                    viewBox="0 0 36 36"
+                  >
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="#E5E7EB"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke={strokeColor}
+                      strokeWidth="2"
+                      strokeDasharray={`${Math.min(percentage, 100)}, 100`}
+                    />
+                  </svg>
+                );
+              })()}
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="text-sm font-bold text-neutral-700">
                   {Math.round((caloriesConsumed / estimatedCalories) * 100)}%

@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { CheckCircle } from "lucide-react";
 import MenuHeader from "../components/Menu/MenuHeader";
 import MenuContent from "../components/Menu/MenuContent";
 import MenuFooter from "../components/Menu/MenuFooter";
 import PersonalizationModal from "../components/Menu/PersonalizationModal";
 import CartSidebar from "../components/Menu/CartSidebar";
 import PaymentSidebar from "../components/Menu/PaymentSidebar";
+import DishOptionsModal from "../components/Menu/DishOptionsModal";
 import { mockMenuDishes, categories } from "../constants/menuData";
 
 export default function Menu() {
@@ -12,6 +14,7 @@ export default function Menu() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isCallStaffOpen, setIsCallStaffOpen] = useState(false);
+  const [isDishOptionsOpen, setIsDishOptionsOpen] = useState(false);
   const [activeMenuTab, setActiveMenuTab] = useState("all");
   const [selectedDish, setSelectedDish] = useState(null);
   const [cart, setCart] = useState([]);
@@ -26,6 +29,9 @@ export default function Menu() {
   const [personalizationForm, setPersonalizationForm] = useState({
     height: 170,
     weight: 70,
+    gender: "male",
+    age: 25,
+    exerciseLevel: "moderate",
     preferences: [],
     goal: "",
   });
@@ -56,7 +62,7 @@ export default function Menu() {
     } else {
       setCart((prevCart) => [...prevCart, { ...dish, quantity: 1, notes }]);
     }
-    setCaloriesConsumed((prev) => prev + dish.calories);
+    setCaloriesConsumed((prev) => prev + (dish.totalCalories || dish.calories));
   };
 
   const updateCartQuantity = (itemId, newQuantity) => {
@@ -73,7 +79,7 @@ export default function Menu() {
           item.id === itemId ? { ...item, quantity: newQuantity } : item,
         ),
       );
-      setCaloriesConsumed((prev) => prev + quantityDiff * item.calories);
+      setCaloriesConsumed((prev) => prev + quantityDiff * (item.totalCalories || item.calories));
     }
   };
 
@@ -81,7 +87,7 @@ export default function Menu() {
     const item = cart.find((item) => item.id === itemId);
     if (item) {
       setCart((prevCart) => prevCart.filter((item) => item.id !== itemId));
-      setCaloriesConsumed((prev) => prev - item.calories * item.quantity);
+      setCaloriesConsumed((prev) => prev - (item.totalCalories || item.calories) * item.quantity);
     }
   };
 
@@ -135,14 +141,14 @@ export default function Menu() {
   const handleOrderFood = () => {
     setIsCartOpen(false);
     // Here you would typically send the order to the kitchen
-    console.log("Order sent to kitchen:", cart);
+    // console.log("Order sent to kitchen:", cart);
   };
 
   const handlePayment = () => {
     setIsPaymentOpen(false);
     setIsCallStaffOpen(true);
     // Here you would typically process the payment
-    console.log("Payment processed:", { cart, paymentMethod });
+    // console.log("Payment processed:", { cart, paymentMethod });
   };
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -153,7 +159,14 @@ export default function Menu() {
         cartItemCount={cartItemCount}
         onPersonalize={() => setIsPersonalizationOpen(true)}
         onViewOrders={() => setIsCartOpen(true)}
-        onCallStaff={() => setIsCallStaffOpen(true)}
+        onCallStaff={() => {
+          setIsCallStaffOpen(true);
+          // Clear cart after successful call
+          setTimeout(() => {
+            setCart([]);
+            setCaloriesConsumed(0);
+          }, 2000);
+        }}
         onCheckout={() => setIsPaymentOpen(true)}
       />
 
@@ -166,7 +179,10 @@ export default function Menu() {
         setSelectedCategory={setSelectedCategory}
         filteredDishes={filteredDishes}
         personalizedMenu={personalizedMenu}
-        onDishSelect={setSelectedDish}
+        onDishSelect={(dish) => {
+          setSelectedDish(dish);
+          setIsDishOptionsOpen(true);
+        }}
         caloriesConsumed={caloriesConsumed}
         estimatedCalories={estimatedCalories}
         onGoalChange={handleGoalChange}
@@ -201,6 +217,13 @@ export default function Menu() {
         setPaymentMethod={setPaymentMethod}
       />
 
+      <DishOptionsModal
+        isOpen={isDishOptionsOpen}
+        onClose={() => setIsDishOptionsOpen(false)}
+        dish={selectedDish}
+        onAddToCart={addToCart}
+      />
+
       {/* Call Staff Modal */}
       {isCallStaffOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -213,9 +236,7 @@ export default function Menu() {
                 Thành công!
               </h3>
               <p className="text-neutral-600 mb-6">
-                {cart.length > 0
-                  ? "Đơn hàng đã được gửi đến bếp và thanh toán đã hoàn tất!"
-                  : "Nhân viên sẽ đến hỗ trợ bạn ngay!"}
+                Nhân viên sẽ đến hỗ trợ bạn ngay! Cảm ơn bạn đã sử dụng dịch vụ.
               </p>
               <button
                 onClick={() => setIsCallStaffOpen(false)}

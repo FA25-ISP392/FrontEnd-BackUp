@@ -11,7 +11,7 @@ export default function PaymentSidebar({
   if (!isOpen) return null;
 
   const totalAmount = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => sum + (item.totalPrice || item.price) * item.quantity,
     0,
   );
 
@@ -90,7 +90,17 @@ export default function PaymentSidebar({
                       {item.name}
                     </div>
                     <div className="text-sm text-neutral-600">
-                      {item.quantity} × ${item.price}
+                      {item.quantity} × ${item.totalPrice || item.price}
+                      {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
+                        <span className="block text-xs text-neutral-500">
+                          {Object.values(item.selectedOptions).map((option, index) => (
+                            <span key={index}>
+                              {option.name}
+                              {index < Object.values(item.selectedOptions).length - 1 ? ", " : ""}
+                            </span>
+                          ))}
+                        </span>
+                      )}
                       {item.notes && (
                         <span className="block text-xs text-neutral-500">
                           Ghi chú: {item.notes}
@@ -99,7 +109,7 @@ export default function PaymentSidebar({
                     </div>
                   </div>
                   <span className="font-medium text-neutral-900">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    ${((item.totalPrice || item.price) * item.quantity).toFixed(2)}
                   </span>
                 </div>
               ))}

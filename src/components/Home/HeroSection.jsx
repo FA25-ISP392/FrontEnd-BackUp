@@ -61,8 +61,8 @@ export default function HeroSection() {
               <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl mb-4 mx-auto group-hover:scale-110 transition-transform">
                 <Clock className="h-6 w-6 text-white" />
               </div>
-              <div className="text-3xl font-bold text-white mb-2">15+</div>
-              <div className="text-neutral-300">Năm kinh nghiệm</div>
+              <div className="text-3xl font-bold text-white mb-2">18:00</div>
+              <div className="text-neutral-300">Giờ tới ăn</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 group">
               <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl mb-4 mx-auto group-hover:scale-110 transition-transform">

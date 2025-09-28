@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Users, ClipboardList, Home, User, LogOut, X, Phone, CheckCircle, Clock, Eye, AlertCircle, Timer, DollarSign } from 'lucide-react';
+import StaffHeader from '../components/Staff/StaffHeader';
+import StaffSidebar from '../components/Staff/StaffSidebar';
 
 export default function StaffPage() {
   const [staffName] = useState('Staff User');
@@ -31,7 +33,7 @@ export default function StaffPage() {
   ]);
 
   const handleLogout = () => {
-    window.location.href = '/staff';
+    window.location.href = '/';
   };
 
   const sidebarItems = [
@@ -84,66 +86,16 @@ export default function StaffPage() {
   const callStaffCount = tables.filter(table => table.callStaff).length;
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      {/* Header */}
-      <header className="w-full border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 sticky top-0 z-50">
-        <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
-          <button 
-            onClick={() => window.location.reload()}
-            className="flex items-center gap-2 hover:opacity-80 transition"
-            aria-label="Reload page"
-          >
-            <span className="inline-block h-8 w-8 rounded bg-blue-600 text-white grid place-items-center font-bold">R</span>
-            <span className="text-lg font-semibold">Restaurant</span>
-          </button>
-          
-          <nav className="flex items-center gap-2">
-            <button
-              onClick={() => window.location.href = '/staff'}
-              className="px-3 py-2 rounded-lg hover:bg-neutral-100 transition text-neutral-700 font-medium flex items-center gap-2"
-            >
-              <Home className="h-4 w-4" />
-              Home
-            </button>
-            <button
-              onClick={() => setIsProfileOpen(true)}
-              className="flex items-center gap-2 p-2 rounded-lg hover:bg-neutral-100 transition"
-            >
-              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                {staffName.charAt(0).toUpperCase()}
-              </div>
-              <span className="text-neutral-700 font-medium">{staffName}</span>
-            </button>
-          </nav>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-green-50 to-emerald-50">
+      <StaffHeader staffName={staffName} />
 
       <div className="flex">
-        {/* Sidebar */}
-        <div className="w-64 bg-white border-r min-h-screen">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold mb-4">Welcome, {staffName}</h2>
-            <nav className="space-y-2">
-              {sidebarItems.map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  onClick={() => setActiveSection(id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition ${
-                    activeSection === id
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-neutral-700 hover:bg-neutral-100'
-                  }`}
-                >
-                  <Icon className="h-5 w-5" />
-                  {label}
-                </button>
-              ))}
-            </nav>
-          </div>
-        </div>
+        <StaffSidebar
+          activeSection={activeSection}
+          setActiveSection={setActiveSection}
+        />
 
-        {/* Main Content */}
-        <div className="flex-1 p-6">
+        <main className="flex-1 p-6">
           {/* Dashboard Section */}
           {activeSection === 'dashboard' && (
             <div className="space-y-6">
@@ -395,7 +347,7 @@ export default function StaffPage() {
               </div>
             </div>
           )}
-        </div>
+        </main>
       </div>
 
       {/* Table Detail Modal */}
