@@ -1,10 +1,232 @@
+import { useState } from "react";
+import MenuHeader from "../components/Menu/MenuHeader";
+import MenuContent from "../components/Menu/MenuContent";
+import MenuFooter from "../components/Menu/MenuFooter";
+import PersonalizationModal from "../components/Menu/PersonalizationModal";
+import CartSidebar from "../components/Menu/CartSidebar";
+import PaymentSidebar from "../components/Menu/PaymentSidebar";
+import { mockMenuDishes, categories } from "../constants/menuData";
+
 export default function Menu() {
+  const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [isCallStaffOpen, setIsCallStaffOpen] = useState(false);
+  const [activeMenuTab, setActiveMenuTab] = useState("all");
+  const [selectedDish, setSelectedDish] = useState(null);
+  const [cart, setCart] = useState([]);
+  const [personalizedMenu, setPersonalizedMenu] = useState([]);
+  const [caloriesConsumed, setCaloriesConsumed] = useState(0);
+  const [estimatedCalories, setEstimatedCalories] = useState(2000);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+
+  // Personalization form state
+  const [personalizationForm, setPersonalizationForm] = useState({
+    height: 170,
+    weight: 70,
+    preferences: [],
+    goal: "",
+  });
+
+  // Filter dishes based on search and category
+  const filteredDishes = mockMenuDishes.filter((dish) => {
+    const matchesSearch =
+      dish.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      dish.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "all" || dish.category === selectedCategory;
+    return matchesSearch && matchesCategory && dish.available;
+  });
+
+  // Cart functions
+  const addToCart = (dish, notes = "") => {
+    const existingItem = cart.find(
+      (item) => item.id === dish.id && item.notes === notes,
+    );
+    if (existingItem) {
+      setCart((prevCart) =>
+        prevCart.map((item) =>
+          item.id === dish.id && item.notes === notes
+            ? { ...item, quantity: item.quantity + 1 }
+            : item,
+        ),
+      );
+    } else {
+      setCart((prevCart) => [...prevCart, { ...dish, quantity: 1, notes }]);
+    }
+    setCaloriesConsumed((prev) => prev + dish.calories);
+  };
+
+  const updateCartQuantity = (itemId, newQuantity) => {
+    if (newQuantity <= 0) {
+      removeFromCart(itemId);
+      return;
+    }
+
+    const item = cart.find((item) => item.id === itemId);
+    if (item) {
+      const quantityDiff = newQuantity - item.quantity;
+      setCart((prevCart) =>
+        prevCart.map((item) =>
+          item.id === itemId ? { ...item, quantity: newQuantity } : item,
+        ),
+      );
+      setCaloriesConsumed((prev) => prev + quantityDiff * item.calories);
+    }
+  };
+
+  const removeFromCart = (itemId) => {
+    const item = cart.find((item) => item.id === itemId);
+    if (item) {
+      setCart((prevCart) => prevCart.filter((item) => item.id !== itemId));
+      setCaloriesConsumed((prev) => prev - item.calories * item.quantity);
+    }
+  };
+
+  // Personalization functions
+  const getPersonalizedDishes = (form) => {
+    return mockMenuDishes.filter((dish) => {
+      // Filter based on preferences
+      if (form.preferences.includes("spicy") && !dish.spicy) return false;
+      if (form.preferences.includes("fatty") && !dish.fatty) return false;
+      if (form.preferences.includes("sweet") && !dish.sweet) return false;
+
+      // Filter based on goal
+      if (form.goal === "lose" && dish.calories > 300) return false;
+      if (form.goal === "gain" && dish.calories < 200) return false;
+
+      return dish.available;
+    });
+  };
+
+  const handlePersonalizationSubmit = (form) => {
+    const personalized = getPersonalizedDishes(form);
+    setPersonalizedMenu(personalized);
+    setIsPersonalizationOpen(false);
+
+    // Update estimated calories based on BMI
+    const bmi = form.weight / Math.pow(form.height / 100, 2);
+    if (bmi < 18.5) {
+      setEstimatedCalories(2200); // Underweight - need more calories
+    } else if (bmi < 25) {
+      setEstimatedCalories(2000); // Normal weight
+    } else if (bmi < 30) {
+      setEstimatedCalories(1800); // Overweight - need fewer calories
+    } else {
+      setEstimatedCalories(1600); // Obese - need significantly fewer calories
+    }
+  };
+
+  const handleGoalChange = (goalId, checked) => {
+    if (checked) {
+      const filtered = personalizedMenu.filter((dish) => {
+        if (goalId === "lose" && dish.calories > 300) return false;
+        if (goalId === "gain" && dish.calories < 200) return false;
+        return true;
+      });
+      setPersonalizedMenu(filtered);
+    } else {
+      setPersonalizedMenu(getPersonalizedDishes(personalizationForm));
+    }
+  };
+
+  const handleOrderFood = () => {
+    setIsCartOpen(false);
+    // Here you would typically send the order to the kitchen
+    console.log("Order sent to kitchen:", cart);
+  };
+
+  const handlePayment = () => {
+    setIsPaymentOpen(false);
+    setIsCallStaffOpen(true);
+    // Here you would typically process the payment
+    console.log("Payment processed:", { cart, paymentMethod });
+  };
+
+  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10">
-      <h1 className="text-2xl font-semibold">Menu</h1>
-      <p className="mt-2 text-neutral-600">Browse dishes. (Functionality to be implemented in later sections.)</p>
-    </main>
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
+      <MenuHeader
+        cartItemCount={cartItemCount}
+        onPersonalize={() => setIsPersonalizationOpen(true)}
+        onViewOrders={() => setIsCartOpen(true)}
+        onCallStaff={() => setIsCallStaffOpen(true)}
+        onCheckout={() => setIsPaymentOpen(true)}
+      />
+
+      <MenuContent
+        activeMenuTab={activeMenuTab}
+        setActiveMenuTab={setActiveMenuTab}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        filteredDishes={filteredDishes}
+        personalizedMenu={personalizedMenu}
+        onDishSelect={setSelectedDish}
+        caloriesConsumed={caloriesConsumed}
+        estimatedCalories={estimatedCalories}
+        onGoalChange={handleGoalChange}
+      />
+
+      <MenuFooter />
+
+      {/* Modals */}
+      <PersonalizationModal
+        isOpen={isPersonalizationOpen}
+        onClose={() => setIsPersonalizationOpen(false)}
+        personalizationForm={personalizationForm}
+        setPersonalizationForm={setPersonalizationForm}
+        onSubmit={handlePersonalizationSubmit}
+      />
+
+      <CartSidebar
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        cart={cart}
+        onUpdateQuantity={updateCartQuantity}
+        onRemoveItem={removeFromCart}
+        onOrderFood={handleOrderFood}
+      />
+
+      <PaymentSidebar
+        isOpen={isPaymentOpen}
+        onClose={() => setIsPaymentOpen(false)}
+        cart={cart}
+        onPayment={handlePayment}
+        paymentMethod={paymentMethod}
+        setPaymentMethod={setPaymentMethod}
+      />
+
+      {/* Call Staff Modal */}
+      {isCallStaffOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">
+                Thành công!
+              </h3>
+              <p className="text-neutral-600 mb-6">
+                {cart.length > 0
+                  ? "Đơn hàng đã được gửi đến bếp và thanh toán đã hoàn tất!"
+                  : "Nhân viên sẽ đến hỗ trợ bạn ngay!"}
+              </p>
+              <button
+                onClick={() => setIsCallStaffOpen(false)}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
-
-
