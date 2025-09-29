@@ -3,6 +3,7 @@ import ChefHeader from "../components/Chef/ChefHeader";
 import ChefSidebar from "../components/Chef/ChefSidebar";
 import ChefStatsCards from "../components/Chef/ChefStatsCards";
 import OrdersManagement from "../components/Chef/OrdersManagement";
+import DishQuantityManagement from "../components/Chef/DishQuantityManagement";
 import { mockChefOrders, mockChefDishes } from "../constants/chefData";
 
 export default function Chef() {
@@ -10,6 +11,7 @@ export default function Chef() {
   const [activeSection, setActiveSection] = useState("overview");
   const [orders, setOrders] = useState(mockChefOrders);
   const [dishes, setDishes] = useState(mockChefDishes);
+  const [dishRequests, setDishRequests] = useState([]); // Requests sent to Manager
 
   // Calculate stats
   const pendingOrders = orders.filter(
@@ -29,6 +31,18 @@ export default function Chef() {
         order.id === orderId ? { ...order, status: newStatus } : order,
       ),
     );
+  };
+
+  const submitDishRequest = (request) => {
+    const newRequest = {
+      ...request,
+      id: Date.now(),
+      createdAt: Date.now(),
+      status: 'pending'
+    };
+    setDishRequests(prev => [...prev, newRequest]);
+    // In a real app, this would be sent to backend/server
+    console.log('Dish request submitted:', newRequest);
   };
 
   const renderContent = () => {
@@ -57,14 +71,10 @@ export default function Chef() {
         );
       case "dishes":
         return (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">
-              Quản Lý Món Ăn
-            </h3>
-            <p className="text-neutral-600">
-              Chức năng quản lý món ăn sẽ được phát triển...
-            </p>
-          </div>
+          <DishQuantityManagement 
+            dishes={dishes}
+            onSubmitRequest={submitDishRequest}
+          />
         );
       case "invoices":
         return (

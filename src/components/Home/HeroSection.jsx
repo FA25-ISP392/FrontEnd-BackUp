@@ -21,13 +21,13 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-black/60"></div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div className="animate-fade-in-up">
+        <div className="animate-fadeIn">
           {/* Logo */}
           <div className="mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl shadow-2xl mb-6">
-              <ChefHat className="h-10 w-10 text-white" />
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl shadow-2xl mb-6 animate-heartbeat floating">
+              <ChefHat className="h-12 w-12 text-white" />
             </div>
-            <h1 className="text-6xl md:text-7xl font-bold text-white mb-4 bg-gradient-to-r from-orange-400 via-red-400 to-pink-400 bg-clip-text text-transparent animate-glow">
+            <h1 className="text-6xl md:text-7xl font-bold text-white mb-4 bg-gradient-to-r from-orange-400 via-red-400 to-pink-400 bg-clip-text text-transparent animate-glow pulse-text">
               Restaurant
             </h1>
             <p className="text-xl md:text-2xl text-neutral-300 mb-8 max-w-3xl mx-auto leading-relaxed">
@@ -37,36 +37,36 @@ export default function HeroSection() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-            <button className="group bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-2xl hover:shadow-orange-500/25 hover:scale-105 transition-all duration-300 flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 animate-fadeIn stagger-1">
+            <button className="group bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-2xl hover:shadow-orange-500/25 hover:scale-105 transition-all duration-300 flex items-center gap-3 btn-animated">
               <span>Xem Thực Đơn</span>
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </button>
-            <button className="group bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-2xl font-semibold text-lg border border-white/20 hover:bg-white/20 hover:scale-105 transition-all duration-300 flex items-center gap-3">
+            <button className="group bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-2xl font-semibold text-lg border border-white/20 hover:bg-white/20 hover:scale-105 transition-all duration-300 flex items-center gap-3 btn-animated">
               <span>Đặt Bàn</span>
               <Calendar className="h-5 w-5 group-hover:scale-110 transition-transform" />
             </button>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 group">
-              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl mb-4 mx-auto group-hover:scale-110 transition-transform">
-                <Star className="h-6 w-6 text-white" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto animate-fadeIn stagger-2">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 group card-hover floating">
+              <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl mb-4 mx-auto group-hover:scale-110 transition-transform card-icon">
+                <Star className="h-7 w-7 text-white" />
               </div>
               <div className="text-3xl font-bold text-white mb-2">4.8/5</div>
               <div className="text-neutral-300">Đánh giá khách hàng</div>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 group">
-              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl mb-4 mx-auto group-hover:scale-110 transition-transform">
-                <Clock className="h-6 w-6 text-white" />
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 group card-hover floating" style={{animationDelay: '1s'}}>
+              <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl mb-4 mx-auto group-hover:scale-110 transition-transform card-icon">
+                <Clock className="h-7 w-7 text-white" />
               </div>
               <div className="text-3xl font-bold text-white mb-2">18:00</div>
               <div className="text-neutral-300">Giờ tới ăn</div>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 group">
-              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl mb-4 mx-auto group-hover:scale-110 transition-transform">
-                <Users className="h-6 w-6 text-white" />
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:bg-white/20 transition-all duration-300 group card-hover floating" style={{animationDelay: '2s'}}>
+              <div className="flex items-center justify-center w-14 h-14 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl mb-4 mx-auto group-hover:scale-110 transition-transform card-icon">
+                <Users className="h-7 w-7 text-white" />
               </div>
               <div className="text-3xl font-bold text-white mb-2">10K+</div>
               <div className="text-neutral-300">Khách hàng hài lòng</div>

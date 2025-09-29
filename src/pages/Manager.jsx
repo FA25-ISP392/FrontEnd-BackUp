@@ -5,6 +5,7 @@ import StatsCards from "../components/Manager/StatsCards";
 import Charts from "../components/Manager/Charts";
 import TablesManagement from "../components/Manager/TablesManagement";
 import AccountManagement from "../components/Manager/AccountManagement";
+import DishRequestsManagement from "../components/Manager/DishRequestsManagement";
 import TableDetailsModal from "../components/Manager/TableDetailsModal";
 import EditAccountModal from "../components/Manager/EditAccountModal";
 import {
@@ -14,6 +15,7 @@ import {
   mockRevenueData,
   mockPopularDishes,
 } from "../constants/managerData";
+import { getDishRequests, updateDishRequest } from "../constants/dishRequestsData";
 
 export default function Manager() {
   const [managerName] = useState("Manager User");
@@ -26,6 +28,7 @@ export default function Manager() {
   const [accounts, setAccounts] = useState(mockAccounts);
   const [dishes, setDishes] = useState(mockDishes);
   const [tables, setTables] = useState(mockTables);
+  const [dishRequests, setDishRequests] = useState(getDishRequests());
 
   // Calculate totals
   const totalRevenue = mockRevenueData.reduce(
@@ -60,6 +63,16 @@ export default function Manager() {
     setAccounts((prevAccounts) =>
       prevAccounts.filter((acc) => acc.id !== accountId),
     );
+  };
+
+  const handleApproveRequest = (requestId) => {
+    updateDishRequest(requestId, { status: 'approved' });
+    setDishRequests(getDishRequests());
+  };
+
+  const handleRejectRequest = (requestId) => {
+    updateDishRequest(requestId, { status: 'rejected' });
+    setDishRequests(getDishRequests());
   };
 
   const renderContent = () => {
@@ -101,14 +114,11 @@ export default function Manager() {
         );
       case "dishes":
         return (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">
-              Quản Lý Món Ăn
-            </h3>
-            <p className="text-neutral-600">
-              Chức năng quản lý món ăn sẽ được phát triển...
-            </p>
-          </div>
+          <DishRequestsManagement 
+            requests={dishRequests}
+            onApproveRequest={handleApproveRequest}
+            onRejectRequest={handleRejectRequest}
+          />
         );
       case "invoices":
         return (
