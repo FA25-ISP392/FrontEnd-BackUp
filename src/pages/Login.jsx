@@ -9,7 +9,7 @@ export default function Login() {
   const roles = [
     {
       id: "admin",
-      name: "Admin",
+      name: "Chủ Nhà Hàng",
       description: "Quản lý toàn bộ hệ thống",
       icon: Shield,
       color: "from-blue-500 to-purple-500",
@@ -18,7 +18,7 @@ export default function Login() {
     },
     {
       id: "manager",
-      name: "Manager",
+      name: "Quản Lý Nhà Hàng",
       description: "Quản lý nhà hàng và bàn",
       icon: User,
       color: "from-orange-500 to-red-500",
@@ -27,7 +27,7 @@ export default function Login() {
     },
     {
       id: "chef",
-      name: "Chef",
+      name: "Bếp",
       description: "Quản lý bếp và đơn hàng",
       icon: ChefHat,
       color: "from-green-500 to-emerald-500",
@@ -36,22 +36,22 @@ export default function Login() {
     },
     {
       id: "staff",
-      name: "Staff",
+      name: "Nhân viên phục vụ",
       description: "Phục vụ khách hàng",
       icon: Users,
       color: "from-purple-500 to-pink-500",
       bgColor: "from-purple-50 to-pink-50",
       route: "/staff",
     },
-    {
-      id: "customer",
-      name: "Khách hàng",
-      description: "Xem menu và đặt món",
-      icon: ShoppingBag,
-      color: "from-yellow-500 to-orange-500",
-      bgColor: "from-yellow-50 to-orange-50",
-      route: "/menu",
-    },
+    // {
+    //   id: "customer",
+    //   name: "Khách hàng",
+    //   description: "Xem menu và đặt món",
+    //   icon: ShoppingBag,
+    //   color: "from-yellow-500 to-orange-500",
+    //   bgColor: "from-yellow-50 to-orange-50",
+    //   route: "/menu",
+    // },
   ];
 
   const handleLogin = (e) => {
@@ -86,11 +86,8 @@ export default function Login() {
       <div className="max-w-6xl w-full">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl shadow-2xl mb-6">
-            <ChefHat className="h-10 w-10 text-white" />
-          </div>
           <h1 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-4">
-            Restaurant Management System
+            Hệ Thống Quản Lý Nhà Hàng
           </h1>
           <p className="text-xl text-neutral-600 max-w-3xl mx-auto">
             Chọn vai trò của bạn để đăng nhập vào hệ thống quản lý nhà hàng
