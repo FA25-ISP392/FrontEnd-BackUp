@@ -15,7 +15,7 @@ export default function App() {
   return (
     <div className="min-h-dvh flex flex-col">
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/homestaff" element={<Login />} />
         <Route
           path="/home"
           element={

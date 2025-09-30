@@ -54,3 +54,4 @@ export const updateDishRequest = (id, updates) => {
 export const getPendingRequests = () => dishRequests.filter(r => r.status === 'pending');
 export const getApprovedRequests = () => dishRequests.filter(r => r.status === 'approved');
 export const getRejectedRequests = () => dishRequests.filter(r => r.status === 'rejected');
+
