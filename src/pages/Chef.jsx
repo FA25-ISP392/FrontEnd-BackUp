@@ -1,7 +1,6 @@
 import { useState } from "react";
 import ChefHeader from "../components/Chef/ChefHeader";
 import ChefSidebar from "../components/Chef/ChefSidebar";
-import ChefStatsCards from "../components/Chef/ChefStatsCards";
 import OrdersManagement from "../components/Chef/OrdersManagement";
 import DishQuantityManagement from "../components/Chef/DishQuantityManagement";
 import { mockChefOrders, mockChefDishes } from "../constants/chefData";
@@ -15,21 +14,21 @@ export default function Chef() {
 
   // Calculate stats
   const pendingOrders = orders.filter(
-    (order) => order.status === "pending",
+    (order) => order.status === "pending"
   ).length;
   const preparingOrders = orders.filter(
-    (order) => order.status === "preparing",
+    (order) => order.status === "preparing"
   ).length;
   const availableDishes = dishes.filter(
-    (dish) => dish.status === "available",
+    (dish) => dish.status === "available"
   ).length;
   const totalRevenue = 1250.5; // Mock total revenue
 
   const updateOrderStatus = (orderId, newStatus) => {
     setOrders((prevOrders) =>
       prevOrders.map((order) =>
-        order.id === orderId ? { ...order, status: newStatus } : order,
-      ),
+        order.id === orderId ? { ...order, status: newStatus } : order
+      )
     );
   };
 
@@ -38,11 +37,11 @@ export default function Chef() {
       ...request,
       id: Date.now(),
       createdAt: Date.now(),
-      status: 'pending'
+      status: "pending",
     };
-    setDishRequests(prev => [...prev, newRequest]);
+    setDishRequests((prev) => [...prev, newRequest]);
     // In a real app, this would be sent to backend/server
-    console.log('Dish request submitted:', newRequest);
+    console.log("Dish request submitted:", newRequest);
   };
 
   const renderContent = () => {
@@ -50,12 +49,6 @@ export default function Chef() {
       case "overview":
         return (
           <>
-            <ChefStatsCards
-              pendingOrders={pendingOrders}
-              preparingOrders={preparingOrders}
-              availableDishes={availableDishes}
-              totalRevenue={totalRevenue}
-            />
             <OrdersManagement
               orders={orders}
               updateOrderStatus={updateOrderStatus}
@@ -71,7 +64,7 @@ export default function Chef() {
         );
       case "dishes":
         return (
-          <DishQuantityManagement 
+          <DishQuantityManagement
             dishes={dishes}
             onSubmitRequest={submitDishRequest}
           />
@@ -120,12 +113,6 @@ export default function Chef() {
             <p className="text-neutral-600 text-lg">
               Quản lý bếp hiệu quả với dashboard thông minh
             </p>
-            <div className="flex items-center gap-2 mt-4">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-green-600 font-medium">
-                Bếp hoạt động tốt
-              </span>
-            </div>
           </div>
 
           {/* Dynamic Content */}

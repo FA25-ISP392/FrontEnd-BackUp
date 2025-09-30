@@ -15,7 +15,10 @@ import {
   mockRevenueData,
   mockPopularDishes,
 } from "../constants/managerData";
-import { getDishRequests, updateDishRequest } from "../constants/dishRequestsData";
+import {
+  getDishRequests,
+  updateDishRequest,
+} from "../constants/dishRequestsData";
 
 export default function Manager() {
   const [managerName] = useState("Manager User");
@@ -33,7 +36,7 @@ export default function Manager() {
   // Calculate totals
   const totalRevenue = mockRevenueData.reduce(
     (sum, item) => sum + item.revenue,
-    0,
+    0
   );
   const totalAccounts = accounts.length;
   const totalDishes = dishes.length;
@@ -42,8 +45,8 @@ export default function Manager() {
   const updateOrderStatus = (tableId, updatedOrder) => {
     setTables((prevTables) =>
       prevTables.map((table) =>
-        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table,
-      ),
+        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table
+      )
     );
   };
 
@@ -51,8 +54,8 @@ export default function Manager() {
     if (accountData.id && accounts.find((acc) => acc.id === accountData.id)) {
       setAccounts((prevAccounts) =>
         prevAccounts.map((acc) =>
-          acc.id === accountData.id ? accountData : acc,
-        ),
+          acc.id === accountData.id ? accountData : acc
+        )
       );
     } else {
       setAccounts((prevAccounts) => [...prevAccounts, accountData]);
@@ -61,17 +64,17 @@ export default function Manager() {
 
   const deleteAccount = (accountId) => {
     setAccounts((prevAccounts) =>
-      prevAccounts.filter((acc) => acc.id !== accountId),
+      prevAccounts.filter((acc) => acc.id !== accountId)
     );
   };
 
   const handleApproveRequest = (requestId) => {
-    updateDishRequest(requestId, { status: 'approved' });
+    updateDishRequest(requestId, { status: "approved" });
     setDishRequests(getDishRequests());
   };
 
   const handleRejectRequest = (requestId) => {
-    updateDishRequest(requestId, { status: 'rejected' });
+    updateDishRequest(requestId, { status: "rejected" });
     setDishRequests(getDishRequests());
   };
 
@@ -114,7 +117,7 @@ export default function Manager() {
         );
       case "dishes":
         return (
-          <DishRequestsManagement 
+          <DishRequestsManagement
             requests={dishRequests}
             onApproveRequest={handleApproveRequest}
             onRejectRequest={handleRejectRequest}
@@ -164,12 +167,6 @@ export default function Manager() {
             <p className="text-neutral-600 text-lg">
               Quản lý nhà hàng hiệu quả với dashboard thông minh
             </p>
-            <div className="flex items-center gap-2 mt-4">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-green-600 font-medium">
-                Hệ thống hoạt động tốt
-              </span>
-            </div>
           </div>
 
           {/* Dynamic Content */}
@@ -183,7 +180,6 @@ export default function Manager() {
         setSelectedTable={setSelectedTable}
         updateOrderStatus={updateOrderStatus}
       />
-
       <EditAccountModal
         isEditingAccount={isEditingAccount}
         setIsEditingAccount={setIsEditingAccount}

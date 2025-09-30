@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AdminHeader from "../components/Admin/AdminHeader";
 import AdminSidebar from "../components/Admin/AdminSidebar";
 import AdminStatsCards from "../components/Admin/AdminStatsCards";
 import AdminCharts from "../components/Admin/AdminCharts";
+// import SettingsSidebar from "../components/Admin/SettingsSidebar"; // << thêm component mới
 import {
   mockAdminAccounts,
   mockAdminDishes,
@@ -19,6 +20,28 @@ export default function Admin() {
   const [isEditingDish, setIsEditingDish] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
 
+  // mở/đóng Settings
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // state settings (có thể lưu localStorage)
+  const [settings, setSettings] = useState({
+    theme: "light",
+    language: "vi",
+    currency: "USD",
+    emailNotif: true,
+    pushNotif: false,
+    compactSidebar: false,
+    autoSave: true,
+  });
+
+  useEffect(() => {
+    const raw = localStorage.getItem("admin_settings");
+    if (raw) setSettings(JSON.parse(raw));
+  }, []);
+  useEffect(() => {
+    localStorage.setItem("admin_settings", JSON.stringify(settings));
+  }, [settings]);
+
   // Mock data
   const [accounts, setAccounts] = useState(mockAdminAccounts);
   const [dishes, setDishes] = useState(mockAdminDishes);
@@ -27,7 +50,7 @@ export default function Admin() {
   // Calculate totals
   const totalRevenue = mockAdminRevenueData.reduce(
     (sum, item) => sum + item.revenue,
-    0,
+    0
   );
   const totalAccounts = accounts.length;
   const totalDishes = dishes.length;
@@ -37,8 +60,8 @@ export default function Admin() {
     if (accountData.id && accounts.find((acc) => acc.id === accountData.id)) {
       setAccounts((prevAccounts) =>
         prevAccounts.map((acc) =>
-          acc.id === accountData.id ? accountData : acc,
-        ),
+          acc.id === accountData.id ? accountData : acc
+        )
       );
     } else {
       setAccounts((prevAccounts) => [...prevAccounts, accountData]);
@@ -47,14 +70,14 @@ export default function Admin() {
 
   const deleteAccount = (accountId) => {
     setAccounts((prevAccounts) =>
-      prevAccounts.filter((acc) => acc.id !== accountId),
+      prevAccounts.filter((acc) => acc.id !== accountId)
     );
   };
 
   const saveDish = (dishData) => {
     if (dishData.id && dishes.find((dish) => dish.id === dishData.id)) {
       setDishes((prevDishes) =>
-        prevDishes.map((dish) => (dish.id === dishData.id ? dishData : dish)),
+        prevDishes.map((dish) => (dish.id === dishData.id ? dishData : dish))
       );
     } else {
       setDishes((prevDishes) => [...prevDishes, dishData]);
@@ -117,15 +140,6 @@ export default function Admin() {
             </p>
           </div>
         );
-      case "settings":
-        return (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">Cài Đặt</h3>
-            <p className="text-neutral-600">
-              Chức năng cài đặt sẽ được phát triển...
-            </p>
-          </div>
-        );
       default:
         return null;
     }
@@ -133,12 +147,16 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-blue-50 to-purple-50">
-      <AdminHeader adminName={adminName} />
+      <AdminHeader
+        adminName={adminName}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      />
 
       <div className="flex">
         <AdminSidebar
           activeSection={activeSection}
           setActiveSection={setActiveSection}
+          compact={settings.compactSidebar}
         />
 
         <main className="flex-1 p-6">
@@ -150,12 +168,6 @@ export default function Admin() {
             <p className="text-neutral-600 text-lg">
               Quản lý hệ thống nhà hàng hiệu quả với dashboard thông minh
             </p>
-            <div className="flex items-center gap-2 mt-4">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-green-600 font-medium">
-                Hệ thống hoạt động tốt
-              </span>
-            </div>
           </div>
 
           {/* Dynamic Content */}

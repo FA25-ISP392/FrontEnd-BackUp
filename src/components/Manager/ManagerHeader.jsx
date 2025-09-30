@@ -5,7 +5,7 @@ export default function ManagerHeader({ managerName }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const handleLogout = () => {
-    window.location.href = '/';
+    window.location.href = "/homestaff";
   };
   return (
     <>
@@ -18,9 +18,9 @@ export default function ManagerHeader({ managerName }) {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-neutral-900">
-                  Restaurant Manager
+                  Quản Lý Nhà Hàng
                 </h1>
-                <p className="text-sm text-neutral-600">Dashboard quản lý</p>
+                <p className="text-sm text-neutral-600">Hệ thống quản lý</p>
               </div>
             </div>
 
@@ -50,10 +50,13 @@ export default function ManagerHeader({ managerName }) {
       {/* Profile Modal */}
       {isProfileOpen && (
         <div className="fixed inset-0 z-50 flex">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setIsProfileOpen(false)} />
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setIsProfileOpen(false)}
+          />
           <div className="relative ml-auto w-full max-w-md bg-white shadow-xl">
             <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-semibold">Manager Profile</h2>
+              <h2 className="text-lg font-semibold">Thông Tin Tài Khoản</h2>
               <button
                 onClick={() => setIsProfileOpen(false)}
                 className="p-2 hover:bg-neutral-100 rounded-lg transition"
@@ -68,21 +71,25 @@ export default function ManagerHeader({ managerName }) {
                 </div>
                 <h3 className="font-semibold text-lg">{managerName}</h3>
                 <p className="text-neutral-600 text-sm">Manager</p>
-                <p className="text-neutral-500 text-xs mt-1">Manager ID: MGR001</p>
+                <p className="text-neutral-500 text-xs mt-1">ID: MGR001</p>
               </div>
-              
+
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-sm">
-                  <span className="text-neutral-600">Department:</span>
-                  <span className="font-medium">Operations</span>
+                  <span className="text-neutral-600">Bộ phận:</span>
+                  <span className="font-medium">Quản lý nhà hàng</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-neutral-600">Access Level:</span>
-                  <span className="font-medium">Manager Access</span>
+                  <span className="text-neutral-600">Cấp độ quyền hạn:</span>
+                  <span className="font-medium">Quyền hạn của Quản lý</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-neutral-600">Last Login:</span>
-                  <span className="font-medium">{new Date().toLocaleString()}</span>
+                  <span className="text-neutral-600">
+                    Lần đăng nhập gần nhất:
+                  </span>
+                  <span className="font-medium">
+                    {new Date().toLocaleString()}
+                  </span>
                 </div>
               </div>
 
@@ -91,7 +98,7 @@ export default function ManagerHeader({ managerName }) {
                 className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition font-medium flex items-center justify-center gap-2"
               >
                 <LogOut className="h-4 w-4" />
-                Logout
+                Đăng Xuất
               </button>
             </div>
           </div>

@@ -9,7 +9,7 @@ export default function ChefHeader({ chefName = "Chef" }) {
 
   const handleLogout = () => {
     // navigate("/", { replace: true }); // SPA-friendly
-    window.location.href = "/";          // nếu chưa dùng router
+    window.location.href = "/homestaff"; // nếu chưa dùng router
   };
 
   const initial = (chefName?.charAt(0) || "C").toUpperCase();
@@ -24,16 +24,26 @@ export default function ChefHeader({ chefName = "Chef" }) {
                 <ChefHat className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">Chef Dashboard</h1>
-                <p className="text-sm text-neutral-600">Quản lý bếp và đơn hàng</p>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                  Bảng điều khiển Bếp
+                </h1>
+                <p className="text-sm text-neutral-600">
+                  Quản lý bếp và đơn hàng
+                </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 animate-fadeIn stagger-1">
-              <button className="group p-3 hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-md" aria-label="Notifications">
+              <button
+                className="group p-3 hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-md"
+                aria-label="Notifications"
+              >
                 <Bell className="h-5 w-5 text-neutral-600 group-hover:text-orange-600 group-hover:animate-wiggle" />
               </button>
-              <button className="group p-3 hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-md" aria-label="Settings">
+              <button
+                className="group p-3 hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-md"
+                aria-label="Settings"
+              >
                 <Settings className="h-5 w-5 text-neutral-600 group-hover:text-orange-600 group-hover:rotate-90 transition-transform duration-300" />
               </button>
               <button
@@ -41,9 +51,13 @@ export default function ChefHeader({ chefName = "Chef" }) {
                 className="flex items-center gap-3 hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 rounded-xl p-3 transition-all duration-300 btn-animated"
               >
                 <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300">
-                  <span className="text-white text-sm font-bold">{initial}</span>
+                  <span className="text-white text-sm font-bold">
+                    {initial}
+                  </span>
                 </div>
-                <span className="text-sm font-medium text-neutral-700 font-semibold">{chefName}</span>
+                <span className="text-sm font-medium text-neutral-700 font-semibold">
+                  {chefName}
+                </span>
               </button>
             </div>
           </div>
@@ -52,7 +66,11 @@ export default function ChefHeader({ chefName = "Chef" }) {
 
       {/* Profile Modal */}
       {isProfileOpen && (
-        <div className="fixed inset-0 z-50 flex animate-slide-in-top" role="dialog" aria-modal="true">
+        <div
+          className="fixed inset-0 z-50 flex animate-slide-in-top"
+          role="dialog"
+          aria-modal="true"
+        >
           <div
             className="fixed inset-0 bg-black/50"
             onClick={() => setIsProfileOpen(false)}
@@ -60,7 +78,7 @@ export default function ChefHeader({ chefName = "Chef" }) {
           />
           <div className="relative ml-auto w-full max-w-md bg-white shadow-xl">
             <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-semibold">Chef Profile</h2>
+              <h2 className="text-lg font-semibold">Thông Tin Tài Khoản</h2>
               <button
                 onClick={() => setIsProfileOpen(false)}
                 className="p-2 hover:bg-neutral-100 rounded-lg transition"
@@ -77,21 +95,25 @@ export default function ChefHeader({ chefName = "Chef" }) {
                 </div>
                 <h3 className="font-semibold text-lg">{chefName}</h3>
                 <p className="text-neutral-600 text-sm">Chef</p>
-                <p className="text-neutral-500 text-xs mt-1">Chef ID: CHF001</p>
+                <p className="text-neutral-500 text-xs mt-1">ID: CHF001</p>
               </div>
 
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-sm">
-                  <span className="text-neutral-600">Department:</span>
-                  <span className="font-medium">Kitchen</span>
+                  <span className="text-neutral-600">Bộ phận:</span>
+                  <span className="font-medium">Bếp</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-neutral-600">Access Level:</span>
-                  <span className="font-medium">Chef Access</span>
+                  <span className="text-neutral-600">Cấp độ quyền hạn:</span>
+                  <span className="font-medium">Quyền hạn của Bếp</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-neutral-600">Last Login:</span>
-                  <span className="font-medium">{new Date().toLocaleString()}</span>
+                  <span className="text-neutral-600">
+                    Lần đăng nhập gần nhất:
+                  </span>
+                  <span className="font-medium">
+                    {new Date().toLocaleString()}
+                  </span>
                 </div>
               </div>
 
@@ -100,7 +122,7 @@ export default function ChefHeader({ chefName = "Chef" }) {
                 className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition font-medium flex items-center justify-center gap-2"
               >
                 <LogOut className="h-4 w-4" />
-                Logout
+                Đăng Xuất
               </button>
             </div>
           </div>

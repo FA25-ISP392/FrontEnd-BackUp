@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { 
-  Plus, 
-  Minus, 
-  Send, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Plus,
+  Minus,
+  Send,
+  Clock,
+  CheckCircle,
+  XCircle,
   UtensilsCrossed,
-  Calendar
+  Calendar,
 } from "lucide-react";
 
 export default function DishQuantityManagement({ dishes, onSubmitRequest }) {
@@ -15,9 +15,9 @@ export default function DishQuantityManagement({ dishes, onSubmitRequest }) {
   const [loadingId, setLoadingId] = useState(null);
 
   const handleQuantityChange = (dishId, delta) => {
-    setQuantities(prev => ({
+    setQuantities((prev) => ({
       ...prev,
-      [dishId]: Math.max(0, (prev[dishId] || 0) + delta)
+      [dishId]: Math.max(0, (prev[dishId] || 0) + delta),
     }));
   };
 
@@ -27,14 +27,14 @@ export default function DishQuantityManagement({ dishes, onSubmitRequest }) {
     setTimeout(() => {
       const request = {
         dishId,
-        dishName: dishes.find(d => d.id === dishId)?.name,
+        dishName: dishes.find((d) => d.id === dishId)?.name,
         requestedQuantity: quantities[dishId] || 0,
         status: "pending",
-        date: new Date().toISOString().split('T')[0],
-        chefName: "Chef User"
+        date: new Date().toISOString().split("T")[0],
+        chefName: "Chef User",
       };
       onSubmitRequest(request);
-      setQuantities(prev => ({ ...prev, [dishId]: 0 }));
+      setQuantities((prev) => ({ ...prev, [dishId]: 0 }));
       setLoadingId(null);
     }, 1000);
   };
@@ -62,8 +62,12 @@ export default function DishQuantityManagement({ dishes, onSubmitRequest }) {
             <Calendar className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h4 className="font-semibold text-neutral-900">Đơn đặt hàng cho ngày</h4>
-            <p className="text-sm text-neutral-600">{new Date().toLocaleDateString('vi-VN')}</p>
+            <h4 className="font-semibold text-neutral-900">
+              Đơn đặt hàng cho ngày
+            </h4>
+            <p className="text-sm text-neutral-600">
+              {new Date().toLocaleDateString("vi-VN")}
+            </p>
           </div>
         </div>
       </div>
@@ -84,13 +88,17 @@ export default function DishQuantityManagement({ dishes, onSubmitRequest }) {
                   {dish.name}
                 </h4>
                 <p className="text-sm text-neutral-600">{dish.category}</p>
-                <p className="text-sm font-medium text-green-600">${dish.price}</p>
+                <p className="text-sm font-medium text-green-600">
+                  ${dish.price}
+                </p>
               </div>
             </div>
 
             {/* Quantity Control */}
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-medium text-neutral-700">Số lượng:</span>
+              <span className="text-sm font-medium text-neutral-700">
+                Số lượng:
+              </span>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => handleQuantityChange(dish.id, -1)}
@@ -150,11 +158,15 @@ export default function DishQuantityManagement({ dishes, onSubmitRequest }) {
             <Send className="h-3 w-3 text-white" />
           </div>
           <div>
-            <h5 className="font-medium text-neutral-900 mb-1">Hướng dẫn sử dụng</h5>
+            <h5 className="font-medium text-neutral-900 mb-1">
+              Hướng dẫn sử dụng
+            </h5>
             <p className="text-sm text-neutral-600">
-              • Thiết lập số lượng món ăn bạn muốn chuẩn bị cho ngày hôm nay<br/>
-              • Nhấn "Gửi Yêu Cầu" để gửi đến Manager để phê duyệt<br/>
-              • Chỉ sau khi Manager phê duyệt, món ăn mới được phục vụ cho khách hàng
+              • Thiết lập số lượng món ăn bạn muốn chuẩn bị cho ngày hôm nay
+              <br />
+              • Nhấn "Gửi Yêu Cầu" để gửi đến Manager để phê duyệt
+              <br />• Chỉ sau khi Manager phê duyệt, món ăn mới được phục vụ cho
+              khách hàng
             </p>
           </div>
         </div>
@@ -162,4 +174,3 @@ export default function DishQuantityManagement({ dishes, onSubmitRequest }) {
     </div>
   );
 }
-

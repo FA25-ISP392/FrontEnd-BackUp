@@ -3,7 +3,7 @@ import { Clock, ChefHat, CheckCircle } from "lucide-react";
 export default function OrdersManagement({ orders, updateOrderStatus }) {
   const pendingOrders = orders.filter((order) => order.status === "pending");
   const preparingOrders = orders.filter(
-    (order) => order.status === "preparing",
+    (order) => order.status === "preparing"
   );
   const readyOrders = orders.filter((order) => order.status === "ready");
 
