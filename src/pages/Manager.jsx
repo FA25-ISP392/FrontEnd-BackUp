@@ -6,6 +6,8 @@ import Charts from "../components/Manager/Charts";
 import TablesManagement from "../components/Manager/TablesManagement";
 import AccountManagement from "../components/Manager/AccountManagement";
 import DishRequestsManagement from "../components/Manager/DishRequestsManagement";
+import ManagerInvoicesToday from "../components/Manager/InvoicesToday";
+import DishesStockVisibility from "../components/Manager/DishesStockVisibility";
 import TableDetailsModal from "../components/Manager/TableDetailsModal";
 import EditAccountModal from "../components/Manager/EditAccountModal";
 import {
@@ -36,7 +38,7 @@ export default function Manager() {
   // Calculate totals
   const totalRevenue = mockRevenueData.reduce(
     (sum, item) => sum + item.revenue,
-    0
+    0,
   );
   const totalAccounts = accounts.length;
   const totalDishes = dishes.length;
@@ -45,8 +47,8 @@ export default function Manager() {
   const updateOrderStatus = (tableId, updatedOrder) => {
     setTables((prevTables) =>
       prevTables.map((table) =>
-        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table
-      )
+        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table,
+      ),
     );
   };
 
@@ -54,8 +56,8 @@ export default function Manager() {
     if (accountData.id && accounts.find((acc) => acc.id === accountData.id)) {
       setAccounts((prevAccounts) =>
         prevAccounts.map((acc) =>
-          acc.id === accountData.id ? accountData : acc
-        )
+          acc.id === accountData.id ? accountData : acc,
+        ),
       );
     } else {
       setAccounts((prevAccounts) => [...prevAccounts, accountData]);
@@ -64,7 +66,7 @@ export default function Manager() {
 
   const deleteAccount = (accountId) => {
     setAccounts((prevAccounts) =>
-      prevAccounts.filter((acc) => acc.id !== accountId)
+      prevAccounts.filter((acc) => acc.id !== accountId),
     );
   };
 
@@ -117,22 +119,27 @@ export default function Manager() {
         );
       case "dishes":
         return (
-          <DishRequestsManagement
-            requests={dishRequests}
-            onApproveRequest={handleApproveRequest}
-            onRejectRequest={handleRejectRequest}
-          />
+          <div className="space-y-6">
+            <DishRequestsManagement
+              requests={dishRequests}
+              onApproveRequest={handleApproveRequest}
+              onRejectRequest={handleRejectRequest}
+            />
+            <DishesStockVisibility dishes={dishes} />
+          </div>
         );
       case "invoices":
         return (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">
-              Quản Lý Hóa Đơn
-            </h3>
-            <p className="text-neutral-600">
-              Chức năng quản lý hóa đơn sẽ được phát triển...
-            </p>
-          </div>
+          <ManagerInvoicesToday
+            invoices={mockRevenueData.map((r, i) => ({
+              id: i + 1,
+              table: (i % 10) + 1,
+              amount: Math.round(r.revenue * 1.1),
+              time: "--:--",
+              date: new Date().toISOString().slice(0, 10),
+              paymentMethod: i % 2 ? "Card" : "Cash",
+            }))}
+          />
         );
       case "settings":
         return (

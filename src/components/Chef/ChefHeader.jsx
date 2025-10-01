@@ -5,6 +5,8 @@ import { useState } from "react";
 
 export default function ChefHeader({ chefName = "Chef" }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
   // const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -35,12 +37,14 @@ export default function ChefHeader({ chefName = "Chef" }) {
 
             <div className="flex items-center gap-2 animate-fadeIn stagger-1">
               <button
+                onClick={() => setIsNotifOpen(true)}
                 className="group p-3 hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-md"
                 aria-label="Notifications"
               >
                 <Bell className="h-5 w-5 text-neutral-600 group-hover:text-orange-600 group-hover:animate-wiggle" />
               </button>
               <button
+                onClick={() => setIsSettingsOpen(true)}
                 className="group p-3 hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50 rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-md"
                 aria-label="Settings"
               >
@@ -124,6 +128,73 @@ export default function ChefHeader({ chefName = "Chef" }) {
                 <LogOut className="h-4 w-4" />
                 Đăng Xuất
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Sidebar */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setIsSettingsOpen(false)}
+          />
+          <div className="relative ml-auto w-full max-w-md bg-white shadow-xl">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">Cài Đặt</h2>
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="p-2 hover:bg-neutral-100 rounded-lg transition"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <label className="flex items-center justify-between text-sm">
+                <span className="text-neutral-700">Bật thông báo bếp</span>
+                <input type="checkbox" className="h-4 w-4" />
+              </label>
+              <label className="flex items-center justify-between text-sm">
+                <span className="text-neutral-700">Âm thanh chuông</span>
+                <input type="checkbox" className="h-4 w-4" />
+              </label>
+              <button className="mt-4 w-full bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700">
+                Lưu cài đặt
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notifications Sidebar */}
+      {isNotifOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setIsNotifOpen(false)}
+          />
+          <div className="relative ml-auto w-full max-w-md bg-white shadow-xl">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">Thông báo</h2>
+              <button
+                onClick={() => setIsNotifOpen(false)}
+                className="p-2 hover:bg-neutral-100 rounded-lg transition"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="p-3 border rounded-lg">Đơn mới từ bàn 3</div>
+              <div className="p-3 border rounded-lg">
+                Món cần chuẩn bị: Pizza Margherita
+              </div>
+              <div className="p-3 border rounded-lg">
+                Bếp trưởng cập nhật thực đơn
+              </div>
             </div>
           </div>
         </div>

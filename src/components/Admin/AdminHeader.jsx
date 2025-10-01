@@ -4,6 +4,7 @@ import { useState } from "react";
 export default function AdminHeader({ adminName }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false); // thêm state cho settings
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
 
   const handleLogout = () => {
     window.location.href = "/homestaff";
@@ -30,6 +31,7 @@ export default function AdminHeader({ adminName }) {
             {/* Right: actions */}
             <div className="flex items-center gap-4">
               <button
+                onClick={() => setIsNotifOpen(true)}
                 className="p-2 hover:bg-neutral-100 rounded-lg transition"
                 aria-label="Thông báo"
               >
@@ -153,6 +155,36 @@ export default function AdminHeader({ adminName }) {
               <button className="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
                 Lưu cài đặt
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notifications Sidebar */}
+      {isNotifOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setIsNotifOpen(false)}
+          />
+          <div className="relative ml-auto w-full max-w-md bg-white shadow-xl">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">Thông báo</h2>
+              <button
+                onClick={() => setIsNotifOpen(false)}
+                className="p-2 hover:bg-neutral-100 rounded-lg transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="p-3 border rounded-lg">
+                Đơn #1024 vừa thanh toán
+              </div>
+              <div className="p-3 border rounded-lg">
+                Món mới được thêm bởi Admin
+              </div>
+              <div className="p-3 border rounded-lg">Bàn 7 gọi nhân viên</div>
             </div>
           </div>
         </div>

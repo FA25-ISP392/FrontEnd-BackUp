@@ -3,6 +3,11 @@ import AdminHeader from "../components/Admin/AdminHeader";
 import AdminSidebar from "../components/Admin/AdminSidebar";
 import AdminStatsCards from "../components/Admin/AdminStatsCards";
 import AdminCharts from "../components/Admin/AdminCharts";
+import AdminInvoices from "../components/Admin/Invoices";
+import AdminAccountManagement from "../components/Admin/AccountManagement";
+import AdminEditAccountModal from "../components/Admin/EditAccountModal";
+import AdminDishesManagement from "../components/Admin/DishesManagement";
+import AdminEditDishModal from "../components/Admin/EditDishModal";
 // import SettingsSidebar from "../components/Admin/SettingsSidebar"; // << thêm component mới
 import {
   mockAdminAccounts,
@@ -50,7 +55,7 @@ export default function Admin() {
   // Calculate totals
   const totalRevenue = mockAdminRevenueData.reduce(
     (sum, item) => sum + item.revenue,
-    0
+    0,
   );
   const totalAccounts = accounts.length;
   const totalDishes = dishes.length;
@@ -60,8 +65,8 @@ export default function Admin() {
     if (accountData.id && accounts.find((acc) => acc.id === accountData.id)) {
       setAccounts((prevAccounts) =>
         prevAccounts.map((acc) =>
-          acc.id === accountData.id ? accountData : acc
-        )
+          acc.id === accountData.id ? accountData : acc,
+        ),
       );
     } else {
       setAccounts((prevAccounts) => [...prevAccounts, accountData]);
@@ -70,14 +75,14 @@ export default function Admin() {
 
   const deleteAccount = (accountId) => {
     setAccounts((prevAccounts) =>
-      prevAccounts.filter((acc) => acc.id !== accountId)
+      prevAccounts.filter((acc) => acc.id !== accountId),
     );
   };
 
   const saveDish = (dishData) => {
     if (dishData.id && dishes.find((dish) => dish.id === dishData.id)) {
       setDishes((prevDishes) =>
-        prevDishes.map((dish) => (dish.id === dishData.id ? dishData : dish))
+        prevDishes.map((dish) => (dish.id === dishData.id ? dishData : dish)),
       );
     } else {
       setDishes((prevDishes) => [...prevDishes, dishData]);
@@ -109,37 +114,24 @@ export default function Admin() {
         );
       case "accounts":
         return (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">
-              Quản Lý Tài Khoản
-            </h3>
-            <p className="text-neutral-600">
-              Chức năng quản lý tài khoản sẽ được phát triển...
-            </p>
-          </div>
+          <AdminAccountManagement
+            accounts={accounts}
+            setIsEditingAccount={setIsEditingAccount}
+            setEditingItem={setEditingItem}
+            deleteAccount={deleteAccount}
+          />
         );
       case "dishes":
         return (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">
-              Quản Lý Món Ăn
-            </h3>
-            <p className="text-neutral-600">
-              Chức năng quản lý món ăn sẽ được phát triển...
-            </p>
-          </div>
+          <AdminDishesManagement
+            dishes={dishes}
+            setIsEditingDish={setIsEditingDish}
+            setEditingItem={setEditingItem}
+            deleteDish={deleteDish}
+          />
         );
       case "invoices":
-        return (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">
-              Quản Lý Hóa Đơn
-            </h3>
-            <p className="text-neutral-600">
-              Chức năng quản lý hóa đơn sẽ được phát triển...
-            </p>
-          </div>
-        );
+        return <AdminInvoices invoices={invoices} />;
       default:
         return null;
     }
@@ -174,6 +166,21 @@ export default function Admin() {
           {renderContent()}
         </main>
       </div>
+
+      <AdminEditAccountModal
+        isEditingAccount={isEditingAccount}
+        setIsEditingAccount={setIsEditingAccount}
+        editingItem={editingItem}
+        setEditingItem={setEditingItem}
+        saveAccount={saveAccount}
+      />
+      <AdminEditDishModal
+        isEditingDish={isEditingDish}
+        setIsEditingDish={setIsEditingDish}
+        editingItem={editingItem}
+        setEditingItem={setEditingItem}
+        saveDish={saveDish}
+      />
     </div>
   );
 }

@@ -37,15 +37,7 @@ export default function StaffSidebar({ activeSection, setActiveSection }) {
           ))}
         </nav>
 
-        <div className="mt-8 pt-6 border-t border-neutral-200">
-          <button
-            onClick={() => window.location.href = "/"}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-neutral-700 hover:bg-neutral-100 transition-all duration-300"
-          >
-            <Home className="h-5 w-5" />
-            <span className="font-medium">Back to Home</span>
-          </button>
-        </div>
+        {/* Removed Back to Home button as requested */}
       </div>
     </div>
   );

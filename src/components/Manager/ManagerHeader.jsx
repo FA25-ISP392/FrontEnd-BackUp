@@ -3,6 +3,8 @@ import { useState } from "react";
 
 export default function ManagerHeader({ managerName }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const handleLogout = () => {
     window.location.href = "/homestaff";
@@ -25,10 +27,16 @@ export default function ManagerHeader({ managerName }) {
             </div>
 
             <div className="flex items-center gap-4">
-              <button className="p-2 hover:bg-neutral-100 rounded-lg transition">
+              <button
+                onClick={() => setIsNotifOpen(true)}
+                className="p-2 hover:bg-neutral-100 rounded-lg transition"
+              >
                 <Bell className="h-5 w-5 text-neutral-600" />
               </button>
-              <button className="p-2 hover:bg-neutral-100 rounded-lg transition">
+              <button
+                onClick={() => setIsSettingsOpen(true)}
+                className="p-2 hover:bg-neutral-100 rounded-lg transition"
+              >
                 <Settings className="h-5 w-5 text-neutral-600" />
               </button>
               <button
@@ -99,6 +107,68 @@ export default function ManagerHeader({ managerName }) {
               >
                 <LogOut className="h-4 w-4" />
                 Đăng Xuất
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isNotifOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setIsNotifOpen(false)}
+          />
+          <div className="relative ml-auto w-full max-w-md bg-white shadow-xl">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">Thông báo</h2>
+              <button
+                onClick={() => setIsNotifOpen(false)}
+                className="p-2 hover:bg-neutral-100 rounded-lg transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="p-3 border rounded-lg">
+                Đơn #1024 vừa thanh toán
+              </div>
+              <div className="p-3 border rounded-lg">Món sắp hết hàng</div>
+              <div className="p-3 border rounded-lg">Bàn 7 gọi nhân viên</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings Sidebar */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => setIsSettingsOpen(false)}
+          />
+          <div className="relative ml-auto w-full max-w-md bg-white shadow-xl">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">Cài Đặt</h2>
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="p-2 hover:bg-neutral-100 rounded-lg transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <label className="flex items-center justify-between text-sm">
+                <span className="text-neutral-700">Bật thông báo hệ thống</span>
+                <input type="checkbox" className="h-4 w-4" />
+              </label>
+              <label className="flex items-center justify-between text-sm">
+                <span className="text-neutral-700">Chế độ tối</span>
+                <input type="checkbox" className="h-4 w-4" />
+              </label>
+              <button className="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                Lưu cài đặt
               </button>
             </div>
           </div>

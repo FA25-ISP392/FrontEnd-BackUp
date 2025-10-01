@@ -7,7 +7,7 @@ import PersonalizationModal from "../components/Menu/PersonalizationModal";
 import CartSidebar from "../components/Menu/CartSidebar";
 import PaymentSidebar from "../components/Menu/PaymentSidebar";
 import DishOptionsModal from "../components/Menu/DishOptionsModal";
-import { mockMenuDishes, categories } from "../constants/menuData";
+import { mockMenuDishes } from "../constants/menuData";
 
 export default function Menu() {
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
@@ -21,8 +21,7 @@ export default function Menu() {
   const [personalizedMenu, setPersonalizedMenu] = useState([]);
   const [caloriesConsumed, setCaloriesConsumed] = useState(0);
   const [estimatedCalories, setEstimatedCalories] = useState(2000);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+  // Removed search and category dropdown per requirements
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
   // Personalization form state
@@ -36,15 +35,19 @@ export default function Menu() {
     goal: "",
   });
 
-  // Filter dishes based on search and category
-  const filteredDishes = mockMenuDishes.filter((dish) => {
-    const matchesSearch =
-      dish.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      dish.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "all" || dish.category === selectedCategory;
-    return matchesSearch && matchesCategory && dish.available;
-  });
+  // Sync with Manager visibility: hide dishes listed in localStorage hidden_dishes
+  const hiddenNames = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("hidden_dishes")) || [];
+    } catch (_) {
+      return [];
+    }
+  })();
+
+  // Filter dishes: availability and not hidden
+  const filteredDishes = mockMenuDishes.filter(
+    (dish) => dish.available && !hiddenNames.includes(dish.name),
+  );
 
   // Cart functions
   const addToCart = (dish, notes = "") => {
@@ -79,7 +82,9 @@ export default function Menu() {
           item.id === itemId ? { ...item, quantity: newQuantity } : item,
         ),
       );
-      setCaloriesConsumed((prev) => prev + quantityDiff * (item.totalCalories || item.calories));
+      setCaloriesConsumed(
+        (prev) => prev + quantityDiff * (item.totalCalories || item.calories),
+      );
     }
   };
 
@@ -87,7 +92,9 @@ export default function Menu() {
     const item = cart.find((item) => item.id === itemId);
     if (item) {
       setCart((prevCart) => prevCart.filter((item) => item.id !== itemId));
-      setCaloriesConsumed((prev) => prev - (item.totalCalories || item.calories) * item.quantity);
+      setCaloriesConsumed(
+        (prev) => prev - (item.totalCalories || item.calories) * item.quantity,
+      );
     }
   };
 
@@ -173,10 +180,6 @@ export default function Menu() {
       <MenuContent
         activeMenuTab={activeMenuTab}
         setActiveMenuTab={setActiveMenuTab}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
         filteredDishes={filteredDishes}
         personalizedMenu={personalizedMenu}
         onDishSelect={(dish) => {

@@ -1,13 +1,10 @@
 import { useState } from "react";
-import { Search, Filter, Target, Zap, Heart } from "lucide-react";
+import { Target, Zap, Heart } from "lucide-react";
+import { categories as CATEGORY_LIST } from "../../constants/menuData";
 
 export default function MenuContent({
   activeMenuTab,
   setActiveMenuTab,
-  searchTerm,
-  setSearchTerm,
-  selectedCategory,
-  setSelectedCategory,
   filteredDishes,
   personalizedMenu,
   onDishSelect,
@@ -15,14 +12,7 @@ export default function MenuContent({
   estimatedCalories,
   onGoalChange,
 }) {
-  const categories = [
-    { id: "all", name: "Tất cả" },
-    { id: "Pizza", name: "Pizza" },
-    { id: "Pasta", name: "Pasta" },
-    { id: "Main Course", name: "Món chính" },
-    { id: "Salad", name: "Salad" },
-    { id: "Dessert", name: "Tráng miệng" },
-  ];
+  const categories = CATEGORY_LIST.filter((c) => c.id !== "all");
 
   const goals = [
     { id: "lose", name: "Giảm cân", icon: Target },
@@ -64,7 +54,7 @@ export default function MenuContent({
                 } else if (percentage > 100) {
                   strokeColor = "#EF4444"; // Red
                 }
-                
+
                 return (
                   <svg
                     className="w-16 h-16 transform -rotate-90"
@@ -126,32 +116,59 @@ export default function MenuContent({
         </button>
       </div>
 
-      {/* Search and Filter */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-neutral-400" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm món ăn..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white/80 backdrop-blur-sm"
-          />
-        </div>
-        <div className="relative">
-          <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-neutral-400" />
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="pl-10 pr-8 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white/80 backdrop-blur-sm appearance-none"
-          >
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
+      {/* Category Sections (Horizontal Scroll) */}
+      <div className="space-y-10 mb-4">
+        {categories.map((category) => (
+          <div key={category.id}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-neutral-900">
                 {category.name}
-              </option>
-            ))}
-          </select>
-        </div>
+              </h3>
+            </div>
+            <div className="overflow-x-auto">
+              <div className="flex gap-4 min-w-max pb-2">
+                {(activeMenuTab === "all" ? filteredDishes : personalizedMenu)
+                  .filter((d) => d.category === category.id)
+                  .map((dish) => (
+                    <div
+                      key={dish.id}
+                      className="w-72 flex-shrink-0 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20"
+                    >
+                      <div className="aspect-w-16 aspect-h-9 mb-3">
+                        <img
+                          src={dish.image}
+                          alt={dish.name}
+                          className="w-full h-40 object-cover rounded-xl"
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <h4 className="text-lg font-bold text-neutral-900 mb-1">
+                          {dish.name}
+                        </h4>
+                        <p className="text-neutral-600 text-sm line-clamp-2">
+                          {dish.description}
+                        </p>
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                            ${dish.price}
+                          </span>
+                          <span className="text-xs text-neutral-500">
+                            {dish.calories} cal
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => onDishSelect(dish)}
+                        className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-2.5 px-4 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-medium"
+                      >
+                        Chọn món
+                      </button>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Goal Checkboxes for Personalized Menu */}
@@ -184,47 +201,7 @@ export default function MenuContent({
         </div>
       )}
 
-      {/* Menu Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {(activeMenuTab === "all" ? filteredDishes : personalizedMenu).map(
-          (dish) => (
-            <div
-              key={dish.id}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 group"
-            >
-              <div className="aspect-w-16 aspect-h-9 mb-4">
-                <img
-                  src={dish.image}
-                  alt={dish.name}
-                  className="w-full h-48 object-cover rounded-xl"
-                />
-              </div>
-              <div className="mb-4">
-                <h3 className="text-xl font-bold text-neutral-900 mb-2">
-                  {dish.name}
-                </h3>
-                <p className="text-neutral-600 text-sm mb-3">
-                  {dish.description}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                    ${dish.price}
-                  </span>
-                  <span className="text-sm text-neutral-500">
-                    {dish.calories} cal
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => onDishSelect(dish)}
-                className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-4 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-medium"
-              >
-                Chọn món
-              </button>
-            </div>
-          ),
-        )}
-      </div>
+      {/* Removed old grid; now sections above */}
 
       {/* Empty State for Personalized Menu */}
       {activeMenuTab === "personalized" && personalizedMenu.length === 0 && (
