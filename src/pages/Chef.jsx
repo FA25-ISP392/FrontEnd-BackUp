@@ -3,7 +3,7 @@ import ChefHeader from "../components/Chef/ChefHeader";
 import ChefSidebar from "../components/Chef/ChefSidebar";
 import OrdersManagement from "../components/Chef/OrdersManagement";
 import DishQuantityManagement from "../components/Chef/DishQuantityManagement";
-import { mockChefOrders, mockChefDishes } from "../constants/chefData";
+import { mockChefOrders, mockChefDishes } from "../lib/chefData";
 
 export default function Chef() {
   const [chefName] = useState("Chef User");

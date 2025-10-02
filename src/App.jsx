@@ -1,6 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import HomeHeader from "./components/HomeHeader.jsx";
-import Footer from "./components/Footer.jsx";
+import { homeHeader as HomeHeader, footer as Footer } from "./components/ui";
 import Login from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
 import Menu from "./pages/Menu.jsx";

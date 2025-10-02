@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Target, Zap, Heart } from "lucide-react";
-import { categories as CATEGORY_LIST } from "../../constants/menuData";
+import { categories as CATEGORY_LIST } from "../../lib/menuData";
 
 export default function MenuContent({
   activeMenuTab,
