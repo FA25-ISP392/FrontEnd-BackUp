@@ -1,12 +1,12 @@
-// General hooks
+// General utility hooks
 export * from './common';
 
-// Restaurant-specific hooks
-export * from './restaurant';
-
-// Page-specific hooks
-export * from './admin';
-export * from './chef';
-export * from './manager';
-export * from './staff';
-export * from './menu';
+// Advanced algorithm hooks (extracted from real project logic)
+export * from './useBMICalculator';
+export * from './useMenuPersonalization';
+export * from './useCartCalculator';
+export * from './useStockManager';
+export * from './useQuantityManager';
+export * from './useRevenueAnalyzer';
+export * from './useOrderWorkflow';
+export * from './useTableManager';
