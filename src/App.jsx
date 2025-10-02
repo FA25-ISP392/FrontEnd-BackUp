@@ -3,7 +3,6 @@ import { homeHeader as HomeHeader, footer as Footer } from "./components/ui";
 import Login from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
 import Menu from "./pages/Menu.jsx";
-import Staff from "./pages/Staff.jsx";
 import StaffPage from "./pages/StaffPage.jsx";
 import Admin from "./pages/Admin.jsx";
 import Manager from "./pages/Manager.jsx";
@@ -14,6 +13,8 @@ export default function App() {
   return (
     <div className="min-h-dvh flex flex-col">
       <Routes>
+        {/* Route mặc định - chuyển hướng đến trang đăng nhập */}
+        <Route path="/" element={<Login />} />
         <Route path="/homestaff" element={<Login />} />
         <Route
           path="/home"
@@ -26,7 +27,7 @@ export default function App() {
           }
         />
         <Route path="/menu" element={<Menu />} />
-        <Route path="/staff-dashboard" element={<Staff />} />
+        <Route path="/staff-dashboard" element={<StaffPage />} />
         <Route path="/staff" element={<StaffPage />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/manager" element={<Manager />} />
