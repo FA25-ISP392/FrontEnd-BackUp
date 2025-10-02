@@ -16,11 +16,11 @@ import {
   mockTables,
   mockRevenueData,
   mockPopularDishes,
-} from "../constants/managerData";
+} from "../lib/managerData";
 import {
   getDishRequests,
   updateDishRequest,
-} from "../constants/dishRequestsData";
+} from "../lib/dishRequestsData";
 
 export default function Manager() {
   const [managerName] = useState("Manager User");
