@@ -11,7 +11,7 @@ export default function ChefHeader({ chefName = "Chef" }) {
 
   const handleLogout = () => {
     // navigate("/", { replace: true }); // SPA-friendly
-    window.location.href = "/homestaff"; // nếu chưa dùng router
+    window.location.href = "/"; // nếu chưa dùng router
   };
 
   const initial = (chefName?.charAt(0) || "C").toUpperCase();

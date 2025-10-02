@@ -7,7 +7,7 @@ export default function ManagerHeader({ managerName }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const handleLogout = () => {
-    window.location.href = "/homestaff";
+    window.location.href = "/";
   };
   return (
     <>

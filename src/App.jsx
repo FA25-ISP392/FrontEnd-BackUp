@@ -15,7 +15,6 @@ export default function App() {
       <Routes>
         {/* Route mặc định - chuyển hướng đến trang đăng nhập */}
         <Route path="/" element={<Login />} />
-        <Route path="/homestaff" element={<Login />} />
         <Route
           path="/home"
           element={
@@ -27,7 +26,6 @@ export default function App() {
           }
         />
         <Route path="/menu" element={<Menu />} />
-        <Route path="/staff-dashboard" element={<StaffPage />} />
         <Route path="/staff" element={<StaffPage />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/manager" element={<Manager />} />

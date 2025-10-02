@@ -1,82 +1,16 @@
 import { useState } from "react";
 import { ChefHat, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import { useApiLogin } from "../hooks/useApiLogin";
 
 export default function Login() {
+  const { login, isLoading, error } = useApiLogin();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  // Role mapping từ API response sang routes
-  const roleRoutes = {
-    ADMIN: "/admin",
-    MANAGER: "/manager", 
-    STAFF: "/staff",
-    CHEF: "/chef"
-  };
-
-  const handleLogin = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // 1. Reset lỗi cũ và bật loading
-    setError("");
-    setIsLoading(true);
-    
-    // 2. VALIDATION: Kiểm tra input trước khi gọi API
-    if (!username || !password) {
-      setError("Vui lòng nhập đầy đủ thông tin đăng nhập");
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      // 3. GỌI API: Gửi request đến Backend
-      const response = await fetch("https://backend-production-e9d8.up.railway.app/isp392/auth/token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: username,
-          password: password,
-        }),
-      });
-
-      // 4. XỬ LÝ RESPONSE THÀNH CÔNG (status 200-299)
-      if (response.ok) {
-        const userData = await response.json();
-        
-        // 5. CHIA QUYỀN: Kiểm tra role từ Backend
-        if (userData.role && roleRoutes[userData.role]) {
-          // 6. LƯU THÔNG TIN: Lưu user data để dùng sau
-          localStorage.setItem("user", JSON.stringify(userData));
-          localStorage.setItem("token", userData.token || "");
-          
-          // 7. CHUYỂN HƯỚNG: Đi đến trang tương ứng với role
-          window.location.href = roleRoutes[userData.role];
-          
-        } else {
-          setError("Vai trò không hợp lệ hoặc không được phép truy cập");
-        }
-        
-      } else {
-        // 8. XỬ LÝ LỖI TỪ BACKEND (status 400, 401, 403, 500...)
-        try {
-          const errorData = await response.json();
-          setError(errorData.message || "Tên đăng nhập hoặc mật khẩu không đúng");
-        } catch (parseError) {
-          setError("Đã xảy ra lỗi. Vui lòng thử lại.");
-        }
-      }
-      
-    } catch (error) {
-      // 9. XỬ LÝ LỖI NETWORK (server offline, timeout, CORS...)
-      setError("Không thể kết nối đến server. Vui lòng thử lại sau.");
-    } finally {
-      // 10. TẮT LOADING (luôn chạy dù thành công hay thất bại)
-      setIsLoading(false);
-    }
+    login(username, password);
   };
 
   return (
@@ -91,17 +25,17 @@ export default function Login() {
             Đăng nhập vào hệ thống quản lý nhà hàng
           </p>
         </div>
-
+        
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          {/* Restaurant Image */}
+          {/* Restaurant Banner */}
           <div className="relative">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/20 overflow-hidden">
               <div className="relative h-96 rounded-xl overflow-hidden">
-                {/* Placeholder restaurant image with gradient overlay */}
+                {/* Background Gradient */}
                 <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-red-500 to-pink-500"></div>
                 <div className="absolute inset-0 bg-black/20"></div>
                 
-                {/* Restaurant illustration using CSS */}
+                {/* Restaurant Content */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center text-white">
                     <ChefHat className="h-16 w-16 mx-auto mb-4 opacity-90" />
@@ -109,7 +43,6 @@ export default function Login() {
                     <p className="text-lg opacity-90">Hương vị tuyệt vời</p>
                   </div>
                 </div>
-                
               </div>
               
               <div className="mt-6 text-center">
@@ -129,7 +62,7 @@ export default function Login() {
               Đăng nhập
             </h2>
 
-            <form onSubmit={handleLogin} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Error Message */}
               {error && (
                 <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
@@ -138,6 +71,7 @@ export default function Login() {
                 </div>
               )}
 
+              {/* Username Input */}
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
                   Tên đăng nhập
@@ -153,6 +87,7 @@ export default function Login() {
                 />
               </div>
 
+              {/* Password Input */}
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
                   Mật khẩu
@@ -182,6 +117,7 @@ export default function Login() {
                 </div>
               </div>
 
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isLoading}
@@ -197,10 +133,8 @@ export default function Login() {
                 )}
               </button>
             </form>
-
           </div>
         </div>
-
       </div>
     </div>
   );

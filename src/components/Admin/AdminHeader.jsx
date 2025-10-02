@@ -7,7 +7,7 @@ export default function AdminHeader({ adminName }) {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
   const handleLogout = () => {
-    window.location.href = "/homestaff";
+    window.location.href = "/";
   };
 
   return (
