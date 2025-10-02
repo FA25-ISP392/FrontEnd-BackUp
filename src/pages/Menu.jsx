@@ -7,7 +7,7 @@ import PersonalizationModal from "../components/Menu/PersonalizationModal";
 import CartSidebar from "../components/Menu/CartSidebar";
 import PaymentSidebar from "../components/Menu/PaymentSidebar";
 import DishOptionsModal from "../components/Menu/DishOptionsModal";
-import { mockMenuDishes } from "../lib/menuData";
+import { mockMenuDishes } from "../constants/menuData";
 
 export default function Menu() {
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);

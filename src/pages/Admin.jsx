@@ -15,7 +15,7 @@ import {
   mockAdminInvoices,
   mockAdminRevenueData,
   mockAdminDishSalesData,
-} from "../lib/adminData";
+} from "../constants/adminData";
 
 export default function Admin() {
   const [adminName] = useState("Admin User");
