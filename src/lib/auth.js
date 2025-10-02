@@ -18,18 +18,19 @@ export const roleRoutes = {
 
 //Cấu hình và sử dụng JWT&PHIÊN
 export function parseJWT(token) {
-  if (!token) return null;
   try {
-    const base64 = token.split(".")[1]?.replace(/-/g, "+").replace(/_/g, "/");
-    if (!base64) return null;
-    const json = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16).slice(-2)))
-        .join("")
-    );
+    const base64Url = token.split(".")[1];
+    if (!base64Url) return null;
+
+    // base64url -> base64 + padding
+    let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const pad = base64.length % 4;
+    if (pad) base64 += "=".repeat(4 - pad);
+
+    const json = atob(base64);
     return JSON.parse(json);
-  } catch {
+  } catch (e) {
+    console.error("decode JWT error:", e);
     return null;
   }
 }
