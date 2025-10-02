@@ -5,6 +5,9 @@ import StatsCards from "../components/Manager/StatsCards";
 import Charts from "../components/Manager/Charts";
 import TablesManagement from "../components/Manager/TablesManagement";
 import AccountManagement from "../components/Manager/AccountManagement";
+import DishRequestsManagement from "../components/Manager/DishRequestsManagement";
+import ManagerInvoicesToday from "../components/Manager/InvoicesToday";
+import DishesStockVisibility from "../components/Manager/DishesStockVisibility";
 import TableDetailsModal from "../components/Manager/TableDetailsModal";
 import EditAccountModal from "../components/Manager/EditAccountModal";
 import {
@@ -13,7 +16,11 @@ import {
   mockTables,
   mockRevenueData,
   mockPopularDishes,
-} from "../constants/managerData";
+} from "../lib/managerData";
+import {
+  getDishRequests,
+  updateDishRequest,
+} from "../lib/dishRequestsData";
 
 export default function Manager() {
   const [managerName] = useState("Manager User");
@@ -26,6 +33,7 @@ export default function Manager() {
   const [accounts, setAccounts] = useState(mockAccounts);
   const [dishes, setDishes] = useState(mockDishes);
   const [tables, setTables] = useState(mockTables);
+  const [dishRequests, setDishRequests] = useState(getDishRequests());
 
   // Calculate totals
   const totalRevenue = mockRevenueData.reduce(
@@ -60,6 +68,16 @@ export default function Manager() {
     setAccounts((prevAccounts) =>
       prevAccounts.filter((acc) => acc.id !== accountId),
     );
+  };
+
+  const handleApproveRequest = (requestId) => {
+    updateDishRequest(requestId, { status: "approved" });
+    setDishRequests(getDishRequests());
+  };
+
+  const handleRejectRequest = (requestId) => {
+    updateDishRequest(requestId, { status: "rejected" });
+    setDishRequests(getDishRequests());
   };
 
   const renderContent = () => {
@@ -101,25 +119,27 @@ export default function Manager() {
         );
       case "dishes":
         return (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">
-              Quản Lý Món Ăn
-            </h3>
-            <p className="text-neutral-600">
-              Chức năng quản lý món ăn sẽ được phát triển...
-            </p>
+          <div className="space-y-6">
+            <DishRequestsManagement
+              requests={dishRequests}
+              onApproveRequest={handleApproveRequest}
+              onRejectRequest={handleRejectRequest}
+            />
+            <DishesStockVisibility dishes={dishes} />
           </div>
         );
       case "invoices":
         return (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">
-              Quản Lý Hóa Đơn
-            </h3>
-            <p className="text-neutral-600">
-              Chức năng quản lý hóa đơn sẽ được phát triển...
-            </p>
-          </div>
+          <ManagerInvoicesToday
+            invoices={mockRevenueData.map((r, i) => ({
+              id: i + 1,
+              table: (i % 10) + 1,
+              amount: Math.round(r.revenue * 1.1),
+              time: "--:--",
+              date: new Date().toISOString().slice(0, 10),
+              paymentMethod: i % 2 ? "Card" : "Cash",
+            }))}
+          />
         );
       case "settings":
         return (
@@ -154,12 +174,6 @@ export default function Manager() {
             <p className="text-neutral-600 text-lg">
               Quản lý nhà hàng hiệu quả với dashboard thông minh
             </p>
-            <div className="flex items-center gap-2 mt-4">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-green-600 font-medium">
-                Hệ thống hoạt động tốt
-              </span>
-            </div>
           </div>
 
           {/* Dynamic Content */}
@@ -173,7 +187,6 @@ export default function Manager() {
         setSelectedTable={setSelectedTable}
         updateOrderStatus={updateOrderStatus}
       />
-
       <EditAccountModal
         isEditingAccount={isEditingAccount}
         setIsEditingAccount={setIsEditingAccount}

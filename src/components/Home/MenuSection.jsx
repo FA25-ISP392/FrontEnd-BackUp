@@ -23,25 +23,29 @@ export default function MenuSection() {
             id: 1,
             name: "Burrata Parma Ham Margherita",
             price: 28.99,
-            image: "/api/placeholder/400/300",
+            image:
+              "https://cdn.leonardo.ai/users/a95be6ae-a57c-46e8-a8e0-13b01b97c278/generations/50c2995b-a0a7-4aa5-94d2-702001732d92/segments/4:4:1/Lucid_Origin_Create_a_vivid_and_appetizing_image_with_a_resolu_3.jpg",
             description:
-              "Fresh burrata cheese with premium Parma ham and basil",
+              "Phô mai burrata tươi kết hợp với thịt nguội Parma hảo hạng và lá húng quế",
             category: "Pizza",
           },
           {
             id: 2,
             name: "Truffle Carbonara",
             price: 24.99,
-            image: "/api/placeholder/400/300",
-            description: "Creamy pasta with black truffle and pancetta",
+            image:
+              "https://cdn.leonardo.ai/users/a95be6ae-a57c-46e8-a8e0-13b01b97c278/generations/3bf0a0bd-6862-4b78-904d-fe4ac4b5f210/segments/4:4:1/Lucid_Origin_Create_a_1216x416_image_of_a_decadent_Truffle_Car_3.jpg",
+            description:
+              "Mì Ý sốt kem cùng nấm cục đen và thịt xông khói pancetta",
             category: "Pasta",
           },
           {
             id: 3,
             name: "Wagyu Beef Pizza",
             price: 35.99,
-            image: "/api/placeholder/400/300",
-            description: "Premium Wagyu beef with seasonal vegetables",
+            image:
+              "https://cdn.leonardo.ai/users/a95be6ae-a57c-46e8-a8e0-13b01b97c278/generations/cd49535b-bfd6-480b-8799-fbc8e6b3c5bd/segments/3:4:1/Lucid_Origin_Create_a_vibrant_and_appetizing_image_sized_1216x_2.jpg",
+            description: "Thịt bò Wagyu thượng hạng kèm rau củ theo mùa",
             category: "Pizza",
           },
         ]);
@@ -52,8 +56,9 @@ export default function MenuSection() {
             name: "Vegetarian Delight",
             price: 19.99,
             originalPrice: 26.99,
-            image: "/api/placeholder/400/300",
-            description: "Fresh seasonal vegetables with house-made cheese",
+            image:
+              "https://imgcdn.stablediffusionweb.com/2025/9/29/73645da2-02f4-4bd2-b9dc-6de9bb33f994.jpg",
+            description: "Rau củ tươi theo mùa ăn kèm phô mai nhà làm",
             category: "Vegetarian",
           },
           {
@@ -61,8 +66,9 @@ export default function MenuSection() {
             name: "Family Feast",
             price: 45.99,
             originalPrice: 62.99,
-            image: "/api/placeholder/400/300",
-            description: "Perfect sharing platter for 4-6 people",
+            image:
+              "https://imgcdn.stablediffusionweb.com/2025/9/29/73645da2-02f4-4bd2-b9dc-6de9bb33f994.jpg",
+            description: "Khay món ăn lý tưởng để chia sẻ cho 4–6 người",
             category: "Family",
           },
         ]);
@@ -73,15 +79,16 @@ export default function MenuSection() {
             name: "Crystal Tomato Caprese",
             price: 22.99,
             originalPrice: 29.99,
-            image: "/api/placeholder/400/300",
-            description: "Heritage tomatoes with fresh mozzarella",
+            image:
+              "https://cdn.leonardo.ai/users/a95be6ae-a57c-46e8-a8e0-13b01b97c278/generations/f8be2f70-0ffc-4b47-97a5-61ab7b60bb77/segments/1:4:1/Lucid_Origin_Create_a_vibrant_and_appetizing_image_sized_1216x_0.jpg",
+            description:
+              "Cà chua hữu cơ đặc sản ăn kèm phô mai mozzarella tươi",
             category: "Special",
           },
         ]);
 
         setLoading(false);
       } catch (error) {
-        // console.error("Failed to fetch dishes:", error);
         setLoading(false);
       }
     };
@@ -103,7 +110,7 @@ export default function MenuSection() {
 
   const prevSlide = () => {
     setCurrentSlide(
-      (prev) => (prev - 1 + bestSellers.length) % bestSellers.length,
+      (prev) => (prev - 1 + bestSellers.length) % bestSellers.length
     );
   };
 
@@ -341,14 +348,6 @@ export default function MenuSection() {
               ))}
             </div>
           </div>
-        </div>
-
-        {/* View Full Menu Button */}
-        <div className="text-center mt-12">
-          <button className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-2xl hover:shadow-orange-500/25 hover:scale-105 transition-all duration-300 flex items-center gap-3 mx-auto">
-            <span>XEM TOÀN BỘ THỰC ĐƠN</span>
-            <ArrowRight className="h-5 w-5" />
-          </button>
         </div>
       </div>
     </section>

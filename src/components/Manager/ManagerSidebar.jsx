@@ -14,7 +14,6 @@ const sidebarItems = [
   { id: "accounts", label: "Tài Khoản", icon: Users },
   { id: "dishes", label: "Món Ăn", icon: Package },
   { id: "invoices", label: "Hóa Đơn", icon: FileText },
-  { id: "settings", label: "Cài Đặt", icon: Settings },
 ];
 
 export default function ManagerSidebar({ activeSection, setActiveSection }) {
@@ -26,7 +25,7 @@ export default function ManagerSidebar({ activeSection, setActiveSection }) {
             <BarChart3 className="h-5 w-5 text-white" />
           </div>
           <h2 className="text-lg font-bold text-neutral-900">
-            Manager Dashboard
+            Quản Lý Nhà Hàng
           </h2>
         </div>
 
@@ -55,13 +54,6 @@ export default function ManagerSidebar({ activeSection, setActiveSection }) {
             );
           })}
         </nav>
-
-        <div className="mt-8 pt-6 border-t border-neutral-200">
-          <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left text-neutral-700 hover:bg-red-50 hover:text-red-600 transition-all duration-300 group">
-            <LogOut className="h-5 w-5 text-neutral-600 group-hover:text-red-500" />
-            <span className="font-medium">Đăng Xuất</span>
-          </button>
-        </div>
       </div>
     </aside>
   );
