@@ -9,7 +9,7 @@ export default defineConfig({
       '/api': {
         target: 'https://isp392-production.up.railway.app',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/isp392/staff')
+        rewrite: (path) => path.replace(/^\/api/, '/isp392')
       }
     }
   }

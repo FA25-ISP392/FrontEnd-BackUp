@@ -1,27 +1,19 @@
-// ===== CẤU HÌNH API - TẤT CẢ LINKS Ở ĐÂY =====
-
-// 🔧 THAY ĐỔI API CONFIG TẠI ĐÂY
 const API_CONFIG = {
-  // Chế độ development (dùng Vite proxy) hay production (direct call)
-  USE_PROXY: true, // true = dùng proxy (dev), false = direct call (production)
+  USE_PROXY: true,
 
-  // Base URL của server backend (chỉ dùng khi USE_PROXY = false)
   BASE_URL: "https://isp392-production.up.railway.app",
 
-  // Tất cả endpoints
   ENDPOINTS: {},
 };
 
 API_CONFIG.ENDPOINTS = {
-  LOGIN: API_CONFIG.USE_PROXY ? "/api/auth/login" : "/isp392/staff/auth/login",
+  LOGIN: API_CONFIG.USE_PROXY ? "/api/auth/token" : "/isp392/auth/token",
 };
 
-// URL đầy đủ cho login API
 const LOGIN_API_URL = API_CONFIG.USE_PROXY
   ? API_CONFIG.ENDPOINTS.LOGIN
   : API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.LOGIN;
 
-// Helper function để tạo API URL cho bất kỳ endpoint nào
 export const createApiUrl = (endpointKey) => {
   if (API_CONFIG.USE_PROXY) {
     return API_CONFIG.ENDPOINTS[endpointKey];
@@ -30,20 +22,16 @@ export const createApiUrl = (endpointKey) => {
   }
 };
 
-// Function để tạo custom API URL
 export const createCustomApiUrl = (customEndpoint) => {
   if (API_CONFIG.USE_PROXY) {
-    // Với proxy, cần convert endpoint thành /api format
     return customEndpoint.replace(/^\/isp392\/staff/, "/api");
   } else {
     return API_CONFIG.BASE_URL + customEndpoint;
   }
 };
 
-// Export API config để dùng ở file khác
 export { API_CONFIG };
 
-// Role mapping từ API response sang routes
 export const roleRoutes = {
   ADMIN: "/admin",
   MANAGER: "/manager",
@@ -51,7 +39,6 @@ export const roleRoutes = {
   CHEF: "/chef",
 };
 
-// Function để decode JWT token
 export const decodeJWT = (token) => {
   try {
     const base64Url = token.split(".")[1];
@@ -71,7 +58,6 @@ export const decodeJWT = (token) => {
   }
 };
 
-// Function để xác định redirect path dựa trên username
 export const determineRedirectPath = (username) => {
   if (username.toLowerCase().includes("admin")) {
     return "/admin";
@@ -85,21 +71,18 @@ export const determineRedirectPath = (username) => {
   return "/admin"; // Default
 };
 
-// Main API login function
 export const apiLogin = async (username, password) => {
   console.log("🔍 DEBUG - Starting API login for:", username);
 
-  // Gọi API Backend
   console.log("🔍 DEBUG - Calling API:", LOGIN_API_URL);
   const response = await fetch(LOGIN_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
-      // Thêm headers khác nếu cần
     },
-    mode: "cors", // Explicitly set CORS mode
-    credentials: "omit", // Don't send cookies
+    mode: "cors",
+    credentials: "omit",
     body: JSON.stringify({
       username: username,
       password: password,
@@ -107,7 +90,6 @@ export const apiLogin = async (username, password) => {
   });
 
   if (!response.ok) {
-    // Handle HTTP errors
     console.log("🔍 DEBUG - Error Response Status:", response.status);
     let errorMessage = "Tên đăng nhập hoặc mật khẩu không đúng";
 
@@ -123,15 +105,13 @@ export const apiLogin = async (username, password) => {
     throw new Error(errorMessage);
   }
 
-  // Parse successful response
   const userData = await response.json();
   console.log("🔍 DEBUG - Full API Response:", userData);
   console.log("🔍 DEBUG - Response code:", userData.code);
   console.log("🔍 DEBUG - Response result:", userData.result);
 
-  // Validate response structure
   if (
-    userData.code !== 0 ||
+    (userData.code !== 1000 && userData.code !== 0) ||
     !userData.result ||
     !userData.result.authenticated ||
     !userData.result.token
@@ -144,11 +124,9 @@ export const apiLogin = async (username, password) => {
 
   console.log("🔍 DEBUG - Authentication successful, token received");
 
-  // Decode JWT token
   const decodedToken = decodeJWT(userData.result.token);
   console.log("🔍 DEBUG - Decoded JWT:", decodedToken);
 
-  // Return processed data
   return {
     username,
     authenticated: userData.result.authenticated,
@@ -157,14 +135,12 @@ export const apiLogin = async (username, password) => {
   };
 };
 
-// Function để lưu user info vào localStorage
 export const saveUserInfo = (userInfo) => {
   localStorage.setItem("user", JSON.stringify(userInfo));
   localStorage.setItem("token", userInfo.token);
   console.log("🔍 DEBUG - User info saved to localStorage");
 };
 
-// Function để redirect user dựa trên username
 export const redirectUser = (username) => {
   const redirectPath = determineRedirectPath(username);
   console.log("🔍 DEBUG - Redirecting to:", redirectPath);
