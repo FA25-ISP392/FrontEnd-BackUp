@@ -1,6 +1,6 @@
 // ===== VÍ DỤ SỬ DỤNG API FUNCTIONS =====
 
-import { createApiUrl, createCustomApiUrl, API_CONFIG } from './apiLogin.js';
+import { createApiUrl, createCustomApiUrl, API_CONFIG } from './auth.js';
 
 // ===== CÁCH SỬ DỤNG =====
 

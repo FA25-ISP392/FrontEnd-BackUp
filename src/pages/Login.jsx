@@ -1,16 +1,22 @@
 import { useState } from "react";
 import { ChefHat, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
-import { useApiLogin } from "../hooks/useApiLogin";
+import { useLogin } from "../hooks/useLogin";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
-  const { login, isLoading, error } = useApiLogin();
+  const navigate = useNavigate();
+  const { login, isLoading, error } = useLogin();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    login(username, password);
+    login({
+    username,
+    password,
+    onSuccess: (path) => navigate(path, { replace: true }),
+  });
   };
 
   return (
