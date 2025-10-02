@@ -1,21 +1,69 @@
-// API functions for authentication
+// ===== CẤU HÌNH API - TẤT CẢ LINKS Ở ĐÂY =====
+
+// 🔧 THAY ĐỔI API CONFIG TẠI ĐÂY
+const API_CONFIG = {
+  // Chế độ development (dùng Vite proxy) hay production (direct call)
+  USE_PROXY: true, // true = dùng proxy (dev), false = direct call (production)
+
+  // Base URL của server backend (chỉ dùng khi USE_PROXY = false)
+  BASE_URL: "https://isp392-production.up.railway.app",
+
+  // Tất cả endpoints
+  ENDPOINTS: {},
+};
+
+API_CONFIG.ENDPOINTS = {
+  LOGIN: API_CONFIG.USE_PROXY ? "/api/auth/login" : "/isp392/staff/auth/login",
+};
+
+// URL đầy đủ cho login API
+const LOGIN_API_URL = API_CONFIG.USE_PROXY
+  ? API_CONFIG.ENDPOINTS.LOGIN
+  : API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS.LOGIN;
+
+// Helper function để tạo API URL cho bất kỳ endpoint nào
+export const createApiUrl = (endpointKey) => {
+  if (API_CONFIG.USE_PROXY) {
+    return API_CONFIG.ENDPOINTS[endpointKey];
+  } else {
+    return API_CONFIG.BASE_URL + API_CONFIG.ENDPOINTS[endpointKey];
+  }
+};
+
+// Function để tạo custom API URL
+export const createCustomApiUrl = (customEndpoint) => {
+  if (API_CONFIG.USE_PROXY) {
+    // Với proxy, cần convert endpoint thành /api format
+    return customEndpoint.replace(/^\/isp392\/staff/, "/api");
+  } else {
+    return API_CONFIG.BASE_URL + customEndpoint;
+  }
+};
+
+// Export API config để dùng ở file khác
+export { API_CONFIG };
 
 // Role mapping từ API response sang routes
 export const roleRoutes = {
   ADMIN: "/admin",
-  MANAGER: "/manager", 
+  MANAGER: "/manager",
   STAFF: "/staff",
-  CHEF: "/chef"
+  CHEF: "/chef",
 };
 
 // Function để decode JWT token
 export const decodeJWT = (token) => {
   try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map(function (c) {
+          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join("")
+    );
     return JSON.parse(jsonPayload);
   } catch (error) {
     console.error("Error decoding JWT:", error);
@@ -40,13 +88,18 @@ export const determineRedirectPath = (username) => {
 // Main API login function
 export const apiLogin = async (username, password) => {
   console.log("🔍 DEBUG - Starting API login for:", username);
-  
+
   // Gọi API Backend
-  const response = await fetch("/api/auth/token", {
+  console.log("🔍 DEBUG - Calling API:", LOGIN_API_URL);
+  const response = await fetch(LOGIN_API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Accept: "application/json",
+      // Thêm headers khác nếu cần
     },
+    mode: "cors", // Explicitly set CORS mode
+    credentials: "omit", // Don't send cookies
     body: JSON.stringify({
       username: username,
       password: password,
@@ -57,7 +110,7 @@ export const apiLogin = async (username, password) => {
     // Handle HTTP errors
     console.log("🔍 DEBUG - Error Response Status:", response.status);
     let errorMessage = "Tên đăng nhập hoặc mật khẩu không đúng";
-    
+
     try {
       const errorData = await response.json();
       console.log("🔍 DEBUG - Error Response Data:", errorData);
@@ -66,7 +119,7 @@ export const apiLogin = async (username, password) => {
       console.log("🔍 DEBUG - Cannot parse error response:", parseError);
       errorMessage = "Đã xảy ra lỗi. Vui lòng thử lại.";
     }
-    
+
     throw new Error(errorMessage);
   }
 
@@ -77,7 +130,12 @@ export const apiLogin = async (username, password) => {
   console.log("🔍 DEBUG - Response result:", userData.result);
 
   // Validate response structure
-  if (userData.code !== 0 || !userData.result || !userData.result.authenticated || !userData.result.token) {
+  if (
+    userData.code !== 0 ||
+    !userData.result ||
+    !userData.result.authenticated ||
+    !userData.result.token
+  ) {
     console.log("🔍 DEBUG - Authentication failed or no token");
     console.log("🔍 DEBUG - Code:", userData.code);
     console.log("🔍 DEBUG - Result:", userData.result);
@@ -95,7 +153,7 @@ export const apiLogin = async (username, password) => {
     username,
     authenticated: userData.result.authenticated,
     token: userData.result.token,
-    decodedToken
+    decodedToken,
   };
 };
 

@@ -1,8 +1,8 @@
 // Mock API Server để test đăng nhập
 // Chạy: node mock-server.js
 
-const express = require('express');
-const cors = require('cors');
+import express from 'express';
+import cors from 'cors';
 const app = express();
 const PORT = 8080;
 

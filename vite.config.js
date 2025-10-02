@@ -7,9 +7,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://backend-production-e9d8.up.railway.app',
+        target: 'https://isp392-production.up.railway.app',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/isp392')
+        rewrite: (path) => path.replace(/^\/api/, '/isp392/staff')
       }
     }
   }
