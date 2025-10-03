@@ -2,7 +2,7 @@
 
 //Vì Vite chạy localhost nên phải cần thông qua Proxy để chuyển từ localhost sang thành đường dẫn API
 const USE_PROXY = true; //Bật/Tắt Proxy
-const BASE_URl = "https://isp392-production.up.railway.app/isp392/auth/token";//Nơi chứa đường dẫn API mà BE đưa cho
+const BASE_URL = "https://isp392-production.up.railway.app/isp392/auth/token";//Nơi chứa đường dẫn API mà BE đưa cho
 
 const LOGIN_PATH = USE_PROXY ? "/api/auth/token" : "/isp392/auth/token";//Nếu muốn dùng cho việc đăng nhập thì làm như này
 
@@ -17,17 +17,23 @@ export const roleRoutes = {
 // ====================TIỆN ÍCH JWT và PHIÊN====================
 
 //Cấu hình và sử dụng JWT&PHIÊN
+//Giải mã đoạn token để lấy ra phần mong muốn
 export function parseJWT(token) {
   try {
+    // Tách phần payload (ở giữa, index [1])
     const base64Url = token.split(".")[1];
     if (!base64Url) return null;
 
     // base64url -> base64 + padding
+    // Chuyển base64url -> base64 chuẩn + thêm padding
     let base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
     const pad = base64.length % 4;
     if (pad) base64 += "=".repeat(4 - pad);
 
+    // Giải mã base64 thành chuỗi JSON
     const json = atob(base64);
+
+     // Parse JSON thành object JavaScript
     return JSON.parse(json);
   } catch (e) {
     console.error("decode JWT error:", e);
@@ -42,13 +48,14 @@ export function getRoleFromToken(decode){
 
 //Lưu token và user info sau khi đã login thành công, để khi load lại trang không bị văng ra ngoài
 export function saveSession({ token, user }) {
-  localStorage.setItem("token", token);  
-  localStorage.setItem("user", JSON.stringify(user));  
+  localStorage.setItem("token", token);
+  localStorage.setItem("user", JSON.stringify(user));
+  console.log("💾 saveSession: token saved?", !!localStorage.getItem("token"));
 }
 
 //Lấy ra token đã lưu ở trên, nếu nó không có gì === null thì cho ra ngoài
 export function getToken() {
-  return localStorage.getItem("item");
+  return localStorage.getItem("token");
 }
 
 //Lấy ra user info đã lưu trong localStorage 
@@ -59,6 +66,14 @@ export function getCurrentUser() {
   } catch {
     return null;
   }
+}
+
+//Lấy ra role
+export function getCurrentRole() {
+ const token = localStorage.getItem("token");
+ if (!token) return null;
+ const d = parseJWT(token);
+ return d?.role || d?.roles?.[0] || d?.authorities?.[0] || null;
 }
 
 //Xoá hết token lẫn user info === dùng cho khi ấn Logout
@@ -76,20 +91,17 @@ export function resolveRouteByRole(role) {
 
 //Kiểm tra xem người dùng có đang đăng nhập hợp lệ không
 export function isAuthenticated() {
-  const token = getToken();
+  const token = localStorage.getItem("token");
   if (!token) return false;
-
-  const decode = parseJWT(token);
-  if (!decode) return false;
-
-  if (decode.exp && Date.now() / 1000 >= decode.exp) return false;
-
+  const decoded = parseJWT(token);
+  if (!decoded) return false;
+  if (decoded.exp && Date.now()/1000 >= decoded.exp) return false;
   return true;
 }
 
 // ====================CALL API LOGIN====================
 export async function apiLogin({ username, password }) {
-  const url = USE_PROXY ? LOGIN_PATH : BASE_URl + LOGIN_PATH;
+  const url = USE_PROXY ? LOGIN_PATH : BASE_URL + LOGIN_PATH;
 
   //Gọi ra fetch API
   const res = await fetch(url, {

@@ -1,3 +1,4 @@
+import { logout } from "../../lib/auth";
 import { BarChart3, Bell, Settings, X, LogOut } from "lucide-react";
 import { useState } from "react";
 
@@ -5,10 +6,6 @@ export default function AdminHeader({ adminName }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false); // thêm state cho settings
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-
-  const handleLogout = () => {
-    window.location.href = "/";
-  };
 
   return (
     <>
@@ -114,7 +111,7 @@ export default function AdminHeader({ adminName }) {
               </div>
 
               <button
-                onClick={handleLogout}
+                onClick={() => logout("/")}
                 className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition font-medium flex items-center justify-center gap-2"
               >
                 <LogOut className="h-4 w-4" />

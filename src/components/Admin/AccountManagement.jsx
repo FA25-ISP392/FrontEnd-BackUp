@@ -1,11 +1,17 @@
+import { useState } from "react";
 import { Plus, Edit, Trash2, Users } from "lucide-react";
+import AdminAccountForm from "./AdminAccountForm"; // <- form tạo mới
 
 export default function AdminAccountManagement({
   accounts,
   setIsEditingAccount,
   setEditingItem,
   deleteAccount,
+  setAccounts, // <- NHỚ truyền từ parent xuống
 }) {
+  // State mở/đóng modal TẠO MỚI (không ảnh hưởng luồng Edit cũ)
+  const [openCreate, setOpenCreate] = useState(false);
+
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
       <div className="flex items-center justify-between mb-6">
@@ -22,8 +28,10 @@ export default function AdminAccountManagement({
             </p>
           </div>
         </div>
+
+        {/* Thêm Tài Khoản -> mở modal tạo mới (KHÔNG đụng setIsEditingAccount cũ) */}
         <button
-          onClick={() => setIsEditingAccount(true)}
+          onClick={() => setOpenCreate(true)}
           className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 font-medium flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
@@ -41,6 +49,7 @@ export default function AdminAccountManagement({
             <div>Hành động</div>
           </div>
         </div>
+
         <div className="divide-y divide-neutral-200">
           {accounts.map((account) => (
             <div
@@ -48,9 +57,7 @@ export default function AdminAccountManagement({
               className="px-6 py-4 hover:bg-neutral-50 transition-colors"
             >
               <div className="grid grid-cols-5 gap-4 items-center">
-                <div className="font-medium text-neutral-900">
-                  {account.name}
-                </div>
+                <div className="font-medium text-neutral-900">{account.name}</div>
                 <div className="text-neutral-600">{account.email}</div>
                 <div className="text-neutral-600">{account.role}</div>
                 <div>
@@ -61,21 +68,22 @@ export default function AdminAccountManagement({
                         : "bg-red-100 text-red-800 border-red-200"
                     }`}
                   >
-                    {account.status === "active"
-                      ? "Hoạt động"
-                      : "Không hoạt động"}
+                    {account.status === "active" ? "Hoạt động" : "Không hoạt động"}
                   </span>
                 </div>
+
+                {/* Hành động: Edit (giữ nguyên luồng cũ) + Delete */}
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
-                      setEditingItem(account);
-                      setIsEditingAccount(true);
+                      setEditingItem(account);      // chọn item để edit
+                      setIsEditingAccount(true);    // mở modal edit của bạn (nếu có)
                     }}
                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
                   >
                     <Edit className="h-4 w-4" />
                   </button>
+
                   <button
                     onClick={() => deleteAccount(account.id)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
@@ -88,6 +96,28 @@ export default function AdminAccountManagement({
           ))}
         </div>
       </div>
+
+      {/* Modal tạo mới (Add) */}
+      {openCreate && (
+        <AdminAccountForm
+          open={openCreate}
+          onClose={() => setOpenCreate(false)}
+          onCreated={(newStaff) => {
+            // Map field trả về từ BE -> cấu trúc đang render
+            // Nếu BE trả key khác, đổi ở đây cho khớp
+            setAccounts?.((prev) => [
+              {
+                id: newStaff.staffId ?? newStaff.id ?? Date.now(),
+                name: newStaff.staffName ?? newStaff.name,
+                email: newStaff.staffEmail ?? newStaff.email,
+                role: newStaff.role,
+                status: "active",
+              },
+              ...(prev || []),
+            ]);
+          }}
+        />
+      )}
     </div>
   );
 }

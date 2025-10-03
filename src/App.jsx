@@ -7,6 +7,7 @@ import StaffPage from "./pages/StaffPage.jsx";
 import Admin from "./pages/Admin.jsx";
 import Manager from "./pages/Manager.jsx";
 import Chef from "./pages/Chef.jsx";
+import ProtectedRoute from "./components/Handle/ProtectedRoute.jsx";
 import "./App.css";
 
 export default function App() {
@@ -26,10 +27,43 @@ export default function App() {
           }
         />
         <Route path="/menu" element={<Menu />} />
-        <Route path="/staff" element={<StaffPage />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/manager" element={<Manager />} />
-        <Route path="/chef" element={<Chef />} />
+        
+        {/* Staff - chỉ STAFF vào */}
+        <Route
+          path="/staff"
+          element={
+          <ProtectedRoute allowedRoles={["STAFF"]}>
+            <StaffPage />
+          </ProtectedRoute>
+        }
+        />
+
+        <Route
+          path="/admin"
+          element={
+          <ProtectedRoute allowedRoles={["ADMIN"]}>
+            <Admin />
+          </ProtectedRoute>
+        }
+        />
+
+        <Route
+          path="/chef"
+          element={
+          <ProtectedRoute allowedRoles={["CHEF"]}>
+            <Chef />
+          </ProtectedRoute>
+        }
+        />
+
+        <Route
+          path="/manager"
+          element={
+          <ProtectedRoute allowedRoles={["MANAGER"]}>
+            <Manager />
+          </ProtectedRoute>
+        }
+        />
       </Routes>
     </div>
   );

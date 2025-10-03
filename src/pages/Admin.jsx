@@ -116,6 +116,7 @@ export default function Admin() {
         return (
           <AdminAccountManagement
             accounts={accounts}
+            setAccounts={setAccounts}
             setIsEditingAccount={setIsEditingAccount}
             setEditingItem={setEditingItem}
             deleteAccount={deleteAccount}
