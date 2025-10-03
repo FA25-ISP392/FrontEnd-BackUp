@@ -29,7 +29,7 @@ function makeUrl(path) {
 }
 
 // ==================== STAFF API ====================
-// POST /staff — tạo nhân viên mới
+//POST/staff — tạo nhân viên mới
 export async function createStaff(payload) {
   const res = await fetch(makeUrl(STAFF_PATH), {
     method: "POST",
@@ -39,33 +39,33 @@ export async function createStaff(payload) {
   return handle(res);
 }
 
-// // GET /staff — danh sách
-// export async function listStaff() {
-//   const res = await fetch(makeUrl(STAFF_PATH), { headers: authHeaders() });
-//   return handle(res);
-// }
+//GET/staff — danh sách
+export async function listStaff() {
+  const res = await fetch(makeUrl(STAFF_PATH), { headers: authHeaders() });
+  return handle(res);
+}
 
-// // GET /staff/{id} — chi tiết
-// export async function getStaff(id) {
-//   const res = await fetch(makeUrl(`${STAFF_PATH}/${id}`), { headers: authHeaders() });
-//   return handle(res);
-// }
+//GET/staff/{id} — chi tiết
+export async function getStaff(id) {
+  const res = await fetch(makeUrl(`${STAFF_PATH}/${id}`), { headers: authHeaders() });
+  return handle(res);
+}
 
-// // PUT /staff/{id} — cập nhật
-// export async function updateStaff(id, payload) {
-//   const res = await fetch(makeUrl(`${STAFF_PATH}/${id}`), {
-//     method: "PUT",
-//     headers: authHeaders(),
-//     body: JSON.stringify(payload),
-//   });
-//   return handle(res);
-// }
+//PUT/staff/{id} — cập nhật
+export async function updateStaff(id, payload) {
+  const res = await fetch(makeUrl(`${STAFF_PATH}/${id}`), {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handle(res);
+}
 
-// // DELETE /staff/{id} — xoá
-// export async function deleteStaff(id) {
-//   const res = await fetch(makeUrl(`${STAFF_PATH}/${id}`), {
-//     method: "DELETE",
-//     headers: authHeaders(),
-//   });
-//   return handle(res);
-// }
+//DELETE/staff/{id} — xoá
+export async function deleteStaff(id) {
+  const res = await fetch(makeUrl(`${STAFF_PATH}/${id}`), {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  return handle(res);
+}
