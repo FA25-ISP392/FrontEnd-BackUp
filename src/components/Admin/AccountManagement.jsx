@@ -45,12 +45,12 @@ export default function AdminAccountManagement({
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden">
         <div className="bg-gradient-to-r from-neutral-50 to-neutral-100 px-6 py-4 border-b border-neutral-200">
           <div className="grid grid-cols-6 gap-4 text-sm font-semibold text-neutral-700">
-            <div>Tên</div>
-            <div>Số Điện Thoại</div>
-            <div>Email</div>
-            <div>Vai Trò</div>
-            <div>Trạng Thái</div>
-            <div>Hành động</div>
+            <div className="truncate">Tên</div>
+            <div className="truncate">Số Điện Thoại</div>
+            <div className="truncate">Email</div>
+            <div className="truncate">Vai Trò</div>
+            <div className="truncate">Trạng Thái</div>
+            <div className="truncate">Hành động</div>
           </div>
         </div>
 
@@ -66,12 +66,18 @@ export default function AdminAccountManagement({
                 className="px-6 py-4 hover:bg-neutral-50 transition-colors"
               >
                 <div className="grid grid-cols-6 gap-4 items-center">
-                  <div className="font-medium text-neutral-900">
+                  <div className="font-medium text-neutral-900 truncate" title={account.name}>
                     {account.name}
                   </div>
-                  <div className="text-neutral-600">{account.phone || "-"}</div>
-                  <div className="text-neutral-600">{account.email}</div>
-                  <div className="text-neutral-600">{account.role}</div>
+                  <div className="text-neutral-600 truncate" title={account.phone || "-"}>
+                    {account.phone || "-"}
+                  </div>
+                  <div className="text-neutral-600 truncate" title={account.email}>
+                    {account.email}
+                  </div>
+                  <div className="text-neutral-600 truncate" title={account.role}>
+                    {account.role}
+                  </div>
                   <div>
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium border ${
@@ -87,7 +93,7 @@ export default function AdminAccountManagement({
                   </div>
 
                   {/* Hành động: Edit (giữ nguyên luồng cũ) + Delete */}
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
                     <button
                       onClick={() => {
                         setEditingItem(account); // chọn item để edit

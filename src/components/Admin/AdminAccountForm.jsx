@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { X, Save } from "lucide-react";
 import { createStaff } from "../../lib/apiStaff";
 
 export default function AdminAccountForm({ open, onClose, onCreated }) {
@@ -32,58 +33,116 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-xl shadow-2xl border">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="text-lg font-semibold">Thêm tài khoản nhân sự</h3>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-neutral-100">✕</button>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full">
+        <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-6 text-white rounded-t-2xl">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold">Thêm Tài Khoản Nhân Sự</h2>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-white/20 rounded-lg transition"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
-        <form onSubmit={submit} className="p-4 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={submit} className="p-6 space-y-6">
+          <div className="grid grid-cols-2 gap-6">
             <div>
-              <label className="text-sm font-medium">Tên Đăng Nhập</label>
-              <input className="w-full mt-1 px-3 py-2 border rounded-lg"
-                     value={form.username} onChange={e=>setF("username", e.target.value)} />
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Tên Đăng Nhập
+              </label>
+              <input 
+                className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                value={form.username} 
+                onChange={e=>setF("username", e.target.value)} 
+                required
+              />
             </div>
             <div>
-              <label className="text-sm font-medium">Mật Khẩu</label>
-              <input type="password" className="w-full mt-1 px-3 py-2 border rounded-lg"
-                     value={form.password} onChange={e=>setF("password", e.target.value)} />
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Mật Khẩu
+              </label>
+              <input 
+                type="password" 
+                className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                value={form.password} 
+                onChange={e=>setF("password", e.target.value)} 
+                required
+              />
             </div>
             <div>
-              <label className="text-sm font-medium">Họ Tên</label>
-              <input className="w-full mt-1 px-3 py-2 border rounded-lg"
-                     value={form.staffName} onChange={e=>setF("staffName", e.target.value)} />
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Họ Tên
+              </label>
+              <input 
+                className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                value={form.staffName} 
+                onChange={e=>setF("staffName", e.target.value)} 
+                required
+              />
             </div>
             <div>
-              <label className="text-sm font-medium">Số Điện Thoại</label>
-              <input className="w-full mt-1 px-3 py-2 border rounded-lg"
-                     value={form.staffPhone} onChange={e=>setF("staffPhone", e.target.value)} />
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Số Điện Thoại
+              </label>
+              <input 
+                className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                value={form.staffPhone} 
+                onChange={e=>setF("staffPhone", e.target.value)} 
+              />
             </div>
             <div className="col-span-2">
-              <label className="text-sm font-medium">Email</label>
-              <input type="email" className="w-full mt-1 px-3 py-2 border rounded-lg"
-                     value={form.staffEmail} onChange={e=>setF("staffEmail", e.target.value)} />
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Email
+              </label>
+              <input 
+                type="email" 
+                className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                value={form.staffEmail} 
+                onChange={e=>setF("staffEmail", e.target.value)} 
+                required
+              />
             </div>
             <div className="col-span-2">
-              <label className="text-sm font-medium">Vai Trò</label>
-              <select className="w-full mt-1 px-3 py-2 border rounded-lg"
-                      value={form.role} onChange={e=>setF("role", e.target.value)}>
-                <option>ADMIN</option>
-                <option>MANAGER</option>
-                <option>STAFF</option>
-                <option>CHEF</option>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Vai Trò
+              </label>
+              <select 
+                className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                value={form.role} 
+                onChange={e=>setF("role", e.target.value)}
+                required
+              >
+                <option value="ADMIN">ADMIN</option>
+                <option value="MANAGER">MANAGER</option>
+                <option value="STAFF">STAFF</option>
+                <option value="CHEF">CHEF</option>
               </select>
             </div>
           </div>
 
-          {err && <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">{err}</div>}
+          {err && (
+            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+              {err}
+            </div>
+          )}
 
-          <div className="flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg border">Hủy</button>
-            <button disabled={saving}
-              className="px-4 py-2 rounded-lg text-white bg-gradient-to-r from-blue-500 to-purple-500 disabled:opacity-50">
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 border border-neutral-300 text-neutral-700 rounded-xl hover:bg-neutral-50 transition-all font-medium"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-3 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <Save className="h-4 w-4" />
               {saving ? "Đang tạo..." : "Tạo nhân sự"}
             </button>
           </div>
