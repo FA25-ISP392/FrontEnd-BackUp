@@ -1,16 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ChefHeader from "../components/Chef/ChefHeader";
 import ChefSidebar from "../components/Chef/ChefSidebar";
 import OrdersManagement from "../components/Chef/OrdersManagement";
 import DishQuantityManagement from "../components/Chef/DishQuantityManagement";
 import { mockChefOrders, mockChefDishes } from "../lib/chefData";
+import { getCurrentUser } from "../lib/auth";
 
 export default function Chef() {
-  const [chefName] = useState("Chef User");
+  const [chefName, setChefName] = useState("");
   const [activeSection, setActiveSection] = useState("overview");
   const [orders, setOrders] = useState(mockChefOrders);
   const [dishes, setDishes] = useState(mockChefDishes);
   const [dishRequests, setDishRequests] = useState([]); // Requests sent to Manager
+
+  //lấy tên để welcome
+  useEffect(() => {
+    const u = getCurrentUser();
+    const name =
+      u?.staff_name ||
+      u?.staffName ||
+      u?.fullName ||
+      u?.name ||
+      u?.displayName ||
+      u?.username;
+    setChefName(name || "Chef");
+  }, []);
 
   // Calculate stats
   const pendingOrders = orders.filter(

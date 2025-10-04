@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ManagerHeader from "../components/Manager/ManagerHeader";
 import ManagerSidebar from "../components/Manager/ManagerSidebar";
 import StatsCards from "../components/Manager/StatsCards";
@@ -17,13 +17,12 @@ import {
   mockRevenueData,
   mockPopularDishes,
 } from "../lib/managerData";
-import {
-  getDishRequests,
-  updateDishRequest,
-} from "../lib/dishRequestsData";
+import { getDishRequests, updateDishRequest } from "../lib/dishRequestsData";
+
+import { getCurrentUser } from "../lib/auth";
 
 export default function Manager() {
-  const [managerName] = useState("Manager User");
+  const [managerName, setManagerName] = useState("");
   const [activeSection, setActiveSection] = useState("overview");
   const [revenuePeriod, setRevenuePeriod] = useState("day");
   const [isEditingAccount, setIsEditingAccount] = useState(false);
@@ -35,10 +34,23 @@ export default function Manager() {
   const [tables, setTables] = useState(mockTables);
   const [dishRequests, setDishRequests] = useState(getDishRequests());
 
+  //lấy tên để welcome
+  useEffect(() => {
+    const u = getCurrentUser();
+    const name =
+      u?.staff_name ||
+      u?.staffName ||
+      u?.fullName ||
+      u?.name ||
+      u?.displayName ||
+      u?.username;
+    setManagerName(name || "Manager");
+  }, []);
+
   // Calculate totals
   const totalRevenue = mockRevenueData.reduce(
     (sum, item) => sum + item.revenue,
-    0,
+    0
   );
   const totalAccounts = accounts.length;
   const totalDishes = dishes.length;
@@ -47,8 +59,8 @@ export default function Manager() {
   const updateOrderStatus = (tableId, updatedOrder) => {
     setTables((prevTables) =>
       prevTables.map((table) =>
-        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table,
-      ),
+        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table
+      )
     );
   };
 
@@ -56,8 +68,8 @@ export default function Manager() {
     if (accountData.id && accounts.find((acc) => acc.id === accountData.id)) {
       setAccounts((prevAccounts) =>
         prevAccounts.map((acc) =>
-          acc.id === accountData.id ? accountData : acc,
-        ),
+          acc.id === accountData.id ? accountData : acc
+        )
       );
     } else {
       setAccounts((prevAccounts) => [...prevAccounts, accountData]);
@@ -66,7 +78,7 @@ export default function Manager() {
 
   const deleteAccount = (accountId) => {
     setAccounts((prevAccounts) =>
-      prevAccounts.filter((acc) => acc.id !== accountId),
+      prevAccounts.filter((acc) => acc.id !== accountId)
     );
   };
 

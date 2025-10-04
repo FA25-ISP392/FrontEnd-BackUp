@@ -18,9 +18,10 @@ import {
 } from "../lib/adminData";
 
 import { listStaff, updateStaff, deleteStaff } from "../lib/apiStaff";
+import { getCurrentUser } from "../lib/auth";
 
 export default function Admin() {
-  const [adminName] = useState("Admin User");
+  const [adminName, setAdminName] = useState("");
   const [activeSection, setActiveSection] = useState("overview");
   const [revenuePeriod, setRevenuePeriod] = useState("day");
   const [isEditingAccount, setIsEditingAccount] = useState(false);
@@ -41,6 +42,19 @@ export default function Admin() {
     compactSidebar: false,
     autoSave: true,
   });
+
+  //lấy tên để welcome
+  useEffect(() => {
+    const u = getCurrentUser();
+    const name =
+      u?.staff_name ||
+      u?.staffName ||
+      u?.fullName ||
+      u?.name ||
+      u?.displayName ||
+      u?.username;
+    setAdminName(name || "Admin");
+  }, []);
 
   useEffect(() => {
     const raw = localStorage.getItem("admin_settings");
