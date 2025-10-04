@@ -10,7 +10,6 @@ import AdminDishesManagement from "../components/Admin/DishesManagement";
 import AdminEditDishModal from "../components/Admin/EditDishModal";
 
 import {
-  mockAdminAccounts,
   mockAdminDishes,
   mockAdminInvoices,
   mockAdminRevenueData,
@@ -43,6 +42,7 @@ export default function Admin() {
     autoSave: true,
   });
 
+  //========================= CRUD USER STAFF =========================//
   //lấy tên để welcome
   useEffect(() => {
     const u = getCurrentUser();
@@ -106,15 +106,6 @@ export default function Admin() {
       cancelled = true;
     };
   }, [activeSection]);
-
-  // Calculate totals
-  const totalRevenue = mockAdminRevenueData.reduce(
-    (sum, item) => sum + item.revenue,
-    0
-  );
-  const totalAccounts = accounts.length;
-  const totalDishes = dishes.length;
-  const totalInvoices = invoices.length;
 
   //Cập nhật nhân sự
   const saveAccount = async (accountData) => {
@@ -180,6 +171,16 @@ export default function Admin() {
       });
     }
   };
+  //====================================================================//
+
+  // Calculate totals
+  const totalRevenue = mockAdminRevenueData.reduce(
+    (sum, item) => sum + item.revenue,
+    0
+  );
+  const totalAccounts = accounts.length;
+  const totalDishes = dishes.length;
+  const totalInvoices = invoices.length;
 
   const saveDish = (dishData) => {
     if (dishData.id && dishes.find((dish) => dish.id === dishData.id)) {

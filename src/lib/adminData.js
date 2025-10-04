@@ -1,39 +1,4 @@
 // Mock data for Admin page
-export const mockAdminAccounts = [
-  {
-    id: 1,
-    username: "admin",
-    role: "admin",
-    email: "admin@restaurant.com",
-    status: "active",
-    created: "2024-01-01",
-  },
-  {
-    id: 2,
-    username: "manager1",
-    role: "manager",
-    email: "manager1@restaurant.com",
-    status: "active",
-    created: "2024-01-02",
-  },
-  {
-    id: 3,
-    username: "staff1",
-    role: "staff",
-    email: "staff1@restaurant.com",
-    status: "active",
-    created: "2024-01-03",
-  },
-  {
-    id: 4,
-    username: "chef1",
-    role: "chef",
-    email: "chef1@restaurant.com",
-    status: "active",
-    created: "2024-01-04",
-  },
-];
-
 export const mockAdminDishes = [
   {
     id: 1,

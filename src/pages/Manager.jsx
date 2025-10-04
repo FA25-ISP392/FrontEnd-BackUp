@@ -19,6 +19,7 @@ import {
 } from "../lib/managerData";
 import { getDishRequests, updateDishRequest } from "../lib/dishRequestsData";
 
+import { updateStaff, deleteStaff, listNonAdmin } from "../lib/apiStaff";
 import { getCurrentUser } from "../lib/auth";
 
 export default function Manager() {
@@ -29,11 +30,12 @@ export default function Manager() {
   const [isEditingDish, setIsEditingDish] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [selectedTable, setSelectedTable] = useState(null);
-  const [accounts, setAccounts] = useState(mockAccounts);
   const [dishes, setDishes] = useState(mockDishes);
   const [tables, setTables] = useState(mockTables);
   const [dishRequests, setDishRequests] = useState(getDishRequests());
+  const [deletingIds, setDeletingIds] = useState(new Set());
 
+  //========================= CRUD USER STAFF ======================//
   //lấy tên để welcome
   useEffect(() => {
     const u = getCurrentUser();
@@ -46,6 +48,110 @@ export default function Manager() {
       u?.username;
     setManagerName(name || "Manager");
   }, []);
+
+  //Call API data real
+  const [accounts, setAccounts] = useState([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [accountsError, setAccountsError] = useState("");
+
+  //Map ra list nhân viên nhà hàng
+  useEffect(() => {
+    if (activeSection !== "accounts") return;
+    let cancelled = false;
+
+    (async () => {
+      setLoadingAccounts(true);
+      setAccountsError("");
+      try {
+        const res = await listNonAdmin();
+        const arr = Array.isArray(res) ? res : res?.item || [];
+        const mapped = arr.map((s) => ({
+          id: s.staffId ?? s.id, //Dùng ID để cập nhật dữ liệu
+          name: s.staffName ?? s.username ?? "",
+          email: s.staffEmail ?? s.email ?? "",
+          phone: s.staffPhone ?? s.phone ?? "",
+          role: (s.role ?? "").toString().toLowerCase(),
+          status: s.status ?? "active",
+        }));
+        if (!cancelled) setAccounts(mapped);
+      } catch (e) {
+        if (!cancelled)
+          setAccountsError(e.message || "Không tải được danh sách nhân viên.");
+      } finally {
+        if (!cancelled) setLoadingAccounts(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSection]);
+
+  //Cập nhật nhân sự
+  const saveAccount = async (accountData) => {
+    // console.log("[EDIT FORM] ccountData:", accountData);
+
+    if (!accountData?.id) return;
+    //Gửi lại chuẩn API Payload cho BackEnd
+    const payload = {
+      staffName: accountData.name,
+      staffEmail: accountData.email,
+      // thêm password nếu có
+      ...(accountData.password ? { password: accountData.password } : {}),
+      staffPhone: accountData.phone,
+      role: (accountData.role || "").toUpperCase(),
+    };
+
+    console.log("[SAVE] payload:", payload);
+
+    try {
+      const updatedStaff = await updateStaff(accountData.id, payload);
+      //Cập nhật lại list theo call fallback gửi về
+
+      // console.log("[SAVE] response:", updatedStaff);
+
+      setAccounts((prev) =>
+        prev.map((acc) =>
+          acc.id === accountData.id
+            ? {
+                ...acc,
+                name: updatedStaff?.staffName ?? payload.staffName,
+                email: updatedStaff?.staffEmail ?? payload.staffEmail,
+                phone: updatedStaff?.staffPhone ?? payload.staffPhone,
+                role: (updatedStaff?.role ?? payload.role).toLowerCase(),
+              }
+            : acc
+        )
+      );
+    } catch (e) {
+      alert(e.message || "Cập nhật thất bại.");
+    }
+  };
+
+  const deleteAccount = async (accountId) => {
+    if (!accountId) return; // xác nhận đã làm ở UI con rồi
+
+    // Optimistic UI: xoá tạm trên UI, nếu lỗi thì rollback
+    const prev = accounts;
+    setDeletingIds((s) => new Set(s).add(accountId));
+    setAccounts((curr) => curr.filter((acc) => acc.id !== accountId));
+
+    try {
+      await deleteStaff(accountId); // gọi API DELETE /staff/{id}
+      // nếu BE trả 204 thì handle() đã trả null — không cần làm gì thêm
+    } catch (e) {
+      // rollback nếu thất bại
+      setAccounts(prev);
+      alert(e.message || "Xoá thất bại.");
+    } finally {
+      setDeletingIds((s) => {
+        const next = new Set(s);
+        next.delete(accountId);
+        return next;
+      });
+    }
+  };
+  //============================================================================//
 
   // Calculate totals
   const totalRevenue = mockRevenueData.reduce(
@@ -61,24 +167,6 @@ export default function Manager() {
       prevTables.map((table) =>
         table.id === tableId ? { ...table, currentOrder: updatedOrder } : table
       )
-    );
-  };
-
-  const saveAccount = (accountData) => {
-    if (accountData.id && accounts.find((acc) => acc.id === accountData.id)) {
-      setAccounts((prevAccounts) =>
-        prevAccounts.map((acc) =>
-          acc.id === accountData.id ? accountData : acc
-        )
-      );
-    } else {
-      setAccounts((prevAccounts) => [...prevAccounts, accountData]);
-    }
-  };
-
-  const deleteAccount = (accountId) => {
-    setAccounts((prevAccounts) =>
-      prevAccounts.filter((acc) => acc.id !== accountId)
     );
   };
 
@@ -124,9 +212,11 @@ export default function Manager() {
         return (
           <AccountManagement
             accounts={accounts}
+            setAccounts={setAccounts}
             setIsEditingAccount={setIsEditingAccount}
             setEditingItem={setEditingItem}
             deleteAccount={deleteAccount}
+            loading={loadingAccounts}
           />
         );
       case "dishes":

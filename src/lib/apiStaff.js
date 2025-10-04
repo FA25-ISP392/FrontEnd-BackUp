@@ -16,6 +16,12 @@ export async function listStaff(params = {}) {
   return handleResponse(res);
 }
 
+export async function listNonAdmin(params = {}) {
+  const allStaff = await listStaff(params);
+  if (!Array.isArray(allStaff)) return [];
+  return allStaff.filter((staff) => staff.role?.toUpperCase() !== "ADMIN");
+}
+
 export async function getStaff(id) {
   const res = await fetch(apiPath(`/staff/${id}`), { headers: authHeaders() });
   return handleResponse(res);
