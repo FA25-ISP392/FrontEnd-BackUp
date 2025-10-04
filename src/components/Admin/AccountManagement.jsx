@@ -66,16 +66,28 @@ export default function AdminAccountManagement({
                 className="px-6 py-4 hover:bg-neutral-50 transition-colors"
               >
                 <div className="grid grid-cols-6 gap-4 items-center">
-                  <div className="font-medium text-neutral-900 truncate" title={account.name}>
+                  <div
+                    className="font-medium text-neutral-900 truncate"
+                    title={account.name}
+                  >
                     {account.name}
                   </div>
-                  <div className="text-neutral-600 truncate" title={account.phone || "-"}>
+                  <div
+                    className="text-neutral-600 truncate"
+                    title={account.phone || "-"}
+                  >
                     {account.phone || "-"}
                   </div>
-                  <div className="text-neutral-600 truncate" title={account.email}>
+                  <div
+                    className="text-neutral-600 truncate"
+                    title={account.email}
+                  >
                     {account.email}
                   </div>
-                  <div className="text-neutral-600 truncate" title={account.role}>
+                  <div
+                    className="text-neutral-600 truncate"
+                    title={account.role}
+                  >
                     {account.role}
                   </div>
                   <div>
