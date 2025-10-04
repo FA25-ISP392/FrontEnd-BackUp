@@ -4,32 +4,42 @@ import { createStaff } from "../../lib/apiStaff";
 
 export default function AdminAccountForm({ open, onClose, onCreated }) {
   const [form, setForm] = useState({
-    username: "", password: "",
-    staffName: "", staffPhone: "", staffEmail: "",
+    username: "",
+    password: "",
+    staffName: "",
+    staffPhone: "",
+    staffEmail: "",
     role: "STAFF",
   });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
   if (!open) return null;
-  //Cập nhật từng field trong form 
-  const setF = (k,v)=>setForm(s=>({...s,[k]:v}));
+  //Cập nhật từng field trong form
+  const setF = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
   const submit = async (e) => {
     e.preventDefault();
     setErr("");
-    if (!form.username || !form.password || !form.staffName || !form.staffEmail) {
+    if (
+      !form.username ||
+      !form.password ||
+      !form.staffName ||
+      !form.staffEmail
+    ) {
       setErr("Vui lòng nhập đủ Username, Password, Họ tên, Email.");
       return;
     }
     try {
       setSaving(true);
       const newStaff = await createStaff(form); //Call API tạo nhân viên
-      onCreated?.(newStaff);   //Call fallback để component cha cập nhật list
+      onCreated?.(newStaff); //Call fallback để component cha cập nhật list
       onClose?.();
     } catch (e) {
       setErr(e.message || "Có lỗi xảy ra.");
-    } finally { setSaving(false); }
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -53,10 +63,10 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
               <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Tên Đăng Nhập
               </label>
-              <input 
+              <input
                 className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                value={form.username} 
-                onChange={e=>setF("username", e.target.value)} 
+                value={form.username}
+                onChange={(e) => setF("username", e.target.value)}
                 required
               />
             </div>
@@ -64,11 +74,11 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
               <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Mật Khẩu
               </label>
-              <input 
-                type="password" 
+              <input
+                type="password"
                 className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                value={form.password} 
-                onChange={e=>setF("password", e.target.value)} 
+                value={form.password}
+                onChange={(e) => setF("password", e.target.value)}
                 required
               />
             </div>
@@ -76,10 +86,10 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
               <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Họ Tên
               </label>
-              <input 
+              <input
                 className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                value={form.staffName} 
-                onChange={e=>setF("staffName", e.target.value)} 
+                value={form.staffName}
+                onChange={(e) => setF("staffName", e.target.value)}
                 required
               />
             </div>
@@ -87,21 +97,21 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
               <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Số Điện Thoại
               </label>
-              <input 
+              <input
                 className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                value={form.staffPhone} 
-                onChange={e=>setF("staffPhone", e.target.value)} 
+                value={form.staffPhone}
+                onChange={(e) => setF("staffPhone", e.target.value)}
               />
             </div>
             <div className="col-span-2">
               <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Email
               </label>
-              <input 
-                type="email" 
+              <input
+                type="email"
                 className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                value={form.staffEmail} 
-                onChange={e=>setF("staffEmail", e.target.value)} 
+                value={form.staffEmail}
+                onChange={(e) => setF("staffEmail", e.target.value)}
                 required
               />
             </div>
@@ -109,10 +119,10 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
               <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Vai Trò
               </label>
-              <select 
+              <select
                 className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                value={form.role} 
-                onChange={e=>setF("role", e.target.value)}
+                value={form.role}
+                onChange={(e) => setF("role", e.target.value)}
                 required
               >
                 <option value="ADMIN">ADMIN</option>

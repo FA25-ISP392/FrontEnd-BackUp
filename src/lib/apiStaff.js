@@ -1,9 +1,9 @@
 // BẬT/TẮT proxy Vite. Nếu === true thì phải có proxy trong vite.config.js
 const USE_PROXY = true;
-const BASE_URL = "https://isp392-production.up.railway.app";
+const BASE_URL = "https://backend2-production-00a1.up.railway.app";
 const STAFF_PATH = USE_PROXY ? "/api/staff" : "/isp392/staff";
 
-import { getToken } from "../lib/auth"; 
+import { getToken } from "../lib/auth";
 
 function authHeaders() {
   return {
@@ -16,7 +16,7 @@ function authHeaders() {
 async function handle(res) {
   if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
-  //Nếu ra code 0 hoặc 1000 là thành công 
+  //Nếu ra code 0 hoặc 1000 là thành công
   if (!res.ok || !(data?.code === 0 || data?.code === 1000)) {
     throw new Error(data?.message || "Yêu cầu thất bại.");
   }
@@ -47,7 +47,9 @@ export async function listStaff() {
 
 //GET/staff/{id} — chi tiết
 export async function getStaff(id) {
-  const res = await fetch(makeUrl(`${STAFF_PATH}/${id}`), { headers: authHeaders() });
+  const res = await fetch(makeUrl(`${STAFF_PATH}/${id}`), {
+    headers: authHeaders(),
+  });
   return handle(res);
 }
 

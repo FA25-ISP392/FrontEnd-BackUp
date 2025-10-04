@@ -2,7 +2,8 @@
 
 //Vì Vite chạy localhost nên phải cần thông qua Proxy để chuyển từ localhost sang thành đường dẫn API
 const USE_PROXY = true; //Bật/Tắt Proxy
-const BASE_URL = "https://isp392-production.up.railway.app/isp392/auth/token"; //Nơi chứa đường dẫn API mà BE đưa cho
+const BASE_URL =
+  "https://backend2-production-00a1.up.railway.app/isp392/auth/token"; //Nơi chứa đường dẫn API mà BE đưa cho
 
 const LOGIN_PATH = USE_PROXY ? "/api/auth/token" : "/isp392/auth/token"; //Nếu muốn dùng cho việc đăng nhập thì làm như này
 
@@ -51,7 +52,7 @@ export function saveSession({ token, user }) {
   localStorage.setItem("token", token);
   localStorage.setItem("user", JSON.stringify(user));
 
-  // console.log("💾 saveSession: token saved?", !!localStorage.getItem("token"));
+  // console.log("saveSession: token saved?", !!localStorage.getItem("token"));
 }
 
 //Lấy ra token đã lưu ở trên, nếu nó không có gì === null thì cho ra ngoài

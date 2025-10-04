@@ -104,7 +104,7 @@ export default function Admin() {
 
   //Cập nhật nhân sự
   const saveAccount = async (accountData) => {
-    // console.log("[EDIT FORM] accountData:", accountData);
+    // console.log("[EDIT FORM] ccountData:", accountData);
 
     if (!accountData?.id) return;
     //Gửi lại chuẩn API Payload cho BackEnd
@@ -117,7 +117,7 @@ export default function Admin() {
       role: (accountData.role || "").toUpperCase(),
     };
 
-    // console.log("[SAVE] payload:", payload);
+    console.log("[SAVE] payload:", payload);
 
     try {
       const updatedStaff = await updateStaff(accountData.id, payload);
