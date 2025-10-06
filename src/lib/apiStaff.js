@@ -1,4 +1,4 @@
-import { apiPath, authHeaders, handleResponse } from "./apiConfig";
+import { apiPath, authHeaders, handleResponse } from "../api/apiConfig";
 
 export async function createStaff(payload) {
   const res = await fetch(apiPath("/staff"), {

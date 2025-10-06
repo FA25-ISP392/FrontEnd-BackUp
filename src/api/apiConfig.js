@@ -7,7 +7,7 @@ export const PROXY_PREFIX = "/api";
 
 //========================== TOKEN & HEADER =========================//
 
-import { getToken } from "./auth";
+import { getToken } from "../lib/auth";
 
 export function authHeaders() {
   return {

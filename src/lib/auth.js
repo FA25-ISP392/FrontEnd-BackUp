@@ -1,4 +1,4 @@
-import { apiPath, handleResponse } from "./apiConfig";
+import { apiPath, handleResponse } from "../api/apiConfig";
 
 export const roleRoutes = {
   ADMIN: "/admin",
