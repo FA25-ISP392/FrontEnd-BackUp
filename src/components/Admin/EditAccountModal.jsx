@@ -17,6 +17,7 @@ export default function AdminEditAccountModal({
   const [showPwd, setShowPwd] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [err, setErr] = useState("");
+  const [fieldErrs, setFieldErrs] = useState({});
 
   // đồng bộ khi mở modal
   useEffect(() => {
@@ -26,40 +27,97 @@ export default function AdminEditAccountModal({
     setErr("");
   }, [editingItem]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    // Validate đổi mật khẩu (chỉ khi người dùng nhập)
-    if (password || confirm) {
-      if (!password || !confirm) {
-        setErr("Vui lòng nhập đầy đủ 2 ô mật khẩu.");
-        return;
-      }
-      if (password !== confirm) {
-        setErr("Mật khẩu nhập lại không khớp.");
-        return;
-      }
-      if (password.length < 8) {
-        setErr("Mật khẩu phải từ 8 ký tự trở lên.");
-        return;
+  const ROLES = ["ADMIN", "MANAGER", "CHEF", "STAFF"];
+  function validateForm({ name, email, phone, password, confirm, role }) {
+    const errs = {};
+    const _name = (name || "").trim();
+    const _email = (email || "").trim();
+    const _phone = (phone || "").trim();
+    const _role = String(role || "").toUpperCase();
+
+    if (!_name || _name.length < 2 || _name.length > 30) {
+      errs.name = "Họ Tên từ 2-30 ký tự.";
+    }
+
+    if (!_email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(_email)) {
+      errs.email = "Email có ký tự không hợp lệ.";
+    }
+
+    if (_phone) {
+      if (!/^\d+$/.test(_phone)) {
+        errs.phone = "Số Điện Thoại chỉ được chứa số.";
+      } else if (!/^\d{9,11}$/.test(_phone)) {
+        errs.phone = "Số Điện Thoại phải 9–11 chữ số.";
       }
     }
+
+    if (password || confirm) {
+      if (password.length < 8 || password.length > 30) {
+        errs.confirm = "Mật khẩu từ 8-30 ký tự.";
+      }
+
+      if (!password || !confirm) {
+        errs.confirm = "Vui lòng nhập đủ 2 ô mật khẩu.";
+      } else if (password !== confirm) {
+        errs.confirm = "Mật khẩu nhập lại không trùng hợp.";
+      }
+    }
+
+    if (!ROLES.includes(_role)) {
+      errs.role = "Vai trò không hợp lệ.";
+    }
+
+    return {
+      errs,
+      cleaned: {
+        name: _name,
+        email: _email,
+        phone: _phone,
+        role: _role,
+      },
+    };
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErr("");
+
     const formData = new FormData(e.target);
+    const name = formData.get("name");
+    const email = formData.get("email");
+    const phone = formData.get("phone");
+
+    const { errs, cleaned } = validateForm({
+      name,
+      email,
+      phone,
+      password,
+      confirm,
+      role,
+    });
+
+    if (Object.keys(errs).length) {
+      setFieldErrs(errs);
+      setErr("");
+      return;
+    }
+
     const accountData = {
       id: editingItem?.id,
-      name: formData.get("name"),
-      email: formData.get("email"),
-      // Chỉ kèm password nếu có nhập
+      name: cleaned.name,
+      email: cleaned.email,
+      phone: cleaned.phone || null,
+      role: cleaned.role,
       ...(password ? { password } : {}),
-      phone: formData.get("phone"),
-      role: role,
     };
+
     try {
       setSaving(true);
       await saveAccount(accountData);
       setIsEditingAccount(false);
       setEditingItem(null);
     } catch (err) {
-      alert(err?.message || "Cập nhật thất bại.");
+      setErr(err?.message || "Cập nhật thông tin thất bại.");
     } finally {
       setSaving(false);
     }
@@ -85,7 +143,7 @@ export default function AdminEditAccountModal({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-neutral-700 mb-2">
               Tên
@@ -94,9 +152,15 @@ export default function AdminEditAccountModal({
               type="text"
               name="name"
               defaultValue={editingItem?.name || ""}
+              minLength={2}
+              maxLength={30}
               required
+              onChange={() => setFieldErrs((s) => ({ ...s, name: "" }))}
               className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
+            {fieldErrs.name && (
+              <p className="text-xs text-red-600 mt-1">{fieldErrs.name}</p>
+            )}
           </div>
 
           <div>
@@ -108,11 +172,14 @@ export default function AdminEditAccountModal({
               name="email"
               defaultValue={editingItem?.email || ""}
               required
+              onChange={() => setFieldErrs((s) => ({ ...s, email: "" }))}
               className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
+            {fieldErrs.email && (
+              <p className="text-xs text-red-600 mt-1">{fieldErrs.email}</p>
+            )}
           </div>
 
-          {/* Mật khẩu mới (tuỳ chọn) */}
           <div>
             <label className="block text-sm font-medium text-neutral-700 mb-2">
               Mật khẩu mới{" "}
@@ -122,9 +189,13 @@ export default function AdminEditAccountModal({
                 type={showPwd ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Ít nhất 8 ký tự"
                 className="w-full px-4 py-3 pr-10 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
+              {fieldErrs.password && (
+                <p className="text-xs text-red-600 mt-1">
+                  {fieldErrs.password}
+                </p>
+              )}
               <button
                 type="button"
                 onClick={() => setShowPwd((v) => !v)}
@@ -147,9 +218,15 @@ export default function AdminEditAccountModal({
               <input
                 type={showConfirm ? "text" : "password"}
                 value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
+                onChange={(e) => {
+                  setConfirm(e.target.value);
+                  setFieldErrs((s) => ({ ...s, confirm: "" })); // clear lỗi khi gõ
+                }}
                 className="w-full px-4 py-3 pr-10 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               />
+              {fieldErrs.confirm && (
+                <p className="text-xs text-red-600 mt-1">{fieldErrs.confirm}</p>
+              )}
               <button
                 type="button"
                 onClick={() => setShowConfirm((v) => !v)}
@@ -172,9 +249,12 @@ export default function AdminEditAccountModal({
               type="text"
               name="phone"
               defaultValue={editingItem?.phone || ""}
-              required
+              onChange={() => setFieldErrs((s) => ({ ...s, phone: "" }))}
               className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
+            {fieldErrs.phone && (
+              <p className="text-xs text-red-600 mt-1">{fieldErrs.phone}</p>
+            )}
           </div>
 
           <div>
