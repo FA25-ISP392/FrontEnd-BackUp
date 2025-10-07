@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X, Save, Eye, EyeOff } from "lucide-react";
-import { createStaff } from "../../lib/apiStaff";
+import { createStaff, getStaff } from "../../lib/apiStaff";
 
 export default function AdminAccountForm({ open, onClose, onCreated }) {
   const [form, setForm] = useState({
@@ -90,8 +90,13 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
 
     try {
       setSaving(true);
-      const newStaff = await createStaff(cleaned);
-      onCreated?.(newStaff);
+      const created = await createStaff(cleaned);
+
+      // Re-fetch để chắc chắn có đủ staffName/account.role
+      const id = created?.staffId ?? created?.id;
+      const full = id ? await getStaff(id) : created;
+
+      onCreated?.(full);
       onClose?.();
     } catch (e) {
       setErr(e.message || "Có lỗi xảy ra.");

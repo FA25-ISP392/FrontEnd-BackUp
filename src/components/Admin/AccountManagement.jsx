@@ -161,7 +161,12 @@ export default function AdminAccountManagement({
             setAccounts?.((prev) => [
               {
                 id: newStaff.staffId ?? newStaff.id ?? Date.now(),
-                name: newStaff.staffName ?? newStaff.name,
+                name:
+                  newStaff.staffName ??
+                  newStaff.name ??
+                  newStaff.account?.name ??
+                  newStaff.account?.username ??
+                  "",
                 phone: newStaff.staffPhone ?? newStaff.phone ?? "",
                 email: newStaff.staffEmail ?? newStaff.email,
                 role: newStaff.role ?? newStaff.account?.role ?? "",
