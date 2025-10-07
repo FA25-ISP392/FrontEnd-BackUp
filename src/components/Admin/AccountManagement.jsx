@@ -164,7 +164,7 @@ export default function AdminAccountManagement({
                 name: newStaff.staffName ?? newStaff.name,
                 phone: newStaff.staffPhone ?? newStaff.phone ?? "",
                 email: newStaff.staffEmail ?? newStaff.email,
-                role: newStaff.role,
+                role: newStaff.role ?? newStaff.account?.role ?? "",
                 status: "active",
               },
               ...(prev || []),

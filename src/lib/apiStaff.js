@@ -13,13 +13,22 @@ export async function listStaff(params = {}) {
   const query = new URLSearchParams(params).toString();
   const url = apiPath(`/staff${query ? `?${query}` : ""}`);
   const res = await fetch(url, { headers: authHeaders() });
-  return handleResponse(res);
+  const data = await handleResponse(res);
+  const arr = Array.isArray(data) ? data : data?.result || [];
+
+  return arr.map((s) => ({
+    id: s.staffId ?? s.id,
+    name: s.staffName ?? s.name,
+    phone: s.staffPhone ?? s.phone ?? "",
+    email: s.staffEmail ?? s.email ?? "",
+    role: s.account?.role ?? "",
+    status: s.status ?? "active",
+  }));
 }
 
 export async function listNonAdmin(params = {}) {
-  const allStaff = await listStaff(params);
-  if (!Array.isArray(allStaff)) return [];
-  return allStaff.filter((staff) => staff.role?.toUpperCase() !== "ADMIN");
+  const all = await listStaff(params);
+  return all.filter((x) => (x.role || "").toUpperCase() !== "ADMIN");
 }
 
 export async function getStaff(id) {

@@ -20,38 +20,78 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
   //Cập nhật từng field trong form
   const setF = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
+  const ROLES = ["ADMIN", "MANAGER", "STAFF", "CHEF"];
+  function validateCreate(f) {
+    const errs = {};
+    const cleaned = {
+      username: (f.username || "").trim(),
+      password: f.password || "",
+      staffName: (f.staffName || "").trim(),
+      staffPhone: (f.staffPhone || "").trim(),
+      staffEmail: (f.staffEmail || "").trim(),
+      role: String(f.role || "").toUpperCase(),
+    };
+
+    if (
+      !cleaned.username ||
+      cleaned.username.length < 3 ||
+      cleaned.username.length > 30
+    ) {
+      errs.username = "Tên đăng nhập phải từ 3-30 ký tự.";
+    }
+
+    if (
+      !cleaned.password ||
+      cleaned.password.length < 8 ||
+      cleaned.password.length > 30
+    ) {
+      errs.password = "Mật khẩu phải từ 8–30 ký tự.";
+    }
+
+    if (
+      !cleaned.staffName ||
+      cleaned.staffName.length < 2 ||
+      cleaned.staffName.length > 30
+    ) {
+      errs.staffName = "Họ Tên phải từ 2–30 ký tự.";
+    }
+
+    if (cleaned.staffPhone) {
+      if (!/^\d+$/.test(cleaned.staffPhone))
+        errs.staffPhone = "Số Điện Thoại chỉ chứa số.";
+      else if (!/^\d{9,11}$/.test(cleaned.staffPhone))
+        errs.staffPhone = "Số Điện Thoại phải 9–11 chữ số.";
+    }
+
+    if (
+      !cleaned.staffEmail ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleaned.staffEmail)
+    ) {
+      errs.staffEmail = "Email không hợp lệ.";
+    }
+
+    if (!ROLES.includes(cleaned.role)) errs.role = "Vai trò không hợp lệ.";
+
+    if (!cleaned.staffPhone) cleaned.staffPhone = null;
+
+    return { errs, cleaned };
+  }
+
   const submit = async (e) => {
     e.preventDefault();
     setErr("");
     setFieldErrs({});
-    
-    // Validation
-    const errors = {};
-    if (!form.username || form.username.trim().length < 2) {
-      errors.username = "Tên đăng nhập phải có ít nhất 2 ký tự.";
-    }
-    if (!form.password || form.password.length < 8) {
-      errors.password = "Mật khẩu phải có ít nhất 8 ký tự.";
-    }
-    if (!form.staffName || form.staffName.trim().length < 2) {
-      errors.staffName = "Họ tên phải có ít nhất 2 ký tự.";
-    }
-    if (!form.staffEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.staffEmail)) {
-      errors.staffEmail = "Email không hợp lệ.";
-    }
-    if (form.staffPhone && !/^\d{9,11}$/.test(form.staffPhone)) {
-      errors.staffPhone = "Số điện thoại phải có 9-11 chữ số.";
-    }
-    
-    if (Object.keys(errors).length > 0) {
-      setFieldErrs(errors);
+
+    const { errs, cleaned } = validateCreate(form);
+    if (Object.keys(errs).length) {
+      setFieldErrs(errs);
       return;
     }
-    
+
     try {
       setSaving(true);
-      const newStaff = await createStaff(form); //Call API tạo nhân viên
-      onCreated?.(newStaff); //Call fallback để component cha cập nhật list
+      const newStaff = await createStaff(cleaned);
+      onCreated?.(newStaff);
       onClose?.();
     } catch (e) {
       setErr(e.message || "Có lỗi xảy ra.");
@@ -75,7 +115,7 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
           </div>
         </div>
 
-        <form onSubmit={submit} className="p-6 space-y-4">
+        <form onSubmit={submit} noValidate className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-neutral-700 mb-2">
               Tên Đăng Nhập
@@ -87,6 +127,8 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
                 setF("username", e.target.value);
                 setFieldErrs((s) => ({ ...s, username: "" }));
               }}
+              minLength={3}
+              maxLength={30}
               required
             />
             {fieldErrs.username && (
@@ -107,8 +149,15 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
                   setF("password", e.target.value);
                   setFieldErrs((s) => ({ ...s, password: "" }));
                 }}
+                minLength={8}
+                maxLength={30}
                 required
               />
+              {fieldErrs.password && (
+                <p className="text-xs text-red-600 mt-1">
+                  {fieldErrs.password}
+                </p>
+              )}
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
@@ -121,9 +170,6 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
                 )}
               </button>
             </div>
-            {fieldErrs.password && (
-              <p className="text-xs text-red-600 mt-1">{fieldErrs.password}</p>
-            )}
           </div>
 
           <div>
@@ -137,6 +183,8 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
                 setF("staffName", e.target.value);
                 setFieldErrs((s) => ({ ...s, staffName: "" }));
               }}
+              minLength={2}
+              maxLength={30}
               required
             />
             {fieldErrs.staffName && (
@@ -159,7 +207,9 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
               required
             />
             {fieldErrs.staffEmail && (
-              <p className="text-xs text-red-600 mt-1">{fieldErrs.staffEmail}</p>
+              <p className="text-xs text-red-600 mt-1">
+                {fieldErrs.staffEmail}
+              </p>
             )}
           </div>
 
@@ -176,7 +226,9 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
               }}
             />
             {fieldErrs.staffPhone && (
-              <p className="text-xs text-red-600 mt-1">{fieldErrs.staffPhone}</p>
+              <p className="text-xs text-red-600 mt-1">
+                {fieldErrs.staffPhone}
+              </p>
             )}
           </div>
 
@@ -195,6 +247,9 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
               <option value="STAFF">STAFF</option>
               <option value="CHEF">CHEF</option>
             </select>
+            {fieldErrs.role && (
+              <p className="text-xs text-red-600 mt-1">{fieldErrs.role}</p>
+            )}
           </div>
 
           {err && <p className="text-sm text-red-600">{err}</p>}
