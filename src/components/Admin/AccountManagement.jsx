@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Plus, Edit, Trash2, Users } from "lucide-react";
 import AdminAccountForm from "./AdminAccountForm"; // <- form tạo mới
+import { normalizeStaff } from "../../lib/apiStaff";
 
 export default function AdminAccountManagement({
   accounts,
@@ -72,6 +73,7 @@ export default function AdminAccountManagement({
                   >
                     {account.name}
                   </div>
+
                   <div
                     className="text-neutral-600 truncate"
                     title={account.phone || "-"}
@@ -156,24 +158,8 @@ export default function AdminAccountManagement({
           open={openCreate}
           onClose={() => setOpenCreate(false)}
           onCreated={(newStaff) => {
-            // Map field trả về từ BE -> cấu trúc đang render
-            // Nếu BE trả key khác, đổi ở đây cho khớp
-            setAccounts?.((prev) => [
-              {
-                id: newStaff.staffId ?? newStaff.id ?? Date.now(),
-                name:
-                  newStaff.staffName ??
-                  newStaff.name ??
-                  newStaff.account?.name ??
-                  newStaff.account?.username ??
-                  "",
-                phone: newStaff.staffPhone ?? newStaff.phone ?? "",
-                email: newStaff.staffEmail ?? newStaff.email,
-                role: newStaff.role ?? newStaff.account?.role ?? "",
-                status: "active",
-              },
-              ...(prev || []),
-            ]);
+            const n = normalizeStaff(newStaff);
+            setAccounts?.((prev) => [n, ...(prev || [])]);
           }}
         />
       )}

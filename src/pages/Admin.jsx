@@ -83,17 +83,21 @@ export default function Admin() {
       setLoadingAccounts(true);
       setAccountsError("");
       try {
-        const res = await listStaff();
-        const arr = Array.isArray(res) ? res : res?.item || [];
-        const mapped = arr.map((s) => ({
-          id: s.staffId ?? s.id, //Dùng ID để cập nhật dữ liệu
-          name: s.staffName ?? s.username ?? "",
-          email: s.staffEmail ?? s.email ?? "",
-          phone: s.staffPhone ?? s.phone ?? "",
-          role: (s.role ?? "").toString().toLowerCase(),
-          status: s.status ?? "active",
-        }));
-        if (!cancelled) setAccounts(mapped);
+        const list = await listStaff(); // list = array of objects
+        if (!cancelled) {
+          // console.log("[accounts after fetch]", list);
+          console.log("[accounts after fetch]", list);
+          console.log(
+            "[isArray?]",
+            Array.isArray(list),
+            "first types:",
+            list.slice(0, 3).map((x) => typeof x)
+          );
+          console.table(
+            list.map((x) => ({ id: x.id, name: x.name, email: x.email }))
+          );
+          setAccounts(list); // ✅ KHÔNG .map(async ...)
+        }
       } catch (e) {
         if (!cancelled)
           setAccountsError(e.message || "Không tải được danh sách nhân viên.");

@@ -90,15 +90,29 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
 
     try {
       setSaving(true);
+
+      // 1) Tạo mới
       const created = await createStaff(cleaned);
 
-      // Re-fetch để chắc chắn có đủ staffName/account.role
+      // 2) Dùng luôn dữ liệu POST; refetch chỉ là "best-effort"
+      let full = created;
       const id = created?.staffId ?? created?.id;
-      const full = id ? await getStaff(id) : created;
 
+      if (id) {
+        try {
+          const detail = await getStaff(id); // có thể bị 400/403
+          if (detail) full = detail;
+        } catch (refetchErr) {
+          // Không setErr ở đây! Chỉ log để debug
+          console.warn("[refetch staff by id failed]", refetchErr);
+        }
+      }
+
+      // 3) Cập nhật UI & đóng modal dù refetch có lỗi
       onCreated?.(full);
       onClose?.();
     } catch (e) {
+      // Chỉ catch lỗi TẠO mới
       setErr(e.message || "Có lỗi xảy ra.");
     } finally {
       setSaving(false);

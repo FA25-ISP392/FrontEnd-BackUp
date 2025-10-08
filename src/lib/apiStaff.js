@@ -1,5 +1,22 @@
 import { apiPath, authHeaders, handleResponse } from "../api/apiConfig";
 
+export function normalizeStaff(s = {}) {
+  return {
+    id: s.staffId ?? s.id,
+    name:
+      s.staffName ??
+      s.staff_name ??
+      s.name ??
+      s.account?.fullName ??
+      s.account?.name ??
+      "",
+    phone: s.staffPhone ?? s.staff_phone ?? s.phone ?? "",
+    email: s.staffEmail ?? s.staff_email ?? s.email ?? "",
+    role: s.account?.role ?? s.role ?? "",
+    status: s.status ?? "active",
+  };
+}
+
 export async function createStaff(payload) {
   const res = await fetch(apiPath("/staff"), {
     method: "POST",
@@ -14,16 +31,27 @@ export async function listStaff(params = {}) {
   const url = apiPath(`/staff${query ? `?${query}` : ""}`);
   const res = await fetch(url, { headers: authHeaders() });
   const data = await handleResponse(res);
-  const arr = Array.isArray(data) ? data : data?.result || [];
+  const arr = Array.isArray(data) ? data : [];
+  // console.log("[listStaff raw]", arr);
+  // return arr.map(normalizeStaff);
+  console.log("[listStaff raw]", arr);
 
-  return arr.map((s) => ({
-    id: s.staffId ?? s.id,
-    name: s.staffName ?? s.name,
-    phone: s.staffPhone ?? s.phone ?? "",
-    email: s.staffEmail ?? s.email ?? "",
-    role: s.account?.role ?? "",
-    status: s.status ?? "active",
-  }));
+  const mapped = arr.map((s) => normalizeStaff(s));
+  const hasPromise = mapped.some((v) => v && typeof v.then === "function");
+  console.log("[listStaff mapped -> hasPromise?]", hasPromise);
+
+  const result = hasPromise ? await Promise.all(mapped) : mapped;
+
+  console.log(
+    "[listStaff result types]",
+    result.map((x) => typeof x)
+  );
+  console.log("[listStaff sample]", result.slice(0, 3));
+  console.table(
+    result.map((x) => ({ id: x.id, name: x.name, email: x.email }))
+  );
+
+  return result;
 }
 
 export async function listNonAdmin(params = {}) {
@@ -62,14 +90,12 @@ export async function findNameByUserName(username, token) {
 
   const res = await fetch(apiPath("/staff"), { headers });
   const data = await handleResponse(res);
-  const arr = Array.isArray(data) ? data : data?.item || [];
+  const arr = Array.isArray(data) ? data : [];
 
-  const me = arr.find((s) =>
-    [s.username, s.usename] // phòng trường hợp BE map sai chính tả
-      .filter(Boolean)
-      .some((u) => String(u).toLowerCase() === String(username).toLowerCase())
-  );
-  if (!me) return null;
+  const me = arr.find((s) => {
+    const u = s.account?.username ?? s.username ?? s.usename;
+    return String(u || "").toLowerCase() === String(username).toLowerCase();
+  });
 
-  return { ...me, staff_name: me.staffName || me.staff_name };
+  return me ? { ...me, staff_name: me.staffName || me.staff_name } : null;
 }

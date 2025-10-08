@@ -13,10 +13,10 @@ export default function Login() {
   const handleSubmit = (e) => {
     e.preventDefault();
     login({
-    username,
-    password,
-    onSuccess: (path) => navigate(path, { replace: true }),
-  });
+      username,
+      password,
+      onSuccess: (path) => navigate(path, { replace: true }),
+    });
   };
 
   return (
@@ -31,7 +31,7 @@ export default function Login() {
             Đăng nhập vào hệ thống quản lý nhà hàng
           </p>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           {/* Restaurant Banner */}
           <div className="relative">
@@ -40,17 +40,19 @@ export default function Login() {
                 {/* Background Gradient */}
                 <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-red-500 to-pink-500"></div>
                 <div className="absolute inset-0 bg-black/20"></div>
-                
+
                 {/* Restaurant Content */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center text-white">
                     <ChefHat className="h-16 w-16 mx-auto mb-4 opacity-90" />
-                    <h3 className="text-2xl font-bold mb-2">Nhà Hàng Delicious</h3>
+                    <h3 className="text-2xl font-bold mb-2">
+                      Nhà Hàng Delicious
+                    </h3>
                     <p className="text-lg opacity-90">Hương vị tuyệt vời</p>
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-6 text-center">
                 <h4 className="text-xl font-bold text-neutral-900 mb-2">
                   Chào mừng đến với hệ thống quản lý
