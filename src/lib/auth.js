@@ -1,4 +1,4 @@
-import { apiPath, handleResponse } from "../api/apiConfig";
+import apiConfig from "../api/apiConfig";
 
 export const roleRoutes = {
   ADMIN: "/admin",
@@ -75,27 +75,17 @@ export function isAuthenticated() {
 }
 
 export async function apiLogin({ username, password }) {
-  const url = apiPath("/auth/token");
+  const data = await apiConfig.post("/auth/token", { username, password });
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    credentials: "omit",
-    body: JSON.stringify({ username, password }),
-  });
-
-  const data = await handleResponse(res);
-
-  const token = data?.token ?? data?.result?.token;
-  const authenticated =
-    data?.authenticated ?? data?.result?.authenticated ?? true;
+  const token = data?.token;
+  const authenticated = data?.authenticated ?? true;
 
   if (!token || authenticated === false) {
     throw new Error("Xác thực thất bại. Vui lòng thử lại.");
   }
 
   const decoded = parseJWT(token);
-  const role = getRoleFromToken(decoded);
+  const role = getRoleFromToken(decoded) || "STAFF";
 
   return {
     token,

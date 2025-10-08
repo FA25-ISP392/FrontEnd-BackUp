@@ -1,8 +1,9 @@
-import { apiPath, authHeaders, handleResponse } from "../api/apiConfig";
+import apiConfig from "../api/apiConfig";
 
 export function normalizeStaff(s = {}) {
   return {
     id: s.staffId ?? s.id,
+    username: s.account?.username ?? s.username ?? "",
     name:
       s.staffName ??
       s.staff_name ??
@@ -18,40 +19,14 @@ export function normalizeStaff(s = {}) {
 }
 
 export async function createStaff(payload) {
-  const res = await fetch(apiPath("/staff"), {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify(payload),
-  });
-  return handleResponse(res);
+  const res = await apiConfig.post("/staff", payload);
+  return res;
 }
 
 export async function listStaff(params = {}) {
-  const query = new URLSearchParams(params).toString();
-  const url = apiPath(`/staff${query ? `?${query}` : ""}`);
-  const res = await fetch(url, { headers: authHeaders() });
-  const data = await handleResponse(res);
-  const arr = Array.isArray(data) ? data : [];
-  // console.log("[listStaff raw]", arr);
-  // return arr.map(normalizeStaff);
-  console.log("[listStaff raw]", arr);
-
-  const mapped = arr.map((s) => normalizeStaff(s));
-  const hasPromise = mapped.some((v) => v && typeof v.then === "function");
-  console.log("[listStaff mapped -> hasPromise?]", hasPromise);
-
-  const result = hasPromise ? await Promise.all(mapped) : mapped;
-
-  console.log(
-    "[listStaff result types]",
-    result.map((x) => typeof x)
-  );
-  console.log("[listStaff sample]", result.slice(0, 3));
-  console.table(
-    result.map((x) => ({ id: x.id, name: x.name, email: x.email }))
-  );
-
-  return result;
+  const res = await apiConfig.get("/staff", { params });
+  const arr = Array.isArray(res) ? res : [];
+  return arr.map(normalizeStaff);
 }
 
 export async function listNonAdmin(params = {}) {
@@ -60,42 +35,13 @@ export async function listNonAdmin(params = {}) {
 }
 
 export async function getStaff(id) {
-  const res = await fetch(apiPath(`/staff/${id}`), { headers: authHeaders() });
-  return handleResponse(res);
+  return await apiConfig.get(`/staff/${id}`);
 }
 
 export async function updateStaff(id, payload) {
-  const res = await fetch(apiPath(`/staff/${id}`), {
-    method: "PUT",
-    headers: authHeaders(),
-    body: JSON.stringify(payload),
-  });
-  return handleResponse(res);
+  return await apiConfig.put(`/staff/${id}`, payload);
 }
 
 export async function deleteStaff(id) {
-  const res = await fetch(apiPath(`/staff/${id}`), {
-    method: "DELETE",
-    headers: authHeaders(),
-  });
-  return handleResponse(res);
-}
-
-export async function findNameByUserName(username, token) {
-  const headers = {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    Authorization: `Bearer ${token}`, // dùng token vừa login, KHÔNG lấy từ localStorage
-  };
-
-  const res = await fetch(apiPath("/staff"), { headers });
-  const data = await handleResponse(res);
-  const arr = Array.isArray(data) ? data : [];
-
-  const me = arr.find((s) => {
-    const u = s.account?.username ?? s.username ?? s.usename;
-    return String(u || "").toLowerCase() === String(username).toLowerCase();
-  });
-
-  return me ? { ...me, staff_name: me.staffName || me.staff_name } : null;
+  return await apiConfig.delete(`/staff/${id}`);
 }

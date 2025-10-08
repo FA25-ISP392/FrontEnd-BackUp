@@ -161,6 +161,7 @@ export default function AdminAccountManagement({
             const n = normalizeStaff(newStaff);
             setAccounts?.((prev) => [n, ...(prev || [])]);
           }}
+          accounts={accounts}
         />
       )}
     </div>

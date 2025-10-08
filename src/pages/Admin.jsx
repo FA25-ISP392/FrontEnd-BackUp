@@ -46,13 +46,7 @@ export default function Admin() {
   //lấy tên để welcome
   useEffect(() => {
     const u = getCurrentUser();
-    const name =
-      u?.staff_name ||
-      u?.staffName ||
-      u?.fullName ||
-      u?.name ||
-      u?.displayName ||
-      u?.username;
+    const name = u?.staff_name || u?.staffName || u?.fullName;
     setAdminName(name || "Admin");
   }, []);
 
@@ -83,20 +77,9 @@ export default function Admin() {
       setLoadingAccounts(true);
       setAccountsError("");
       try {
-        const list = await listStaff(); // list = array of objects
+        const list = await listStaff();
         if (!cancelled) {
-          // console.log("[accounts after fetch]", list);
-          console.log("[accounts after fetch]", list);
-          console.log(
-            "[isArray?]",
-            Array.isArray(list),
-            "first types:",
-            list.slice(0, 3).map((x) => typeof x)
-          );
-          console.table(
-            list.map((x) => ({ id: x.id, name: x.name, email: x.email }))
-          );
-          setAccounts(list); // ✅ KHÔNG .map(async ...)
+          setAccounts(list);
         }
       } catch (e) {
         if (!cancelled)
@@ -113,36 +96,33 @@ export default function Admin() {
 
   //Cập nhật nhân sự
   const saveAccount = async (accountData) => {
-    // console.log("[EDIT FORM] ccountData:", accountData);
-
     if (!accountData?.id) return;
-    //Gửi lại chuẩn API Payload cho BackEnd
+
     const payload = {
-      staffName: accountData.name,
-      staffEmail: accountData.email,
-      // thêm password nếu có
+      staffName: accountData.name?.trim(),
+      staffEmail: accountData.email?.trim(),
+      ...(accountData.phone
+        ? { staffPhone: String(accountData.phone).trim() }
+        : {}),
+      ...(accountData.role
+        ? { role: String(accountData.role).toUpperCase() }
+        : {}),
       ...(accountData.password ? { password: accountData.password } : {}),
-      staffPhone: accountData.phone,
-      role: (accountData.role || "").toUpperCase(),
     };
 
-    console.log("[SAVE] payload:", payload);
-
     try {
-      const updatedStaff = await updateStaff(accountData.id, payload);
-      //Cập nhật lại list theo call fallback gửi về
-
-      // console.log("[SAVE] response:", updatedStaff);
+      console.log("[UPDATE] id:", accountData.id, "payload:", payload);
+      const updated = await updateStaff(accountData.id, payload);
 
       setAccounts((prev) =>
         prev.map((acc) =>
           acc.id === accountData.id
             ? {
                 ...acc,
-                name: updatedStaff?.staffName ?? payload.staffName,
-                email: updatedStaff?.staffEmail ?? payload.staffEmail,
-                phone: updatedStaff?.staffPhone ?? payload.staffPhone,
-                role: (updatedStaff?.role ?? payload.role).toLowerCase(),
+                name: updated?.staffName ?? payload.staffName,
+                email: updated?.staffEmail ?? payload.staffEmail,
+                phone: updated?.staffPhone ?? payload.staffPhone,
+                role: updated?.role ?? payload.role,
               }
             : acc
         )
@@ -153,18 +133,15 @@ export default function Admin() {
   };
 
   const deleteAccount = async (accountId) => {
-    if (!accountId) return; // xác nhận đã làm ở UI con rồi
+    if (!accountId) return;
 
-    // Optimistic UI: xoá tạm trên UI, nếu lỗi thì rollback
     const prev = accounts;
     setDeletingIds((s) => new Set(s).add(accountId));
     setAccounts((curr) => curr.filter((acc) => acc.id !== accountId));
 
     try {
-      await deleteStaff(accountId); // gọi API DELETE /staff/{id}
-      // nếu BE trả 204 thì handle() đã trả null — không cần làm gì thêm
+      await deleteStaff(accountId);
     } catch (e) {
-      // rollback nếu thất bại
       setAccounts(prev);
       alert(e.message || "Xoá thất bại.");
     } finally {

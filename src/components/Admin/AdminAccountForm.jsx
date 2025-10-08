@@ -90,30 +90,48 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
 
     try {
       setSaving(true);
-
-      // 1) Tạo mới
       const created = await createStaff(cleaned);
 
-      // 2) Dùng luôn dữ liệu POST; refetch chỉ là "best-effort"
       let full = created;
       const id = created?.staffId ?? created?.id;
-
       if (id) {
         try {
-          const detail = await getStaff(id); // có thể bị 400/403
+          const detail = await getStaff(id);
           if (detail) full = detail;
         } catch (refetchErr) {
-          // Không setErr ở đây! Chỉ log để debug
-          console.warn("[refetch staff by id failed]", refetchErr);
+          console.debug("[Refetch skipped]", refetchErr.message);
         }
       }
 
-      // 3) Cập nhật UI & đóng modal dù refetch có lỗi
       onCreated?.(full);
       onClose?.();
     } catch (e) {
-      // Chỉ catch lỗi TẠO mới
-      setErr(e.message || "Có lỗi xảy ra.");
+      const status = e?.response?.status;
+      const data = e?.response?.data || {};
+
+      if (status === 409) {
+        const dup = data?.duplicates || {};
+        const fe = {};
+
+        if (dup.username) fe.username = "Tên đăng nhập đã tồn tại.";
+        if (dup.email) fe.staffEmail = "Email đã tồn tại.";
+        if (dup.phone) fe.staffPhone = "Số Điện Thoại đã tồn tại.";
+
+        if (!Object.keys(fe).length && typeof data?.message === "string") {
+          const msg = data.message.toLowerCase();
+          if (msg.includes("user")) fe.username = "Tên đăng nhập đã tồn tại.";
+          if (msg.includes("email")) fe.staffEmail = "Email đã tồn tại.";
+          if (msg.includes("phone") || msg.includes("sđt"))
+            fe.staffPhone = "Số Điện Thoại đã tồn tại.";
+        }
+
+        if (Object.keys(fe).length) {
+          setFieldErrs(fe);
+          return;
+        }
+      }
+
+      setErr(data?.message || e.message || "Có lỗi xảy ra.");
     } finally {
       setSaving(false);
     }
