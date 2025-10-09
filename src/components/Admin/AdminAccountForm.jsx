@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { X, Save, Eye, EyeOff } from "lucide-react";
 import { createStaff, getStaff } from "../../lib/apiStaff";
 
-export default function AdminAccountForm({ open, onClose, onCreated }) {
+export default function AdminAccountForm({
+  open,
+  onClose,
+  onCreated,
+  accounts = [],
+}) {
   const [form, setForm] = useState({
     username: "",
     password: "",
@@ -17,7 +22,6 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
   const [showPassword, setShowPassword] = useState(false);
 
   if (!open) return null;
-  //Cập nhật từng field trong form
   const setF = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
   const ROLES = ["ADMIN", "MANAGER", "STAFF", "CHEF"];
@@ -77,61 +81,159 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
     return { errs, cleaned };
   }
 
+  function normalizePhone(v = "") {
+    return String(v).replace(/\D/g, "");
+  }
+
+  const { userSet, emailSet, phoneSet } = useMemo(() => {
+    const u = new Set(
+      (accounts || [])
+        .map((a) => (a?.username || "").trim().toLowerCase())
+        .filter(Boolean)
+    );
+    const e = new Set(
+      (accounts || [])
+        .map((a) => (a?.email || "").trim().toLowerCase())
+        .filter(Boolean)
+    );
+    const p = new Set(
+      (accounts || [])
+        .map((a) => normalizePhone(a?.phone || ""))
+        .filter(Boolean)
+    );
+    return { userSet: u, emailSet: e, phoneSet: p };
+  }, [accounts]);
+
+  function precheckDuplicate({ username, staffEmail, staffPhone }) {
+    const fe = {};
+    const u = (username || "").trim().toLowerCase();
+    const e = (staffEmail || "").trim().toLowerCase();
+    const p = normalizePhone(staffPhone || "");
+
+    if (u && userSet.has(u)) fe.username = "Tên đăng nhập đã tồn tại.";
+    if (e && emailSet.has(e)) fe.staffEmail = "Email đã tồn tại.";
+    if (p && phoneSet.has(p)) fe.staffPhone = "Số Điện Thoại đã tồn tại.";
+
+    return fe;
+  }
+
+  function focusFirstError(fe) {
+    const firstKey = Object.keys(fe)[0];
+    const sel =
+      firstKey === "username"
+        ? "input[name='username']"
+        : firstKey === "staffEmail"
+        ? "input[name='staffEmail']"
+        : firstKey === "staffPhone"
+        ? "input[name='staffPhone']"
+        : firstKey === "password"
+        ? "input[type='password']"
+        : firstKey === "staffName"
+        ? "input[name='staffName']"
+        : null;
+    const el = sel && document.querySelector(sel);
+    if (el) el.focus();
+  }
+
+  function showFieldErrors(fe) {
+    setFieldErrs(fe);
+    setErr("");
+    requestAnimationFrame(() => focusFirstError(fe));
+  }
+
+  function parseBackendError(err) {
+    const status = err?.status || err?.response?.status;
+    const data = err?.data || err?.response?.data || {};
+    const lowMsg = String(data?.message || err?.message || "").toLowerCase();
+    const fe = {};
+
+    if (status === 400 || status === 409) {
+      const list =
+        data?.errors ||
+        data?.result ||
+        data?.fieldErrors ||
+        data?.violations ||
+        data?.details ||
+        data?.subErrors ||
+        [];
+      if (Array.isArray(list)) {
+        for (const it of list) {
+          const field = String(
+            it.field || it.fieldName || it.property || it.path || it.param || ""
+          ).toLowerCase();
+          const msg =
+            it.defaultMessage ||
+            it.message ||
+            it.reason ||
+            data?.message ||
+            "Không hợp lệ.";
+          if (field.includes("user")) fe.username = msg;
+          if (field.includes("email")) fe.staffEmail = msg;
+          if (field.includes("phone") || field.includes("tel"))
+            fe.staffPhone = msg;
+          if (field.includes("name")) fe.staffName = msg;
+          if (field.includes("pass")) fe.password = msg;
+        }
+      }
+
+      const dup = data?.duplicates || {};
+      if (dup.username) fe.username = "Tên đăng nhập đã tồn tại.";
+      if (dup.email) fe.staffEmail = "Email đã tồn tại.";
+      if (dup.phone) fe.staffPhone = "Số Điện Thoại đã tồn tại.";
+
+      const dupRe = /(exist|exists|duplicate|already|unique|trùng)/i;
+      if (!fe.username && /(user(name)?)/i.test(lowMsg) && dupRe.test(lowMsg))
+        fe.username = "Tên đăng nhập đã tồn tại.";
+      if (!fe.staffEmail && /(email)/i.test(lowMsg) && dupRe.test(lowMsg))
+        fe.staffEmail = "Email đã tồn tại.";
+      if (!fe.staffPhone && /(phone|sđt)/i.test(lowMsg) && dupRe.test(lowMsg))
+        fe.staffPhone = "Số Điện Thoại đã tồn tại.";
+
+      if (!fe.staffEmail) {
+        const deep = JSON.stringify(data).toLowerCase();
+        const cause = String(
+          data?.cause?.message || data?.rootCause?.message || ""
+        ).toLowerCase();
+        if (
+          (deep.includes("email") && dupRe.test(deep)) ||
+          (cause.includes("email") && dupRe.test(cause))
+        ) {
+          fe.staffEmail = "Email đã tồn tại.";
+        }
+      }
+    }
+
+    return {
+      fieldErrors: fe,
+      message: data?.message || err.message || "Có lỗi xảy ra.",
+    };
+  }
+
   const submit = async (e) => {
     e.preventDefault();
     setErr("");
     setFieldErrs({});
 
+    // 1) Validate
     const { errs, cleaned } = validateCreate(form);
-    if (Object.keys(errs).length) {
-      setFieldErrs(errs);
-      return;
-    }
+    if (Object.keys(errs).length) return showFieldErrors(errs);
 
+    // 2) Pre-check duplicate FE
+    const dupErrs = precheckDuplicate(cleaned);
+    if (Object.keys(dupErrs).length) return showFieldErrors(dupErrs);
+
+    // 3) Call API
     try {
       setSaving(true);
       const created = await createStaff(cleaned);
-
-      let full = created;
       const id = created?.staffId ?? created?.id;
-      if (id) {
-        try {
-          const detail = await getStaff(id);
-          if (detail) full = detail;
-        } catch (refetchErr) {
-          console.debug("[Refetch skipped]", refetchErr.message);
-        }
-      }
-
+      const full = id ? await getStaff(id).catch(() => created) : created;
       onCreated?.(full);
       onClose?.();
-    } catch (e) {
-      const status = e?.response?.status;
-      const data = e?.response?.data || {};
-
-      if (status === 409) {
-        const dup = data?.duplicates || {};
-        const fe = {};
-
-        if (dup.username) fe.username = "Tên đăng nhập đã tồn tại.";
-        if (dup.email) fe.staffEmail = "Email đã tồn tại.";
-        if (dup.phone) fe.staffPhone = "Số Điện Thoại đã tồn tại.";
-
-        if (!Object.keys(fe).length && typeof data?.message === "string") {
-          const msg = data.message.toLowerCase();
-          if (msg.includes("user")) fe.username = "Tên đăng nhập đã tồn tại.";
-          if (msg.includes("email")) fe.staffEmail = "Email đã tồn tại.";
-          if (msg.includes("phone") || msg.includes("sđt"))
-            fe.staffPhone = "Số Điện Thoại đã tồn tại.";
-        }
-
-        if (Object.keys(fe).length) {
-          setFieldErrs(fe);
-          return;
-        }
-      }
-
-      setErr(data?.message || e.message || "Có lỗi xảy ra.");
+    } catch (err) {
+      const { fieldErrors, message } = parseBackendError(err);
+      if (Object.keys(fieldErrors).length) return showFieldErrors(fieldErrors);
+      setErr(message);
     } finally {
       setSaving(false);
     }
@@ -158,11 +260,13 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
               Tên Đăng Nhập
             </label>
             <input
+              name="username"
               className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               value={form.username}
               onChange={(e) => {
                 setF("username", e.target.value);
                 setFieldErrs((s) => ({ ...s, username: "" }));
+                setErr("");
               }}
               minLength={3}
               maxLength={30}
@@ -234,12 +338,14 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
               Email
             </label>
             <input
+              name="staffEmail"
               type="email"
               className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               value={form.staffEmail}
               onChange={(e) => {
                 setF("staffEmail", e.target.value);
                 setFieldErrs((s) => ({ ...s, staffEmail: "" }));
+                setErr("");
               }}
               required
             />
@@ -255,11 +361,13 @@ export default function AdminAccountForm({ open, onClose, onCreated }) {
               Số Điện Thoại
             </label>
             <input
+              name="staffPhone"
               className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               value={form.staffPhone}
               onChange={(e) => {
                 setF("staffPhone", e.target.value);
                 setFieldErrs((s) => ({ ...s, staffPhone: "" }));
+                setErr("");
               }}
             />
             {fieldErrs.staffPhone && (
