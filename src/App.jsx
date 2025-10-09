@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import { homeHeader as HomeHeader, footer as Footer } from "./components/ui";
+import MainLayout from "./layout/MainLayout.jsx";
 import Login from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
 import Menu from "./pages/Menu.jsx";
@@ -12,59 +12,92 @@ import "./App.css";
 
 export default function App() {
   return (
-    <div className="min-h-dvh flex flex-col">
-      <Routes>
-        {/* Route mặc định - chuyển hướng đến trang đăng nhập */}
-        <Route path="/" element={<Login />} />
-        <Route
-          path="/home"
-          element={
-            <>
-              <HomeHeader />
-              <Home />
-              <Footer />
-            </>
-          }
-        />
-        <Route path="/menu" element={<Menu />} />
-        
-        {/* Staff - chỉ STAFF vào */}
-        <Route
-          path="/staff"
-          element={
+    <Routes>
+      {/* Routes without layout */}
+      <Route path="/" element={<Login />} />
+      <Route path="/menu" element={<Menu />} />
+      <Route path="/home" element={<Home />} />
+
+      {/* Protected Routes with MainLayout */}
+      <Route
+        path="/staff"
+        element={
           <ProtectedRoute allowedRoles={["STAFF"]}>
-            <StaffPage />
+            <MainLayout
+              headerProps={{
+                icon: "👥",
+                title: "Trang nhân viên",
+                subtitle: "Quản lý dịch vụ khách hàng",
+                userRole: "staff",
+                userName: "staff",
+              }}
+              showFooter={false}
+            >
+              <StaffPage />
+            </MainLayout>
           </ProtectedRoute>
         }
-        />
+      />
 
-        <Route
-          path="/admin"
-          element={
+      <Route
+        path="/admin"
+        element={
           <ProtectedRoute allowedRoles={["ADMIN"]}>
-            <Admin />
+            <MainLayout
+              headerProps={{
+                icon: "📊",
+                title: "Trang quản trị",
+                subtitle: "Quản lý hệ thống",
+                userRole: "admin",
+                userName: "admin",
+              }}
+              showFooter={false}
+            >
+              <Admin />
+            </MainLayout>
           </ProtectedRoute>
         }
-        />
+      />
 
-        <Route
-          path="/chef"
-          element={
+      <Route
+        path="/chef"
+        element={
           <ProtectedRoute allowedRoles={["CHEF"]}>
-            <Chef />
+            <MainLayout
+              headerProps={{
+                icon: "👨‍🍳",
+                title: "Trang bếp",
+                subtitle: "Quản lý món ăn và đơn hàng",
+                userRole: "chef",
+                userName: "chef",
+              }}
+              showFooter={false}
+            >
+              <Chef />
+            </MainLayout>
           </ProtectedRoute>
         }
-        />
+      />
 
-        <Route
-          path="/manager"
-          element={
+      <Route
+        path="/manager"
+        element={
           <ProtectedRoute allowedRoles={["MANAGER"]}>
-            <Manager />
+            <MainLayout
+              headerProps={{
+                icon: "👔",
+                title: "Trang quản lý",
+                subtitle: "Quản lý nhà hàng",
+                userRole: "manager",
+                userName: "manager",
+              }}
+              showFooter={false}
+            >
+              <Manager />
+            </MainLayout>
           </ProtectedRoute>
         }
-        />
-      </Routes>
-    </div>
+      />
+    </Routes>
   );
 }

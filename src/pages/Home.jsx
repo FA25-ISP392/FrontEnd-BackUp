@@ -1,11 +1,57 @@
 import HeroSection from "../components/Home/HeroSection";
 import VisionSection from "../components/Home/VisionSection";
 import MenuSection from "../components/Home/MenuSection";
-import { MapPin, Phone, Mail } from "lucide-react"; // ✅ Thêm import icon
+import { MapPin, Phone, Mail } from "lucide-react";
+import { Link, NavLink } from "react-router-dom";
 
 export default function Home() {
   return (
     <div className="min-h-screen">
+      {/* Home Header */}
+      <header className="w-full bg-white shadow-sm">
+        <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
+          {/* Brand Name */}
+          <Link
+            to="/home"
+            className="text-2xl font-bold text-orange-600"
+            aria-label="Go to home"
+          >
+            Persona Dine
+          </Link>
+
+          {/* Navigation Links */}
+          <nav className="flex items-center gap-8">
+            <NavLink
+              to="/home"
+              className={({ isActive }) =>
+                `text-gray-700 hover:text-orange-600 transition-colors ${
+                  isActive ? "text-orange-600" : ""
+                }`
+              }
+            >
+              Về Chúng Tôi
+            </NavLink>
+            <NavLink
+              to="/reservation"
+              className={({ isActive }) =>
+                `text-gray-700 hover:text-orange-600 transition-colors ${
+                  isActive ? "text-orange-600" : ""
+                }`
+              }
+            >
+              Đặt Bàn
+            </NavLink>
+            <NavLink
+              to="/menu"
+              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full transition-colors"
+            >
+              Thực Đơn
+            </NavLink>
+          </nav>
+        </div>
+      </header>
+
+      {/* Original Home Content */}
       <HeroSection />
       <VisionSection />
       <MenuSection />
@@ -54,7 +100,7 @@ export default function Home() {
                 src={
                   "https://www.google.com/maps?q=" +
                   encodeURIComponent(
-                    "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Việt Nam"
+                    "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Việt Nam",
                   ) +
                   "&output=embed"
                 }

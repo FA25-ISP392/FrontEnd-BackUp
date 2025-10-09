@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import ChefHeader from "../components/Chef/ChefHeader";
 import ChefSidebar from "../components/Chef/ChefSidebar";
 import OrdersManagement from "../components/Chef/OrdersManagement";
 import DishQuantityManagement from "../components/Chef/DishQuantityManagement";
@@ -28,21 +27,21 @@ export default function Chef() {
 
   // Calculate stats
   const pendingOrders = orders.filter(
-    (order) => order.status === "pending"
+    (order) => order.status === "pending",
   ).length;
   const preparingOrders = orders.filter(
-    (order) => order.status === "preparing"
+    (order) => order.status === "preparing",
   ).length;
   const availableDishes = dishes.filter(
-    (dish) => dish.status === "available"
+    (dish) => dish.status === "available",
   ).length;
   const totalRevenue = 1250.5; // Mock total revenue
 
   const updateOrderStatus = (orderId, newStatus) => {
     setOrders((prevOrders) =>
       prevOrders.map((order) =>
-        order.id === orderId ? { ...order, status: newStatus } : order
-      )
+        order.id === orderId ? { ...order, status: newStatus } : order,
+      ),
     );
   };
 
@@ -110,8 +109,6 @@ export default function Chef() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
-      <ChefHeader chefName={chefName} />
-
       <div className="flex">
         <ChefSidebar
           activeSection={activeSection}
