@@ -1,82 +1,110 @@
-import { Link, NavLink } from "react-router-dom";
+import { Bell, Settings, User } from "lucide-react";
+import { useState } from "react";
+import NotificationSidebar from "./NotificationSidebar";
+import SettingsSidebar from "./SettingsSidebar";
+import UserModal from "./UserModal";
 
-export default function Header() {
+export default function Header({
+  icon = "📊",
+  title = "Trang quản trị",
+  subtitle = "Quản lý hệ thống",
+  userRole = "admin",
+  userName = "admin",
+  onNotificationClick,
+  onSettingsClick,
+  onUserClick,
+}) {
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+
+  const handleNotificationClick = () => {
+    setIsNotificationOpen(true);
+    onNotificationClick?.();
+  };
+
+  const handleSettingsClick = () => {
+    setIsSettingsOpen(true);
+    onSettingsClick?.();
+  };
+
+  const handleUserClick = () => {
+    setIsUserModalOpen(true);
+    onUserClick?.();
+  };
   return (
-    <header className="w-full border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
-        <Link
-          to="/"
-          className="flex items-center gap-2"
-          aria-label="Go to home"
-        >
-          <span className="inline-block h-8 w-8 rounded bg-blue-600 text-white grid place-items-center font-bold">
-            R
-          </span>
-          <span className="text-lg font-semibold">Restaurant</span>
-        </Link>
-        <nav className="flex items-center gap-1">
-          <NavLink
-            to="/"
-            className={({ isActive }) =>
-              `px-3 py-2 rounded hover:bg-neutral-100 transition ${
-                isActive ? "text-blue-600" : "text-neutral-700"
-              }`
-            }
+    <header className="w-full bg-white border-b border-gray-200">
+      <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
+        {/* Left Section - Branding and Page Information */}
+        <div className="flex items-center gap-4">
+          {/* Icon */}
+          <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
+            <span className="text-white text-xl">{icon}</span>
+          </div>
+
+          {/* Title and Subtitle */}
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+            <p className="text-sm text-gray-500">{subtitle}</p>
+          </div>
+        </div>
+
+        {/* Right Section - User Controls */}
+        <div className="flex items-center gap-4">
+          {/* Notification Icon */}
+          <button
+            onClick={handleNotificationClick}
+            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors relative"
+            aria-label="Notifications"
           >
-            Home
-          </NavLink>
-          <NavLink
-            to="/menu"
-            className={({ isActive }) =>
-              `px-3 py-2 rounded hover:bg-neutral-100 transition ${
-                isActive ? "text-blue-600" : "text-neutral-700"
-              }`
-            }
+            <Bell className="w-5 h-5" />
+            {/* Notification badge */}
+            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+          </button>
+
+          {/* Settings Icon */}
+          <button
+            onClick={handleSettingsClick}
+            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Settings"
           >
-            Menu
-          </NavLink>
-          <NavLink
-            to="/staff"
-            className={({ isActive }) =>
-              `px-3 py-2 rounded hover:bg-neutral-100 transition ${
-                isActive ? "text-blue-600" : "text-neutral-700"
-              }`
-            }
+            <Settings className="w-5 h-5" />
+          </button>
+
+          {/* User Avatar and Info */}
+          <button
+            onClick={handleUserClick}
+            className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            Staff
-          </NavLink>
-          <NavLink
-            to="/admin"
-            className={({ isActive }) =>
-              `px-3 py-2 rounded hover:bg-neutral-100 transition ${
-                isActive ? "text-blue-600" : "text-neutral-700"
-              }`
-            }
-          >
-            Admin
-          </NavLink>
-          <NavLink
-            to="/manager"
-            className={({ isActive }) =>
-              `px-3 py-2 rounded hover:bg-neutral-100 transition ${
-                isActive ? "text-blue-600" : "text-neutral-700"
-              }`
-            }
-          >
-            Manager
-          </NavLink>
-          <NavLink
-            to="/chef"
-            className={({ isActive }) =>
-              `px-3 py-2 rounded hover:bg-neutral-100 transition ${
-                isActive ? "text-blue-600" : "text-neutral-700"
-              }`
-            }
-          >
-            Chef
-          </NavLink>
-        </nav>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center">
+              <span className="text-white text-sm font-semibold">
+                {userName.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <span className="text-gray-700 font-medium">{userRole}</span>
+          </button>
+        </div>
       </div>
+
+      {/* Notification Sidebar */}
+      <NotificationSidebar
+        isOpen={isNotificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
+      />
+
+      {/* Settings Sidebar */}
+      <SettingsSidebar
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
+
+      {/* User Modal */}
+      <UserModal
+        isOpen={isUserModalOpen}
+        onClose={() => setIsUserModalOpen(false)}
+        userRole={userRole}
+        userName={userName}
+      />
     </header>
   );
 }

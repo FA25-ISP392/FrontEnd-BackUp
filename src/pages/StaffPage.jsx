@@ -14,7 +14,6 @@ import {
   Timer,
   DollarSign,
 } from "lucide-react";
-import StaffHeader from "../components/Staff/StaffHeader";
 import StaffSidebar from "../components/Staff/StaffSidebar";
 
 import { getCurrentUser } from "../lib/auth";
@@ -293,20 +292,18 @@ export default function StaffPage() {
 
   const totalRevenue = tables.reduce(
     (sum, table) => sum + table.totalAmount,
-    0
+    0,
   );
   const occupiedTables = tables.filter(
-    (table) => table.status === "occupied"
+    (table) => table.status === "occupied",
   ).length;
   const availableTables = tables.filter(
-    (table) => table.status === "available"
+    (table) => table.status === "available",
   ).length;
   const callStaffCount = tables.filter((table) => table.callStaff).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-green-50 to-emerald-50">
-      <StaffHeader staffName={staffName} />
-
       <div className="flex">
         <StaffSidebar
           activeSection={activeSection}
@@ -391,7 +388,7 @@ export default function StaffPage() {
                       <div className="text-center">
                         <div
                           className={`w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center text-white font-bold text-lg ${getTableStatusColor(
-                            table.status
+                            table.status,
                           )}`}
                         >
                           {table.number}
@@ -445,7 +442,7 @@ export default function StaffPage() {
                       <div className="flex items-center gap-3">
                         <span
                           className={`px-2 py-1 rounded-full text-xs font-medium ${getOrderStatusColor(
-                            order.status
+                            order.status,
                           )}`}
                         >
                           {getOrderStatusText(order.status)}
@@ -456,7 +453,7 @@ export default function StaffPage() {
                         <button
                           onClick={() =>
                             setSelectedTable(
-                              tables.find((t) => t.number === order.table)
+                              tables.find((t) => t.number === order.table),
                             )
                           }
                           className="text-blue-600 hover:text-blue-800"
@@ -669,7 +666,7 @@ export default function StaffPage() {
                 <div className="flex items-center gap-4 mb-4">
                   <div
                     className={`w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl ${getTableStatusColor(
-                      selectedTable.status
+                      selectedTable.status,
                     )}`}
                   >
                     {selectedTable.number}
@@ -738,7 +735,7 @@ export default function StaffPage() {
                               </span>
                               <span
                                 className={`px-2 py-1 rounded-full text-xs font-medium ${getOrderStatusColor(
-                                  order.status
+                                  order.status,
                                 )}`}
                               >
                                 {getOrderStatusText(order.status)}

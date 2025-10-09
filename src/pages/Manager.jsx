@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import ManagerHeader from "../components/Manager/ManagerHeader";
 import ManagerSidebar from "../components/Manager/ManagerSidebar";
 import StatsCards from "../components/Manager/StatsCards";
 import Charts from "../components/Manager/Charts";
@@ -120,8 +119,8 @@ export default function Manager() {
                 phone: updatedStaff?.staffPhone ?? payload.staffPhone,
                 role: (updatedStaff?.role ?? payload.role).toLowerCase(),
               }
-            : acc
-        )
+            : acc,
+        ),
       );
     } catch (e) {
       alert(e.message || "Cập nhật thất bại.");
@@ -156,7 +155,7 @@ export default function Manager() {
   // Calculate totals
   const totalRevenue = mockRevenueData.reduce(
     (sum, item) => sum + item.revenue,
-    0
+    0,
   );
   const totalAccounts = accounts.length;
   const totalDishes = dishes.length;
@@ -165,8 +164,8 @@ export default function Manager() {
   const updateOrderStatus = (tableId, updatedOrder) => {
     setTables((prevTables) =>
       prevTables.map((table) =>
-        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table
-      )
+        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table,
+      ),
     );
   };
 
@@ -259,8 +258,6 @@ export default function Manager() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
-      <ManagerHeader managerName={managerName} />
-
       <div className="flex">
         <ManagerSidebar
           activeSection={activeSection}

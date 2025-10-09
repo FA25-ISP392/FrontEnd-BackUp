@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import AdminHeader from "../components/Admin/AdminHeader";
 import AdminSidebar from "../components/Admin/AdminSidebar";
 import AdminStatsCards from "../components/Admin/AdminStatsCards";
 import AdminCharts from "../components/Admin/AdminCharts";
@@ -140,8 +139,8 @@ export default function Admin() {
                 phone: updatedStaff?.staffPhone ?? payload.staffPhone,
                 role: (updatedStaff?.role ?? payload.role).toLowerCase(),
               }
-            : acc
-        )
+            : acc,
+        ),
       );
     } catch (e) {
       alert(e.message || "Cập nhật thất bại.");
@@ -176,7 +175,7 @@ export default function Admin() {
   // Calculate totals
   const totalRevenue = mockAdminRevenueData.reduce(
     (sum, item) => sum + item.revenue,
-    0
+    0,
   );
   const totalAccounts = accounts.length;
   const totalDishes = dishes.length;
@@ -185,7 +184,7 @@ export default function Admin() {
   const saveDish = (dishData) => {
     if (dishData.id && dishes.find((dish) => dish.id === dishData.id)) {
       setDishes((prevDishes) =>
-        prevDishes.map((dish) => (dish.id === dishData.id ? dishData : dish))
+        prevDishes.map((dish) => (dish.id === dishData.id ? dishData : dish)),
       );
     } else {
       setDishes((prevDishes) => [...prevDishes, dishData]);
@@ -244,11 +243,6 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-blue-50 to-purple-50">
-      <AdminHeader
-        adminName={adminName}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-      />
-
       <div className="flex">
         <AdminSidebar
           activeSection={activeSection}
