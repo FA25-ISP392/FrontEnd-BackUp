@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus, Edit, Trash2, Users } from "lucide-react";
-import AdminAccountForm from "./AdminAccountForm"; // <- form tạo mới
+import AdminAccountForm from "./AdminAccountForm";
 import { normalizeStaff } from "../../lib/apiStaff";
 
 export default function AdminAccountManagement({
@@ -8,11 +8,10 @@ export default function AdminAccountManagement({
   setIsEditingAccount,
   setEditingItem,
   deleteAccount,
-  setAccounts, // <- NHỚ truyền từ parent xuống
+  setAccounts,
   loading,
-  // deletingIds = new Set(),
+  deletingIds = new Set(),
 }) {
-  // State mở/đóng modal TẠO MỚI (không ảnh hưởng luồng Edit cũ)
   const [openCreate, setOpenCreate] = useState(false);
   const [confirmingId, setConfirmingId] = useState(null);
 
@@ -33,7 +32,6 @@ export default function AdminAccountManagement({
           </div>
         </div>
 
-        {/* Thêm Tài Khoản -> mở modal tạo mới (KHÔNG đụng setIsEditingAccount cũ) */}
         <button
           onClick={() => setOpenCreate(true)}
           className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 font-medium flex items-center gap-2"
@@ -48,9 +46,9 @@ export default function AdminAccountManagement({
           <div className="grid grid-cols-6 gap-4 text-sm font-semibold text-neutral-700">
             <div className="truncate">Tên</div>
             <div className="truncate">Số Điện Thoại</div>
+            <div className="truncate">Ngày sinh</div>
             <div className="truncate">Email</div>
             <div className="truncate">Vai Trò</div>
-            <div className="truncate">Trạng Thái</div>
             <div className="truncate">Hành động</div>
           </div>
         </div>
@@ -80,38 +78,35 @@ export default function AdminAccountManagement({
                   >
                     {account.phone || "-"}
                   </div>
+
+                  <div
+                    className="text-neutral-600 truncate"
+                    title={account.dob || "-"}
+                  >
+                    {account.dob
+                      ? new Date(account.dob).toLocaleDateString("vi-VN")
+                      : "-"}
+                  </div>
+
                   <div
                     className="text-neutral-600 truncate"
                     title={account.email}
                   >
                     {account.email}
                   </div>
+
                   <div
                     className="text-neutral-600 truncate"
                     title={account.role}
                   >
                     {account.role}
                   </div>
-                  <div>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                        account.status === "active"
-                          ? "bg-green-100 text-green-800 border-green-200"
-                          : "bg-red-100 text-red-800 border-red-200"
-                      }`}
-                    >
-                      {account.status === "active"
-                        ? "Hoạt động"
-                        : "Không hoạt động"}
-                    </span>
-                  </div>
 
-                  {/* Hành động: Edit (giữ nguyên luồng cũ) + Delete */}
                   <div className="flex gap-2 items-center">
                     <button
                       onClick={() => {
-                        setEditingItem(account); // chọn item để edit
-                        setIsEditingAccount(true); // mở modal edit của bạn (nếu có)
+                        setEditingItem(account);
+                        setIsEditingAccount(true);
                       }}
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
                     >
@@ -119,18 +114,27 @@ export default function AdminAccountManagement({
                     </button>
 
                     <button
+                      disabled={deletingIds.has(Number(account.id))}
                       onClick={() => {
                         if (confirmingId === account.id) {
-                          deleteAccount(account.id); // gọi API xoá
+                          deleteAccount(account.id);
                           setConfirmingId(null);
                         } else {
-                          setConfirmingId(account.id); // lần đầu bấm thì hiện confirm
+                          setConfirmingId(account.id);
                         }
                       }}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                      className={`p-2 rounded-lg transition ${
+                        deletingIds.has(Number(account.id))
+                          ? "text-neutral-400 cursor-not-allowed"
+                          : "text-red-600 hover:bg-red-50"
+                      }`}
                     >
                       {confirmingId === account.id ? (
-                        "Xác nhận?"
+                        deletingIds.has(Number(account.id)) ? (
+                          "Đang xoá..."
+                        ) : (
+                          "Xác nhận?"
+                        )
                       ) : (
                         <Trash2 className="h-4 w-4" />
                       )}
@@ -152,7 +156,6 @@ export default function AdminAccountManagement({
         </div>
       </div>
 
-      {/* Modal tạo mới (Add) */}
       {openCreate && (
         <AdminAccountForm
           open={openCreate}

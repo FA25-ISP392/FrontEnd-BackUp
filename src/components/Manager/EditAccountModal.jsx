@@ -7,11 +7,12 @@ export default function AdminEditAccountModal({
   editingItem,
   setEditingItem,
   saveAccount,
+  accounts = [],
 }) {
   if (!isEditingAccount) return null;
 
   const [saving, setSaving] = useState(false);
-  const [role, setRole] = useState("staff"); // state local
+  const [role, setRole] = useState("staff");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPwd, setShowPwd] = useState(false);
@@ -19,7 +20,6 @@ export default function AdminEditAccountModal({
   const [err, setErr] = useState("");
   const [fieldErrs, setFieldErrs] = useState({});
 
-  // đồng bộ khi mở modal
   useEffect(() => {
     setRole((editingItem?.role || "staff").toLowerCase());
     setPassword("");
@@ -27,97 +27,173 @@ export default function AdminEditAccountModal({
     setErr("");
   }, [editingItem]);
 
-  const ROLES = ["MANAGER", "CHEF", "STAFF"];
-  function validateForm({ name, email, phone, password, confirm, role }) {
+  function validateForm({ name, email, phone, password, confirm, role, dob }) {
     const errs = {};
     const _name = (name || "").trim();
     const _email = (email || "").trim();
-    const _phone = (phone || "").trim();
-    const _role = String(role || "").toUpperCase();
+    let _phone = (phone || "").trim();
+    const _role = role ? String(role).toUpperCase() : undefined;
+    const _dob = (dob || "").trim();
 
-    if (!_name || _name.length < 2 || _name.length > 30) {
-      errs.name = "Họ Tên từ 2-30 ký tự.";
+    if (_name && (_name.length < 2 || _name.length > 50)) {
+      errs.name = "Họ Tên từ 2–50 ký tự.";
     }
 
-    if (!_email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(_email)) {
-      errs.email = "Email có ký tự không hợp lệ.";
+    if (_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(_email)) {
+      errs.email = "Email không hợp lệ.";
     }
 
     if (_phone) {
-      if (!/^\d+$/.test(_phone)) {
-        errs.phone = "Số Điện Thoại chỉ được chứa số.";
-      } else if (!/^\d{9,11}$/.test(_phone)) {
-        errs.phone = "Số Điện Thoại phải 9–11 chữ số.";
+      _phone = _phone.replace(/\D/g, "");
+      if (!/^0[1-9]\d{8}$/.test(_phone)) {
+        errs.phone =
+          "Số Điện Thoại phải 10 số, bắt đầu bằng 0 và số thứ 2 từ 1–9.";
+      }
+    }
+
+    if (_dob) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(_dob)) {
+        errs.dob = "Ngày sinh phải dạng yyyy-MM-dd.";
       }
     }
 
     if (password || confirm) {
-      if (password.length < 8 || password.length > 30) {
-        errs.confirm = "Mật khẩu từ 8-30 ký tự.";
-      }
-
       if (!password || !confirm) {
         errs.confirm = "Vui lòng nhập đủ 2 ô mật khẩu.";
+      } else if (password.length < 8 || password.length > 30) {
+        errs.confirm = "Mật khẩu từ 8–30 ký tự.";
       } else if (password !== confirm) {
-        errs.confirm = "Mật khẩu nhập lại không trùng hợp.";
+        errs.confirm = "Mật khẩu nhập lại không trùng.";
       }
-    }
-
-    if (!ROLES.includes(_role)) {
-      errs.role = "Vai trò không hợp lệ.";
     }
 
     return {
       errs,
       cleaned: {
-        name: _name,
-        email: _email,
-        phone: _phone,
+        name: _name || undefined,
+        email: _email || undefined,
+        phone: _phone || undefined,
+        dob: _dob || undefined,
         role: _role,
       },
     };
   }
 
+  function normalizePhone(value = "") {
+    return String(value).replace(/\D/g, "");
+  }
+
+  function precheckDuplicate({ email, phone }) {
+    const checkId = editingItem?.id;
+    const errs = {};
+
+    const checkDupEmail = (email || "").trim().toLowerCase();
+    const checkDupPhone = normalizePhone(phone || "");
+
+    for (const check of accounts) {
+      if (check?.id === checkId) continue;
+      const checkEmail = (check?.email || "").trim().toLowerCase();
+      const checkPhone = normalizePhone(check?.phone || "");
+
+      if (checkDupEmail && checkEmail && checkEmail === checkDupEmail) {
+        errs.email = "Email đã tồn tại.";
+      }
+      if (checkDupPhone && checkPhone && checkPhone === checkDupPhone) {
+        errs.phone = "Số điện thoại đã tồn tại.";
+      }
+    }
+    return errs;
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErr("");
+    setFieldErrs({});
 
-    const formData = new FormData(e.target);
-    const name = formData.get("name");
-    const email = formData.get("email");
-    const phone = formData.get("phone");
+    const toDigits = (isDigit) => String(isDigit || "").replace(/\D/g, "");
+    const sameDate = (same1, same2) =>
+      String(same1 || "").slice(0, 10) === String(same2 || "").slice(0, 10);
+    const old = editingItem || {};
+    const staffId = editingItem?.staffId ?? editingItem?.id;
+    if (!staffId) return setErr("Không tìm thấy tài khoản phù hợp.");
 
-    const { errs, cleaned } = validateForm({
-      name,
-      email,
-      phone,
+    const tmpData = new FormData(e.target);
+    const rawData = {
+      name: tmpData.get("name"),
+      email: tmpData.get("email"),
+      phone: tmpData.get("phone"),
+      dob: tmpData.get("dob"),
+      role,
       password,
       confirm,
-      role,
-    });
-
-    if (Object.keys(errs).length) {
-      setFieldErrs(errs);
-      setErr("");
-      return;
-    }
-
-    const accountData = {
-      id: editingItem?.id,
-      name: cleaned.name,
-      email: cleaned.email,
-      phone: cleaned.phone || null,
-      role: cleaned.role,
-      ...(password ? { password } : {}),
     };
+
+    const { errs, cleaned } = validateForm(rawData);
+    if (Object.keys(errs).length) return setFieldErrs(errs);
+
+    const dupChecks = {
+      email:
+        cleaned.email && cleaned.email !== (old.email || "")
+          ? cleaned.email
+          : "",
+      phone:
+        cleaned.phone && toDigits(cleaned.phone) !== toDigits(old.phone || "")
+          ? cleaned.phone
+          : "",
+    };
+
+    const dup = precheckDuplicate(dupChecks);
+    if (Object.keys(dup).length) return setFieldErrs(dup);
+
+    const planUpdate = [
+      {
+        ui: "name",
+        api: "fullName",
+        diff: (value) => value !== (old.name || ""),
+      },
+      {
+        ui: "email",
+        api: "email",
+        diff: (value) => value !== (old.email || ""),
+      },
+      {
+        ui: "phone",
+        api: "phone",
+        xform: toDigits,
+        diff: (value) => toDigits(value) !== toDigits(old.phone || ""),
+      },
+      { ui: "dob", api: "dob", diff: (value) => !sameDate(value, old.dob) },
+      {
+        ui: "role",
+        api: "role",
+        xform: (value) => String(value).toUpperCase(),
+        diff: (value) =>
+          String(value).toUpperCase() !== String(old.role || "").toUpperCase(),
+      },
+      { ui: "password", api: "password", diff: (value) => !!value },
+    ];
+
+    const changesData = planUpdate.reduce(
+      (object, { ui, api, xform, diff }) => {
+        const value = cleaned[ui] ?? (ui === "password" ? password : undefined);
+        if (value === undefined || value === "") return object;
+        const val = xform ? xform(value) : value;
+        if (diff(val)) object[api] = val;
+        return object;
+      },
+      {}
+    );
+
+    if (!Object.keys(changesData).length)
+      return setErr("Không có thay đổi nào.");
 
     try {
       setSaving(true);
-      await saveAccount(accountData);
+      await saveAccount({ staffId, ...changesData });
       setIsEditingAccount(false);
       setEditingItem(null);
-    } catch (err) {
-      setErr(err?.message || "Cập nhật thông tin thất bại.");
+    } catch (ex) {
+      setErr(ex?.message || "Cập nhật thông tin thất bại.");
     } finally {
       setSaving(false);
     }
@@ -154,12 +230,29 @@ export default function AdminEditAccountModal({
               defaultValue={editingItem?.name || ""}
               minLength={2}
               maxLength={30}
-              required
               onChange={() => setFieldErrs((s) => ({ ...s, name: "" }))}
               className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
             {fieldErrs.name && (
               <p className="text-xs text-red-600 mt-1">{fieldErrs.name}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              Ngày sinh
+            </label>
+            <input
+              type="date"
+              name="dob"
+              defaultValue={
+                editingItem?.dob ? String(editingItem.dob).slice(0, 10) : ""
+              }
+              onChange={() => setFieldErrs((s) => ({ ...s, dob: "" }))}
+              className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            />
+            {fieldErrs.dob && (
+              <p className="text-xs text-red-600 mt-1">{fieldErrs.dob}</p>
             )}
           </div>
 
@@ -171,7 +264,6 @@ export default function AdminEditAccountModal({
               type="email"
               name="email"
               defaultValue={editingItem?.email || ""}
-              required
               onChange={() => setFieldErrs((s) => ({ ...s, email: "" }))}
               className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
@@ -268,7 +360,6 @@ export default function AdminEditAccountModal({
               required
               className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             >
-              <option value="admin">Admin</option>
               <option value="manager">Manager</option>
               <option value="chef">Chef</option>
               <option value="staff">Staff</option>

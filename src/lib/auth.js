@@ -1,4 +1,5 @@
 import apiConfig from "../api/apiConfig";
+import { findStaffByUsername } from "./apiStaff";
 
 export const roleRoutes = {
   ADMIN: "/admin",
@@ -87,10 +88,15 @@ export async function apiLogin({ username, password }) {
   const decoded = parseJWT(token);
   const role = getRoleFromToken(decoded) || "STAFF";
 
+  let profile = null;
+  try {
+    profile = await findStaffByUsername(username);
+  } catch {}
+
   return {
     token,
     role,
-    user: { username, authenticated: true, decode: decoded },
+    user: profile ? profile : { username, fullName: username },
   };
 }
 

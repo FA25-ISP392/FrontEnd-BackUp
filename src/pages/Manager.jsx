@@ -11,7 +11,6 @@ import DishesStockVisibility from "../components/Manager/DishesStockVisibility";
 import TableDetailsModal from "../components/Manager/TableDetailsModal";
 import EditAccountModal from "../components/Manager/EditAccountModal";
 import {
-  mockAccounts,
   mockDishes,
   mockTables,
   mockRevenueData,
@@ -19,8 +18,16 @@ import {
 } from "../lib/managerData";
 import { getDishRequests, updateDishRequest } from "../lib/dishRequestsData";
 
-import { updateStaff, deleteStaff, listNonAdmin } from "../lib/apiStaff";
-import { getCurrentUser } from "../lib/auth";
+import {
+  updateStaff,
+  deleteStaff,
+  listNonAdmin,
+  listStaff,
+  normalizeStaff,
+} from "../lib/apiStaff";
+
+import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
+import { findStaffByUsername } from "../lib/apiStaff";
 
 export default function Manager() {
   const [managerName, setManagerName] = useState("");
@@ -38,16 +45,32 @@ export default function Manager() {
   //========================= CRUD USER STAFF ======================//
   //lấy tên để welcome
   useEffect(() => {
-    const u = getCurrentUser();
-    const name =
-      u?.staff_name ||
-      u?.staffName ||
-      u?.fullName ||
-      u?.name ||
-      u?.displayName ||
-      u?.username;
-    setManagerName(name || "Manager");
-  }, []);
+    const loadName = async () => {
+      try {
+        const user = getCurrentUser();
+        let username = user?.username;
+        if (!username) {
+          const token = getToken();
+          const decode = token ? parseJWT(token) : null;
+          username = decode?.username || "";
+        }
+        if (!username) {
+          setManagerName("Admin");
+          return;
+        }
+        const profile = await findStaffByUsername(username);
+        if (profile && profile.name) {
+          setManagerName(profile.name);
+        } else {
+          setManagerName("Admin");
+        }
+      } catch {
+        console.error("Lỗi khi lấy tên admin:", err);
+        setManagerName("Admin");
+      }
+    };
+    loadName();
+  });
 
   //Call API data real
   const [accounts, setAccounts] = useState([]);
@@ -63,17 +86,10 @@ export default function Manager() {
       setLoadingAccounts(true);
       setAccountsError("");
       try {
-        const res = await listNonAdmin();
-        const arr = Array.isArray(res) ? res : res?.item || [];
-        const mapped = arr.map((s) => ({
-          id: s.staffId ?? s.id, //Dùng ID để cập nhật dữ liệu
-          name: s.staffName ?? s.username ?? "",
-          email: s.staffEmail ?? s.email ?? "",
-          phone: s.staffPhone ?? s.phone ?? "",
-          role: (s.role ?? "").toString().toLowerCase(),
-          status: s.status ?? "active",
-        }));
-        if (!cancelled) setAccounts(mapped);
+        const list = await listStaff();
+        if (!cancelled) {
+          setAccounts(list);
+        }
       } catch (e) {
         if (!cancelled)
           setAccountsError(e.message || "Không tải được danh sách nhân viên.");
@@ -88,43 +104,45 @@ export default function Manager() {
   }, [activeSection]);
 
   //Cập nhật nhân sự
-  const saveAccount = async (accountData) => {
-    // console.log("[EDIT FORM] ccountData:", accountData);
+  const updateAccount = async (data) => {
+    const staffId = data?.staffId ?? data?.id;
+    if (!staffId) return;
 
-    if (!accountData?.id) return;
-    //Gửi lại chuẩn API Payload cho BackEnd
-    const payload = {
-      staffName: accountData.name,
-      staffEmail: accountData.email,
-      // thêm password nếu có
-      ...(accountData.password ? { password: accountData.password } : {}),
-      staffPhone: accountData.phone,
-      role: (accountData.role || "").toUpperCase(),
-    };
-
-    console.log("[SAVE] payload:", payload);
+    const payload = [
+      "fullName",
+      "email",
+      "phone",
+      "dob",
+      "role",
+      "password",
+    ].reduce((object, key) => {
+      let value = data[key];
+      if (value === "" || value === undefined || value === null) return object;
+      if (key === "role") value = String(value).toUpperCase();
+      object[key] = value;
+      return object;
+    }, {});
 
     try {
-      const updatedStaff = await updateStaff(accountData.id, payload);
-      //Cập nhật lại list theo call fallback gửi về
-
-      // console.log("[SAVE] response:", updatedStaff);
-
+      const response = await updateStaff(staffId, payload);
+      const updated = normalizeStaff(response?.result ?? response);
       setAccounts((prev) =>
-        prev.map((acc) =>
-          acc.id === accountData.id
-            ? {
-                ...acc,
-                name: updatedStaff?.staffName ?? payload.staffName,
-                email: updatedStaff?.staffEmail ?? payload.staffEmail,
-                phone: updatedStaff?.staffPhone ?? payload.staffPhone,
-                role: (updatedStaff?.role ?? payload.role).toLowerCase(),
-              }
-            : acc
-        )
+        prev.map((arr) => (arr.id === id ? { ...arr, ...updated } : arr))
       );
-    } catch (e) {
-      alert(e.message || "Cập nhật thất bại.");
+    } catch (err) {
+      const data = err?.response?.data || err?.data || {};
+      const list = data?.result || data?.errors || data?.fieldErrors || [];
+      const message =
+        (Array.isArray(list) &&
+          list
+            .map((arrs) => arrs?.defaultMessage || arrs?.message)
+            .filter(Boolean)
+            .join(" | ")) ||
+        data?.message ||
+        err.message ||
+        "Cập nhật thất bại.";
+      alert(message);
+      throw err;
     }
   };
 
@@ -294,7 +312,7 @@ export default function Manager() {
         setIsEditingAccount={setIsEditingAccount}
         editingItem={editingItem}
         setEditingItem={setEditingItem}
-        saveAccount={saveAccount}
+        saveAccount={updateAccount}
       />
     </div>
   );

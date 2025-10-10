@@ -11,9 +11,10 @@ export default function AdminAccountForm({
   const [form, setForm] = useState({
     username: "",
     password: "",
-    staffName: "",
-    staffPhone: "",
-    staffEmail: "",
+    fullName: "",
+    phone: "",
+    email: "",
+    dob: "",
     role: "STAFF",
   });
   const [saving, setSaving] = useState(false);
@@ -22,18 +23,20 @@ export default function AdminAccountForm({
   const [showPassword, setShowPassword] = useState(false);
 
   if (!open) return null;
-  const setF = (k, v) => setForm((s) => ({ ...s, [k]: v }));
+  //Tiện ích giúp cho việc ghi đè các field cần và giữ nguyên các field không chạm vào
+  const setF = (key, value) => setForm((state) => ({ ...state, [key]: value }));
 
   const ROLES = ["ADMIN", "MANAGER", "STAFF", "CHEF"];
-  function validateCreate(f) {
+  function validateCreate(vldCreate) {
     const errs = {};
     const cleaned = {
-      username: (f.username || "").trim(),
-      password: f.password || "",
-      staffName: (f.staffName || "").trim(),
-      staffPhone: (f.staffPhone || "").trim(),
-      staffEmail: (f.staffEmail || "").trim(),
-      role: String(f.role || "").toUpperCase(),
+      username: (vldCreate.username || "").trim(),
+      password: vldCreate.password || "",
+      fullName: (vldCreate.fullName || "").trim(),
+      phone: (vldCreate.phone || "").trim(),
+      email: (vldCreate.email || "").trim(),
+      dob: (vldCreate.dob || "").trim(),
+      role: String(vldCreate.role || "").toUpperCase(),
     };
 
     if (
@@ -41,7 +44,7 @@ export default function AdminAccountForm({
       cleaned.username.length < 3 ||
       cleaned.username.length > 30
     ) {
-      errs.username = "Tên đăng nhập phải từ 3-30 ký tự.";
+      errs.username = "Tên đăng nhập phải từ 3–30 ký tự.";
     }
 
     if (
@@ -53,99 +56,114 @@ export default function AdminAccountForm({
     }
 
     if (
-      !cleaned.staffName ||
-      cleaned.staffName.length < 2 ||
-      cleaned.staffName.length > 30
+      !cleaned.fullName ||
+      cleaned.fullName.length < 2 ||
+      cleaned.fullName.length > 50
     ) {
-      errs.staffName = "Họ Tên phải từ 2–30 ký tự.";
+      errs.fullName = "Họ tên phải từ 2–50 ký tự.";
     }
 
-    if (cleaned.staffPhone) {
-      if (!/^\d+$/.test(cleaned.staffPhone))
-        errs.staffPhone = "Số Điện Thoại chỉ chứa số.";
-      else if (!/^\d{9,11}$/.test(cleaned.staffPhone))
-        errs.staffPhone = "Số Điện Thoại phải 9–11 chữ số.";
+    if (cleaned.phone) {
+      const newPhone = cleaned.phone.replace(/\D/g, "");
+      if (!/^0[1-9]\d{8}$/.test(newPhone)) {
+        errs.phone =
+          "Số điện thoại phải 10 số, bắt đầu bằng 0 và số thứ 2 từ 1–9.";
+      }
+      cleaned.phone = newPhone;
+    } else {
+      delete cleaned.phone;
     }
 
-    if (
-      !cleaned.staffEmail ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleaned.staffEmail)
-    ) {
-      errs.staffEmail = "Email không hợp lệ.";
+    if (cleaned.dob) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(cleaned.dob)) {
+        errs.dob = "Ngày sinh phải dạng yyyy-MM-dd.";
+      }
+    } else {
+      delete cleaned.dob;
+    }
+
+    if (cleaned.email) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleaned.email)) {
+        errs.email = "Email không hợp lệ.";
+      }
+    } else {
+      delete cleaned.email;
     }
 
     if (!ROLES.includes(cleaned.role)) errs.role = "Vai trò không hợp lệ.";
 
-    if (!cleaned.staffPhone) cleaned.staffPhone = null;
-
     return { errs, cleaned };
   }
 
-  function normalizePhone(v = "") {
-    return String(v).replace(/\D/g, "");
+  function normalizePhone(checkPhone = "") {
+    return String(checkPhone).replace(/\D/g, "");
   }
 
-  const { userSet, emailSet, phoneSet } = useMemo(() => {
-    const u = new Set(
+  const { checkUserDup, checkEmailDup, checkPhoneDup } = useMemo(() => {
+    const checkUser = new Set(
       (accounts || [])
-        .map((a) => (a?.username || "").trim().toLowerCase())
+        .map((checkU) => (checkU?.username || "").trim().toLowerCase())
         .filter(Boolean)
     );
-    const e = new Set(
+    const checkEmail = new Set(
       (accounts || [])
-        .map((a) => (a?.email || "").trim().toLowerCase())
+        .map((checkE) => (checkE?.email || "").trim().toLowerCase())
         .filter(Boolean)
     );
-    const p = new Set(
+    const checkPhone = new Set(
       (accounts || [])
-        .map((a) => normalizePhone(a?.phone || ""))
+        .map((checkP) => normalizePhone(checkP?.phone || ""))
         .filter(Boolean)
     );
-    return { userSet: u, emailSet: e, phoneSet: p };
+    return {
+      checkUserDup: checkUser,
+      checkEmailDup: checkEmail,
+      checkPhoneDup: checkPhone,
+    };
   }, [accounts]);
 
-  function precheckDuplicate({ username, staffEmail, staffPhone }) {
-    const fe = {};
-    const u = (username || "").trim().toLowerCase();
-    const e = (staffEmail || "").trim().toLowerCase();
-    const p = normalizePhone(staffPhone || "");
+  function precheckDuplicate({ username, email, phone }) {
+    const tmp = {};
+    const us = (username || "").trim().toLowerCase();
+    const em = (email || "").trim().toLowerCase();
+    const ph = normalizePhone(phone || "");
 
-    if (u && userSet.has(u)) fe.username = "Tên đăng nhập đã tồn tại.";
-    if (e && emailSet.has(e)) fe.staffEmail = "Email đã tồn tại.";
-    if (p && phoneSet.has(p)) fe.staffPhone = "Số Điện Thoại đã tồn tại.";
+    if (us && checkUserDup.has(us)) tmp.username = "Tên đăng nhập đã tồn tại.";
+    if (em && checkEmailDup.has(em)) tmp.email = "Email đã tồn tại.";
+    if (ph && checkPhoneDup.has(ph)) tmp.phone = "Số điện thoại đã tồn tại.";
 
-    return fe;
+    return tmp;
   }
 
-  function focusFirstError(fe) {
-    const firstKey = Object.keys(fe)[0];
-    const sel =
+  function focusFirstError(tmp) {
+    const firstKey = Object.keys(tmp)[0];
+    const choose =
       firstKey === "username"
         ? "input[name='username']"
-        : firstKey === "staffEmail"
-        ? "input[name='staffEmail']"
-        : firstKey === "staffPhone"
-        ? "input[name='staffPhone']"
+        : firstKey === "email"
+        ? "input[name='email']"
+        : firstKey === "phone"
+        ? "input[name='phone']"
         : firstKey === "password"
         ? "input[type='password']"
-        : firstKey === "staffName"
-        ? "input[name='staffName']"
+        : firstKey === "fullName"
+        ? "input[name='fullName']"
         : null;
-    const el = sel && document.querySelector(sel);
-    if (el) el.focus();
+    const result = choose && document.querySelector(choose);
+    if (result) result.focus();
   }
 
-  function showFieldErrors(fe) {
-    setFieldErrs(fe);
+  function showFieldErrors(tmp) {
+    setFieldErrs(tmp);
     setErr("");
-    requestAnimationFrame(() => focusFirstError(fe));
+    requestAnimationFrame(() => focusFirstError(tmp));
   }
 
   function parseBackendError(err) {
-    const status = err?.status || err?.response?.status;
-    const data = err?.data || err?.response?.data || {};
-    const lowMsg = String(data?.message || err?.message || "").toLowerCase();
-    const fe = {};
+    const status = err?.response?.status;
+    const data = err?.response?.data || {};
+    const lowMessage = String(err?.message || "").toLowerCase();
+    const tmp = {};
 
     if (status === 400 || status === 409) {
       const list =
@@ -167,29 +185,36 @@ export default function AdminAccountForm({
             it.reason ||
             data?.message ||
             "Không hợp lệ.";
-          if (field.includes("user")) fe.username = msg;
-          if (field.includes("email")) fe.staffEmail = msg;
-          if (field.includes("phone") || field.includes("tel"))
-            fe.staffPhone = msg;
-          if (field.includes("name")) fe.staffName = msg;
-          if (field.includes("pass")) fe.password = msg;
+          if (field.includes("user")) tmp.username = msg;
+          if (field.includes("email")) tmp.email = msg;
+          if (field.includes("phone") || field.includes("tel")) tmp.phone = msg;
+          if (field.includes("name")) tmp.fullName = msg;
+          if (field.includes("pass")) tmp.password = msg;
         }
       }
 
       const dup = data?.duplicates || {};
-      if (dup.username) fe.username = "Tên đăng nhập đã tồn tại.";
-      if (dup.email) fe.staffEmail = "Email đã tồn tại.";
-      if (dup.phone) fe.staffPhone = "Số Điện Thoại đã tồn tại.";
+      if (dup.username) tmp.username = "Tên đăng nhập đã tồn tại.";
+      if (dup.email) tmp.email = "Email đã tồn tại.";
+      if (dup.phone) tmp.phone = "Số Điện Thoại đã tồn tại.";
 
       const dupRe = /(exist|exists|duplicate|already|unique|trùng)/i;
-      if (!fe.username && /(user(name)?)/i.test(lowMsg) && dupRe.test(lowMsg))
-        fe.username = "Tên đăng nhập đã tồn tại.";
-      if (!fe.staffEmail && /(email)/i.test(lowMsg) && dupRe.test(lowMsg))
-        fe.staffEmail = "Email đã tồn tại.";
-      if (!fe.staffPhone && /(phone|sđt)/i.test(lowMsg) && dupRe.test(lowMsg))
-        fe.staffPhone = "Số Điện Thoại đã tồn tại.";
+      if (
+        !tmp.username &&
+        /(user(name)?)/i.test(lowMessage) &&
+        dupRe.test(lowMessage)
+      )
+        tmp.username = "Tên đăng nhập đã tồn tại.";
+      if (!tmp.email && /(email)/i.test(lowMessage) && dupRe.test(lowMessage))
+        tmp.email = "Email đã tồn tại.";
+      if (
+        !tmp.phone &&
+        /(phone|sđt)/i.test(lowMessage) &&
+        dupRe.test(lowMessage)
+      )
+        tmp.phone = "Số Điện Thoại đã tồn tại.";
 
-      if (!fe.staffEmail) {
+      if (!tmp.email) {
         const deep = JSON.stringify(data).toLowerCase();
         const cause = String(
           data?.cause?.message || data?.rootCause?.message || ""
@@ -198,13 +223,13 @@ export default function AdminAccountForm({
           (deep.includes("email") && dupRe.test(deep)) ||
           (cause.includes("email") && dupRe.test(cause))
         ) {
-          fe.staffEmail = "Email đã tồn tại.";
+          tmp.email = "Email đã tồn tại.";
         }
       }
     }
 
     return {
-      fieldErrors: fe,
+      fieldErrors: tmp,
       message: data?.message || err.message || "Có lỗi xảy ra.",
     };
   }
@@ -214,20 +239,23 @@ export default function AdminAccountForm({
     setErr("");
     setFieldErrs({});
 
-    // 1) Validate
     const { errs, cleaned } = validateCreate(form);
     if (Object.keys(errs).length) return showFieldErrors(errs);
 
-    // 2) Pre-check duplicate FE
+    const payload = Object.fromEntries(
+      Object.entries(cleaned).filter(([_, v]) => v !== "" && v !== null)
+    );
+
     const dupErrs = precheckDuplicate(cleaned);
     if (Object.keys(dupErrs).length) return showFieldErrors(dupErrs);
 
-    // 3) Call API
     try {
       setSaving(true);
-      const created = await createStaff(cleaned);
+
+      const created = await createStaff(payload);
       const id = created?.staffId ?? created?.id;
       const full = id ? await getStaff(id).catch(() => created) : created;
+
       onCreated?.(full);
       onClose?.();
     } catch (err) {
@@ -268,8 +296,6 @@ export default function AdminAccountForm({
                 setFieldErrs((s) => ({ ...s, username: "" }));
                 setErr("");
               }}
-              minLength={3}
-              maxLength={30}
               required
             />
             {fieldErrs.username && (
@@ -290,8 +316,6 @@ export default function AdminAccountForm({
                   setF("password", e.target.value);
                   setFieldErrs((s) => ({ ...s, password: "" }));
                 }}
-                minLength={8}
-                maxLength={30}
                 required
               />
               {fieldErrs.password && (
@@ -319,17 +343,15 @@ export default function AdminAccountForm({
             </label>
             <input
               className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              value={form.staffName}
+              value={form.fullName}
               onChange={(e) => {
-                setF("staffName", e.target.value);
-                setFieldErrs((s) => ({ ...s, staffName: "" }));
+                setF("fullName", e.target.value);
+                setFieldErrs((s) => ({ ...s, fullName: "" }));
               }}
-              minLength={2}
-              maxLength={30}
               required
             />
-            {fieldErrs.staffName && (
-              <p className="text-xs text-red-600 mt-1">{fieldErrs.staffName}</p>
+            {fieldErrs.fullName && (
+              <p className="text-xs text-red-600 mt-1">{fieldErrs.fullName}</p>
             )}
           </div>
 
@@ -338,21 +360,36 @@ export default function AdminAccountForm({
               Email
             </label>
             <input
-              name="staffEmail"
+              name="email"
               type="email"
               className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              value={form.staffEmail}
+              value={form.email}
               onChange={(e) => {
-                setF("staffEmail", e.target.value);
-                setFieldErrs((s) => ({ ...s, staffEmail: "" }));
+                setF("email", e.target.value);
+                setFieldErrs((s) => ({ ...s, email: "" }));
                 setErr("");
               }}
-              required
             />
-            {fieldErrs.staffEmail && (
-              <p className="text-xs text-red-600 mt-1">
-                {fieldErrs.staffEmail}
-              </p>
+            {fieldErrs.email && (
+              <p className="text-xs text-red-600 mt-1">{fieldErrs.email}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              Ngày sinh
+            </label>
+            <input
+              type="date"
+              className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              value={form.dob}
+              onChange={(e) => {
+                setF("dob", e.target.value);
+                setFieldErrs((s) => ({ ...s, dob: "" }));
+              }}
+            />
+            {fieldErrs.dob && (
+              <p className="text-xs text-red-600 mt-1">{fieldErrs.dob}</p>
             )}
           </div>
 
@@ -361,19 +398,17 @@ export default function AdminAccountForm({
               Số Điện Thoại
             </label>
             <input
-              name="staffPhone"
+              name="phone"
               className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              value={form.staffPhone}
+              value={form.phone}
               onChange={(e) => {
-                setF("staffPhone", e.target.value);
-                setFieldErrs((s) => ({ ...s, staffPhone: "" }));
+                setF("phone", e.target.value);
+                setFieldErrs((s) => ({ ...s, phone: "" }));
                 setErr("");
               }}
             />
-            {fieldErrs.staffPhone && (
-              <p className="text-xs text-red-600 mt-1">
-                {fieldErrs.staffPhone}
-              </p>
+            {fieldErrs.phone && (
+              <p className="text-xs text-red-600 mt-1">{fieldErrs.phone}</p>
             )}
           </div>
 

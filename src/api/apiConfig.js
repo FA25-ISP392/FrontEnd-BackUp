@@ -1,8 +1,8 @@
 import axios from "axios";
 import { getToken } from "../lib/auth";
 
-const USE_PROXY = true;
-const BASE_HOT = "https://backend2-production-00a1.up.railway.app";
+const USE_PROXY = import.meta.env.DEV;
+const BASE_HOT = "https://api-monngon88.purintech.id.vn";
 const API_PREFIX = "/isp392";
 const PROXY_PREFIX = "/api";
 
