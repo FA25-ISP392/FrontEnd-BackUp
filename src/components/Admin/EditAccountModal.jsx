@@ -84,21 +84,21 @@ export default function AdminEditAccountModal({
   }
 
   function precheckDuplicate({ email, phone }) {
-    const meId = editingItem?.id;
+    const checkId = editingItem?.id;
     const errs = {};
 
-    const targetEmail = (email || "").trim().toLowerCase();
-    const targetPhone = normalizePhone(phone || "");
+    const checkDupEmail = (email || "").trim().toLowerCase();
+    const checkDupPhone = normalizePhone(phone || "");
 
-    for (const acc of accounts) {
-      if (acc?.id === meId) continue;
-      const accEmail = (acc?.email || "").trim().toLowerCase();
-      const accPhone = normalizePhone(acc?.phone || "");
+    for (const check of accounts) {
+      if (check?.id === checkId) continue;
+      const checkEmail = (check?.email || "").trim().toLowerCase();
+      const checkPhone = normalizePhone(check?.phone || "");
 
-      if (targetEmail && accEmail && accEmail === targetEmail) {
+      if (checkDupEmail && checkEmail && checkEmail === checkDupEmail) {
         errs.email = "Email đã tồn tại.";
       }
-      if (targetPhone && accPhone && accPhone === targetPhone) {
+      if (checkDupPhone && checkPhone && checkPhone === checkDupPhone) {
         errs.phone = "Số điện thoại đã tồn tại.";
       }
     }
@@ -198,10 +198,10 @@ export default function AdminEditAccountModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-        <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-6 text-white rounded-t-2xl">
+      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-4 text-white rounded-t-xl">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold">
+            <h2 className="text-lg font-bold">
               {editingItem ? "Chỉnh Sửa Tài Khoản" : "Thêm Tài Khoản Mới"}
             </h2>
             <button
@@ -209,145 +209,147 @@ export default function AdminEditAccountModal({
                 setIsEditingAccount(false);
                 setEditingItem(null);
               }}
-              className="p-2 hover:bg-white/20 rounded-lg transition"
+              className="p-1.5 hover:bg-white/20 rounded-lg transition"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              Tên
-            </label>
-            <input
-              type="text"
-              name="name"
-              defaultValue={editingItem?.name || ""}
-              minLength={2}
-              maxLength={50}
-              onChange={() => setFieldErrs((s) => ({ ...s, name: "" }))}
-              className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-            {fieldErrs.name && (
-              <p className="text-xs text-red-600 mt-1">{fieldErrs.name}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              Ngày sinh
-            </label>
-            <input
-              type="date"
-              name="dob"
-              defaultValue={
-                editingItem?.dob ? String(editingItem.dob).slice(0, 10) : ""
-              }
-              onChange={() => setFieldErrs((s) => ({ ...s, dob: "" }))}
-              className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-            {fieldErrs.dob && (
-              <p className="text-xs text-red-600 mt-1">{fieldErrs.dob}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              defaultValue={editingItem?.email || ""}
-              onChange={() => setFieldErrs((s) => ({ ...s, email: "" }))}
-              className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-            {fieldErrs.email && (
-              <p className="text-xs text-red-600 mt-1">{fieldErrs.email}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              Mật khẩu mới{" "}
-            </label>
-            <div className="relative">
+        <form onSubmit={handleSubmit} noValidate className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                Tên
+              </label>
               <input
-                type={showPwd ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 pr-10 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                type="text"
+                name="name"
+                defaultValue={editingItem?.name || ""}
+                minLength={2}
+                maxLength={50}
+                onChange={() => setFieldErrs((s) => ({ ...s, name: "" }))}
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
               />
+              {fieldErrs.name && (
+                <p className="text-xs text-red-600 mt-1">{fieldErrs.name}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                Ngày sinh
+              </label>
+              <input
+                type="date"
+                name="dob"
+                defaultValue={
+                  editingItem?.dob ? String(editingItem.dob).slice(0, 10) : ""
+                }
+                onChange={() => setFieldErrs((s) => ({ ...s, dob: "" }))}
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+              />
+              {fieldErrs.dob && (
+                <p className="text-xs text-red-600 mt-1">{fieldErrs.dob}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                name="email"
+                defaultValue={editingItem?.email || ""}
+                onChange={() => setFieldErrs((s) => ({ ...s, email: "" }))}
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+              />
+              {fieldErrs.email && (
+                <p className="text-xs text-red-600 mt-1">{fieldErrs.email}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                Số Điện Thoại
+              </label>
+              <input
+                type="text"
+                name="phone"
+                defaultValue={editingItem?.phone || ""}
+                onChange={() => setFieldErrs((s) => ({ ...s, phone: "" }))}
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+              />
+              {fieldErrs.phone && (
+                <p className="text-xs text-red-600 mt-1">{fieldErrs.phone}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                Mật khẩu mới
+              </label>
+              <div className="relative">
+                <input
+                  type={showPwd ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-3 py-2 pr-8 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPwd((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-500"
+                >
+                  {showPwd ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
               {fieldErrs.password && (
                 <p className="text-xs text-red-600 mt-1">
                   {fieldErrs.password}
                 </p>
               )}
-              <button
-                type="button"
-                onClick={() => setShowPwd((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500"
-              >
-                {showPwd ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-              </button>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              Nhập lại mật khẩu
-            </label>
-            <div className="relative">
-              <input
-                type={showConfirm ? "text" : "password"}
-                value={confirm}
-                onChange={(e) => {
-                  setConfirm(e.target.value);
-                  setFieldErrs((s) => ({ ...s, confirm: "" })); // clear lỗi khi gõ
-                }}
-                className="w-full px-4 py-3 pr-10 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
+                Nhập lại mật khẩu
+              </label>
+              <div className="relative">
+                <input
+                  type={showConfirm ? "text" : "password"}
+                  value={confirm}
+                  onChange={(e) => {
+                    setConfirm(e.target.value);
+                    setFieldErrs((s) => ({ ...s, confirm: "" }));
+                  }}
+                  className="w-full px-3 py-2 pr-8 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-500"
+                >
+                  {showConfirm ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
               {fieldErrs.confirm && (
                 <p className="text-xs text-red-600 mt-1">{fieldErrs.confirm}</p>
               )}
-              <button
-                type="button"
-                onClick={() => setShowConfirm((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500"
-              >
-                {showConfirm ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-              </button>
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
-              Số Điện Thoại
-            </label>
-            <input
-              type="text"
-              name="phone"
-              defaultValue={editingItem?.phone || ""}
-              onChange={() => setFieldErrs((s) => ({ ...s, phone: "" }))}
-              className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-            {fieldErrs.phone && (
-              <p className="text-xs text-red-600 mt-1">{fieldErrs.phone}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-neutral-700 mb-1">
               Vai Trò
             </label>
             <select
@@ -355,7 +357,7 @@ export default function AdminEditAccountModal({
               value={role}
               onChange={(e) => setRole(e.target.value)}
               required
-              className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
             >
               <option value="admin">Admin</option>
               <option value="manager">Manager</option>
@@ -364,23 +366,23 @@ export default function AdminEditAccountModal({
             </select>
           </div>
 
-          {err && <p className="text-sm text-red-600">{err}</p>}
+          {err && <p className="text-sm text-red-600 mb-3">{err}</p>}
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-2">
             <button
               type="button"
               onClick={() => {
                 setIsEditingAccount(false);
                 setEditingItem(null);
               }}
-              className="flex-1 px-4 py-3 border border-neutral-300 text-neutral-700 rounded-xl hover:bg-neutral-50 transition-all font-medium"
+              className="flex-1 px-3 py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-all font-medium text-sm"
             >
               Hủy
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-3 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all font-medium flex items-center justify-center gap-2"
+              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-medium flex items-center justify-center gap-2 text-sm"
             >
               <Save className="h-4 w-4" />
               {saving ? "Đang lưu..." : "Lưu"}

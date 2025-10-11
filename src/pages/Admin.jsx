@@ -66,7 +66,7 @@ export default function Admin() {
           setAdminName("Admin");
         }
       } catch (err) {
-        console.error("Lỗi khi lấy tên admin:", err);
+        console.error("Lỗi khi lấy tên người dùng:", err);
         setAdminName("Admin");
       }
     };
@@ -155,44 +155,42 @@ export default function Admin() {
   const deleteAccount = async (staffId) => {
     if (!staffId) return;
 
-    const target = accounts.find(
-      (a) =>
-        Number(a.id) === Number(staffIdFromRow) ||
-        Number(a.staffId) === Number(staffIdFromRow)
+    const targetDelete = accounts.find(
+      (arr) => Number(arr.staffId) === Number(staffId)
     );
-    if (!target) return;
+    if (!targetDelete) return;
 
-    const realStaffId = Number(target.staffId ?? target.id);
-    if (!realStaffId) {
-      alert("Không xác định được staffId để xoá.");
+    const findStaffId = Number(targetDelete.staffId);
+    if (!findStaffId) {
+      alert("Không tìm thấy StaffId để thực hiện tác vụ.");
       return;
     }
 
-    const prev = accounts; // snapshot
-    setDeletingIds((s) => new Set(s).add(realStaffId));
-    setAccounts((curr) =>
-      curr.filter((acc) => Number(acc.id) !== Number(realStaffId))
+    const prev = accounts;
+    setDeletingIds((set) => new Set(set).add(findStaffId));
+    setAccounts((cur) =>
+      cur.filter((acc) => Number(acc.id) !== Number(findStaffId))
     );
     try {
-      await deleteStaff(realStaffId);
-    } catch (e) {
+      await deleteStaff(findStaffId);
+    } catch (err) {
       setAccounts(prev);
-      const data = e?.response?.data || e?.data || {};
+      const data = err?.response?.data || err?.data || {};
       const list = data?.result || data?.errors || data?.fieldErrors || [];
-      const msg =
+      const message =
         (Array.isArray(list) &&
           list
             .map((it) => it?.defaultMessage || it?.message)
             .filter(Boolean)
             .join(" | ")) ||
         data?.message ||
-        e?.message ||
+        err?.message ||
         "Xoá thất bại.";
-      alert(msg);
+      alert(message);
     } finally {
-      setDeletingIds((s) => {
-        const next = new Set(s);
-        next.delete(realStaffId);
+      setDeletingIds((set) => {
+        const next = new Set(set);
+        next.delete(findStaffId);
         return next;
       });
     }

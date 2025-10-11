@@ -9,7 +9,6 @@ import DishRequestsManagement from "../components/Manager/DishRequestsManagement
 import ManagerInvoicesToday from "../components/Manager/InvoicesToday";
 import DishesStockVisibility from "../components/Manager/DishesStockVisibility";
 import TableDetailsModal from "../components/Manager/TableDetailsModal";
-import EditAccountModal from "../components/Manager/EditAccountModal";
 import {
   mockDishes,
   mockTables,
@@ -28,6 +27,7 @@ import {
 
 import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
 import { findStaffByUsername } from "../lib/apiStaff";
+import ManagerEditAccountModal from "../components/Manager/EditAccountModal";
 
 export default function Manager() {
   const [managerName, setManagerName] = useState("");
@@ -64,8 +64,8 @@ export default function Manager() {
         } else {
           setManagerName("Admin");
         }
-      } catch {
-        console.error("Lỗi khi lấy tên admin:", err);
+      } catch (err) {
+        console.error("Lỗi khi lấy tên người dùng:", err);
         setManagerName("Admin");
       }
     };
@@ -127,7 +127,7 @@ export default function Manager() {
       const response = await updateStaff(staffId, payload);
       const updated = normalizeStaff(response?.result ?? response);
       setAccounts((prev) =>
-        prev.map((arr) => (arr.id === id ? { ...arr, ...updated } : arr))
+        prev.map((arr) => (arr.id === staffId ? { ...arr, ...updated } : arr))
       );
     } catch (err) {
       const data = err?.response?.data || err?.data || {};
@@ -146,25 +146,46 @@ export default function Manager() {
     }
   };
 
-  const deleteAccount = async (accountId) => {
-    if (!accountId) return; // xác nhận đã làm ở UI con rồi
+  const deleteAccount = async (staffId) => {
+    if (!staffId) return;
 
-    // Optimistic UI: xoá tạm trên UI, nếu lỗi thì rollback
+    const targetDelete = accounts.find(
+      (arr) => Number(arr.staffId) === Number(staffId)
+    );
+    if (!targetDelete) return;
+
+    const findStaffId = Number(targetDelete.staffId);
+    if (!findStaffId) {
+      alert("Không tìm thấy StaffId để thực hiện tác vụ.");
+      return;
+    }
+
     const prev = accounts;
-    setDeletingIds((s) => new Set(s).add(accountId));
-    setAccounts((curr) => curr.filter((acc) => acc.id !== accountId));
+    setDeletingIds((set) => new Set(set).add(findStaffId));
+    setAccounts((cur) =>
+      cur.filter((acc) => Number(acc.id) !== Number(findStaffId))
+    );
 
     try {
-      await deleteStaff(accountId); // gọi API DELETE /staff/{id}
-      // nếu BE trả 204 thì handle() đã trả null — không cần làm gì thêm
-    } catch (e) {
-      // rollback nếu thất bại
+      await deleteStaff(findStaffId);
+    } catch (err) {
       setAccounts(prev);
-      alert(e.message || "Xoá thất bại.");
+      const data = err?.response?.data || err?.data || {};
+      const list = data?.result || data?.errors || data?.fieldErrors || [];
+      const message =
+        (Array.isArray(list) &&
+          list
+            .map((it) => it?.defaultMessage || it?.message)
+            .filter(Boolean)
+            .join(" | ")) ||
+        data?.message ||
+        err?.message ||
+        "Xóa thất bại.";
+      alert(message);
     } finally {
-      setDeletingIds((s) => {
-        const next = new Set(s);
-        next.delete(accountId);
+      setDeletingIds((set) => {
+        const next = new Set(set);
+        next.delete(findStaffId);
         return next;
       });
     }
@@ -235,6 +256,7 @@ export default function Manager() {
             setEditingItem={setEditingItem}
             deleteAccount={deleteAccount}
             loading={loadingAccounts}
+            deletingIds={deletingIds}
           />
         );
       case "dishes":
@@ -307,12 +329,14 @@ export default function Manager() {
         setSelectedTable={setSelectedTable}
         updateOrderStatus={updateOrderStatus}
       />
-      <EditAccountModal
+      <ManagerEditAccountModal
         isEditingAccount={isEditingAccount}
         setIsEditingAccount={setIsEditingAccount}
         editingItem={editingItem}
         setEditingItem={setEditingItem}
         saveAccount={updateAccount}
+        setDeletingIds={deletingIds}
+        accounts={accounts}
       />
     </div>
   );
