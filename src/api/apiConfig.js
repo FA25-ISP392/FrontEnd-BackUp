@@ -3,7 +3,7 @@ import { getToken } from "../lib/auth";
 
 const USE_PROXY = import.meta.env.DEV;
 // const BASE_HOT = "https://api-monngon88.purintech.id.vn";
-const BASE_HOT = "https://backend2-production-00a1.up.railway.app/";
+const BASE_HOT = "https://backend2-production-00a1.up.railway.app";
 const API_PREFIX = "/isp392";
 const PROXY_PREFIX = "/api";
 
@@ -17,7 +17,6 @@ const apiConfig = axios.create({
   },
 });
 
-//Gắn Bearer token
 apiConfig.interceptors.request.use((config) => {
   const isAuthLogin = (config.url || "").includes("/auth/token");
   if (!isAuthLogin) {
@@ -27,9 +26,7 @@ apiConfig.interceptors.request.use((config) => {
   return config;
 });
 
-//Chuẩn hóa respone
 apiConfig.interceptors.response.use(
-  // ---- SUCCESS HANDLER ----
   (res) => {
     if (res.status === 204) return null;
     const d = res.data ?? {};
@@ -42,7 +39,6 @@ apiConfig.interceptors.response.use(
     throw new Error(d?.message || "Yêu cầu thất bại.");
   },
 
-  // ---- ERROR HANDLER ----
   (error) => {
     const data = error?.response?.data;
     const errorList = data?.result || data?.errors || [];
