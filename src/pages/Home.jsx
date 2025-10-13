@@ -4,9 +4,10 @@ import MenuSection from "../components/Home/MenuSection";
 import LoginForm from "../components/Home/LoginForm";
 import RegisterForm from "../components/Home/RegisterForm";
 import BookingForm from "../components/Home/BookingForm";
+import UserAccountDropdown from "../components/Home/UserAccountDropdown";
 import { MapPin, Phone, Mail, X, Star } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Home() {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -15,6 +16,29 @@ export default function Home() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isLoginForm, setIsLoginForm] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userInfo, setUserInfo] = useState(null);
+
+  // Check if user is logged in on component mount
+  useEffect(() => {
+    const checkAuthStatus = () => {
+      const token = localStorage.getItem("token");
+      const user = localStorage.getItem("user");
+      
+      if (token && user) {
+        try {
+          const parsedUser = JSON.parse(user);
+          setIsLoggedIn(true);
+          setUserInfo(parsedUser);
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+        }
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
 
   const handleBookingSubmit = (formData) => {
     console.log("Booking submitted:", formData);
@@ -25,8 +49,23 @@ export default function Home() {
   const handleLoginSubmit = (formData) => {
     console.log("Login submitted:", formData);
     alert("Đăng nhập thành công!");
+    
+    // Mock user data for demo
+    const mockUser = {
+      username: formData.username,
+      fullName: formData.username,
+      email: `${formData.username}@example.com`,
+      phone: "",
+      role: "customer"
+    };
+    
     setIsLoggedIn(true);
+    setUserInfo(mockUser);
     setIsLoginOpen(false);
+    
+    // Save to localStorage for persistence
+    localStorage.setItem("token", "mock-token-" + Date.now());
+    localStorage.setItem("user", JSON.stringify(mockUser));
   };
 
   const handleRegisterSubmit = (formData) => {
@@ -49,6 +88,14 @@ export default function Home() {
     setIsBookingOpen(false);
     setIsLoginOpen(true);
     setIsLoginForm(true);
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUserInfo(null);
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    alert("Đăng xuất thành công!");
   };
 
   // Mock menu data for preview
@@ -87,14 +134,7 @@ export default function Home() {
             >
               Về Chúng Tôi
             </button>
-            {isLoggedIn ? (
-              <button
-                onClick={() => setIsLoggedIn(false)}
-                className="text-gray-700 hover:text-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-md px-3 py-1 rounded-lg"
-              >
-                Đăng Xuất
-              </button>
-            ) : (
+            {!isLoggedIn && (
               <button
                 onClick={() => setIsLoginOpen(true)}
                 className="text-gray-700 hover:text-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-md px-3 py-1 rounded-lg"
@@ -114,6 +154,13 @@ export default function Home() {
             >
               Thực Đơn
             </button>
+            
+            {/* User Account Dropdown - only show when logged in */}
+            <UserAccountDropdown
+              isLoggedIn={isLoggedIn}
+              userInfo={userInfo}
+              onLogout={handleLogout}
+            />
           </nav>
         </div>
       </header>
