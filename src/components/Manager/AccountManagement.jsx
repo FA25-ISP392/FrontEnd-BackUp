@@ -1,6 +1,7 @@
 import { Plus, Edit, Trash2, Users } from "lucide-react";
 import { useState } from "react";
 import ManagerAccountForm from "./ManagerAccountForm";
+import { normalizeStaff } from "../../lib/apiStaff";
 
 export default function AccountManagement({
   accounts,
@@ -9,30 +10,53 @@ export default function AccountManagement({
   deleteAccount,
   setAccounts,
   loading,
+  deletingIds = new Set(),
+  page = 1,
+  pageInfo = { page: 1, size: 6, totalPages: 1, totalElements: 0 },
+  onPageChange = () => {},
+  currentUser = {},
 }) {
-  // State mở/đóng modal TẠO MỚI (không ảnh hưởng luồng Edit cũ)
   const [openCreate, setOpenCreate] = useState(false);
   const [confirmingId, setConfirmingId] = useState(null);
+  const { totalPages, totalElements, size: pageSize } = pageInfo;
+
+  const buildPages = () => {
+    const maxLength = 5;
+    if (totalPages <= maxLength) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const left = Math.max(1, page - 2);
+    const right = Math.min(totalPages, page + 2);
+    const pages = [];
+    if (left > 1) pages.push(1, "...");
+    for (let p = left; p <= right; p++) pages.push(p);
+    if (right < totalPages) pages.push("...", totalPages);
+    return pages;
+  };
+
+  const from = totalElements === 0 ? 0 : (page - 1) * pageSize + 1;
+  const to = Math.min(page * pageSize, totalElements);
 
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
             <Users className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+            <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Quản Lý Tài Khoản
             </h3>
             <p className="text-sm text-neutral-600">
-              Quản lý thông tin tài khoản nhân viên
+              Quản lý tài khoản hệ thống
             </p>
           </div>
         </div>
+
         <button
           onClick={() => setOpenCreate(true)}
-          className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 font-medium flex items-center gap-2"
+          className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 font-medium flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
           Thêm Tài Khoản
@@ -44,128 +68,198 @@ export default function AccountManagement({
           <div className="grid grid-cols-6 gap-4 text-sm font-semibold text-neutral-700">
             <div className="truncate">Tên</div>
             <div className="truncate">Số Điện Thoại</div>
+            <div className="truncate">Ngày sinh</div>
             <div className="truncate">Email</div>
             <div className="truncate">Vai Trò</div>
-            <div className="truncate">Trạng Thái</div>
             <div className="truncate">Hành động</div>
           </div>
         </div>
+
         <div className="divide-y divide-neutral-200">
           {loading ? (
             <div className="p-6 text-neutral-500">Đang tải danh sách...</div>
           ) : accounts.length === 0 ? (
             <div className="p-6 text-neutral-500">Chưa có nhân viên nào.</div>
           ) : (
-            accounts.map((account) => (
-              <div
-                key={account.id}
-                className="px-6 py-4 hover:bg-neutral-50 transition-colors"
-              >
-                <div className="grid grid-cols-6 gap-4 items-center">
-                  <div
-                    className="font-medium text-neutral-900 truncate"
-                    title={account.name}
-                  >
-                    {account.name}
-                  </div>
-                  <div
-                    className="text-neutral-600 truncate"
-                    title={account.phone || "-"}
-                  >
-                    {account.phone || "-"}
-                  </div>
-                  <div
-                    className="text-neutral-600 truncate"
-                    title={account.email}
-                  >
-                    {account.email}
-                  </div>
-                  <div
-                    className="text-neutral-600 truncate"
-                    title={account.role}
-                  >
-                    {account.role}
-                  </div>
-                  <div>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                        account.status === "active"
-                          ? "bg-green-100 text-green-800 border-green-200"
-                          : "bg-red-100 text-red-800 border-red-200"
-                      }`}
-                    >
-                      {account.status === "active"
-                        ? "Hoạt động"
-                        : "Không hoạt động"}
-                    </span>
-                  </div>
+            accounts.map((account) => {
+              const isSelf =
+                String(account.username || "").toLowerCase() ===
+                  String(currentUser?.username || "").toLowerCase() ||
+                Number(account.accountId) === Number(currentUser?.accountId) ||
+                Number(account.staffId) ===
+                  Number(currentUser?.staffId || currentUser?.id);
 
-                  {/* Hành động: Edit (giữ nguyên luồng cũ) + Delete */}
-                  <div className="flex gap-2 items-center">
-                    <button
-                      onClick={() => {
-                        setEditingItem(account); // chọn item để edit
-                        setIsEditingAccount(true); // mở modal edit của bạn (nếu có)
-                      }}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
+              const delDisabled = isSelf || deletingIds.has(Number(account.id));
 
-                    <button
-                      onClick={() => {
-                        if (confirmingId === account.id) {
-                          deleteAccount(account.id); // gọi API xoá
-                          setConfirmingId(null);
-                        } else {
-                          setConfirmingId(account.id); // lần đầu bấm thì hiện confirm
-                        }
-                      }}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+              return (
+                <div
+                  key={account.id}
+                  className="px-6 py-4 hover:bg-neutral-50 transition-colors"
+                >
+                  <div className="grid grid-cols-6 gap-4 items-center">
+                    <div
+                      className="font-medium text-neutral-900 truncate"
+                      title={account.name}
                     >
-                      {confirmingId === account.id ? (
-                        "Xác nhận?"
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
+                      {account.name}{" "}
+                      {isSelf && (
+                        <span className="text-xs text-neutral-500">(Bạn)</span>
                       )}
-                    </button>
+                    </div>
 
-                    {confirmingId === account.id && (
+                    <div
+                      className="text-neutral-600 truncate"
+                      title={account.phone || "-"}
+                    >
+                      {account.phone || "-"}
+                    </div>
+
+                    <div
+                      className="text-neutral-600 truncate"
+                      title={account.dob || "-"}
+                    >
+                      {account.dob
+                        ? new Date(account.dob).toLocaleDateString("vi-VN")
+                        : "-"}
+                    </div>
+
+                    <div
+                      className="text-neutral-600 truncate"
+                      title={account.email}
+                    >
+                      {account.email}
+                    </div>
+
+                    <div
+                      className="text-neutral-600 truncate"
+                      title={account.role}
+                    >
+                      {account.role}
+                    </div>
+
+                    <div className="flex gap-2 items-center">
                       <button
-                        onClick={() => setConfirmingId(null)}
-                        className="ml-2 text-neutral-500 hover:text-neutral-700 text-sm"
+                        onClick={() => {
+                          setEditingItem(account);
+                          setIsEditingAccount(true);
+                        }}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
                       >
-                        Huỷ
+                        <Edit className="h-4 w-4" />
                       </button>
-                    )}
+
+                      <button
+                        disabled={delDisabled}
+                        title={
+                          isSelf ? "Không thể xoá tài khoản đang đăng nhập" : ""
+                        }
+                        onClick={() => {
+                          if (isSelf) return;
+                          if (confirmingId === account.id) {
+                            deleteAccount(account.id);
+                            setConfirmingId(null);
+                          } else {
+                            setConfirmingId(account.id);
+                          }
+                        }}
+                        className={`p-2 rounded-lg transition ${
+                          delDisabled
+                            ? "text-neutral-400 cursor-not-allowed"
+                            : "text-red-600 hover:bg-red-50"
+                        }`}
+                      >
+                        {confirmingId === account.id ? (
+                          deletingIds.has(Number(account.id)) ? (
+                            "Đang xoá..."
+                          ) : (
+                            "Xác nhận?"
+                          )
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </button>
+
+                      {confirmingId === account.id && !isSelf && (
+                        <button
+                          onClick={() => setConfirmingId(null)}
+                          className="ml-2 text-neutral-500 hover:text-neutral-700 text-sm"
+                        >
+                          Huỷ
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-neutral-200 bg-neutral-50">
+          <div className="text-sm text-neutral-600">
+            {totalElements > 0
+              ? `Hiển thị ${from}–${to} / ${totalElements}`
+              : "Không có dữ liệu"}
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => onPageChange(Math.max(1, page - 1))}
+              disabled={page <= 1}
+              className={`px-3 py-2 rounded-lg text-sm border ${
+                page <= 1
+                  ? "text-neutral-400 border-neutral-200"
+                  : "hover:bg-neutral-100 border-neutral-300"
+              }`}
+            >
+              Trước
+            </button>
+
+            {buildPages().map((p, idx) =>
+              p === "..." ? (
+                <span key={`ellipsis-${idx}`} className="px-2 text-neutral-500">
+                  …
+                </span>
+              ) : (
+                <button
+                  key={`page-${p}`}
+                  onClick={() => onPageChange(p)}
+                  className={`px-3 py-2 rounded-lg text-sm border ${
+                    p === page
+                      ? "bg-neutral-900 text-white border-neutral-900"
+                      : "hover:bg-neutral-100 border-neutral-300"
+                  }`}
+                >
+                  {p}
+                </button>
+              )
+            )}
+
+            <button
+              onClick={() =>
+                onPageChange(Math.min(pageInfo.totalPages || 1, page + 1))
+              }
+              disabled={page >= (pageInfo.totalPages || 1)}
+              className={`px-3 py-2 rounded-lg text-sm border ${
+                page >= (pageInfo.totalPages || 1)
+                  ? "text-neutral-400 border-neutral-200"
+                  : "hover:bg-neutral-100 border-neutral-300"
+              }`}
+            >
+              Sau
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Modal tạo mới (Add) */}
       {openCreate && (
         <ManagerAccountForm
           open={openCreate}
           onClose={() => setOpenCreate(false)}
           onCreated={(newStaff) => {
-            // Map field trả về từ BE -> cấu trúc đang render
-            // Nếu BE trả key khác, đổi ở đây cho khớp
-            setAccounts?.((prev) => [
-              {
-                id: newStaff.staffId ?? newStaff.id ?? Date.now(),
-                name: newStaff.staffName ?? newStaff.name,
-                phone: newStaff.staffPhone ?? newStaff.phone ?? "",
-                email: newStaff.staffEmail ?? newStaff.email,
-                role: newStaff.role,
-                status: "active",
-              },
-              ...(prev || []),
-            ]);
+            const n = normalizeStaff(newStaff);
+            setAccounts?.((prev) => [n, ...(prev || [])]);
           }}
+          accounts={accounts}
         />
       )}
     </div>
