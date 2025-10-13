@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, Package } from "lucide-react";
 import AdminDishForm from "./AdminDishForm";
 import { listDish, deleteDish, normalizeDish } from "../../lib/apiDish";
@@ -13,7 +13,25 @@ export default function DishesManagement({
   // State mở/đóng modal TẠO MỚI
   const [openCreate, setOpenCreate] = useState(false);
   const [confirmingId, setConfirmingId] = useState(null);
+  const [loadingLocal, setLoadingLocal] = useState(false);
 
+  // 🟢 Gọi API khi component được mount
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoadingLocal(true);
+        const res = await listDish();
+        setDishes(res);
+      } catch (err) {
+        console.error("Không thể tải danh sách món ăn:", err);
+        alert("Không thể tải danh sách món ăn.");
+      } finally {
+        setLoadingLocal(false);
+      }
+    })();
+  }, [setDishes]);
+
+  // Hàm xoá món ăn
   const handleDeleteDish = async (id) => {
     try {
       await deleteDish(id);
@@ -24,10 +42,12 @@ export default function DishesManagement({
     }
   };
 
+  // Format giá VNĐ
   const formatPrice = (price) => {
     return new Intl.NumberFormat("vi-VN").format(price) + "đ";
   };
 
+  // Badge trạng thái
   const getStatusBadge = (status) => {
     return status === 1 ? (
       <span className="px-3 py-1 rounded-full text-xs font-medium border bg-green-100 text-green-800 border-green-200">
@@ -42,6 +62,7 @@ export default function DishesManagement({
 
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
@@ -57,7 +78,7 @@ export default function DishesManagement({
           </div>
         </div>
 
-        {/* Thêm Món Ăn -> mở modal tạo mới */}
+        {/* Nút thêm món ăn */}
         <button
           onClick={() => setOpenCreate(true)}
           className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-medium flex items-center gap-2"
@@ -67,6 +88,7 @@ export default function DishesManagement({
         </button>
       </div>
 
+      {/* Bảng món ăn */}
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden">
         <div className="bg-gradient-to-r from-neutral-50 to-neutral-100 px-6 py-4 border-b border-neutral-200">
           <div className="grid grid-cols-6 gap-4 text-sm font-semibold text-neutral-700">
@@ -80,7 +102,7 @@ export default function DishesManagement({
         </div>
 
         <div className="divide-y divide-neutral-200">
-          {loading ? (
+          {loading || loadingLocal ? (
             <div className="p-6 text-neutral-500">Đang tải danh sách...</div>
           ) : dishes.length === 0 ? (
             <div className="p-6 text-neutral-500">Chưa có món ăn nào.</div>
@@ -121,12 +143,12 @@ export default function DishesManagement({
 
                   <div>{getStatusBadge(dish.is_available ? 1 : 0)}</div>
 
-                  {/* Hành động: Edit + Delete */}
+                  {/* Hành động */}
                   <div className="flex gap-2 items-center">
                     <button
                       onClick={() => {
-                        setEditingItem(dish); // chọn item để edit
-                        setIsEditingDish(true); // mở modal edit
+                        setEditingItem(dish);
+                        setIsEditingDish(true);
                       }}
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
                     >
@@ -135,12 +157,11 @@ export default function DishesManagement({
 
                     <button
                       onClick={() => {
-                        console.log(dish);
                         if (confirmingId === dish.id) {
-                          handleDeleteDish(dish.id); // gọi API xoá
+                          handleDeleteDish(dish.id);
                           setConfirmingId(null);
                         } else {
-                          setConfirmingId(dish.id); // lần đầu bấm thì hiện confirm
+                          setConfirmingId(dish.id);
                         }
                       }}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
@@ -168,7 +189,7 @@ export default function DishesManagement({
         </div>
       </div>
 
-      {/* Modal tạo mới (Add) */}
+      {/* Modal thêm món ăn */}
       {openCreate && (
         <AdminDishForm
           open={openCreate}

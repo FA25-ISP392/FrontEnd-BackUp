@@ -27,6 +27,9 @@ export default function Admin() {
   const [editingItem, setEditingItem] = useState(null);
   const [deletingIds, setDeletingIds] = useState(new Set());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [dishes, setDishes] = useState([]);
+  const [loadingDishes, setLoadingDishes] = useState(false);
+
   const [settings, setSettings] = useState({
     theme: "light ",
     language: "vi",
@@ -104,7 +107,7 @@ export default function Admin() {
       } catch (err) {
         if (!cancelled)
           setAccountsError(
-            err.message || "Không tải được danh sách nhân viên."
+            err.message || "Không tải được danh sách nhân viên.",
           );
       } finally {
         if (!cancelled) setLoadingAccounts(false);
@@ -150,7 +153,7 @@ export default function Admin() {
       const response = await updateStaff(staffId, payload);
       const updated = normalizeStaff(response?.result ?? response);
       setAccounts((prev) =>
-        prev.map((arr) => (arr.id === staffId ? { ...arr, ...updated } : arr))
+        prev.map((arr) => (arr.id === staffId ? { ...arr, ...updated } : arr)),
       );
     } catch (err) {
       const data = err?.response?.data || err?.data || {};
@@ -172,7 +175,7 @@ export default function Admin() {
   const deleteAccount = async (staffId) => {
     if (!staffId) return;
     const targetDelete = accounts.find(
-      (arr) => Number(arr.staffId) === Number(staffId)
+      (arr) => Number(arr.staffId) === Number(staffId),
     );
     if (!targetDelete) return;
     const me = getCurrentUser() || {};
@@ -224,7 +227,7 @@ export default function Admin() {
   // Calculate totals
   const totalRevenue = mockAdminRevenueData.reduce(
     (sum, item) => sum + item.revenue,
-    0
+    0,
   );
   const totalAccounts = accounts.length;
   const totalDishes = dishes.length;
@@ -325,8 +328,8 @@ export default function Admin() {
           if (updatedDish) {
             setDishes((prev) =>
               prev.map((dish) =>
-                dish.id === updatedDish.id ? updatedDish : dish
-              )
+                dish.id === updatedDish.id ? updatedDish : dish,
+              ),
             );
           }
         }}
