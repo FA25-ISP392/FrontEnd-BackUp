@@ -1,18 +1,12 @@
-import { useState, useEffect } from "react";
-import { updateDish, normalizeDish } from "../../lib/apiDish";
+import { useState } from "react";
 import { X, Save } from "lucide-react";
+import { createDish } from "../../lib/apiDish";
 
-export default function EditDishModal({
-  isEditingDish,
-  setIsEditingDish,
-  editingItem,
-  setEditingItem,
-  saveDish,
-}) {
+export default function AdminDishForm({ open, onClose, onCreated }) {
   const [form, setForm] = useState({
     dish_name: "",
     price: "",
-    category: "PIZZA",
+    category: "",
     description: "",
     calo: "",
     picture: "",
@@ -21,6 +15,10 @@ export default function EditDishModal({
   const [saving, setSaving] = useState(false);
   const [fieldErrs, setFieldErrs] = useState({});
   const [err, setErr] = useState("");
+
+  if (!open) return null;
+
+  const setF = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
   const CATEGORIES = [
     "PIZZA",
@@ -31,25 +29,6 @@ export default function EditDishModal({
     "Appetizer",
     "Beverage",
   ];
-
-  useEffect(() => {
-    if (editingItem) {
-      setForm({
-        dish_name: editingItem.name || "",
-        price: editingItem.price || "",
-        category: editingItem.category || "PIZZA",
-        description: editingItem.description || "",
-        calo: editingItem.calories || "",
-        picture: editingItem.picture || "",
-        is_available:
-          editingItem.status === 1 || editingItem.is_available === true,
-      });
-    }
-    setErr("");
-    setFieldErrs({});
-  }, [editingItem, isEditingDish]);
-
-  const setF = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
   function validate(f) {
     const errs = {};
@@ -62,7 +41,7 @@ export default function EditDishModal({
     return errs;
   }
 
-  const handleSubmit = async (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     setErr("");
     setFieldErrs({});
@@ -82,49 +61,42 @@ export default function EditDishModal({
         status: form.is_available ? "available" : "unavailable",
       };
 
-      // Gọi API cập nhật
-      const updated = await updateDish(editingItem.id, payload);
+      const created = await createDish(payload);
+      onCreated?.(created);
+      onClose?.();
 
-      // ⚡ Fix: đảm bảo cập nhật lại trạng thái trong normalized object
-      const normalized = normalizeDish({
-        ...updated,
-        isAvailable: payload.isAvailable,
+      setForm({
+        dish_name: "",
+        price: "",
+        category: "",
+        description: "",
+        calo: "",
+        picture: "",
+        is_available: true,
       });
-
-      // Cập nhật danh sách ở parent
-      saveDish?.(normalized);
-
-      // Đóng modal
-      setIsEditingDish(false);
-      setEditingItem(null);
     } catch (e) {
-      setErr(e.message || "Có lỗi xảy ra khi cập nhật món ăn.");
+      setErr(e.message || "Có lỗi xảy ra khi tạo món ăn.");
     } finally {
       setSaving(false);
     }
   };
 
-  if (!isEditingDish) return null;
-
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white rounded-t-2xl flex justify-between items-center">
-          <h2 className="text-xl font-bold">Chỉnh Sửa Món Ăn</h2>
-          <button
-            onClick={() => setIsEditingDish(false)}
-            className="p-2 hover:bg-white/20 rounded-lg"
-          >
-            <X className="h-5 w-5" />
-          </button>
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white rounded-t-2xl">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold">Thêm Món Ăn Mới</h2>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-white/20 rounded-lg transition"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
-        {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="p-6 space-y-4 max-h-[70vh] overflow-y-auto"
-        >
+        <form onSubmit={submit} className="p-6 space-y-4">
           {/* Tên món */}
           <div>
             <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -244,14 +216,12 @@ export default function EditDishModal({
             </select>
           </div>
 
-          {/* Thông báo lỗi */}
           {err && <p className="text-sm text-red-600">{err}</p>}
 
-          {/* Nút hành động */}
           <div className="flex gap-3 pt-4">
             <button
               type="button"
-              onClick={() => setIsEditingDish(false)}
+              onClick={onClose}
               className="flex-1 border px-4 py-3 rounded-xl text-neutral-700 hover:bg-neutral-50"
             >
               Hủy
@@ -262,7 +232,7 @@ export default function EditDishModal({
               className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-3 rounded-xl hover:from-orange-600 hover:to-red-600 transition"
             >
               <Save className="inline h-4 w-4 mr-2" />
-              {saving ? "Đang lưu..." : "Lưu thay đổi"}
+              {saving ? "Đang tạo..." : "Tạo món ăn"}
             </button>
           </div>
         </form>

@@ -48,7 +48,7 @@ apiConfig.interceptors.response.use(
       : data?.message || "Không thể kết nối server.";
 
     return Promise.reject(new Error(detailedMsg));
-  }
+  },
 );
 
 export default apiConfig;

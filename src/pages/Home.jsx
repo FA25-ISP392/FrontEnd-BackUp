@@ -1,10 +1,59 @@
 import HeroSection from "../components/Home/HeroSection";
 import VisionSection from "../components/Home/VisionSection";
 import MenuSection from "../components/Home/MenuSection";
-import { MapPin, Phone, Mail } from "lucide-react";
+import {
+  MapPin,
+  Phone,
+  Mail,
+  X,
+  Calendar,
+  Clock,
+  Users,
+  Star,
+} from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
+import { useState } from "react";
 
 export default function Home() {
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [bookingForm, setBookingForm] = useState({
+    phone: "",
+    name: "",
+    date: "",
+    time: "",
+    guests: 1,
+  });
+
+  const handleBookingSubmit = (e) => {
+    e.preventDefault();
+    // Xử lý đặt bàn
+    console.log("Booking submitted:", bookingForm);
+    alert("Đặt bàn thành công! Chúng tôi sẽ liên hệ lại với bạn.");
+    setIsBookingOpen(false);
+    setBookingForm({ phone: "", name: "", date: "", time: "", guests: 1 });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setBookingForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Mock menu data for preview
+  const menuCategories = {
+    "Best Sellers": [
+      { name: "Pizza Margherita", price: "299,000đ", image: "🍕" },
+      { name: "Pasta Carbonara", price: "189,000đ", image: "🍝" },
+      { name: "Beef Steak", price: "599,000đ", image: "🥩" },
+    ],
+    "Good Deals": [
+      { name: "Caesar Salad", price: "149,000đ", image: "🥗" },
+      { name: "Chicken Wings", price: "199,000đ", image: "🍗" },
+      { name: "Tiramisu", price: "129,000đ", image: "🍰" },
+    ],
+  };
+
   return (
     <div className="min-h-screen">
       {/* Home Header */}
@@ -16,37 +65,29 @@ export default function Home() {
             className="text-2xl font-bold text-orange-600"
             aria-label="Go to home"
           >
-            Persona Dine
+            PersonaDine
           </Link>
 
           {/* Navigation Links */}
           <nav className="flex items-center gap-8">
-            <NavLink
-              to="/home"
-              className={({ isActive }) =>
-                `text-gray-700 hover:text-orange-600 transition-colors ${
-                  isActive ? "text-orange-600" : ""
-                }`
-              }
+            <button
+              onClick={() => setIsAboutOpen(true)}
+              className="text-gray-700 hover:text-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-md px-3 py-1 rounded-lg"
             >
               Về Chúng Tôi
-            </NavLink>
-            <NavLink
-              to="/reservation"
-              className={({ isActive }) =>
-                `text-gray-700 hover:text-orange-600 transition-colors ${
-                  isActive ? "text-orange-600" : ""
-                }`
-              }
+            </button>
+            <button
+              onClick={() => setIsBookingOpen(true)}
+              className="text-gray-700 hover:text-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-md px-3 py-1 rounded-lg"
             >
               Đặt Bàn
-            </NavLink>
-            <NavLink
-              to="/menu"
-              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full transition-colors"
+            </button>
+            <button
+              onClick={() => setIsMenuOpen(true)}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg transform"
             >
               Thực Đơn
-            </NavLink>
+            </button>
           </nav>
         </div>
       </header>
@@ -113,6 +154,229 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Booking Sidebar */}
+      {isBookingOpen && (
+        <div className="fixed inset-0 z-50 transition-opacity duration-300">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setIsBookingOpen(false)}
+          />
+          <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transform transition-transform duration-300">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Đặt Bàn</h2>
+                <button
+                  onClick={() => setIsBookingOpen(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleBookingSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Số điện thoại
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={bookingForm.phone}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="Nhập số điện thoại"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Họ và tên
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={bookingForm.name}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="Nhập họ và tên"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ngày đặt bàn
+                  </label>
+                  <input
+                    type="date"
+                    name="date"
+                    value={bookingForm.date}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Giờ đặt bàn
+                  </label>
+                  <input
+                    type="time"
+                    name="time"
+                    value={bookingForm.time}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Số lượng khách: {bookingForm.guests}
+                  </label>
+                  <input
+                    type="range"
+                    name="guests"
+                    min="1"
+                    max="20"
+                    value={bookingForm.guests}
+                    onChange={handleInputChange}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>1</span>
+                    <span>20</span>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-medium transition-colors duration-300"
+                >
+                  Đặt Bàn
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Menu Preview Sidebar */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-50 transition-opacity duration-300">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setIsMenuOpen(false)}
+          />
+          <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transform transition-transform duration-300">
+            <div className="p-6 h-full overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Thực Đơn</h2>
+                <button
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {Object.entries(menuCategories).map(([category, dishes]) => (
+                  <div key={category}>
+                    <h3 className="text-xl font-bold text-orange-600 mb-3 flex items-center gap-2">
+                      <Star className="w-5 h-5" />
+                      {category}
+                    </h3>
+                    <div className="space-y-3">
+                      {dishes.map((dish, index) => (
+                        <div
+                          key={index}
+                          className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="text-2xl">{dish.image}</div>
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-gray-900 text-sm">
+                                {dish.name}
+                              </h4>
+                              <p className="text-orange-600 font-bold text-sm">
+                                {dish.price}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* About Sidebar */}
+      {isAboutOpen && (
+        <div className="fixed inset-0 z-50 transition-opacity duration-300">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setIsAboutOpen(false)}
+          />
+          <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transform transition-transform duration-300">
+            <div className="p-6 h-full overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Về Chúng Tôi
+                </h2>
+                <button
+                  onClick={() => setIsAboutOpen(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4 text-gray-700 leading-relaxed text-sm">
+                <p>
+                  Chào mừng bạn đến với nhà hàng của chúng tôi, nơi tinh hoa ẩm
+                  thực hòa quện cùng sự hiếu khách nồng ấm. Trong hơn một thập
+                  kỷ qua, chúng tôi đã phục vụ những món ăn tuyệt hảo được chế
+                  biến từ những nguyên liệu tinh túy nhất.
+                </p>
+
+                <p>
+                  Những đầu bếp tài hoa của chúng tôi sáng tạo nên thực đơn độc
+                  đáo, kết hợp tinh hoa kỹ thuật truyền thống với hương vị hiện
+                  đại, mang đến trải nghiệm ẩm thực khó quên trong từng món ăn.
+                </p>
+
+                <p>
+                  Chúng tôi tự hào mang đến dịch vụ xuất sắc trong một không
+                  gian thoải mái và thanh lịch, lý tưởng cho mọi dịp – từ những
+                  bữa tối ấm cúng cho đến các buổi tiệc lớn.
+                </p>
+
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-bold text-orange-600 mb-2">
+                    Sứ mệnh của chúng tôi
+                  </h3>
+                  <p className="text-sm">
+                    Tạo nên những trải nghiệm ẩm thực khó quên thông qua món ăn
+                    tuyệt hảo, dịch vụ xuất sắc và sự hiếu khách nồng ấm. Đồng
+                    thời, chúng tôi mang đến thực đơn đa dạng và cá nhân hóa
+                    theo nhu cầu từng người, nhằm phục vụ mục tiêu ăn uống lành
+                    mạnh – từ tăng, giảm cho đến duy trì cân nặng một cách bền
+                    vững.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

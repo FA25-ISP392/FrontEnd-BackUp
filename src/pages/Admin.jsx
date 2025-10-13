@@ -9,13 +9,13 @@ import AdminDishesManagement from "../components/Admin/DishesManagement";
 import AdminEditDishModal from "../components/Admin/EditDishModal";
 
 import {
-  mockAdminDishes,
   mockAdminInvoices,
   mockAdminRevenueData,
   mockAdminDishSalesData,
 } from "../lib/adminData";
 
 import { listStaff, updateStaff, deleteStaff } from "../lib/apiStaff";
+import { listDish, normalizeDish } from "../lib/apiDish";
 import { getCurrentUser } from "../lib/auth";
 
 export default function Admin() {
@@ -59,13 +59,16 @@ export default function Admin() {
 
   // Mock data
   // const [accounts, setAccounts] = useState(mockAdminAccounts);
-  const [dishes, setDishes] = useState(mockAdminDishes);
   const [invoices, setInvoices] = useState(mockAdminInvoices);
 
   //Call API data real
   const [accounts, setAccounts] = useState([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [accountsError, setAccountsError] = useState("");
+
+  const [dishes, setDishes] = useState([]);
+  const [loadingDishes, setLoadingDishes] = useState(false);
+  const [dishesError, setDishesError] = useState("");
 
   //Map ra list nhân viên nhà hàng
   useEffect(() => {
@@ -85,6 +88,32 @@ export default function Admin() {
           setAccountsError(e.message || "Không tải được danh sách nhân viên.");
       } finally {
         if (!cancelled) setLoadingAccounts(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSection]);
+
+  //Map ra list món ăn
+  useEffect(() => {
+    if (activeSection !== "dishes") return;
+    let cancelled = false;
+
+    (async () => {
+      setLoadingDishes(true);
+      setDishesError("");
+      try {
+        const list = await listDish();
+        if (!cancelled) {
+          setDishes(list);
+        }
+      } catch (e) {
+        if (!cancelled)
+          setDishesError(e.message || "Không tải được danh sách món ăn.");
+      } finally {
+        if (!cancelled) setLoadingDishes(false);
       }
     })();
 
@@ -162,20 +191,6 @@ export default function Admin() {
   const totalDishes = dishes.length;
   const totalInvoices = invoices.length;
 
-  const saveDish = (dishData) => {
-    if (dishData.id && dishes.find((dish) => dish.id === dishData.id)) {
-      setDishes((prevDishes) =>
-        prevDishes.map((dish) => (dish.id === dishData.id ? dishData : dish)),
-      );
-    } else {
-      setDishes((prevDishes) => [...prevDishes, dishData]);
-    }
-  };
-
-  const deleteDish = (dishId) => {
-    setDishes((prevDishes) => prevDishes.filter((dish) => dish.id !== dishId));
-  };
-
   const renderContent = () => {
     switch (activeSection) {
       case "overview":
@@ -210,9 +225,10 @@ export default function Admin() {
         return (
           <AdminDishesManagement
             dishes={dishes}
+            setDishes={setDishes}
             setIsEditingDish={setIsEditingDish}
             setEditingItem={setEditingItem}
-            deleteDish={deleteDish}
+            loading={loadingDishes}
           />
         );
       case "invoices":
@@ -260,7 +276,15 @@ export default function Admin() {
         setIsEditingDish={setIsEditingDish}
         editingItem={editingItem}
         setEditingItem={setEditingItem}
-        saveDish={saveDish}
+        saveDish={(updatedDish) => {
+          if (updatedDish) {
+            setDishes((prev) =>
+              prev.map((dish) =>
+                dish.id === updatedDish.id ? updatedDish : dish,
+              ),
+            );
+          }
+        }}
       />
     </div>
   );
