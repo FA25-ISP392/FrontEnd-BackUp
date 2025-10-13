@@ -1,14 +1,14 @@
 import HeroSection from "../components/Home/HeroSection";
 import VisionSection from "../components/Home/VisionSection";
 import MenuSection from "../components/Home/MenuSection";
+import LoginForm from "../components/Home/LoginForm";
+import RegisterForm from "../components/Home/RegisterForm";
+import BookingForm from "../components/Home/BookingForm";
 import {
   MapPin,
   Phone,
   Mail,
   X,
-  Calendar,
-  Clock,
-  Users,
   Star,
 } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
@@ -18,26 +18,43 @@ export default function Home() {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
-  const [bookingForm, setBookingForm] = useState({
-    phone: "",
-    name: "",
-    date: "",
-    time: "",
-    guests: 1,
-  });
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isLoginForm, setIsLoginForm] = useState(true); // true = login, false = register
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Trạng thái đăng nhập
 
-  const handleBookingSubmit = (e) => {
-    e.preventDefault();
-    // Xử lý đặt bàn
-    console.log("Booking submitted:", bookingForm);
+  const handleBookingSubmit = (formData) => {
+    console.log("Booking submitted:", formData);
     alert("Đặt bàn thành công! Chúng tôi sẽ liên hệ lại với bạn.");
     setIsBookingOpen(false);
-    setBookingForm({ phone: "", name: "", date: "", time: "", guests: 1 });
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setBookingForm((prev) => ({ ...prev, [name]: value }));
+  const handleLoginSubmit = (formData) => {
+    console.log("Login submitted:", formData);
+    alert("Đăng nhập thành công!");
+    setIsLoggedIn(true); // Set trạng thái đã đăng nhập
+    setIsLoginOpen(false);
+  };
+
+  const handleRegisterSubmit = (formData) => {
+    console.log("Register submitted:", formData);
+    alert("Đăng ký thành công!");
+    setIsLoginOpen(false);
+  };
+
+  const switchToRegister = () => {
+    console.log("Switching to register form");
+    setIsLoginForm(false);
+  };
+
+  const switchToLogin = () => {
+    console.log("Switching to login form");
+    setIsLoginForm(true);
+  };
+
+  const handleLoginFromBooking = () => {
+    setIsBookingOpen(false); // Đóng form đặt bàn
+    setIsLoginOpen(true); // Mở form đăng nhập
+    setIsLoginForm(true); // Đảm bảo hiển thị form đăng nhập
   };
 
   // Mock menu data for preview
@@ -57,7 +74,7 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Home Header */}
-      <header className="w-full bg-white shadow-sm">
+      <header className="fixed top-0 left-0 right-0 w-full bg-white shadow-sm z-50">
         <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
           {/* Brand Name */}
           <Link
@@ -76,6 +93,21 @@ export default function Home() {
             >
               Về Chúng Tôi
             </button>
+            {isLoggedIn ? (
+              <button
+                onClick={() => setIsLoggedIn(false)}
+                className="text-gray-700 hover:text-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-md px-3 py-1 rounded-lg"
+              >
+                Đăng Xuất
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsLoginOpen(true)}
+                className="text-gray-700 hover:text-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-md px-3 py-1 rounded-lg"
+              >
+                Đăng Nhập
+              </button>
+            )}
             <button
               onClick={() => setIsBookingOpen(true)}
               className="text-gray-700 hover:text-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-md px-3 py-1 rounded-lg"
@@ -93,9 +125,11 @@ export default function Home() {
       </header>
 
       {/* Original Home Content */}
-      <HeroSection />
-      <VisionSection />
-      <MenuSection />
+      <div className="pt-20">
+        <HeroSection />
+        <VisionSection />
+        <MenuSection />
+      </div>
 
       {/* Location Section */}
       <section className="py-20 bg-gradient-to-br from-neutral-50 to-neutral-100">
@@ -174,91 +208,11 @@ export default function Home() {
                 </button>
               </div>
 
-              <form onSubmit={handleBookingSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Số điện thoại
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={bookingForm.phone}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    placeholder="Nhập số điện thoại"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Họ và tên
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={bookingForm.name}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    placeholder="Nhập họ và tên"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ngày đặt bàn
-                  </label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={bookingForm.date}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Giờ đặt bàn
-                  </label>
-                  <input
-                    type="time"
-                    name="time"
-                    value={bookingForm.time}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Số lượng khách: {bookingForm.guests}
-                  </label>
-                  <input
-                    type="range"
-                    name="guests"
-                    min="1"
-                    max="20"
-                    value={bookingForm.guests}
-                    onChange={handleInputChange}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>1</span>
-                    <span>20</span>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-medium transition-colors duration-300"
-                >
-                  Đặt Bàn
-                </button>
-              </form>
+              <BookingForm 
+                onSubmit={handleBookingSubmit} 
+                isLoggedIn={isLoggedIn}
+                onLoginClick={handleLoginFromBooking}
+              />
             </div>
           </div>
         </div>
@@ -372,6 +326,47 @@ export default function Home() {
                     vững.
                   </p>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Login/Register Sidebar */}
+      {isLoginOpen && (
+        <div className="fixed inset-0 z-50 transition-opacity duration-300">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setIsLoginOpen(false)}
+          />
+          <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transform transition-transform duration-300">
+            <div className="p-6 h-full overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {isLoginForm ? "Đăng Nhập" : "Đăng Ký"}
+                </h2>
+                <button
+                  onClick={() => setIsLoginOpen(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+
+              {/* Form Container */}
+              <div className="transition-all duration-500 ease-in-out">
+                {isLoginForm ? (
+                  <LoginForm 
+                    onSubmit={handleLoginSubmit} 
+                    onSwitchToRegister={switchToRegister} 
+                  />
+                ) : (
+                  <RegisterForm 
+                    onSubmit={handleRegisterSubmit} 
+                    onSwitchToLogin={switchToLogin} 
+                  />
+                )}
               </div>
             </div>
           </div>
