@@ -18,10 +18,15 @@ const apiConfig = axios.create({
 });
 
 apiConfig.interceptors.request.use((config) => {
-  const isAuthLogin = (config.url || "").includes("/auth/token");
-  if (!isAuthLogin) {
-    const tk = getToken();
-    if (tk) config.headers.Authorization = `Bearer ${tk}`;
+  const raw = getToken();
+  const token = raw ? String(raw).replace(/^Bearer\s+/i, "") : "";
+  if (token && !(config.url || "").includes("/auth")) {
+    if (typeof config.headers?.set === "function") {
+      config.headers.set("Authorization", `Bearer ${token}`);
+    } else {
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   return config;
 });
