@@ -4,14 +4,8 @@ import MenuSection from "../components/Home/MenuSection";
 import LoginForm from "../components/Home/LoginForm";
 import RegisterForm from "../components/Home/RegisterForm";
 import BookingForm from "../components/Home/BookingForm";
-import {
-  MapPin,
-  Phone,
-  Mail,
-  X,
-  Star,
-} from "lucide-react";
-import { Link, NavLink } from "react-router-dom";
+import { MapPin, Phone, Mail, X, Star } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useState } from "react";
 
 export default function Home() {
@@ -19,8 +13,8 @@ export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isLoginForm, setIsLoginForm] = useState(true); // true = login, false = register
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Trạng thái đăng nhập
+  const [isLoginForm, setIsLoginForm] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const handleBookingSubmit = (formData) => {
     console.log("Booking submitted:", formData);
@@ -31,7 +25,7 @@ export default function Home() {
   const handleLoginSubmit = (formData) => {
     console.log("Login submitted:", formData);
     alert("Đăng nhập thành công!");
-    setIsLoggedIn(true); // Set trạng thái đã đăng nhập
+    setIsLoggedIn(true);
     setIsLoginOpen(false);
   };
 
@@ -52,9 +46,9 @@ export default function Home() {
   };
 
   const handleLoginFromBooking = () => {
-    setIsBookingOpen(false); // Đóng form đặt bàn
-    setIsLoginOpen(true); // Mở form đăng nhập
-    setIsLoginForm(true); // Đảm bảo hiển thị form đăng nhập
+    setIsBookingOpen(false);
+    setIsLoginOpen(true);
+    setIsLoginForm(true);
   };
 
   // Mock menu data for preview
@@ -175,7 +169,7 @@ export default function Home() {
                 src={
                   "https://www.google.com/maps?q=" +
                   encodeURIComponent(
-                    "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Việt Nam",
+                    "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Việt Nam"
                   ) +
                   "&output=embed"
                 }
@@ -208,8 +202,8 @@ export default function Home() {
                 </button>
               </div>
 
-              <BookingForm 
-                onSubmit={handleBookingSubmit} 
+              <BookingForm
+                onSubmit={handleBookingSubmit}
                 isLoggedIn={isLoggedIn}
                 onLoginClick={handleLoginFromBooking}
               />
@@ -352,20 +346,16 @@ export default function Home() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              
 
               {/* Form Container */}
               <div className="transition-all duration-500 ease-in-out">
                 {isLoginForm ? (
-                  <LoginForm 
-                    onSubmit={handleLoginSubmit} 
-                    onSwitchToRegister={switchToRegister} 
+                  <LoginForm
+                    onSubmit={handleLoginSubmit}
+                    onSwitchToRegister={switchToRegister}
                   />
                 ) : (
-                  <RegisterForm 
-                    onSubmit={handleRegisterSubmit} 
-                    onSwitchToLogin={switchToLogin} 
-                  />
+                  <RegisterForm onSwitchToLogin={switchToLogin} />
                 )}
               </div>
             </div>

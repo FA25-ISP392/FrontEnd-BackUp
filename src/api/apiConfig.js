@@ -20,7 +20,9 @@ const apiConfig = axios.create({
 apiConfig.interceptors.request.use((config) => {
   const raw = getToken();
   const token = raw ? String(raw).replace(/^Bearer\s+/i, "") : "";
-  if (token && !(config.url || "").includes("/auth")) {
+  const url = String(config.url || "");
+  const isPublic = url.includes("/auth") || url.includes("/customer");
+  if (token && !isPublic) {
     if (typeof config.headers?.set === "function") {
       config.headers.set("Authorization", `Bearer ${token}`);
     } else {

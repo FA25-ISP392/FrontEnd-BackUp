@@ -17,13 +17,13 @@ export default function BookingForm({ onSubmit, isLoggedIn, onLoginClick }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     // Kiểm tra nếu chưa đăng nhập
     if (!isLoggedIn) {
       setShowLoginMessage(true);
       return;
     }
-    
+
     // Nếu đã đăng nhập, submit form
     onSubmit(formData);
     setFormData({ phone: "", name: "", date: "", time: "", guests: 1 });
@@ -123,8 +123,18 @@ export default function BookingForm({ onSubmit, isLoggedIn, onLoginClick }) {
         <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
           <div className="flex items-start">
             <div className="flex-shrink-0">
-              <svg className="w-5 h-5 text-orange-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              <svg
+                className="w-5 h-5 text-orange-500 mt-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
               </svg>
             </div>
             <div className="ml-3 flex-1">
@@ -143,8 +153,18 @@ export default function BookingForm({ onSubmit, isLoggedIn, onLoginClick }) {
                 onClick={() => setShowLoginMessage(false)}
                 className="text-orange-400 hover:text-orange-600 transition-colors duration-300"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
