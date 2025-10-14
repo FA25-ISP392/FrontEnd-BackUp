@@ -8,6 +8,7 @@ import UserAccountDropdown from "../components/Home/UserAccountDropdown";
 import { MapPin, Phone, Mail, X, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { logoutCustomer } from "../lib/auth";
 
 export default function Home() {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -18,26 +19,33 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
 
-  // Check if user is logged in on component mount
   useEffect(() => {
-    const checkAuthStatus = () => {
+    const syncAuth = () => {
       const token = localStorage.getItem("token");
-      const user = localStorage.getItem("user");
-      
-      if (token && user) {
+      const rawUser = localStorage.getItem("user");
+      if (token && rawUser) {
         try {
-          const parsedUser = JSON.parse(user);
           setIsLoggedIn(true);
-          setUserInfo(parsedUser);
-        } catch (error) {
-          console.error("Error parsing user data:", error);
+          setUserInfo(JSON.parse(rawUser));
+        } catch {
           localStorage.removeItem("token");
           localStorage.removeItem("user");
+          setIsLoggedIn(false);
+          setUserInfo(null);
         }
+      } else {
+        setIsLoggedIn(false);
+        setUserInfo(null);
       }
     };
 
-    checkAuthStatus();
+    syncAuth();
+    window.addEventListener("storage", syncAuth);
+    window.addEventListener("auth:changed", syncAuth);
+    return () => {
+      window.removeEventListener("storage", syncAuth);
+      window.removeEventListener("auth:changed", syncAuth);
+    };
   }, []);
 
   const handleBookingSubmit = (formData) => {
@@ -46,26 +54,8 @@ export default function Home() {
     setIsBookingOpen(false);
   };
 
-  const handleLoginSubmit = (formData) => {
-    console.log("Login submitted:", formData);
-    alert("Đăng nhập thành công!");
-    
-    // Mock user data for demo
-    const mockUser = {
-      username: formData.username,
-      fullName: formData.username,
-      email: `${formData.username}@example.com`,
-      phone: "",
-      role: "customer"
-    };
-    
-    setIsLoggedIn(true);
-    setUserInfo(mockUser);
+  const handleLoginSubmit = () => {
     setIsLoginOpen(false);
-    
-    // Save to localStorage for persistence
-    localStorage.setItem("token", "mock-token-" + Date.now());
-    localStorage.setItem("user", JSON.stringify(mockUser));
   };
 
   const handleRegisterSubmit = (formData) => {
@@ -74,15 +64,8 @@ export default function Home() {
     setIsLoginOpen(false);
   };
 
-  const switchToRegister = () => {
-    console.log("Switching to register form");
-    setIsLoginForm(false);
-  };
-
-  const switchToLogin = () => {
-    console.log("Switching to login form");
-    setIsLoginForm(true);
-  };
+  const switchToRegister = () => setIsLoginForm(false);
+  const switchToLogin = () => setIsLoginForm(true);
 
   const handleLoginFromBooking = () => {
     setIsBookingOpen(false);
@@ -91,11 +74,7 @@ export default function Home() {
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUserInfo(null);
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    alert("Đăng xuất thành công!");
+    logoutCustomer("/home");
   };
 
   // Mock menu data for preview
@@ -114,10 +93,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      {/* Home Header */}
       <header className="fixed top-0 left-0 right-0 w-full bg-white shadow-sm z-50">
         <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
-          {/* Brand Name */}
           <Link
             to="/home"
             className="text-2xl font-bold text-orange-600"
@@ -126,7 +103,6 @@ export default function Home() {
             PersonaDine
           </Link>
 
-          {/* Navigation Links */}
           <nav className="flex items-center gap-8">
             <button
               onClick={() => setIsAboutOpen(true)}
@@ -134,6 +110,7 @@ export default function Home() {
             >
               Về Chúng Tôi
             </button>
+
             {!isLoggedIn && (
               <button
                 onClick={() => setIsLoginOpen(true)}
@@ -142,20 +119,21 @@ export default function Home() {
                 Đăng Nhập
               </button>
             )}
+
             <button
               onClick={() => setIsBookingOpen(true)}
               className="text-gray-700 hover:text-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-md px-3 py-1 rounded-lg"
             >
               Đặt Bàn
             </button>
+
             <button
               onClick={() => setIsMenuOpen(true)}
               className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg transform"
             >
               Thực Đơn
             </button>
-            
-            {/* User Account Dropdown - only show when logged in */}
+
             <UserAccountDropdown
               isLoggedIn={isLoggedIn}
               userInfo={userInfo}
@@ -165,14 +143,12 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Original Home Content */}
       <div className="pt-20">
         <HeroSection />
         <VisionSection />
         <MenuSection />
       </div>
 
-      {/* Location Section */}
       <section className="py-20 bg-gradient-to-br from-neutral-50 to-neutral-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -209,7 +185,7 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            {/* Dùng iframe của GG Map */}
+
             <div className="rounded-2xl overflow-hidden h-64">
               <iframe
                 title="Restaurant Map"
@@ -230,7 +206,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Booking Sidebar */}
       {isBookingOpen && (
         <div className="fixed inset-0 z-50 transition-opacity duration-300">
           <div
@@ -259,7 +234,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Menu Preview Sidebar */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-50 transition-opacity duration-300">
           <div
@@ -313,7 +287,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* About Sidebar */}
       {isAboutOpen && (
         <div className="fixed inset-0 z-50 transition-opacity duration-300">
           <div
@@ -373,7 +346,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Login/Register Sidebar */}
       {isLoginOpen && (
         <div className="fixed inset-0 z-50 transition-opacity duration-300">
           <div
@@ -394,7 +366,6 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Form Container */}
               <div className="transition-all duration-500 ease-in-out">
                 {isLoginForm ? (
                   <LoginForm

@@ -1,38 +1,61 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { X, Lock, Eye, EyeOff, Save } from "lucide-react";
+import { getCurrentUser } from "../../lib/auth";
+import {
+  findCustomerByUsername,
+  changeCustomerPassword,
+} from "../../lib/apiCustomer";
 
-export default function ChangePasswordModal({ isOpen, onClose }) {
+export default function ChangePasswordModal({ isOpen, onClose, userInfo }) {
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
-    confirm: false
+    confirm: false,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
+  const effectiveUser = useMemo(() => {
+    return userInfo || getCurrentUser() || {};
+  }, [userInfo]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setMessage({ type: "", text: "" });
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const togglePasswordVisibility = (field) => {
-    setShowPasswords(prev => ({
+    setShowPasswords((prev) => ({
       ...prev,
-      [field]: !prev[field]
+      [field]: !prev[field],
     }));
   };
 
   const validatePassword = (password) => {
-    if (password.length < 6) {
-      return "Mật khẩu phải có ít nhất 6 ký tự";
+    if (password.length < 8) {
+      return "Mật khẩu phải có ít nhất 8 ký tự";
+    }
+    if (password.length > 30) {
+      return "Mật khẩu không được vượt quá 30 ký tự";
+    }
+    return null;
+  };
+
+  const resolveCustomerId = async () => {
+    if (effectiveUser?.id) return effectiveUser.id;
+
+    if (effectiveUser?.username) {
+      const found = await findCustomerByUsername(effectiveUser.username);
+      return found?.id;
     }
     return null;
   };
@@ -43,51 +66,55 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
     setMessage({ type: "", text: "" });
 
     try {
-      // Validate form
-      if (!formData.currentPassword) {
+      const current = formData.currentPassword.trim();
+      const next = formData.newPassword.trim();
+      const confirm = formData.confirmPassword.trim();
+
+      if (!current) {
         throw new Error("Vui lòng nhập mật khẩu hiện tại");
       }
 
-      if (!formData.newPassword) {
+      if (!next) {
         throw new Error("Vui lòng nhập mật khẩu mới");
       }
 
-      const passwordError = validatePassword(formData.newPassword);
+      const passwordError = validatePassword(next);
       if (passwordError) {
         throw new Error(passwordError);
       }
 
-      if (formData.newPassword !== formData.confirmPassword) {
-        throw new Error("Mật khẩu xác nhận không khớp");
-      }
+      if (next !== confirm) throw new Error("Mật khẩu xác nhận không khớp");
 
-      if (formData.currentPassword === formData.newPassword) {
+      if (current === next)
         throw new Error("Mật khẩu mới phải khác mật khẩu hiện tại");
+
+      const customerId = await resolveCustomerId();
+      if (!customerId) {
+        throw new Error("Không xác định được tài khoản khách hàng hiện tại.");
       }
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
+      await changeCustomerPassword(customerId, next);
       setMessage({ type: "success", text: "Đổi mật khẩu thành công!" });
-      
-      // Reset form and close modal after success
+
       setTimeout(() => {
         setFormData({
           currentPassword: "",
           newPassword: "",
-          confirmPassword: ""
+          confirmPassword: "",
         });
         setShowPasswords({
           current: false,
           new: false,
-          confirm: false
+          confirm: false,
         });
         onClose();
         setMessage({ type: "", text: "" });
-      }, 1500);
-
-    } catch (error) {
-      setMessage({ type: "error", text: error.message });
+      }, 1200);
+    } catch (err) {
+      const msg =
+        err?.message ||
+        err?.data?.message ||
+        "Đổi mật khẩu thất bại. Vui lòng thử lại.";
+      setMessage({ type: "error", text: msg });
     } finally {
       setIsLoading(false);
     }
@@ -97,13 +124,10 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 transition-opacity duration-300">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
-      {/* Modal */}
       <div className="absolute inset-0 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white rounded-lg shadow-xl transform transition-transform duration-300">
-          {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <h2 className="text-xl font-bold text-gray-900">Đổi mật khẩu</h2>
             <button
@@ -114,9 +138,7 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
             </button>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            {/* Current Password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Mật khẩu hiện tại *
@@ -137,12 +159,15 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
                   onClick={() => togglePasswordVisibility("current")}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPasswords.current ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
 
-            {/* New Password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Mật khẩu mới *
@@ -163,15 +188,15 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
                   onClick={() => togglePasswordVisibility("new")}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPasswords.new ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Mật khẩu phải có ít nhất 6 ký tự
-              </p>
             </div>
 
-            {/* Confirm Password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Xác nhận mật khẩu mới *
@@ -192,23 +217,27 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
                   onClick={() => togglePasswordVisibility("confirm")}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPasswords.confirm ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
 
-            {/* Message */}
             {message.text && (
-              <div className={`p-3 rounded-lg text-sm ${
-                message.type === "success" 
-                  ? "bg-green-50 text-green-700 border border-green-200" 
-                  : "bg-red-50 text-red-700 border border-red-200"
-              }`}>
+              <div
+                className={`p-3 rounded-lg text-sm ${
+                  message.type === "success"
+                    ? "bg-green-50 text-green-700 border border-green-200"
+                    : "bg-red-50 text-red-700 border border-red-200"
+                }`}
+              >
                 {message.text}
               </div>
             )}
 
-            {/* Buttons */}
             <div className="flex gap-3 pt-4">
               <button
                 type="button"

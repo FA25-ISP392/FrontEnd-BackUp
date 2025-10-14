@@ -55,6 +55,21 @@ export function getCurrentRole() {
   return getRoleFromToken(d);
 }
 
+export function getRolesArray(decoded) {
+  if (!decoded) return [];
+  const raw = decoded.role || decoded.roles || decoded.authorities || [];
+  const arr = Array.isArray(raw) ? raw : [raw];
+  return arr.filter(Boolean).map((r) =>
+    String(r)
+      .replace(/^ROLE_/i, "")
+      .toUpperCase()
+  );
+}
+
+export function hasRole(decoded, role) {
+  return getRolesArray(decoded).includes(String(role).toUpperCase());
+}
+
 export function clearSession() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
@@ -98,6 +113,37 @@ export async function apiLogin({ username, password }) {
     role,
     user: profile ? profile : { username, fullName: username },
   };
+}
+
+export async function apiLoginCustomer({ username, password }) {
+  const data = await apiConfig.post("/auth/token", { username, password });
+  const token = data?.token;
+  const authenticated = data?.authenticated ?? true;
+
+  if (!token || authenticated === false) {
+    throw new Error("Xác thực thất bại. Vui lòng thử lại.");
+  }
+  const decoded = parseJWT(token);
+  if (!hasRole(decoded, "CUSTOMER")) {
+    const err = new Error("Tài khoản không phải KHÁCH HÀNG.");
+    err.code = "NOT_CUSTOMER";
+    throw err;
+  }
+  const role = "CUSTOMER";
+  const profile = {
+    username,
+    fullName: username,
+    email: "",
+    phone: "",
+    role,
+  };
+
+  return { token, role, user: profile };
+}
+
+export function logoutCustomer(redirectTo = "/home") {
+  clearSession();
+  window.location.href = redirectTo;
 }
 
 export function logout(redirectTo = "/") {

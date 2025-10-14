@@ -3,10 +3,10 @@ import { User, LogOut, Edit3, Lock, ChevronDown, X } from "lucide-react";
 import EditAccountModal from "./EditAccountModal";
 import ChangePasswordModal from "./ChangePasswordModal";
 
-export default function UserAccountDropdown({ 
-  isLoggedIn, 
-  userInfo, 
-  onLogout 
+export default function UserAccountDropdown({
+  isLoggedIn,
+  userInfo,
+  onLogout,
 }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isEditAccountOpen, setIsEditAccountOpen] = useState(false);
@@ -32,7 +32,6 @@ export default function UserAccountDropdown({
   return (
     <>
       <div className="relative">
-        {/* User Account Button */}
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -43,13 +42,15 @@ export default function UserAccountDropdown({
           <span className="text-gray-700 font-medium text-sm">
             {userInfo?.fullName || userInfo?.username || "Tài khoản"}
           </span>
-          <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown
+            className={`w-4 h-4 text-gray-500 transition-transform ${
+              isDropdownOpen ? "rotate-180" : ""
+            }`}
+          />
         </button>
 
-        {/* Dropdown Menu */}
         {isDropdownOpen && (
           <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-            {/* Header */}
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center">
@@ -72,14 +73,15 @@ export default function UserAccountDropdown({
               </div>
             </div>
 
-            {/* Menu Items */}
             <div className="p-2">
               <button
                 onClick={handleEditAccount}
                 className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors"
               >
                 <Edit3 className="w-4 h-4 text-gray-500" />
-                <span className="text-gray-700 text-sm">Sửa thông tin tài khoản</span>
+                <span className="text-gray-700 text-sm">
+                  Sửa thông tin tài khoản
+                </span>
               </button>
 
               <button
@@ -91,7 +93,6 @@ export default function UserAccountDropdown({
               </button>
             </div>
 
-            {/* Logout Button */}
             <div className="p-2 border-t border-gray-100">
               <button
                 onClick={handleLogout}
@@ -105,17 +106,16 @@ export default function UserAccountDropdown({
         )}
       </div>
 
-      {/* Edit Account Modal */}
       <EditAccountModal
         isOpen={isEditAccountOpen}
         onClose={() => setIsEditAccountOpen(false)}
         userInfo={userInfo}
       />
 
-      {/* Change Password Modal */}
       <ChangePasswordModal
         isOpen={isChangePasswordOpen}
         onClose={() => setIsChangePasswordOpen(false)}
+        userInfo={userInfo}
       />
     </>
   );

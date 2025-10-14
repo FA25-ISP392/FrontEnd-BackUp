@@ -22,7 +22,6 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-blue-50 to-purple-50 flex items-center justify-center p-4">
       <div className="max-w-6xl w-full">
-        {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-4">
             Hệ Thống Quản Lý Nhà Hàng
@@ -33,15 +32,12 @@ export default function Login() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          {/* Restaurant Banner */}
           <div className="relative">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/20 overflow-hidden">
               <div className="relative h-96 rounded-xl overflow-hidden">
-                {/* Background Gradient */}
                 <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-red-500 to-pink-500"></div>
                 <div className="absolute inset-0 bg-black/20"></div>
 
-                {/* Restaurant Content */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center text-white">
                     <ChefHat className="h-16 w-16 mx-auto mb-4 opacity-90" />
@@ -64,14 +60,12 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Login Form */}
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/20">
             <h2 className="text-2xl font-bold text-neutral-900 mb-6">
               Đăng nhập
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Error Message */}
               {error && (
                 <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
                   <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
@@ -79,7 +73,6 @@ export default function Login() {
                 </div>
               )}
 
-              {/* Username Input */}
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
                   Tên đăng nhập
@@ -90,12 +83,10 @@ export default function Login() {
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="Nhập tên đăng nhập"
-                  required
                   disabled={isLoading}
                 />
               </div>
 
-              {/* Password Input */}
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-2">
                   Mật khẩu
@@ -107,7 +98,6 @@ export default function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full px-4 py-3 pr-12 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="Nhập mật khẩu"
-                    required
                     disabled={isLoading}
                   />
                   <button
@@ -125,7 +115,6 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isLoading}

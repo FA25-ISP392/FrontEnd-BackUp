@@ -28,7 +28,7 @@ export function useLogin() {
       setError(
         /Network|connect|Failed to fetch/i.test(e.message)
           ? "Không thể kết nối đến server. Vui lòng thử lại sau."
-          : e.message || "Có lỗi xảy ra."
+          : e.message || "Tên đăng nhập hoặc Mật khẩu sai. Vui lòng thử lại."
       );
     } finally {
       setIsLoading(false);

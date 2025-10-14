@@ -1,3 +1,4 @@
+import { useCustomerLogin } from "../../hooks/useCustomerLogin";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
@@ -7,21 +8,34 @@ export default function LoginForm({ onSubmit, onSwitchToRegister }) {
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
+  const { login, isLoading, error, clearError } = useCustomerLogin();
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    clearError();
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(formData);
-    setFormData({ username: "", password: "" });
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    await login({
+      username: formData.username,
+      password: formData.password,
+      onSuccess: () => {
+        if (typeof onSubmit === "function") onSubmit(formData);
+      },
+    });
   };
 
   return (
     <div className="animate-fadeIn">
       <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="p-3 text-sm rounded-lg bg-red-50 border border-red-200 text-red-700">
+            {error}
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Tên Đăng Nhập
@@ -31,7 +45,7 @@ export default function LoginForm({ onSubmit, onSwitchToRegister }) {
             name="username"
             value={formData.username}
             onChange={handleInputChange}
-            required
+            disabled={isLoading}
             className="form-input-enhanced"
             placeholder="Nhập tên đăng nhập"
           />
@@ -47,12 +61,13 @@ export default function LoginForm({ onSubmit, onSwitchToRegister }) {
               name="password"
               value={formData.password}
               onChange={handleInputChange}
-              required
+              disabled={isLoading}
               className="form-input-enhanced pr-10"
               placeholder="Nhập mật khẩu"
             />
             <button
               type="button"
+              disabled={isLoading}
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-300"
             >
@@ -65,8 +80,12 @@ export default function LoginForm({ onSubmit, onSwitchToRegister }) {
           </div>
         </div>
 
-        <button type="submit" className="btn-submit-enhanced">
-          Đăng Nhập
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="btn-submit-enhanced"
+        >
+          {isLoading ? "Đang đăng nhập..." : "Đăng Nhập"}
         </button>
       </form>
 

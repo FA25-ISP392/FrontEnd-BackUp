@@ -21,7 +21,13 @@ apiConfig.interceptors.request.use((config) => {
   const raw = getToken();
   const token = raw ? String(raw).replace(/^Bearer\s+/i, "") : "";
   const url = String(config.url || "");
-  const isPublic = url.includes("/auth") || url.includes("/customer");
+  const method = String(config.method || "get").toLowerCase();
+
+  const isAuth = /\/auth(\/|$)/.test(url);
+  const isPublicCustomerCreate =
+    /\/customer(\/|$)/.test(url) && method === "post";
+  const isPublic = isAuth || isPublicCustomerCreate;
+
   if (token && !isPublic) {
     if (typeof config.headers?.set === "function") {
       config.headers.set("Authorization", `Bearer ${token}`);

@@ -1,31 +1,144 @@
 import { useState, useEffect } from "react";
 import { X, User, Phone, Mail, Save } from "lucide-react";
+import {
+  listCustomers,
+  updateCustomer,
+  normalizeCustomer,
+  findCustomerByUsername,
+} from "../../lib/apiCustomer";
 
 export default function EditAccountModal({ isOpen, onClose, userInfo }) {
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
-    email: ""
+    email: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [fieldErrs, setFieldErrs] = useState({});
+  const [allCustomers, setAllCustomers] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadCustomers() {
+      if (!isOpen) return;
+      try {
+        const data = await listCustomers();
+        if (mounted) setAllCustomers(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Không thể tải danh sách khách hàng:", err);
+        if (mounted) setAllCustomers([]);
+      }
+    }
+    loadCustomers();
+    return () => {
+      mounted = false;
+    };
+  }, [isOpen]);
+
+  const trim = (set) => String(set || "").trim();
+  const toDigits = (set) => String(set || "").replace(/\D/g, "");
+
+  function validateFullName(value) {
+    const setFullName = trim(value);
+    if (!setFullName) return "Vui lòng nhập họ và tên";
+    if (setFullName.length < 2 || setFullName.length > 50)
+      return "Họ và tên phải từ 2 đến 50 ký tự";
+    return "";
+  }
+
+  function validateEmail(value) {
+    const setEmail = trim(value);
+    if (!setEmail) return ""; // email không bắt buộc
+    const vldEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(setEmail);
+    return vldEmail ? "" : "Email không hợp lệ";
+  }
+
+  function validatePhone(value) {
+    const setPhone = toDigits(value);
+    if (!setPhone) return ""; // phone không bắt buộc
+    const vldEmail = /^0[1-9]\d{8}$/.test(setPhone);
+    return vldEmail ? "" : "Số điện thoại phải gồm 10 số và bắt đầu bằng 0";
+  }
 
   useEffect(() => {
     if (isOpen && userInfo) {
       setFormData({
         fullName: userInfo.fullName || "",
         phone: userInfo.phone || "",
-        email: userInfo.email || ""
+        email: userInfo.email || "",
       });
     }
   }, [isOpen, userInfo]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const isDirty = (() => {
+    if (!userInfo) return false;
+    const current = {
+      fullName: String(formData.fullName || "").trim(),
+      phone: String(formData.phone || "").replace(/\D/g, ""),
+      email: String(formData.email || "").trim(),
+    };
+    const old = {
+      fullName: String(userInfo.fullName || "").trim(),
+      phone: String(userInfo.phone || "").replace(/\D/g, ""),
+      email: String(userInfo.email || "").trim(),
+    };
+    return (
+      current.fullName !== old.fullName ||
+      current.phone !== old.phone ||
+      current.email !== old.email
+    );
+  })();
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFieldErrs((prev) => {
+      const next = { ...prev };
+      if (name === "fullName") next.fullName = validateFullName(value);
+      if (name === "email") next.email = validateEmail(value);
+      if (name === "phone") next.phone = validatePhone(value);
+      return next;
+    });
+  };
+
+  function checkDuplicateEmailPhone({ email, phone, selfId }) {
+    const e = String(email || "")
+      .trim()
+      .toLowerCase();
+    const p = String(phone || "").replace(/\D/g, "");
+    const errs = {};
+
+    for (const c of allCustomers) {
+      if (!c || c.id === selfId) continue;
+      const ce = String(c.email || "")
+        .trim()
+        .toLowerCase();
+      const cp = String(c.phone || "").replace(/\D/g, "");
+
+      if (e && ce && e === ce) {
+        errs.email = "Email đã tồn tại.";
+      }
+      if (p && cp && p === cp) {
+        errs.phone = "Số điện thoại đã tồn tại.";
+      }
+
+      if (errs.email || errs.phone) break;
+    }
+
+    return errs;
+  }
+
+  const resolveCustomerId = async () => {
+    if (userInfo?.customerId) return userInfo.customerId;
+    if (userInfo?.id) return userInfo.id;
+
+    if (userInfo?.username) {
+      const found = await findCustomerByUsername(userInfo.username);
+      return found?.customerId ?? found?.id ?? null;
+    }
+    return null;
   };
 
   const handleSubmit = async (e) => {
@@ -34,42 +147,64 @@ export default function EditAccountModal({ isOpen, onClose, userInfo }) {
     setMessage({ type: "", text: "" });
 
     try {
-      // Validate form
-      if (!formData.fullName.trim()) {
-        throw new Error("Vui lòng nhập họ tên");
+      if (!isDirty) {
+        setMessage({ type: "error", text: "Không có thay đổi nào để lưu." });
+        setIsLoading(false);
+        return;
       }
 
-      if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
-        throw new Error("Email không hợp lệ");
-      }
+      const errName = validateFullName(formData.fullName);
+      const errEmail = validateEmail(formData.email);
+      const errPhone = validatePhone(formData.phone);
 
-      if (formData.phone && !/^[0-9+\-\s()]+$/.test(formData.phone)) {
-        throw new Error("Số điện thoại không hợp lệ");
-      }
-
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Update user info in localStorage
-      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const updatedUser = {
-        ...currentUser,
-        fullName: formData.fullName,
-        phone: formData.phone,
-        email: formData.email
+      const newFieldErrs = {
+        fullName: errName,
+        email: errEmail,
+        phone: errPhone,
       };
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      const hasErr = Object.values(newFieldErrs).some(Boolean);
+      if (hasErr) {
+        setFieldErrs(newFieldErrs);
+        throw new Error("Dữ liệu chưa hợp lệ, vui lòng kiểm tra lại.");
+      }
 
+      const dup = checkDuplicateEmailPhone({
+        email: formData.email,
+        phone: formData.phone,
+        selfId: userInfo?.id,
+      });
+      if (dup.email || dup.phone) {
+        setFieldErrs((s) => ({ ...s, ...dup }));
+        throw new Error("Email hoặc số điện thoại đã tồn tại.");
+      }
+
+      const toDigits = (s) => String(s || "").replace(/\D/g, "");
+      const payload = {
+        fullName: String(formData.fullName || "").trim(),
+        phone: toDigits(formData.phone),
+        email: String(formData.email || "").trim(),
+      };
+
+      const customerId = await resolveCustomerId();
+      if (!customerId)
+        throw new Error("Không xác định được tài khoản hiện tại.");
+      const serverUser = await updateCustomer(customerId, payload);
+      const normalize = normalizeCustomer(serverUser);
+      localStorage.setItem("user", JSON.stringify(normalize));
+      window.dispatchEvent(new Event("auth:changed"));
+
+      setFieldErrs({});
       setMessage({ type: "success", text: "Cập nhật thông tin thành công!" });
-      
-      // Close modal after success
+
       setTimeout(() => {
         onClose();
         setMessage({ type: "", text: "" });
-      }, 1500);
-
+      }, 1200);
     } catch (error) {
-      setMessage({ type: "error", text: error.message });
+      setMessage({
+        type: "error",
+        text: error?.message || "Cập nhật thất bại.",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -79,15 +214,13 @@ export default function EditAccountModal({ isOpen, onClose, userInfo }) {
 
   return (
     <div className="fixed inset-0 z-50 transition-opacity duration-300">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-
-      {/* Modal */}
       <div className="absolute inset-0 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white rounded-lg shadow-xl transform transition-transform duration-300">
-          {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Sửa thông tin tài khoản</h2>
+            <h2 className="text-xl font-bold text-gray-900">
+              Sửa thông tin tài khoản
+            </h2>
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -96,9 +229,7 @@ export default function EditAccountModal({ isOpen, onClose, userInfo }) {
             </button>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            {/* Full Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Họ và tên *
@@ -114,10 +245,14 @@ export default function EditAccountModal({ isOpen, onClose, userInfo }) {
                   placeholder="Nhập họ và tên"
                   required
                 />
+                {fieldErrs.fullName && (
+                  <p className="text-xs text-red-600 mt-1">
+                    {fieldErrs.fullName}
+                  </p>
+                )}
               </div>
             </div>
 
-            {/* Phone */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Số điện thoại
@@ -132,10 +267,12 @@ export default function EditAccountModal({ isOpen, onClose, userInfo }) {
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                   placeholder="Nhập số điện thoại"
                 />
+                {fieldErrs.phone && (
+                  <p className="text-xs text-red-600 mt-1">{fieldErrs.phone}</p>
+                )}
               </div>
             </div>
 
-            {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email
@@ -150,21 +287,24 @@ export default function EditAccountModal({ isOpen, onClose, userInfo }) {
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                   placeholder="Nhập email"
                 />
+                {fieldErrs.email && (
+                  <p className="text-xs text-red-600 mt-1">{fieldErrs.email}</p>
+                )}
               </div>
             </div>
 
-            {/* Message */}
             {message.text && (
-              <div className={`p-3 rounded-lg text-sm ${
-                message.type === "success" 
-                  ? "bg-green-50 text-green-700 border border-green-200" 
-                  : "bg-red-50 text-red-700 border border-red-200"
-              }`}>
+              <div
+                className={`p-3 rounded-lg text-sm font-medium text-center ${
+                  message.type === "success"
+                    ? "bg-green-50 text-green-700 border border-green-300"
+                    : "bg-red-50 text-red-700 border border-red-300"
+                }`}
+              >
                 {message.text}
               </div>
             )}
 
-            {/* Buttons */}
             <div className="flex gap-3 pt-4">
               <button
                 type="button"
@@ -176,7 +316,7 @@ export default function EditAccountModal({ isOpen, onClose, userInfo }) {
               </button>
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !isDirty}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
