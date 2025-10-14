@@ -1,5 +1,6 @@
 import apiConfig from "../api/apiConfig";
 import { findStaffByUsername } from "./apiStaff";
+import { ensureCustomerForUser } from "../lib/apiCustomer";
 
 export const roleRoutes = {
   ADMIN: "/admin",
@@ -117,28 +118,47 @@ export async function apiLogin({ username, password }) {
 
 export async function apiLoginCustomer({ username, password }) {
   const data = await apiConfig.post("/auth/token", { username, password });
-  const token = data?.token;
+  const token =
+    data?.token || data?.accessToken || data?.id_token || data?.result?.token;
   const authenticated = data?.authenticated ?? true;
 
   if (!token || authenticated === false) {
     throw new Error("Xác thực thất bại. Vui lòng thử lại.");
   }
-  const decoded = parseJWT(token);
+
+  const decoded = parseJWT(token) || {};
   if (!hasRole(decoded, "CUSTOMER")) {
     const err = new Error("Tài khoản không phải KHÁCH HÀNG.");
     err.code = "NOT_CUSTOMER";
     throw err;
   }
-  const role = "CUSTOMER";
-  const profile = {
+
+  const baseProfile = {
     username,
-    fullName: username,
-    email: "",
-    phone: "",
-    role,
+    fullName: decoded?.fullName || username,
+    email: decoded?.email || "",
+    phone: decoded?.phone || "",
+    role: "CUSTOMER",
   };
 
-  return { token, role, user: profile };
+  const cus = await ensureCustomerForUser({
+    username: baseProfile.username,
+    fullName: baseProfile.fullName,
+    email: baseProfile.email,
+    phone: baseProfile.phone,
+  });
+
+  const customerId = cus?.customerId ?? cus?.id ?? null;
+  const profile = {
+    ...baseProfile,
+    fullName: cus?.fullName || baseProfile.fullName,
+    email: cus?.email || baseProfile.email,
+    phone: cus?.phone || baseProfile.phone,
+    customerId,
+  };
+  saveSession({ token: `Bearer ${token}`, user: profile });
+  window.dispatchEvent(new Event("auth:changed"));
+  return { token, role: "CUSTOMER", user: profile };
 }
 
 export function logoutCustomer(redirectTo = "/home") {

@@ -63,7 +63,6 @@ export default function BookingForm({
 
     if (!isLoggedIn) {
       setShowLoginMessage(true);
-      onLoginClick?.(formData);
       return;
     }
 
@@ -88,7 +87,6 @@ export default function BookingForm({
             value={formData.date}
             min={minDate}
             onChange={handleInputChange}
-            required
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           />
           {fieldErrs.date && (
@@ -105,7 +103,6 @@ export default function BookingForm({
             name="time"
             value={formData.time}
             onChange={handleInputChange}
-            required
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           />
           {fieldErrs.time && (
@@ -145,9 +142,16 @@ export default function BookingForm({
 
       {!isLoggedIn && showLoginMessage && (
         <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-          <p className="text-sm text-orange-800">
-            Hãy đăng nhập để tiếp tục Đặt Bàn.
+          <p className="text-sm text-orange-800 mb-3">
+            Bạn cần đăng nhập để tiếp tục đặt bàn.
           </p>
+          <button
+            type="button"
+            onClick={() => onLoginClick?.(formData)}
+            className="px-4 py-2 text-sm rounded-lg bg-orange-500 hover:bg-orange-600 text-white transition-colors"
+          >
+            Đăng nhập ngay
+          </button>
         </div>
       )}
     </div>

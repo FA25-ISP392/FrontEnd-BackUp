@@ -15,8 +15,14 @@ import {
   mockPopularDishes,
 } from "../lib/managerData";
 import { getDishRequests, updateDishRequest } from "../lib/dishRequestsData";
-
+import {
+  listBookingsPaging,
+  approveBooking,
+  rejectBooking,
+  updateBooking,
+} from "../lib/apiBooking";
 import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
+import BookingEditModal from "../components/Manager/BookingEditModal";
 import { findStaffByUsername } from "../lib/apiStaff";
 
 export default function Manager() {
@@ -31,6 +37,7 @@ export default function Manager() {
   const [tables, setTables] = useState(mockTables);
   const [dishRequests, setDishRequests] = useState(getDishRequests());
   const [deletingIds, setDeletingIds] = useState(new Set());
+  const [savingBooking, setSavingBooking] = useState(false);
 
   useEffect(() => {
     const loadName = async () => {
@@ -61,49 +68,22 @@ export default function Manager() {
     loadName();
   }, []);
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const { items, pageInfo } = await listBookingsPaging({
+          page: 1,
+          size: 6,
+        });
+        console.log("BOOKINGS:", items, pageInfo);
+      } catch (err) {
+        console.error("Lỗi load booking:", err);
+      }
+    })();
+  }, []);
+
   //Call API data real
-  const [bookings, setBookings] = useState([
-    {
-      id: 1,
-      customerName: "Nguyễn Văn An",
-      phone: "0123456789",
-      guestCount: 4,
-      bookingTime: "19:30 - 21/12/2024",
-      status: "pending"
-    },
-    {
-      id: 2,
-      customerName: "Trần Thị Bình",
-      phone: "0987654321",
-      guestCount: 2,
-      bookingTime: "18:00 - 22/12/2024",
-      status: "pending"
-    },
-    {
-      id: 3,
-      customerName: "Lê Văn Cường",
-      phone: "0369852147",
-      guestCount: 6,
-      bookingTime: "20:00 - 23/12/2024",
-      status: "pending"
-    },
-    {
-      id: 4,
-      customerName: "Phạm Thị Dung",
-      phone: "0741258963",
-      guestCount: 3,
-      bookingTime: "19:00 - 24/12/2024",
-      status: "pending"
-    },
-    {
-      id: 5,
-      customerName: "Hoàng Văn Em",
-      phone: "0852369741",
-      guestCount: 8,
-      bookingTime: "18:30 - 25/12/2024",
-      status: "pending"
-    }
-  ]);
+  const [bookings, setBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [bookingsError, setBookingsError] = useState("");
 
@@ -113,7 +93,7 @@ export default function Manager() {
     page: 1,
     size: 6,
     totalPages: 1,
-    totalElements: 5,
+    totalElements: 0,
   });
 
   useEffect(() => {
@@ -128,16 +108,14 @@ export default function Manager() {
       setLoadingBookings(true);
       setBookingsError("");
       try {
-        // Tạm thời sử dụng dữ liệu giả, sẽ thêm API call sau
+        const { items, pageInfo } = await listBookingsPaging({ page, size });
         if (!cancelled) {
-          // Giữ nguyên dữ liệu giả đã có
-          setPageInfo({ page: 1, size: 6, totalPages: 1, totalElements: 5 });
+          setBookings(items);
+          setPageInfo(pageInfo);
         }
       } catch (err) {
         if (!cancelled)
-          setBookingsError(
-            err.message || "Không tải được danh sách đặt bàn."
-          );
+          setBookingsError(err.message || "Không tải được danh sách đặt bàn.");
       } finally {
         if (!cancelled) setLoadingBookings(false);
       }
@@ -151,16 +129,61 @@ export default function Manager() {
   const refetchBookings = async (toPage = page) => {
     setLoadingBookings(true);
     try {
-      // Tạm thời giữ nguyên dữ liệu giả, sẽ thêm API call sau
-      setPageInfo({ page: 1, size: 6, totalPages: 1, totalElements: 5 });
+      const { items, pageInfo } = await listBookingsPaging({
+        page: toPage,
+        size,
+      });
+      setBookings(items);
+      setPageInfo(pageInfo);
     } finally {
       setLoadingBookings(false);
     }
   };
 
-  const updateBooking = async (data) => {
-    // Tạm thời để trống, sẽ thêm logic cập nhật đặt bàn sau
-    console.log("Cập nhật đặt bàn:", data);
+  const handleApprove = async (bk) => {
+    setBookings((prev) =>
+      prev.map((x) => (x.id === bk.id ? { ...x, status: "APPROVED" } : x))
+    );
+    try {
+      await approveBooking(bk.id);
+    } catch (e) {
+      setBookings((prev) =>
+        prev.map((x) => (x.id === bk.id ? { ...x, status: "PENDING" } : x))
+      );
+      alert(e.message || "Duyệt thất bại");
+    }
+  };
+
+  const handleReject = async (bk) => {
+    setBookings((prev) =>
+      prev.map((x) => (x.id === bk.id ? { ...x, status: "REJECTED" } : x))
+    );
+    try {
+      await rejectBooking(bk.id);
+    } catch (e) {
+      setBookings((prev) =>
+        prev.map((x) => (x.id === bk.id ? { ...x, status: "PENDING" } : x))
+      );
+      alert(e.message || "Từ chối thất bại");
+    }
+  };
+
+  const handleSaveEdit = async ({ id, seat, bookingDate }) => {
+    try {
+      setSavingBooking(true);
+      setBookings((prev) =>
+        prev.map((x) => (x.id === id ? { ...x, seat, bookingDate } : x))
+      );
+      await updateBooking(id, { seat, bookingDate });
+      await refetchBookings();
+      setIsEditingBooking(false);
+      setEditingItem(null);
+    } catch (e) {
+      console.error(e);
+      alert(e.message || "Cập nhật thất bại");
+    } finally {
+      setSavingBooking(false);
+    }
   };
 
   const deleteBooking = async (bookingId) => {
@@ -235,6 +258,8 @@ export default function Manager() {
             page={page}
             pageInfo={pageInfo}
             onPageChange={setPage}
+            onApprove={handleApprove}
+            onReject={handleReject}
           />
         );
       case "dishes":
@@ -306,6 +331,16 @@ export default function Manager() {
         updateOrderStatus={updateOrderStatus}
       />
       {/* Modal cho chỉnh sửa đặt bàn sẽ được thêm sau */}
+      <BookingEditModal
+        open={isEditingBooking}
+        booking={editingItem}
+        onClose={() => {
+          setIsEditingBooking(false);
+          setEditingItem(null);
+        }}
+        onSave={handleSaveEdit}
+        saving={savingBooking}
+      />
     </div>
   );
 }

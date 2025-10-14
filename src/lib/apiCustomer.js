@@ -74,3 +74,18 @@ export async function updateCustomer(customerId, payload) {
 export async function changeCustomerPassword(customerId, newPassword) {
   return updateCustomer(customerId, { password: newPassword });
 }
+
+export async function ensureCustomerForUser({
+  username,
+  fullName,
+  email,
+  phone,
+}) {
+  const existed = await findCustomerByUsername(username);
+  if (existed?.customerId) return existed;
+
+  const payload = { username, fullName, email, phone };
+  const res = await apiConfig.post("/customer", payload);
+  const data = res?.result ?? res;
+  return normalizeCustomer(data);
+}

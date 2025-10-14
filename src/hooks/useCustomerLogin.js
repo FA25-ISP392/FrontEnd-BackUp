@@ -1,5 +1,4 @@
-// src/hooks/useCustomerLogin.js
-import { apiLoginCustomer, saveSession } from "../lib/auth";
+import { apiLoginCustomer } from "../lib/auth";
 import { useState, useCallback } from "react";
 
 export function useCustomerLogin() {
@@ -26,8 +25,6 @@ export function useCustomerLogin() {
           username: u,
           password: p,
         });
-        saveSession({ token, user });
-        window.dispatchEvent(new Event("auth:changed"));
         if (typeof onSuccess === "function") onSuccess();
         return true;
       } catch (e) {

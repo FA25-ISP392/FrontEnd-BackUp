@@ -17,9 +17,31 @@ export default function RegisterForm({ onSwitchToLogin }) {
   const [fieldErrs, setFieldErrs] = useState({});
   const [formMsg, setFormMsg] = useState("");
 
-  const handleInputChange = (tmp) => {
-    const { name, value } = tmp.target;
-    setFormRegister((prev) => ({ ...prev, [name]: value }));
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    let next = value;
+    switch (name) {
+      case "username": {
+        next = value
+          .toLowerCase()
+          .replace(/[^a-z0-9._-]/g, "")
+          .slice(0, 30);
+        break;
+      }
+      case "fullName": {
+        next = value.replace(/\s+/g, " ").trimStart().slice(0, 50);
+        break;
+      }
+      case "phone": {
+        next = value.replace(/\D/g, "").slice(0, 10);
+        break;
+      }
+      default:
+        break;
+    }
+
+    setFormRegister((prev) => ({ ...prev, [name]: next }));
+    setFieldErrs((prev) => ({ ...prev, [name]: "" }));
   };
 
   function validateCreate(value) {
@@ -33,50 +55,55 @@ export default function RegisterForm({ onSwitchToLogin }) {
       phone: (value.phone || "").trim(),
     };
 
-    if (
-      !cleaned.username ||
-      cleaned.username.length < 3 ||
-      cleaned.username.length > 30
-    ) {
+    if (!cleaned.username) {
+      errs.username = "Vui lòng nhập tên đăng nhập.";
+    } else if (cleaned.username.length < 3 || cleaned.username.length > 30) {
       errs.username = "Tên đăng nhập phải từ 3–30 ký tự.";
+    } else if (!/^[a-z0-9._-]+$/.test(cleaned.username)) {
+      errs.username =
+        "Chỉ gồm a–z, 0–9, dấu chấm (.), gạch dưới (_), gạch nối (-).";
     }
 
-    if (
-      !cleaned.password ||
-      cleaned.password.length < 8 ||
-      cleaned.password.length > 30
-    ) {
+    if (!cleaned.password) {
+      errs.password = "Vui lòng nhập mật khẩu.";
+    } else if (cleaned.password.length < 8 || cleaned.password.length > 30) {
       errs.password = "Mật khẩu phải từ 8–30 ký tự.";
+    } else if (/\s/.test(cleaned.password)) {
+      errs.password = "Mật khẩu không được chứa khoảng trắng.";
+    } else if (
+      !/[A-Za-z]/.test(cleaned.password) ||
+      !/\d/.test(cleaned.password)
+    ) {
+      errs.password = "Nên có cả chữ và số để tăng độ mạnh.";
     }
 
     if (cleaned.confirmPassword !== cleaned.password) {
       errs.confirmPassword = "Mật khẩu xác nhận không khớp.";
     }
 
-    if (
-      !cleaned.fullName ||
-      cleaned.fullName.length < 2 ||
-      cleaned.fullName.length > 50
-    ) {
+    if (!cleaned.fullName) {
+      errs.fullName = "Vui lòng nhập họ và tên.";
+    } else if (cleaned.fullName.length < 2 || cleaned.fullName.length > 50) {
       errs.fullName = "Họ tên phải từ 2–50 ký tự.";
+    } else if (/\d/.test(cleaned.fullName)) {
+      errs.fullName = "Họ tên không được chứa chữ số.";
     }
 
-    if (cleaned.email) {
+    if (!cleaned.email) {
+      errs.email = "Vui lòng nhập email.";
+    } else {
       const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleaned.email);
       if (!emailOk) errs.email = "Email không hợp lệ.";
-    } else {
-      delete cleaned.email;
     }
 
-    if (cleaned.phone) {
+    if (!cleaned.phone) {
+      errs.phone = "Vui lòng nhập số điện thoại.";
+    } else {
       const onlyDigits = cleaned.phone.replace(/\D/g, "");
       if (!/^0[1-9]\d{8}$/.test(onlyDigits)) {
-        errs.phone =
-          "Số điện thoại phải 10 số, bắt đầu bằng 0 và số thứ 2 từ 1–9.";
+        errs.phone = "Số điện thoại phải 10 số, bắt đầu bằng 0.";
       }
       cleaned.phone = onlyDigits;
-    } else {
-      delete cleaned.phone;
     }
 
     return { errs, cleaned };
@@ -133,7 +160,6 @@ export default function RegisterForm({ onSwitchToLogin }) {
         }
       }
 
-      // Một số backend trả message trùng lặp
       const low = String(data?.message || err.message || "").toLowerCase();
       const dup = /(exist|exists|duplicate|already|unique|trùng)/i;
       if (!tmp.username && /user(name)?/.test(low) && dup.test(low))
@@ -209,6 +235,8 @@ export default function RegisterForm({ onSwitchToLogin }) {
               setFieldErrs((prev) => ({ ...prev, username: "" }));
             }}
             required
+            autoComplete="username"
+            maxLength={30}
             className="form-input-enhanced"
             placeholder="Nhập tên đăng nhập"
           />
@@ -231,6 +259,8 @@ export default function RegisterForm({ onSwitchToLogin }) {
                 setFieldErrs((prev) => ({ ...prev, password: "" }));
               }}
               required
+              autoComplete="new-password"
+              maxLength={30}
               className="form-input-enhanced pr-10"
               placeholder="Nhập mật khẩu"
             />
@@ -265,6 +295,8 @@ export default function RegisterForm({ onSwitchToLogin }) {
                 setFieldErrs((prev) => ({ ...prev, confirmPassword: "" }));
               }}
               required
+              autoComplete="new-password"
+              maxLength={30}
               className="form-input-enhanced pr-10"
               placeholder="Nhập lại mật khẩu"
             />
@@ -300,6 +332,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
               setFieldErrs((prev) => ({ ...prev, fullName: "" }));
             }}
             required
+            maxLength={50}
             className="form-input-enhanced"
             placeholder="Nhập họ và tên"
           />
@@ -321,6 +354,10 @@ export default function RegisterForm({ onSwitchToLogin }) {
               setFieldErrs((prev) => ({ ...prev, phone: "" }));
             }}
             required
+            inputMode="numeric"
+            pattern="\d*"
+            autoComplete="tel"
+            maxLength={10}
             className="form-input-enhanced"
             placeholder="Nhập số điện thoại"
           />
@@ -342,6 +379,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
               setFieldErrs((prev) => ({ ...prev, email: "" }));
             }}
             required
+            autoComplete="email"
             className="form-input-enhanced"
             placeholder="Nhập email"
           />

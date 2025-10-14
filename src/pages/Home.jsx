@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { logoutCustomer } from "../lib/auth";
 import { createBooking } from "../lib/apiBooking";
 import { useBooking } from "../hooks/useBooking";
+import ToastHost, { showToast } from "../common/ToastHost";
 
 export default function Home() {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -60,11 +61,13 @@ export default function Home() {
     try {
       await createBooking(formData);
       clearBookingDraft();
-      alert("Đặt bàn thành công! Chúng tôi sẽ liên hệ lại với bạn.");
+      showToast(
+        "Đặt bàn thành công! Chúng tôi sẽ liên hệ lại với bạn.",
+        "success"
+      );
       setIsBookingOpen(false);
     } catch (err) {
-      console.error(err);
-      alert(err?.message || "Đặt bàn thất bại.");
+      showToast(err?.message || "Đặt bàn thất bại.", "error");
     }
   };
 
@@ -85,12 +88,6 @@ export default function Home() {
       setIsBookingOpen(true);
     }
   };
-
-  // const handleRegisterSubmit = (formData) => {
-  //   console.log("Register submitted:", formData);
-  //   alert("Đăng ký thành công!");
-  //   setIsLoginOpen(false);
-  // };
 
   const switchToRegister = () => setIsLoginForm(false);
   const switchToLogin = () => setIsLoginForm(true);
@@ -115,6 +112,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
+      <ToastHost />
       <header className="fixed top-0 left-0 right-0 w-full bg-white shadow-sm z-50">
         <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
           <Link
