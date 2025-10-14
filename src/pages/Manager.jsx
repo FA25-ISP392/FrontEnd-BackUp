@@ -3,7 +3,7 @@ import ManagerSidebar from "../components/Manager/ManagerSidebar";
 import StatsCards from "../components/Manager/StatsCards";
 import Charts from "../components/Manager/Charts";
 import TablesManagement from "../components/Manager/TablesManagement";
-import AccountManagement from "../components/Manager/AccountManagement";
+import BookingManagement from "../components/Manager/BookingManagement";
 import DishRequestsManagement from "../components/Manager/DishRequestsManagement";
 import ManagerInvoicesToday from "../components/Manager/InvoicesToday";
 import DishesStockVisibility from "../components/Manager/DishesStockVisibility";
@@ -16,22 +16,14 @@ import {
 } from "../lib/managerData";
 import { getDishRequests, updateDishRequest } from "../lib/dishRequestsData";
 
-import {
-  updateStaff,
-  deleteStaff,
-  normalizeStaff,
-  listStaffPaging,
-} from "../lib/apiStaff";
-
 import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
 import { findStaffByUsername } from "../lib/apiStaff";
-import ManagerEditAccountModal from "../components/Manager/EditAccountModal";
 
 export default function Manager() {
   const [managerName, setManagerName] = useState("");
   const [activeSection, setActiveSection] = useState("overview");
   const [revenuePeriod, setRevenuePeriod] = useState("day");
-  const [isEditingAccount, setIsEditingAccount] = useState(false);
+  const [isEditingBooking, setIsEditingBooking] = useState(false);
   const [isEditingDish, setIsEditingDish] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [selectedTable, setSelectedTable] = useState(null);
@@ -70,9 +62,50 @@ export default function Manager() {
   }, []);
 
   //Call API data real
-  const [accounts, setAccounts] = useState([]);
-  const [loadingAccounts, setLoadingAccounts] = useState(false);
-  const [accountsError, setAccountsError] = useState("");
+  const [bookings, setBookings] = useState([
+    {
+      id: 1,
+      customerName: "Nguyễn Văn An",
+      phone: "0123456789",
+      guestCount: 4,
+      bookingTime: "19:30 - 21/12/2024",
+      status: "pending"
+    },
+    {
+      id: 2,
+      customerName: "Trần Thị Bình",
+      phone: "0987654321",
+      guestCount: 2,
+      bookingTime: "18:00 - 22/12/2024",
+      status: "pending"
+    },
+    {
+      id: 3,
+      customerName: "Lê Văn Cường",
+      phone: "0369852147",
+      guestCount: 6,
+      bookingTime: "20:00 - 23/12/2024",
+      status: "pending"
+    },
+    {
+      id: 4,
+      customerName: "Phạm Thị Dung",
+      phone: "0741258963",
+      guestCount: 3,
+      bookingTime: "19:00 - 24/12/2024",
+      status: "pending"
+    },
+    {
+      id: 5,
+      customerName: "Hoàng Văn Em",
+      phone: "0852369741",
+      guestCount: 8,
+      bookingTime: "18:30 - 25/12/2024",
+      status: "pending"
+    }
+  ]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+  const [bookingsError, setBookingsError] = useState("");
 
   const [page, setPage] = useState(1);
   const [size] = useState(6);
@@ -80,7 +113,7 @@ export default function Manager() {
     page: 1,
     size: 6,
     totalPages: 1,
-    totalElements: 0,
+    totalElements: 5,
   });
 
   useEffect(() => {
@@ -92,25 +125,21 @@ export default function Manager() {
     let cancelled = false;
 
     (async () => {
-      setLoadingAccounts(true);
-      setAccountsError("");
+      setLoadingBookings(true);
+      setBookingsError("");
       try {
-        const { items, pageInfo } = await listStaffPaging({
-          page,
-          size,
-          excludeRoles: ["ADMIN"],
-        });
+        // Tạm thời sử dụng dữ liệu giả, sẽ thêm API call sau
         if (!cancelled) {
-          setAccounts(items);
-          setPageInfo(pageInfo);
+          // Giữ nguyên dữ liệu giả đã có
+          setPageInfo({ page: 1, size: 6, totalPages: 1, totalElements: 5 });
         }
       } catch (err) {
         if (!cancelled)
-          setAccountsError(
-            err.message || "Không tải được danh sách nhân viên."
+          setBookingsError(
+            err.message || "Không tải được danh sách đặt bàn."
           );
       } finally {
-        if (!cancelled) setLoadingAccounts(false);
+        if (!cancelled) setLoadingBookings(false);
       }
     })();
 
@@ -119,109 +148,24 @@ export default function Manager() {
     };
   }, [activeSection, page, size]);
 
-  const refetchAccounts = async (toPage = page) => {
-    setLoadingAccounts(true);
+  const refetchBookings = async (toPage = page) => {
+    setLoadingBookings(true);
     try {
-      const { items, pageInfo } = await listStaffPaging({ page: toPage, size });
-      setAccounts(items);
-      setPageInfo(pageInfo);
+      // Tạm thời giữ nguyên dữ liệu giả, sẽ thêm API call sau
+      setPageInfo({ page: 1, size: 6, totalPages: 1, totalElements: 5 });
     } finally {
-      setLoadingAccounts(false);
+      setLoadingBookings(false);
     }
   };
 
-  const updateAccount = async (data) => {
-    const staffId = data?.staffId ?? data?.id;
-    if (!staffId) return;
-
-    const payload = [
-      "fullName",
-      "email",
-      "phone",
-      "dob",
-      "role",
-      "password",
-    ].reduce((object, key) => {
-      let value = data[key];
-      if (value === "" || value === undefined || value === null) return object;
-      if (key === "role") value = String(value).toUpperCase();
-      object[key] = value;
-      return object;
-    }, {});
-
-    try {
-      const response = await updateStaff(staffId, payload);
-      const updated = normalizeStaff(response?.result ?? response);
-      setAccounts((prev) =>
-        prev.map((arr) => (arr.id === staffId ? { ...arr, ...updated } : arr))
-      );
-    } catch (err) {
-      const data = err?.response?.data || err?.data || {};
-      const list = data?.result || data?.errors || data?.fieldErrors || [];
-      const message =
-        (Array.isArray(list) &&
-          list
-            .map((arrs) => arrs?.defaultMessage || arrs?.message)
-            .filter(Boolean)
-            .join(" | ")) ||
-        data?.message ||
-        err.message ||
-        "Cập nhật thất bại.";
-      alert(message);
-      throw err;
-    }
+  const updateBooking = async (data) => {
+    // Tạm thời để trống, sẽ thêm logic cập nhật đặt bàn sau
+    console.log("Cập nhật đặt bàn:", data);
   };
 
-  const deleteAccount = async (staffId) => {
-    if (!staffId) return;
-    const targetDelete = accounts.find(
-      (arr) => Number(arr.staffId) === Number(staffId)
-    );
-    if (!targetDelete) return;
-    const me = getCurrentUser() || {};
-    const meUsername = String(me.username || "").toLowerCase();
-    const isSelf =
-      String(targetDelete.username || "").toLowerCase() === meUsername ||
-      Number(targetDelete.accountId) === Number(me.accountId) ||
-      Number(targetDelete.staffId) === Number(me.staffId || me.id);
-    if (isSelf) {
-      alert("Không thể xoá tài khoản đang đăng nhập.");
-      return;
-    }
-    const findStaffId = Number(targetDelete.staffId);
-    if (!findStaffId) {
-      alert("Không tìm thấy StaffId để thực hiện tác vụ.");
-      return;
-    }
-    const prev = accounts;
-    setDeletingIds((set) => new Set(set).add(findStaffId));
-    setAccounts((cur) => cur.filter((acc) => Number(acc.id) !== findStaffId));
-    try {
-      await deleteStaff(findStaffId);
-      const remaining = accounts.length - 1;
-      if (remaining <= 0 && page > 1) setPage((p) => p - 1);
-      else await refetchAccounts(page);
-    } catch (err) {
-      setAccounts(prev);
-      const data = err?.response?.data || err?.data || {};
-      const list = data?.result || data?.errors || data?.fieldErrors || [];
-      const message =
-        (Array.isArray(list) &&
-          list
-            .map((it) => it?.defaultMessage || it?.message)
-            .filter(Boolean)
-            .join(" | ")) ||
-        data?.message ||
-        err?.message ||
-        "Xoá thất bại.";
-      alert(message);
-    } finally {
-      setDeletingIds((set) => {
-        const next = new Set(set);
-        next.delete(findStaffId);
-        return next;
-      });
-    }
+  const deleteBooking = async (bookingId) => {
+    // Tạm thời để trống, sẽ thêm logic xóa đặt bàn sau
+    console.log("Xóa đặt bàn:", bookingId);
   };
 
   // Calculate totals
@@ -229,7 +173,7 @@ export default function Manager() {
     (sum, item) => sum + item.revenue,
     0
   );
-  const totalAccounts = accounts.length;
+  const totalBookings = bookings.length;
   const totalDishes = dishes.length;
   const totalTables = tables.length;
 
@@ -258,7 +202,7 @@ export default function Manager() {
           <>
             <StatsCards
               totalRevenue={totalRevenue}
-              totalAccounts={totalAccounts}
+              totalAccounts={totalBookings}
               totalDishes={totalDishes}
               totalTables={totalTables}
             />
@@ -281,18 +225,16 @@ export default function Manager() {
         );
       case "accounts":
         return (
-          <AccountManagement
-            accounts={accounts}
-            setAccounts={setAccounts}
-            setIsEditingAccount={setIsEditingAccount}
+          <BookingManagement
+            bookings={bookings}
+            setBookings={setBookings}
+            setIsEditingBooking={setIsEditingBooking}
             setEditingItem={setEditingItem}
-            deleteAccount={deleteAccount}
-            loading={loadingAccounts}
+            loading={loadingBookings}
             deletingIds={deletingIds}
             page={page}
             pageInfo={pageInfo}
             onPageChange={setPage}
-            currentUser={getCurrentUser()}
           />
         );
       case "dishes":
@@ -363,15 +305,7 @@ export default function Manager() {
         setSelectedTable={setSelectedTable}
         updateOrderStatus={updateOrderStatus}
       />
-      <ManagerEditAccountModal
-        isEditingAccount={isEditingAccount}
-        setIsEditingAccount={setIsEditingAccount}
-        editingItem={editingItem}
-        setEditingItem={setEditingItem}
-        saveAccount={updateAccount}
-        setDeletingIds={deletingIds}
-        accounts={accounts}
-      />
+      {/* Modal cho chỉnh sửa đặt bàn sẽ được thêm sau */}
     </div>
   );
 }

@@ -11,7 +11,7 @@ import {
 const sidebarItems = [
   { id: "overview", label: "Tổng Quan", icon: BarChart3 },
   { id: "tables", label: "Quản Lý Bàn", icon: Table },
-  { id: "accounts", label: "Tài Khoản", icon: Users },
+  { id: "accounts", label: "Quản Lý Đặt Bàn", icon: Users },
   { id: "dishes", label: "Món Ăn", icon: Package },
   { id: "invoices", label: "Hóa Đơn", icon: FileText },
 ];
