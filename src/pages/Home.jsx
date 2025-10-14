@@ -9,6 +9,8 @@ import { MapPin, Phone, Mail, X, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { logoutCustomer } from "../lib/auth";
+import { createBooking } from "../lib/apiBooking";
+import { useBooking } from "../hooks/useBooking";
 
 export default function Home() {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -18,6 +20,12 @@ export default function Home() {
   const [isLoginForm, setIsLoginForm] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
+  const {
+    bookingDraft,
+    saveBookingDraft,
+    clearBookingDraft,
+    reloadBookingDraft,
+  } = useBooking();
 
   useEffect(() => {
     const syncAuth = () => {
@@ -48,30 +56,44 @@ export default function Home() {
     };
   }, []);
 
-  const handleBookingSubmit = (formData) => {
-    console.log("Booking submitted:", formData);
-    alert("Đặt bàn thành công! Chúng tôi sẽ liên hệ lại với bạn.");
-    setIsBookingOpen(false);
+  const handleBookingSubmit = async (formData) => {
+    try {
+      await createBooking(formData);
+      clearBookingDraft();
+      alert("Đặt bàn thành công! Chúng tôi sẽ liên hệ lại với bạn.");
+      setIsBookingOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert(err?.message || "Đặt bàn thất bại.");
+    }
   };
 
-  const handleLoginSubmit = () => {
-    setIsLoginOpen(false);
-  };
-
-  const handleRegisterSubmit = (formData) => {
-    console.log("Register submitted:", formData);
-    alert("Đăng ký thành công!");
-    setIsLoginOpen(false);
-  };
-
-  const switchToRegister = () => setIsLoginForm(false);
-  const switchToLogin = () => setIsLoginForm(true);
-
-  const handleLoginFromBooking = () => {
+  const handleLoginFromBooking = (currentForm) => {
+    if (currentForm) {
+      const { date, time, guests } = currentForm;
+      saveBookingDraft({ date, time, guests });
+    }
     setIsBookingOpen(false);
     setIsLoginOpen(true);
     setIsLoginForm(true);
   };
+
+  const handleLoginSubmit = () => {
+    setIsLoginOpen(false);
+    if (bookingDraft) {
+      reloadBookingDraft();
+      setIsBookingOpen(true);
+    }
+  };
+
+  // const handleRegisterSubmit = (formData) => {
+  //   console.log("Register submitted:", formData);
+  //   alert("Đăng ký thành công!");
+  //   setIsLoginOpen(false);
+  // };
+
+  const switchToRegister = () => setIsLoginForm(false);
+  const switchToLogin = () => setIsLoginForm(true);
 
   const handleLogout = () => {
     logoutCustomer("/home");
@@ -228,6 +250,7 @@ export default function Home() {
                 onSubmit={handleBookingSubmit}
                 isLoggedIn={isLoggedIn}
                 onLoginClick={handleLoginFromBooking}
+                initialData={bookingDraft}
               />
             </div>
           </div>

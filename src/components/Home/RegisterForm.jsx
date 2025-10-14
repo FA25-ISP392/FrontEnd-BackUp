@@ -320,6 +320,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
               handleInputChange(event);
               setFieldErrs((prev) => ({ ...prev, phone: "" }));
             }}
+            required
             className="form-input-enhanced"
             placeholder="Nhập số điện thoại"
           />
@@ -340,6 +341,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
               handleInputChange(event);
               setFieldErrs((prev) => ({ ...prev, email: "" }));
             }}
+            required
             className="form-input-enhanced"
             placeholder="Nhập email"
           />
