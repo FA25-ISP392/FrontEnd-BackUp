@@ -1,20 +1,5 @@
 import apiConfig from "../api/apiConfig";
-
-function toBookingISO(dateStr, timeStr = "00:00") {
-  if (!dateStr) return new Date().toISOString();
-  const [year, month, day] = dateStr.split("-").map(Number);
-  const [hours, minutes] = timeStr.split(":").map(Number);
-  const date = new Date(
-    year,
-    (month || 1) - 1,
-    day || 1,
-    hours || 0,
-    minutes || 0,
-    0,
-    0
-  );
-  return date.toISOString();
-}
+import { buildISOFromVN } from "../lib/datetimeBooking";
 
 export async function createBooking({ date, time, guests }) {
   if (!localStorage.getItem("token")) {
@@ -22,12 +7,10 @@ export async function createBooking({ date, time, guests }) {
   }
   const payload = {
     seat: Number(guests) || 1,
-    bookingDate: toBookingISO(date, time),
+    bookingDate: buildISOFromVN(date, time),
   };
-
-  if (import.meta.env.DEV) {
+  if (import.meta.env.DEV)
     console.log("POST /booking payload: ", JSON.stringify(payload));
-  }
   return apiConfig.post("/booking", payload);
 }
 
@@ -43,8 +26,24 @@ export const normalizeBooking = (b = {}) => ({
   status: String(b.status || "PENDING").toUpperCase(),
 });
 
-export async function listBookingsPaging({ page = 1, size = 6 } = {}) {
-  const res = await apiConfig.get("/booking");
+function normalizeStatusFilter(status) {
+  if (!status) return "ALL";
+  const set = String(status).toUpperCase();
+  if (set === "REJECT") return "REJECT";
+  return set;
+}
+
+export async function listBookingsPaging({
+  page = 1,
+  size = 6,
+  status = "ALL",
+} = {}) {
+  const setStatusPage = normalizeStatusFilter(status);
+  const endpoint =
+    setStatusPage !== "ALL"
+      ? `/booking/status/${encodeURIComponent(setStatusPage)}`
+      : "/booking";
+  const res = await apiConfig.get(endpoint);
   const list = Array.isArray(res)
     ? res
     : Array.isArray(res?.result)
@@ -56,9 +55,9 @@ export async function listBookingsPaging({ page = 1, size = 6 } = {}) {
   const data = list
     .map(normalizeBooking)
     .sort(
-      (a, b) =>
-        new Date(b.createdAt || b.bookingDate) -
-        new Date(a.createdAt || a.bookingDate)
+      (firstKey, secondKey) =>
+        new Date(secondKey.createdAt || secondKey.bookingDate) -
+        new Date(firstKey.createdAt || firstKey.bookingDate)
     );
 
   const totalElements = data.length;
@@ -81,14 +80,31 @@ export async function listBookingsPaging({ page = 1, size = 6 } = {}) {
 }
 
 export async function updateBooking(id, payload) {
-  const body = Object.fromEntries(
-    Object.entries(payload).filter(
-      ([_, v]) => v !== undefined && v !== null && v !== ""
-    )
-  );
+  const rawSeat = parseInt(payload.seat, 10) || 1;
+  const seat = Math.max(1, Math.min(8, rawSeat));
+  const bookingDate =
+    payload.bookingDate ||
+    (payload.date ? buildISOFromVN(payload.date, payload.time) : null);
+  if (!bookingDate) throw new Error("Thiếu bookingDate hoặc date+time.");
+  const body = { seat, bookingDate };
+  if (import.meta.env.DEV) console.log("PUT /booking/%s body:", id, body);
   const res = await apiConfig.put(`/booking/${id}`, body);
   return normalizeBooking(res?.result ?? res);
 }
 
 export const approveBooking = (id) => updateBooking(id, { status: "APPROVED" });
-export const rejectBooking = (id) => updateBooking(id, { status: "REJECTED" });
+
+export const rejectBooking = async (id) => {
+  const res = await apiConfig.put(`/booking/${id}/reject`, {});
+  return normalizeBooking(res?.result ?? res);
+};
+
+export async function approveBookingWithTable(bookingId, tableId) {
+  if (!bookingId || !tableId)
+    throw new Error("Thiếu bookingId hoặc tableId khi duyệt bàn.");
+
+  const res = await apiConfig.put(`/booking/${bookingId}/approved`, {
+    tableId: Number(tableId),
+  });
+  return res;
+}

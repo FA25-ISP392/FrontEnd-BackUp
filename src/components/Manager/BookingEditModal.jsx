@@ -1,25 +1,6 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-
-// tách ISO -> yyyy-MM-dd & HH:mm theo local
-const isoToParts = (iso) => {
-  if (!iso) return { date: "", time: "" };
-  const d = new Date(iso);
-  const pad = (n) => String(n).padStart(2, "0");
-  const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(
-    d.getDate()
-  )}`;
-  const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  return { date, time };
-};
-
-const toBookingISO = (dateStr, timeStr = "00:00") => {
-  if (!dateStr) return new Date().toISOString();
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const [hh, mm] = (timeStr || "00:00").split(":").map(Number);
-  const dt = new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0, 0, 0);
-  return dt.toISOString();
-};
+import { isoToVNParts, buildISOFromVN } from "../../lib/datetimeBooking";
 
 export default function BookingEditModal({
   open = false,
@@ -31,21 +12,38 @@ export default function BookingEditModal({
   const [seat, setSeat] = useState(1);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+  const clamp = (v, lo = 1, hi = 8) => Math.max(lo, Math.min(hi, v | 0 || lo));
+  const pad = (n) => String(n).padStart(2, "0");
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(
+    today.getDate()
+  )}`;
+  const nowHM = `${pad(today.getHours())}:${pad(today.getMinutes())}`;
 
   useEffect(() => {
     if (!open || !booking) return;
     setSeat(Number(booking.seat || 1));
-    const { date: d, time: t } = isoToParts(booking.bookingDate);
+    const { date: d, time: t } = isoToVNParts(booking.bookingDate);
     setDate(d);
     setTime(t);
   }, [open, booking]);
 
   const handleSubmit = async (e) => {
     e?.preventDefault?.();
+    const seatNum = Number(seat) || 1;
+    if (seatNum < 1 || seatNum > 8) {
+      alert("Số người phải trong khoảng 1–8.");
+      return;
+    }
+    const iso = buildISOFromVN(date, time);
+    if (new Date(iso).getTime() < Date.now()) {
+      alert("Thời điểm đến không được ở quá khứ.");
+      return;
+    }
     const payload = {
       id: booking.id,
-      seat: Number(seat) || 1,
-      bookingDate: toBookingISO(date, time),
+      seat: seatNum,
+      bookingDate: iso,
     };
     await onSave(payload);
   };
@@ -54,9 +52,7 @@ export default function BookingEditModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* backdrop */}
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      {/* panel */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">Sửa đặt bàn</h3>
@@ -89,9 +85,10 @@ export default function BookingEditModal({
               <input
                 type="number"
                 min={1}
+                max={8}
                 className="w-full rounded-lg border border-neutral-300 px-3 py-2"
                 value={seat}
-                onChange={(e) => setSeat(e.target.value)}
+                onChange={(e) => setSeat(clamp(e.target.value))}
                 required
               />
             </div>
@@ -105,6 +102,7 @@ export default function BookingEditModal({
                 className="w-full rounded-lg border border-neutral-300 px-3 py-2"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
+                min={todayStr}
                 required
               />
             </div>
@@ -119,6 +117,7 @@ export default function BookingEditModal({
               className="w-full rounded-lg border border-neutral-300 px-3 py-2"
               value={time}
               onChange={(e) => setTime(e.target.value)}
+              min={date === todayStr ? nowHM : undefined}
               required
             />
           </div>

@@ -8,6 +8,7 @@ import DishRequestsManagement from "../components/Manager/DishRequestsManagement
 import ManagerInvoicesToday from "../components/Manager/InvoicesToday";
 import DishesStockVisibility from "../components/Manager/DishesStockVisibility";
 import TableDetailsModal from "../components/Manager/TableDetailsModal";
+import TableLayout from "../components/Manager/TableLayout";
 import {
   mockDishes,
   mockTables,
@@ -24,6 +25,8 @@ import {
 import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
 import BookingEditModal from "../components/Manager/BookingEditModal";
 import { findStaffByUsername } from "../lib/apiStaff";
+import { listTables } from "../lib/apiTable";
+import { approveBookingWithTable } from "../lib/apiBooking";
 
 export default function Manager() {
   const [managerName, setManagerName] = useState("");
@@ -34,10 +37,26 @@ export default function Manager() {
   const [editingItem, setEditingItem] = useState(null);
   const [selectedTable, setSelectedTable] = useState(null);
   const [dishes, setDishes] = useState(mockDishes);
-  const [tables, setTables] = useState(mockTables);
+  const [tables, setTables] = useState([]);
   const [dishRequests, setDishRequests] = useState(getDishRequests());
   const [deletingIds, setDeletingIds] = useState(new Set());
   const [savingBooking, setSavingBooking] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("ALL");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await listTables();
+        if (!cancelled) setTables(data);
+      } catch (err) {
+        console.error("Load tables failed:", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const loadName = async () => {
@@ -82,7 +101,6 @@ export default function Manager() {
     })();
   }, []);
 
-  //Call API data real
   const [bookings, setBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [bookingsError, setBookingsError] = useState("");
@@ -108,7 +126,11 @@ export default function Manager() {
       setLoadingBookings(true);
       setBookingsError("");
       try {
-        const { items, pageInfo } = await listBookingsPaging({ page, size });
+        const { items, pageInfo } = await listBookingsPaging({
+          page,
+          size,
+          status: statusFilter,
+        });
         if (!cancelled) {
           setBookings(items);
           setPageInfo(pageInfo);
@@ -124,7 +146,7 @@ export default function Manager() {
     return () => {
       cancelled = true;
     };
-  }, [activeSection, page, size]);
+  }, [activeSection, page, size, statusFilter]);
 
   const refetchBookings = async (toPage = page) => {
     setLoadingBookings(true);
@@ -132,6 +154,7 @@ export default function Manager() {
       const { items, pageInfo } = await listBookingsPaging({
         page: toPage,
         size,
+        status: statusFilter,
       });
       setBookings(items);
       setPageInfo(pageInfo);
@@ -140,31 +163,32 @@ export default function Manager() {
     }
   };
 
-  const handleApprove = async (bk) => {
+  const handleApprove = async (booking) => {
+    const id = typeof booking === "object" ? booking.id : booking;
     setBookings((prev) =>
-      prev.map((x) => (x.id === bk.id ? { ...x, status: "APPROVED" } : x))
+      prev.map((x) => (x.id === id ? { ...x, status: "APPROVED" } : x))
     );
     try {
-      await approveBooking(bk.id);
-    } catch (e) {
+      await approveBooking(id);
+    } catch (error) {
       setBookings((prev) =>
-        prev.map((x) => (x.id === bk.id ? { ...x, status: "PENDING" } : x))
+        prev.map((x) => (x.id === id ? { ...x, status: "PENDING" } : x))
       );
-      alert(e.message || "Duyệt thất bại");
+      alert(error.message || "Duyệt thất bại");
     }
   };
 
-  const handleReject = async (bk) => {
+  const handleReject = async (id) => {
     setBookings((prev) =>
-      prev.map((x) => (x.id === bk.id ? { ...x, status: "REJECTED" } : x))
+      prev.map((x) => (x.id === id ? { ...x, status: "REJECT" } : x))
     );
     try {
-      await rejectBooking(bk.id);
-    } catch (e) {
+      await rejectBooking(id); // gọi endpoint /booking/{id}/reject
+    } catch (err) {
       setBookings((prev) =>
-        prev.map((x) => (x.id === bk.id ? { ...x, status: "PENDING" } : x))
+        prev.map((x) => (x.id === id ? { ...x, status: "PENDING" } : x))
       );
-      alert(e.message || "Từ chối thất bại");
+      alert(err.message || "Từ chối thất bại");
     }
   };
 
@@ -187,11 +211,9 @@ export default function Manager() {
   };
 
   const deleteBooking = async (bookingId) => {
-    // Tạm thời để trống, sẽ thêm logic xóa đặt bàn sau
     console.log("Xóa đặt bàn:", bookingId);
   };
 
-  // Calculate totals
   const totalRevenue = mockRevenueData.reduce(
     (sum, item) => sum + item.revenue,
     0
@@ -220,24 +242,21 @@ export default function Manager() {
 
   const handleAssignTable = async (bookingId, tableId) => {
     try {
-      // Cập nhật booking với bàn được gán
+      await approveBookingWithTable(bookingId, tableId);
       setBookings((prev) =>
-        prev.map((booking) =>
-          booking.id === bookingId 
-            ? { ...booking, status: "APPROVED", assignedTableId: tableId }
-            : booking
+        prev.map((b) =>
+          b.id === bookingId
+            ? { ...b, status: "APPROVED", assignedTableId: tableId }
+            : b
         )
       );
-      
-      // Cập nhật trạng thái bàn
       setTables((prev) =>
-        prev.map((table) =>
-          table.id === tableId 
-            ? { ...table, status: "reserved" }
-            : table
+        prev.map((t) =>
+          t.id === tableId
+            ? { ...t, status: "reserved", isAvailable: false }
+            : t
         )
       );
-      
       console.log(`Đã gán booking ${bookingId} cho bàn ${tableId}`);
     } catch (error) {
       console.error("Lỗi khi gán bàn:", error);
@@ -266,12 +285,24 @@ export default function Manager() {
         );
       case "tables":
         return (
-          <TablesManagement
-            tables={tables}
-            selectedTable={selectedTable}
-            setSelectedTable={setSelectedTable}
-            updateOrderStatus={updateOrderStatus}
-          />
+          <>
+            <TableLayout
+              tables={tables}
+              bookings={bookings}
+              onTableClick={(id) => {
+                const found = tables.find((t) => t.id === id);
+                if (found) setSelectedTable(found);
+              }}
+              selectedTableId={selectedTable?.id}
+            />
+
+            <TablesManagement
+              tables={tables}
+              selectedTable={selectedTable}
+              setSelectedTable={setSelectedTable}
+              updateOrderStatus={updateOrderStatus}
+            />
+          </>
         );
       case "accounts":
         return (
@@ -287,9 +318,13 @@ export default function Manager() {
             onPageChange={setPage}
             onApprove={handleApprove}
             onReject={handleReject}
-            onEdit={handleSaveEdit}
             tables={tables}
             onAssignTable={handleAssignTable}
+            statusFilter={statusFilter}
+            onStatusChange={(v) => {
+              setPage(1);
+              setStatusFilter(v);
+            }}
           />
         );
       case "dishes":
@@ -339,7 +374,6 @@ export default function Manager() {
         />
 
         <main className="flex-1 p-6">
-          {/* Main Content Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-neutral-900 mb-2">
               Chào mừng trở lại, {managerName}!
@@ -349,18 +383,16 @@ export default function Manager() {
             </p>
           </div>
 
-          {/* Dynamic Content */}
           {renderContent()}
         </main>
       </div>
 
-      {/* Modals */}
       <TableDetailsModal
         selectedTable={selectedTable}
         setSelectedTable={setSelectedTable}
         updateOrderStatus={updateOrderStatus}
       />
-      {/* Modal cho chỉnh sửa đặt bàn sẽ được thêm sau */}
+
       <BookingEditModal
         open={isEditingBooking}
         booking={editingItem}

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { fmtVNDateTime } from "../../lib/datetimeBooking";
 import TableLayout from "./TableLayout";
 import TableAssignmentModal from "./TableAssignmentModal";
+import { approveBookingWithTable } from "../../lib/apiBooking";
 
 export default function BookingManagement({
   bookings = [],
@@ -19,6 +20,8 @@ export default function BookingManagement({
   onEdit,
   tables = [],
   onAssignTable,
+  statusFilter = "ALL",
+  onStatusChange = () => {},
 }) {
   const [confirmingId, setConfirmingId] = useState(null);
   const [showTableAssignment, setShowTableAssignment] = useState(false);
@@ -44,45 +47,25 @@ export default function BookingManagement({
   const to = Math.min(page * pageSize, totalElements);
 
   const handleApprove = (booking) => {
-    console.log("Duyệt đặt bàn:", booking.id);
     setSelectedBooking(booking);
     setShowTableAssignment(true);
   };
 
   const handleAssignTable = async (bookingId, tableId) => {
     try {
-      // Cập nhật booking với bàn được gán
       setBookings((prev) =>
         prev.map((booking) =>
-          booking.id === bookingId 
+          booking.id === bookingId
             ? { ...booking, status: "APPROVED", assignedTableId: tableId }
             : booking
         )
       );
-      
-      // Gọi API approve trước
-      if (onApprove) {
-        await onApprove({ id: bookingId });
-      }
-      
-      // Gọi callback để cập nhật trạng thái bàn
-      if (onAssignTable) {
-        await onAssignTable(bookingId, tableId);
-      }
-      
+      await onAssignTable?.(bookingId, tableId);
       setShowTableAssignment(false);
       setSelectedBooking(null);
     } catch (error) {
       console.error("Lỗi khi gán bàn:", error);
-      // Revert lại trạng thái nếu có lỗi
-      setBookings((prev) =>
-        prev.map((booking) =>
-          booking.id === bookingId 
-            ? { ...booking, status: "PENDING", assignedTableId: null }
-            : booking
-        )
-      );
-      throw error;
+      alert(error.message || "Không thể gán bàn cho đơn đặt.");
     }
   };
 
@@ -91,26 +74,15 @@ export default function BookingManagement({
   };
 
   const handleReject = async (bookingId) => {
-    console.log("Từ chối đặt bàn:", bookingId);
     try {
-      // Cập nhật trạng thái đặt bàn
       setBookings((prev) =>
-        prev.map((booking) =>
-          booking.id === bookingId ? { ...booking, status: "REJECTED" } : booking
-        )
+        prev.map((b) => (b.id === bookingId ? { ...b, status: "REJECT" } : b))
       );
-      
-      // Gọi API reject
-      if (onReject) {
-        await onReject({ id: bookingId });
-      }
+      await onReject?.(bookingId);
     } catch (error) {
       console.error("Lỗi khi từ chối đặt bàn:", error);
-      // Revert lại trạng thái nếu có lỗi
       setBookings((prev) =>
-        prev.map((booking) =>
-          booking.id === bookingId ? { ...booking, status: "PENDING" } : booking
-        )
+        prev.map((b) => (b.id === bookingId ? { ...b, status: "PENDING" } : b))
       );
     }
   };
@@ -118,37 +90,35 @@ export default function BookingManagement({
   const handleEdit = (booking) => {
     setEditingItem?.(booking);
     setIsEditingBooking?.(true);
-    onEdit?.(booking);
   };
 
   return (
     <div className="space-y-6">
-      {/* Sơ đồ bàn */}
-      <TableLayout 
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-neutral-700">Trạng thái:</span>
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              onStatusChange(e.target.value);
+            }}
+            className="border border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white"
+          >
+            <option value="ALL">Tất Cả</option>
+            <option value="PENDING">Chờ Duyệt</option>
+            <option value="APPROVED">Chấp Nhận</option>
+            <option value="REJECTED">Từ Chối</option>
+            <option value="CANCELLED">Đã Hủy</option>
+          </select>
+        </div>
+      </div>
+
+      <TableLayout
         tables={tables}
         onTableClick={handleTableClick}
         selectedTableId={selectedTableId}
         bookings={bookings}
       />
-
-      {/* Danh sách đặt bàn */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
-              <Calendar className="h-4 w-4 text-white" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                Quản Lý Đặt Bàn
-              </h3>
-              <p className="text-sm text-neutral-600">
-                Quản lý yêu cầu đặt bàn của khách hàng
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div className="bg-white/80 rounded-2xl shadow-lg border border-white/20 overflow-hidden">
         <div className="bg-gradient-to-r from-neutral-50 to-neutral-100 px-6 py-4 border-b border-neutral-200">
@@ -174,24 +144,26 @@ export default function BookingManagement({
           ) : (
             bookings.map((b) => {
               const status = String(b.status || "PENDING").toUpperCase();
+              const isLocked = [
+                "APPROVED",
+                "REJECT",
+                "REJECTED",
+                "CANCELLED",
+              ].includes(status);
               return (
                 <div key={b.id} className="px-6 py-4 hover:bg-neutral-50">
                   <div className="grid grid-cols-8 gap-4 items-center">
                     <div className="font-medium text-neutral-900">
-                      <div className="break-words">{b.customerName}</div>
+                      {b.customerName}
                     </div>
+                    <div className="text-neutral-600">{b.phone || "-"}</div>
+                    <div className="text-neutral-600">{b.email || "-"}</div>
                     <div className="text-neutral-600">
-                      <div className="break-words">{b.phone || "-"}</div>
-                    </div>
-                    <div className="text-neutral-600">
-                      <div className="break-words">{b.email || "-"}</div>
-                    </div>
-                    <div className="text-neutral-600">
-                      <div className="font-medium">{b.seat} người</div>
+                      <span className="font-medium">{b.seat}</span> người
                     </div>
 
                     <div className="text-neutral-600">
-                      <div className="break-words">{fmtVNDateTime(b.bookingDate)}</div>
+                      <div>{fmtVNDateTime(b.bookingDate)}</div>
                       <div className="mt-1">
                         {status === "PENDING" && (
                           <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
@@ -203,9 +175,14 @@ export default function BookingManagement({
                             Đã duyệt
                           </span>
                         )}
-                        {status === "REJECTED" && (
+                        {(status === "REJECTED" || status === "REJECT") && (
                           <span className="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">
                             Đã từ chối
+                          </span>
+                        )}
+                        {status === "CANCELLED" && (
+                          <span className="px-2 py-1 rounded-full text-xs bg-neutral-200 text-neutral-700">
+                            Đã hủy
                           </span>
                         )}
                       </div>
@@ -213,18 +190,18 @@ export default function BookingManagement({
 
                     <div className="text-neutral-600">
                       {b.assignedTableId ? (
-                        <div className="flex items-center gap-1">
-                          <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 font-medium">
-                            Bàn {b.assignedTableId}
-                          </span>
-                        </div>
+                        <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 font-medium">
+                          Bàn {b.assignedTableId}
+                        </span>
                       ) : (
-                        <span className="text-neutral-400 text-sm">Chưa gán</span>
+                        <span className="text-neutral-400 text-sm">
+                          Chưa gán
+                        </span>
                       )}
                     </div>
 
                     <div className="text-neutral-600">
-                      <div className="break-words">{fmtVNDateTime(b.createdAt || b.created_at)}</div>
+                      {fmtVNDateTime(b.createdAt || b.created_at)}
                     </div>
 
                     <div className="flex gap-2 items-center">
@@ -237,7 +214,6 @@ export default function BookingManagement({
                           >
                             <Check className="h-4 w-4" />
                           </button>
-
                           <button
                             onClick={() => handleReject(b.id)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
@@ -247,10 +223,14 @@ export default function BookingManagement({
                           </button>
                         </>
                       )}
-
                       <button
                         onClick={() => handleEdit(b)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                        disabled={isLocked}
+                        className={`p-2 text-blue-600 rounded-lg transition ${
+                          isLocked
+                            ? "opacity-40 cursor-not-allowed"
+                            : "hover:bg-blue-50"
+                        }`}
                         title="Sửa (số người, giờ tới)"
                       >
                         <Edit className="h-4 w-4" />
@@ -317,7 +297,6 @@ export default function BookingManagement({
         </div>
       </div>
 
-      {/* Modal gán bàn */}
       <TableAssignmentModal
         isOpen={showTableAssignment}
         onClose={() => {

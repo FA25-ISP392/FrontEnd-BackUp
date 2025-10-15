@@ -11,7 +11,7 @@ export default function TableDetailsModal({
     const updatedOrder = {
       ...selectedTable.currentOrder,
       items: selectedTable.currentOrder.items.map((item, index) =>
-        index === itemIndex ? { ...item, status: newStatus } : item,
+        index === itemIndex ? { ...item, status: newStatus } : item
       ),
     };
 
@@ -22,7 +22,6 @@ export default function TableDetailsModal({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-        {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
@@ -43,7 +42,6 @@ export default function TableDetailsModal({
         </div>
 
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-          {/* Current Order */}
           {selectedTable.currentOrder && (
             <div className="mb-8">
               <h3 className="text-xl font-bold text-neutral-900 mb-4 flex items-center gap-2">
@@ -75,7 +73,6 @@ export default function TableDetailsModal({
                         </span>
                       </div>
 
-                      {/* Status Controls */}
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-neutral-700">
                           Trạng thái:
@@ -136,7 +133,6 @@ export default function TableDetailsModal({
             </div>
           )}
 
-          {/* Order History */}
           <div>
             <h3 className="text-xl font-bold text-neutral-900 mb-4 flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
