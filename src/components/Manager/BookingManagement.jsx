@@ -94,24 +94,6 @@ export default function BookingManagement({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-neutral-700">Trạng thái:</span>
-          <select
-            value={statusFilter}
-            onChange={(e) => {
-              onStatusChange(e.target.value);
-            }}
-            className="border border-neutral-300 rounded-lg px-3 py-2 text-sm bg-white"
-          >
-            <option value="ALL">Tất Cả</option>
-            <option value="PENDING">Chờ Duyệt</option>
-            <option value="APPROVED">Chấp Nhận</option>
-            <option value="REJECTED">Từ Chối</option>
-            <option value="CANCELLED">Đã Hủy</option>
-          </select>
-        </div>
-      </div>
 
       <TableLayout
         tables={tables}
@@ -122,15 +104,34 @@ export default function BookingManagement({
 
       <div className="bg-white/80 rounded-2xl shadow-lg border border-white/20 overflow-hidden">
         <div className="bg-gradient-to-r from-neutral-50 to-neutral-100 px-6 py-4 border-b border-neutral-200">
-          <div className="grid grid-cols-8 gap-4 text-sm font-semibold text-neutral-700">
-            <div>Tên Khách Hàng</div>
-            <div>Số Điện Thoại</div>
-            <div>Email</div>
-            <div>Số Người</div>
-            <div>Thời gian tới</div>
-            <div>Bàn được gán</div>
-            <div>Ghi nhận</div>
-            <div>Hành Động</div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-neutral-900">Danh sách đơn đặt bàn</h3>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-neutral-700">Lọc theo trạng thái:</span>
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  onStatusChange(e.target.value);
+                }}
+                className="border border-neutral-300 rounded-lg px-4 py-2 text-sm bg-white shadow-sm hover:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+              >
+                <option value="ALL">Tất Cả</option>
+                <option value="PENDING">Chờ Duyệt</option>
+                <option value="APPROVED">Chấp Nhận</option>
+                <option value="REJECTED">Từ Chối</option>
+                <option value="CANCELLED">Đã Hủy</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-12 gap-3 text-sm font-semibold text-neutral-700">
+            <div className="col-span-2">Tên Khách Hàng</div>
+            <div className="col-span-2">Số Điện Thoại</div>
+            <div className="col-span-2">Email</div>
+            <div className="col-span-1">Số Người</div>
+            <div className="col-span-2">Thời gian tới</div>
+            <div className="col-span-1">Bàn được gán</div>
+            <div className="col-span-1">Ghi nhận</div>
+            <div className="col-span-1">Hành Động</div>
           </div>
         </div>
 
@@ -152,18 +153,18 @@ export default function BookingManagement({
               ].includes(status);
               return (
                 <div key={b.id} className="px-6 py-4 hover:bg-neutral-50">
-                  <div className="grid grid-cols-8 gap-4 items-center">
-                    <div className="font-medium text-neutral-900">
+                  <div className="grid grid-cols-12 gap-3 items-center">
+                    <div className="col-span-2 font-medium text-neutral-900 truncate">
                       {b.customerName}
                     </div>
-                    <div className="text-neutral-600">{b.phone || "-"}</div>
-                    <div className="text-neutral-600">{b.email || "-"}</div>
-                    <div className="text-neutral-600">
+                    <div className="col-span-2 text-neutral-600 truncate">{b.phone || "-"}</div>
+                    <div className="col-span-2 text-neutral-600 truncate">{b.email || "-"}</div>
+                    <div className="col-span-1 text-neutral-600 text-center">
                       <span className="font-medium">{b.seat}</span> người
                     </div>
 
-                    <div className="text-neutral-600">
-                      <div>{fmtVNDateTime(b.bookingDate)}</div>
+                    <div className="col-span-2 text-neutral-600">
+                      <div className="text-sm">{fmtVNDateTime(b.bookingDate)}</div>
                       <div className="mt-1">
                         {status === "PENDING" && (
                           <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
@@ -188,35 +189,35 @@ export default function BookingManagement({
                       </div>
                     </div>
 
-                    <div className="text-neutral-600">
+                    <div className="col-span-1 text-neutral-600 text-center">
                       {b.assignedTableId ? (
                         <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 font-medium">
                           Bàn {b.assignedTableId}
                         </span>
                       ) : (
-                        <span className="text-neutral-400 text-sm">
+                        <span className="text-neutral-400 text-xs">
                           Chưa gán
                         </span>
                       )}
                     </div>
 
-                    <div className="text-neutral-600">
+                    <div className="col-span-1 text-neutral-600 text-sm">
                       {fmtVNDateTime(b.createdAt || b.created_at)}
                     </div>
 
-                    <div className="flex gap-2 items-center">
+                    <div className="col-span-1 flex gap-1 items-center justify-center">
                       {status === "PENDING" && (
                         <>
                           <button
                             onClick={() => handleApprove(b)}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition"
+                            className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition"
                             title="Duyệt"
                           >
                             <Check className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleReject(b.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition"
                             title="Từ chối"
                           >
                             <X className="h-4 w-4" />
@@ -226,7 +227,7 @@ export default function BookingManagement({
                       <button
                         onClick={() => handleEdit(b)}
                         disabled={isLocked}
-                        className={`p-2 text-blue-600 rounded-lg transition ${
+                        className={`p-1.5 text-blue-600 rounded-lg transition ${
                           isLocked
                             ? "opacity-40 cursor-not-allowed"
                             : "hover:bg-blue-50"

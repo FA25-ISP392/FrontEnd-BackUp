@@ -52,26 +52,26 @@ export default function BookingEditModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Sửa đặt bàn</h3>
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl w-full max-w-lg p-6 border border-white/20">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-semibold text-neutral-900">Sửa đặt bàn</h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-neutral-100"
+            className="p-2 rounded-lg hover:bg-neutral-100 transition-colors duration-200"
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5 text-neutral-600" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
               Tên khách hàng
             </label>
             <input
               disabled
-              className="w-full rounded-lg border border-neutral-300 px-3 py-2 bg-neutral-50"
+              className="w-full rounded-lg border border-neutral-300 px-4 py-3 bg-neutral-50 text-neutral-600"
               value={booking.customerName || ""}
               readOnly
             />
@@ -79,14 +79,14 @@ export default function BookingEditModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Số người
               </label>
               <input
                 type="number"
                 min={1}
                 max={8}
-                className="w-full rounded-lg border border-neutral-300 px-3 py-2"
+                className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
                 value={seat}
                 onChange={(e) => setSeat(clamp(e.target.value))}
                 required
@@ -94,12 +94,12 @@ export default function BookingEditModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Ngày đến
               </label>
               <input
                 type="date"
-                className="w-full rounded-lg border border-neutral-300 px-3 py-2"
+                className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 min={todayStr}
@@ -109,12 +109,12 @@ export default function BookingEditModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
               Giờ đến
             </label>
             <input
               type="time"
-              className="w-full rounded-lg border border-neutral-300 px-3 py-2"
+              className="w-full rounded-lg border border-neutral-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
               value={time}
               onChange={(e) => setTime(e.target.value)}
               min={date === todayStr ? nowHM : undefined}
@@ -122,18 +122,18 @@ export default function BookingEditModal({
             />
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg border border-neutral-300 hover:bg-neutral-100"
+              className="px-6 py-3 rounded-lg border border-neutral-300 hover:bg-neutral-100 transition-colors duration-200 font-medium"
               disabled={saving}
             >
               Hủy
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-neutral-900 text-white hover:opacity-90 disabled:opacity-60"
+              className="px-6 py-3 rounded-lg bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 disabled:opacity-60 transition-all duration-200 font-medium shadow-lg"
               disabled={saving}
             >
               {saving ? "Đang lưu..." : "Lưu thay đổi"}

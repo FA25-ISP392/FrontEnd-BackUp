@@ -95,57 +95,79 @@ export default function TableAssignmentModal({
 
         {/* Booking Info */}
         <div className="p-6 border-b border-neutral-200">
-          <h3 className="text-lg font-semibold text-neutral-900 mb-4">
+          <h3 className="text-lg font-semibold text-neutral-900 mb-6">
             Thông Tin Đơn Đặt Bàn
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-neutral-500" />
-              <div>
-                <div className="font-medium text-neutral-900">
-                  {booking.customerName}
+          
+          {/* Thông tin khách hàng */}
+          <div className="bg-gradient-to-r from-neutral-50 to-neutral-100 rounded-xl p-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Users className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm text-neutral-600 mb-1">Tên khách hàng</div>
+                    <div className="font-semibold text-neutral-900">
+                      {booking.customerName}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-sm text-neutral-600">Khách hàng</div>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-3">
-              <Phone className="h-5 w-5 text-neutral-500" />
-              <div>
-                <div className="font-medium text-neutral-900">
-                  {booking.phone || "Chưa có"}
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                    <Phone className="h-4 w-4 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm text-neutral-600 mb-1">Số điện thoại</div>
+                    <div className="font-semibold text-neutral-900">
+                      {booking.phone || "Chưa có"}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-sm text-neutral-600">Số điện thoại</div>
               </div>
-            </div>
 
-            <div className="flex items-center gap-3">
-              <Mail className="h-5 w-5 text-neutral-500" />
-              <div>
-                <div className="font-medium text-neutral-900">
-                  {booking.email || "Chưa có"}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <Mail className="h-4 w-4 text-purple-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm text-neutral-600 mb-1">Email</div>
+                    <div className="font-semibold text-neutral-900">
+                      {booking.email || "Chưa có"}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-sm text-neutral-600">Email</div>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-neutral-500" />
-              <div>
-                <div className="font-medium text-neutral-900">
-                  {new Date(booking.bookingDate).toLocaleString("vi-VN")}
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <Clock className="h-4 w-4 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm text-neutral-600 mb-1">Thời gian đến</div>
+                    <div className="font-semibold text-neutral-900">
+                      {new Date(booking.bookingDate).toLocaleString("vi-VN")}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-sm text-neutral-600">Thời gian đến</div>
               </div>
             </div>
           </div>
 
-          <div className="mt-4 p-4 bg-blue-50 rounded-xl">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-blue-600" />
-              <span className="font-semibold text-blue-900">
-                Số người: {booking.seat} người
-              </span>
+          {/* Thông tin số người */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
+            <div className="flex items-center justify-center gap-3">
+              <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                <Users className="h-5 w-5 text-white" />
+              </div>
+              <div className="text-center">
+                <div className="text-sm text-blue-600 mb-1">Số người</div>
+                <div className="text-2xl font-bold text-blue-900">
+                  {booking.seat} người
+                </div>
+              </div>
             </div>
           </div>
         </div>
