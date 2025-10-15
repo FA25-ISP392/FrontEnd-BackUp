@@ -218,6 +218,33 @@ export default function Manager() {
     setDishRequests(getDishRequests());
   };
 
+  const handleAssignTable = async (bookingId, tableId) => {
+    try {
+      // Cập nhật booking với bàn được gán
+      setBookings((prev) =>
+        prev.map((booking) =>
+          booking.id === bookingId 
+            ? { ...booking, status: "APPROVED", assignedTableId: tableId }
+            : booking
+        )
+      );
+      
+      // Cập nhật trạng thái bàn
+      setTables((prev) =>
+        prev.map((table) =>
+          table.id === tableId 
+            ? { ...table, status: "reserved" }
+            : table
+        )
+      );
+      
+      console.log(`Đã gán booking ${bookingId} cho bàn ${tableId}`);
+    } catch (error) {
+      console.error("Lỗi khi gán bàn:", error);
+      throw error;
+    }
+  };
+
   const renderContent = () => {
     switch (activeSection) {
       case "overview":
@@ -260,6 +287,9 @@ export default function Manager() {
             onPageChange={setPage}
             onApprove={handleApprove}
             onReject={handleReject}
+            onEdit={handleSaveEdit}
+            tables={tables}
+            onAssignTable={handleAssignTable}
           />
         );
       case "dishes":

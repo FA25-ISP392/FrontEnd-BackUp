@@ -45,7 +45,7 @@ export default function BookingForm({
         errs.time = `Giờ đặt phải cách hiện tại ít nhất ${LEAD_MINUTES} phút.`;
     }
     const n = Number(formData.guests) || 1;
-    if (n < 1 || n > 10) errs.guests = "Số khách từ 1 đến 10.";
+    if (n < 1 || n > 8) errs.guests = "Số khách từ 1 đến 8.";
     return errs;
   };
 
@@ -118,7 +118,7 @@ export default function BookingForm({
             type="range"
             name="guests"
             min="1"
-            max="10"
+            max="8"
             value={formData.guests}
             onChange={handleInputChange}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
@@ -128,7 +128,7 @@ export default function BookingForm({
           )}
           <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>1</span>
-            <span>10</span>
+            <span>8</span>
           </div>
         </div>
 
