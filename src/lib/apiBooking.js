@@ -1,5 +1,5 @@
 import apiConfig from "../api/apiConfig";
-import { buildISOFromVN } from "../lib/datetimeBooking";
+import { buildISOFromVN, normalizeISOFromAPI } from "../lib/datetimeBooking";
 
 export async function createBooking({ date, time, guests, preferredTable }) {
   if (!localStorage.getItem("token")) {
@@ -25,7 +25,7 @@ export const normalizeBooking = (b = {}) => ({
   phone: b.customerPhone ?? b.customer?.phone ?? "",
   email: b.customerEmail ?? b.customer?.email ?? "",
   seat: b.seat ?? b.guestCount ?? 1,
-  bookingDate: b.bookingDate,
+  bookingDate: normalizeISOFromAPI(b.bookingDate),
   createdAt: b.createdAt ?? b.created_at ?? null,
   preferredTable: b.preferredTable ?? b.wantTable ?? b.wanttable ?? "",
   assignedTableId:

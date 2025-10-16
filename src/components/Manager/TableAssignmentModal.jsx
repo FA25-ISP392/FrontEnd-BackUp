@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, Table, Users, Clock, Phone, Mail } from "lucide-react";
+import { fmtVNDateTime } from "../../lib/datetimeBooking";
 
 export default function TableAssignmentModal({
   isOpen,
@@ -147,7 +148,7 @@ export default function TableAssignmentModal({
                       Thời gian đến
                     </div>
                     <div className="font-semibold text-neutral-900">
-                      {new Date(booking.bookingDate).toLocaleString("vi-VN")}
+                      {fmtVNDateTime(booking.bookingDate)}
                     </div>
                   </div>
                 </div>

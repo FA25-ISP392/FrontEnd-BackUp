@@ -1,16 +1,15 @@
-const TZ_VN = "Asia/Ho_Chi_Minh";
+export const TZ_VN = "Asia/Ho_Chi_Minh";
 
-function normalizeISOWithTZ(isoLike) {
+export function normalizeISOFromAPI(isoLike) {
   if (!isoLike) return null;
-  let s = String(isoLike).trim();
-  s = s.replace(" ", "T");
+  let s = String(isoLike).trim().replace(" ", "T");
   if (/Z$|[+-]\d{2}:\d{2}$/.test(s)) return s;
-  return `${s}+07:00`;
+  return `${s}Z`;
 }
 
 export function fmtVNDateTime(iso, extra = {}) {
   if (!iso) return "-";
-  const d = new Date(iso);
+  const d = new Date(normalizeISOFromAPI(iso));
   return new Intl.DateTimeFormat("vi-VN", {
     year: "numeric",
     month: "2-digit",
@@ -18,7 +17,7 @@ export function fmtVNDateTime(iso, extra = {}) {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    timeZone: "Asia/Ho_Chi_Minh",
+    timeZone: TZ_VN,
     ...extra,
   }).format(d);
 }
