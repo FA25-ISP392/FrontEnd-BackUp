@@ -80,7 +80,36 @@ export default function BookingForm({
   return (
     <div>
       <RestaurantTableLayout />
-      <form onSubmit={handleSubmit} className="space-y-4">
+      
+      {/* Thông báo đăng nhập */}
+      {!isLoggedIn && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-xl shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-orange-100 rounded-lg">
+              <svg className="h-5 w-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-orange-800 mb-1">
+                Cần đăng nhập để đặt bàn
+              </h3>
+              <p className="text-xs text-orange-700">
+                Vui lòng đăng nhập để tiếp tục quá trình đặt bàn
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onLoginClick?.(formData)}
+              className="px-4 py-2 text-sm rounded-lg bg-orange-500 hover:bg-orange-600 text-white transition-colors font-medium"
+            >
+              Đăng nhập
+            </button>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className={`space-y-4 ${!isLoggedIn ? 'opacity-50 pointer-events-none' : ''}`}>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Ngày đặt bàn
@@ -169,20 +198,6 @@ export default function BookingForm({
         </button>
       </form>
 
-      {!isLoggedIn && showLoginMessage && (
-        <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-          <p className="text-sm text-orange-800 mb-3">
-            Bạn cần đăng nhập để tiếp tục đặt bàn.
-          </p>
-          <button
-            type="button"
-            onClick={() => onLoginClick?.(formData)}
-            className="px-4 py-2 text-sm rounded-lg bg-orange-500 hover:bg-orange-600 text-white transition-colors"
-          >
-            Đăng nhập ngay
-          </button>
-        </div>
-      )}
     </div>
   );
 }

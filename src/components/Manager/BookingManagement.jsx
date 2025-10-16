@@ -150,22 +150,35 @@ export default function BookingManagement({
               Danh sách đơn đặt bàn
             </h3>
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-neutral-700">
-                Lọc theo trạng thái:
-              </span>
-              <select
-                value={statusFilter}
-                onChange={(e) => {
-                  onStatusChange(e.target.value);
-                }}
-                className="border border-neutral-300 rounded-lg px-4 py-2 text-sm bg-white shadow-sm hover:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
-              >
-                <option value="ALL">Tất Cả</option>
-                <option value="PENDING">Chờ Duyệt</option>
-                <option value="APPROVED">Chấp Nhận</option>
-                <option value="REJECTED">Từ Chối</option>
-                <option value="CANCELLED">Đã Hủy</option>
-              </select>
+              <div className="flex items-center gap-2">
+                <svg className="h-4 w-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                <span className="text-sm font-medium text-neutral-700">
+                  Lọc theo trạng thái:
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {[
+                  { value: "ALL", label: "Tất Cả", color: "bg-neutral-100 text-neutral-700 hover:bg-neutral-200", activeColor: "bg-neutral-600 text-white" },
+                  { value: "PENDING", label: "Chờ Duyệt", color: "bg-yellow-100 text-yellow-700 hover:bg-yellow-200", activeColor: "bg-yellow-500 text-white" },
+                  { value: "APPROVED", label: "Chấp Nhận", color: "bg-green-100 text-green-700 hover:bg-green-200", activeColor: "bg-green-500 text-white" },
+                  { value: "REJECTED", label: "Từ Chối", color: "bg-red-100 text-red-700 hover:bg-red-200", activeColor: "bg-red-500 text-white" },
+                  { value: "CANCELLED", label: "Đã Hủy", color: "bg-gray-100 text-gray-700 hover:bg-gray-200", activeColor: "bg-gray-500 text-white" }
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => onStatusChange(option.value)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm ${
+                      statusFilter === option.value
+                        ? option.activeColor
+                        : option.color
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -309,56 +322,82 @@ export default function BookingManagement({
           )}
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-neutral-200 bg-neutral-50">
-          <div className="text-sm text-neutral-600">
-            {totalElements > 0
-              ? `Hiển thị ${from}–${to} / ${totalElements}`
-              : "Không có dữ liệu"}
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => onPageChange(Math.max(1, page - 1))}
-              disabled={page <= 1}
-              className={`px-3 py-2 rounded-lg text-sm border ${
-                page <= 1
-                  ? "text-neutral-400 border-neutral-200"
-                  : "hover:bg-neutral-100 border-neutral-300"
-              }`}
-            >
-              Trước
-            </button>
-            {buildPages().map((p, i) =>
-              p === "…" ? (
-                <span key={`e-${i}`} className="px-2 text-neutral-500">
-                  …
-                </span>
-              ) : (
-                <button
-                  key={p}
-                  onClick={() => onPageChange(p)}
-                  className={`px-3 py-2 rounded-lg text-sm border ${
-                    p === page
-                      ? "bg-neutral-900 text-white border-neutral-900"
-                      : "hover:bg-neutral-100 border-neutral-300"
-                  }`}
-                >
-                  {p}
-                </button>
-              )
-            )}
-            <button
-              onClick={() =>
-                onPageChange(Math.min(pageInfo.totalPages || 1, page + 1))
-              }
-              disabled={page >= (pageInfo.totalPages || 1)}
-              className={`px-3 py-2 rounded-lg text-sm border ${
-                page >= (pageInfo.totalPages || 1)
-                  ? "text-neutral-400 border-neutral-200"
-                  : "hover:bg-neutral-100 border-neutral-300"
-              }`}
-            >
-              Sau
-            </button>
+        <div className="bg-gradient-to-r from-neutral-50 to-orange-50 px-6 py-4 border-t border-neutral-200">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <svg className="h-4 w-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div className="text-sm text-neutral-700">
+                {totalElements > 0 ? (
+                  <span>
+                    Hiển thị <span className="font-semibold text-orange-600">{from}</span> đến{" "}
+                    <span className="font-semibold text-orange-600">{to}</span> trong tổng số{" "}
+                    <span className="font-semibold text-orange-600">{totalElements}</span> đơn đặt bàn
+                  </span>
+                ) : (
+                  <span className="text-neutral-500">Không có dữ liệu</span>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onPageChange(Math.max(1, page - 1))}
+                disabled={page <= 1}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  page <= 1
+                    ? "text-neutral-400 bg-neutral-100 cursor-not-allowed"
+                    : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
+                }`}
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Trước
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {buildPages().map((p, i) =>
+                  p === "…" ? (
+                    <span key={`e-${i}`} className="px-3 py-2 text-neutral-500 font-medium">
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => onPageChange(p)}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        p === page
+                          ? "bg-orange-500 text-white shadow-lg transform scale-105"
+                          : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+              </div>
+              
+              <button
+                onClick={() =>
+                  onPageChange(Math.min(pageInfo.totalPages || 1, page + 1))
+                }
+                disabled={page >= (pageInfo.totalPages || 1)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  page >= (pageInfo.totalPages || 1)
+                    ? "text-neutral-400 bg-neutral-100 cursor-not-allowed"
+                    : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
+                }`}
+              >
+                Sau
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
