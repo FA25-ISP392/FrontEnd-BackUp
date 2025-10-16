@@ -1,16 +1,20 @@
 import apiConfig from "../api/apiConfig";
 import { buildISOFromVN } from "../lib/datetimeBooking";
 
-export async function createBooking({ date, time, guests }) {
+export async function createBooking({ date, time, guests, preferredTable }) {
   if (!localStorage.getItem("token")) {
     throw new Error("Bạn cần đăng nhập trước khi đặt bàn.");
   }
+
   const payload = {
     seat: Number(guests) || 1,
     bookingDate: buildISOFromVN(date, time),
+    ...(preferredTable ? { wantTable: String(preferredTable) } : {}),
   };
-  if (import.meta.env.DEV)
-    console.log("POST /booking payload: ", JSON.stringify(payload));
+
+  if (import.meta.env.DEV) {
+    console.log("POST /booking payload:", payload);
+  }
   return apiConfig.post("/booking", payload);
 }
 
@@ -23,6 +27,7 @@ export const normalizeBooking = (b = {}) => ({
   seat: b.seat ?? b.guestCount ?? 1,
   bookingDate: b.bookingDate,
   createdAt: b.createdAt ?? b.created_at ?? null,
+  preferredTable: b.preferredTable ?? b.wantTable ?? b.wanttable ?? "",
   status: String(b.status || "PENDING").toUpperCase(),
 });
 

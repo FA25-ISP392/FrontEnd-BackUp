@@ -3,6 +3,7 @@ import { useState } from "react";
 import { fmtVNDateTime } from "../../lib/datetimeBooking";
 import TableLayout from "./TableLayout";
 import TableAssignmentModal from "./TableAssignmentModal";
+import TableBookingsModal from "./TableBookingsModal";
 import { approveBookingWithTable } from "../../lib/apiBooking";
 
 export default function BookingManagement({
@@ -27,6 +28,8 @@ export default function BookingManagement({
   const [showTableAssignment, setShowTableAssignment] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [selectedTableId, setSelectedTableId] = useState(null);
+  const [showTableBookings, setShowTableBookings] = useState(false);
+  const [selectedTable, setSelectedTable] = useState(null);
   const { totalPages, totalElements, size: pageSize } = pageInfo;
 
   const buildPages = () => {
@@ -70,7 +73,17 @@ export default function BookingManagement({
   };
 
   const handleTableClick = (tableId) => {
+    console.log("Table clicked:", tableId);
+    console.log("Available tables:", tables);
     setSelectedTableId(tableId);
+    // Tìm thông tin bàn được chọn
+    const table = tables.find(t => t.id === tableId);
+    console.log("Found table:", table);
+    if (table) {
+      setSelectedTable(table);
+      setShowTableBookings(true);
+      console.log("Modal should open now");
+    }
   };
 
   const handleReject = async (bookingId) => {
@@ -94,20 +107,22 @@ export default function BookingManagement({
 
   return (
     <div className="space-y-6">
-
       <TableLayout
         tables={tables}
         onTableClick={handleTableClick}
         selectedTableId={selectedTableId}
-        bookings={bookings}
       />
 
       <div className="bg-white/80 rounded-2xl shadow-lg border border-white/20 overflow-hidden">
         <div className="bg-gradient-to-r from-neutral-50 to-neutral-100 px-6 py-4 border-b border-neutral-200">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-neutral-900">Danh sách đơn đặt bàn</h3>
+            <h3 className="text-lg font-semibold text-neutral-900">
+              Danh sách đơn đặt bàn
+            </h3>
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-neutral-700">Lọc theo trạng thái:</span>
+              <span className="text-sm font-medium text-neutral-700">
+                Lọc theo trạng thái:
+              </span>
               <select
                 value={statusFilter}
                 onChange={(e) => {
@@ -123,14 +138,14 @@ export default function BookingManagement({
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-12 gap-3 text-sm font-semibold text-neutral-700">
+          <div className="grid grid-cols-12 gap-2 text-sm font-semibold text-neutral-700">
             <div className="col-span-2">Tên Khách Hàng</div>
             <div className="col-span-2">Số Điện Thoại</div>
             <div className="col-span-2">Email</div>
             <div className="col-span-1">Số Người</div>
+            <div className="col-span-1">Bàn Mong Muốn</div>
             <div className="col-span-2">Thời gian tới</div>
             <div className="col-span-1">Bàn được gán</div>
-            <div className="col-span-1">Ghi nhận</div>
             <div className="col-span-1">Hành Động</div>
           </div>
         </div>
@@ -152,37 +167,52 @@ export default function BookingManagement({
                 "CANCELLED",
               ].includes(status);
               return (
-                <div key={b.id} className="px-6 py-4 hover:bg-neutral-50">
-                  <div className="grid grid-cols-12 gap-3 items-center">
-                    <div className="col-span-2 font-medium text-neutral-900 truncate">
+                <div key={b.id} className="px-6 py-3 hover:bg-neutral-50">
+                  <div className="grid grid-cols-12 gap-2 items-center">
+                    <div className="col-span-2 font-medium text-neutral-900 truncate text-sm">
                       {b.customerName}
                     </div>
-                    <div className="col-span-2 text-neutral-600 truncate">{b.phone || "-"}</div>
-                    <div className="col-span-2 text-neutral-600 truncate">{b.email || "-"}</div>
+                    <div className="col-span-2 text-neutral-600 truncate text-sm">
+                      {b.phone || "-"}
+                    </div>
+                    <div className="col-span-2 text-neutral-600 truncate text-sm">
+                      {b.email || "-"}
+                    </div>
+                    <div className="col-span-1 text-neutral-600 text-center text-sm">
+                      <span className="font-medium">{b.seat}</span>
+                    </div>
                     <div className="col-span-1 text-neutral-600 text-center">
-                      <span className="font-medium">{b.seat}</span> người
+                      {b.preferredTable ? (
+                        <span className="px-1 py-0.5 rounded-full text-xs bg-orange-100 text-orange-800 font-medium">
+                          {b.preferredTable}
+                        </span>
+                      ) : (
+                        <span className="text-neutral-400 text-xs">-</span>
+                      )}
                     </div>
 
                     <div className="col-span-2 text-neutral-600">
-                      <div className="text-sm">{fmtVNDateTime(b.bookingDate)}</div>
+                      <div className="text-xs">
+                        {fmtVNDateTime(b.bookingDate)}
+                      </div>
                       <div className="mt-1">
                         {status === "PENDING" && (
-                          <span className="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                          <span className="px-1 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-800">
                             Chờ duyệt
                           </span>
                         )}
                         {status === "APPROVED" && (
-                          <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                          <span className="px-1 py-0.5 rounded-full text-xs bg-green-100 text-green-800">
                             Đã duyệt
                           </span>
                         )}
                         {(status === "REJECTED" || status === "REJECT") && (
-                          <span className="px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">
-                            Đã từ chối
+                          <span className="px-1 py-0.5 rounded-full text-xs bg-red-100 text-red-800">
+                            Từ chối
                           </span>
                         )}
                         {status === "CANCELLED" && (
-                          <span className="px-2 py-1 rounded-full text-xs bg-neutral-200 text-neutral-700">
+                          <span className="px-1 py-0.5 rounded-full text-xs bg-neutral-200 text-neutral-700">
                             Đã hủy
                           </span>
                         )}
@@ -191,18 +221,12 @@ export default function BookingManagement({
 
                     <div className="col-span-1 text-neutral-600 text-center">
                       {b.assignedTableId ? (
-                        <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800 font-medium">
-                          Bàn {b.assignedTableId}
+                        <span className="px-1 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 font-medium">
+                          {b.assignedTableId}
                         </span>
                       ) : (
-                        <span className="text-neutral-400 text-xs">
-                          Chưa gán
-                        </span>
+                        <span className="text-neutral-400 text-xs">-</span>
                       )}
-                    </div>
-
-                    <div className="col-span-1 text-neutral-600 text-sm">
-                      {fmtVNDateTime(b.createdAt || b.created_at)}
                     </div>
 
                     <div className="col-span-1 flex gap-1 items-center justify-center">
@@ -307,6 +331,16 @@ export default function BookingManagement({
         booking={selectedBooking}
         tables={tables}
         onAssignTable={handleAssignTable}
+      />
+
+      <TableBookingsModal
+        isOpen={showTableBookings}
+        onClose={() => {
+          setShowTableBookings(false);
+          setSelectedTable(null);
+        }}
+        table={selectedTable}
+        bookings={bookings}
       />
     </div>
   );

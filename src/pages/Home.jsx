@@ -73,8 +73,8 @@ export default function Home() {
 
   const handleLoginFromBooking = (currentForm) => {
     if (currentForm) {
-      const { date, time, guests } = currentForm;
-      saveBookingDraft({ date, time, guests });
+      const { date, time, guests, preferredTable } = currentForm;
+      saveBookingDraft({ date, time, guests, preferredTable });
     }
     setIsBookingOpen(false);
     setIsLoginOpen(true);
@@ -233,7 +233,7 @@ export default function Home() {
             onClick={() => setIsBookingOpen(false)}
           />
           <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transform transition-transform duration-300">
-            <div className="p-6">
+            <div className="p-6 h-full overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">Đặt Bàn</h2>
                 <button

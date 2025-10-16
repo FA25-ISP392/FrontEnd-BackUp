@@ -288,7 +288,6 @@ export default function Manager() {
           <>
             <TableLayout
               tables={tables}
-              bookings={bookings}
               onTableClick={(id) => {
                 const found = tables.find((t) => t.id === id);
                 if (found) setSelectedTable(found);

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import RestaurantTableLayout from "./RestaurantTableLayout";
 
 const LEAD_MINUTES = 30;
 
@@ -12,6 +13,7 @@ export default function BookingForm({
     date: "",
     time: "",
     guests: 1,
+    preferredTable: "",
   });
   const [showLoginMessage, setShowLoginMessage] = useState(false);
   const [fieldErrs, setFieldErrs] = useState({});
@@ -21,6 +23,7 @@ export default function BookingForm({
       date: initialData?.date ?? set?.date,
       time: initialData?.time ?? set?.time,
       guests: Number(initialData?.guests ?? set.guests) || 1,
+      preferredTable: initialData?.preferredTable ?? set?.preferredTable ?? "",
     }));
   }, [initialData]);
 
@@ -76,6 +79,7 @@ export default function BookingForm({
 
   return (
     <div>
+      <RestaurantTableLayout />
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -130,6 +134,31 @@ export default function BookingForm({
             <span>1</span>
             <span>8</span>
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Bàn mong muốn (tùy chọn)
+          </label>
+          <select
+            name="preferredTable"
+            value={formData.preferredTable}
+            onChange={handleInputChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+          >
+            <option value="">Không có yêu cầu đặc biệt</option>
+            <option value="1">Bàn 1 (2 người)</option>
+            <option value="2">Bàn 2 (2 người)</option>
+            <option value="3">Bàn 3 (4 người)</option>
+            <option value="4">Bàn 4 (4 người)</option>
+            <option value="5">Bàn 5 (6 người)</option>
+            <option value="6">Bàn 6 (6 người)</option>
+            <option value="7">Bàn 7 (8 người)</option>
+            <option value="8">Bàn 8 (8 người)</option>
+          </select>
+          {fieldErrs.preferredTable && (
+            <p className="text-xs text-red-600 mt-1">{fieldErrs.preferredTable}</p>
+          )}
         </div>
 
         <button
