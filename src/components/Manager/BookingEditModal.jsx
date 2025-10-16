@@ -52,10 +52,15 @@ export default function BookingEditModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
       <div className="relative bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl w-full max-w-lg p-6 border border-white/20">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-neutral-900">Sửa đặt bàn</h3>
+          <h3 className="text-xl font-semibold text-neutral-900">
+            Sửa đặt bàn
+          </h3>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-neutral-100 transition-colors duration-200"

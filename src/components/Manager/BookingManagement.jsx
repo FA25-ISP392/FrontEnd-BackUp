@@ -4,7 +4,10 @@ import { fmtVNDateTime } from "../../lib/datetimeBooking";
 import TableLayout from "./TableLayout";
 import TableAssignmentModal from "./TableAssignmentModal";
 import TableBookingsModal from "./TableBookingsModal";
-import { approveBookingWithTable } from "../../lib/apiBooking";
+import {
+  approveBookingWithTable,
+  listBookingsByTableDate,
+} from "../../lib/apiBooking";
 
 export default function BookingManagement({
   bookings = [],
@@ -31,6 +34,26 @@ export default function BookingManagement({
   const [showTableBookings, setShowTableBookings] = useState(false);
   const [selectedTable, setSelectedTable] = useState(null);
   const { totalPages, totalElements, size: pageSize } = pageInfo;
+  const [tableBookings, setTableBookings] = useState([]);
+  const [tableBookingsDate, setTableBookingsDate] = useState(() => {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  });
+  const [loadingTableBookings, setLoadingTableBookings] = useState(false);
+
+  async function fetchTableBookings(tableId, dateStr) {
+    setLoadingTableBookings(true);
+    try {
+      const items = await listBookingsByTableDate(tableId, dateStr);
+      setTableBookings(items);
+    } catch (e) {
+      console.error(e);
+      setTableBookings([]);
+    } finally {
+      setLoadingTableBookings(false);
+    }
+  }
 
   const buildPages = () => {
     const maxLength = 5;
@@ -40,9 +63,9 @@ export default function BookingManagement({
     const left = Math.max(1, page - 2);
     const right = Math.min(totalPages, page + 2);
     const pages = [];
-    if (left > 1) pages.push(1, "...");
+    if (left > 1) pages.push(1, "…");
     for (let p = left; p <= right; p++) pages.push(p);
-    if (right < totalPages) pages.push("...", totalPages);
+    if (right < totalPages) pages.push("…", totalPages);
     return pages;
   };
 
@@ -56,33 +79,33 @@ export default function BookingManagement({
 
   const handleAssignTable = async (bookingId, tableId) => {
     try {
+      await onAssignTable?.(bookingId, tableId);
       setBookings((prev) =>
-        prev.map((booking) =>
-          booking.id === bookingId
-            ? { ...booking, status: "APPROVED", assignedTableId: tableId }
-            : booking
+        prev.map((b) =>
+          b.id === bookingId
+            ? { ...b, status: "APPROVED", assignedTableId: tableId }
+            : b
         )
       );
-      await onAssignTable?.(bookingId, tableId);
       setShowTableAssignment(false);
       setSelectedBooking(null);
     } catch (error) {
       console.error("Lỗi khi gán bàn:", error);
-      alert(error.message || "Không thể gán bàn cho đơn đặt.");
+      alert(
+        error.response?.data?.message ||
+          error.message ||
+          "Không thể gán bàn cho đơn đặt."
+      );
     }
   };
 
   const handleTableClick = (tableId) => {
-    console.log("Table clicked:", tableId);
-    console.log("Available tables:", tables);
     setSelectedTableId(tableId);
-    // Tìm thông tin bàn được chọn
-    const table = tables.find(t => t.id === tableId);
-    console.log("Found table:", table);
+    const table = tables.find((t) => t.id === tableId);
     if (table) {
       setSelectedTable(table);
       setShowTableBookings(true);
-      console.log("Modal should open now");
+      fetchTableBookings(table.id, tableBookingsDate);
     }
   };
 
@@ -103,6 +126,13 @@ export default function BookingManagement({
   const handleEdit = (booking) => {
     setEditingItem?.(booking);
     setIsEditingBooking?.(true);
+  };
+
+  const tableNameById = (id) => {
+    if (!id && id !== 0) return "-";
+    const t = tables.find((x) => String(x.id) === String(id));
+    const name = t?.name || `Table ${id}`;
+    return String(name).replace(/^Bàn\s*/i, "Table ");
   };
 
   return (
@@ -138,6 +168,7 @@ export default function BookingManagement({
               </select>
             </div>
           </div>
+
           <div className="grid grid-cols-12 gap-2 text-sm font-semibold text-neutral-700">
             <div className="col-span-2">Tên Khách Hàng</div>
             <div className="col-span-2">Số Điện Thoại</div>
@@ -172,23 +203,31 @@ export default function BookingManagement({
                     <div className="col-span-2 font-medium text-neutral-900 truncate text-sm">
                       {b.customerName}
                     </div>
+
                     <div className="col-span-2 text-neutral-600 truncate text-sm">
                       {b.phone || "-"}
                     </div>
+
                     <div className="col-span-2 text-neutral-600 truncate text-sm">
                       {b.email || "-"}
                     </div>
+
                     <div className="col-span-1 text-neutral-600 text-center text-sm">
                       <span className="font-medium">{b.seat}</span>
                     </div>
+
                     <div className="col-span-1 text-neutral-600 text-center">
-                      {b.preferredTable ? (
-                        <span className="px-1 py-0.5 rounded-full text-xs bg-orange-100 text-orange-800 font-medium">
-                          {b.preferredTable}
-                        </span>
-                      ) : (
-                        <span className="text-neutral-400 text-xs">-</span>
-                      )}
+                      <span
+                        className={`px-1 py-0.5 rounded-full text-xs ${
+                          b.preferredTable
+                            ? "bg-orange-100 text-orange-800 font-medium"
+                            : "text-neutral-400"
+                        }`}
+                      >
+                        {b.preferredTable
+                          ? tableNameById(b.preferredTable)
+                          : "-"}
+                      </span>
                     </div>
 
                     <div className="col-span-2 text-neutral-600">
@@ -220,13 +259,15 @@ export default function BookingManagement({
                     </div>
 
                     <div className="col-span-1 text-neutral-600 text-center">
-                      {b.assignedTableId ? (
-                        <span className="px-1 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 font-medium">
-                          {b.assignedTableId}
-                        </span>
-                      ) : (
-                        <span className="text-neutral-400 text-xs">-</span>
-                      )}
+                      <span
+                        className={`px-1 py-0.5 rounded-full text-xs ${
+                          b.assignedTableId
+                            ? "bg-blue-100 text-blue-800 font-medium"
+                            : "text-neutral-400"
+                        }`}
+                      >
+                        {tableNameById(b.assignedTableId)}
+                      </span>
                     </div>
 
                     <div className="col-span-1 flex gap-1 items-center justify-center">
@@ -287,7 +328,7 @@ export default function BookingManagement({
               Trước
             </button>
             {buildPages().map((p, i) =>
-              p === "..." ? (
+              p === "…" ? (
                 <span key={`e-${i}`} className="px-2 text-neutral-500">
                   …
                 </span>
@@ -340,7 +381,14 @@ export default function BookingManagement({
           setSelectedTable(null);
         }}
         table={selectedTable}
-        bookings={bookings}
+        bookings={tableBookings}
+        loading={loadingTableBookings}
+        selectedDate={tableBookingsDate}
+        onChangeDate={async (newDateStr) => {
+          setTableBookingsDate(newDateStr);
+          if (selectedTable)
+            await fetchTableBookings(selectedTable.id, newDateStr);
+        }}
       />
     </div>
   );

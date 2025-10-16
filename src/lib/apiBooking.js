@@ -28,6 +28,14 @@ export const normalizeBooking = (b = {}) => ({
   bookingDate: b.bookingDate,
   createdAt: b.createdAt ?? b.created_at ?? null,
   preferredTable: b.preferredTable ?? b.wantTable ?? b.wanttable ?? "",
+  assignedTableId:
+    b.assignedTableId ??
+    b.tableId ??
+    b.tableID ??
+    b.table_id ??
+    b.table?.id ??
+    b.table?.tableId ??
+    null,
   status: String(b.status || "PENDING").toUpperCase(),
 });
 
@@ -108,8 +116,49 @@ export async function approveBookingWithTable(bookingId, tableId) {
   if (!bookingId || !tableId)
     throw new Error("Thiếu bookingId hoặc tableId khi duyệt bàn.");
 
-  const res = await apiConfig.put(`/booking/${bookingId}/approved`, {
-    tableId: Number(tableId),
+  const id = Number(bookingId);
+  const tId = Number(tableId);
+  try {
+    return await apiConfig.put(`/booking/${id}/approved`, { tableId: tId });
+  } catch (err1) {
+    const code = err1?.response?.status;
+    if (code !== 400) throw err1;
+    try {
+      return await apiConfig.put(`/booking/${id}/approved`, { tableID: tId });
+    } catch (err2) {
+      if (err2?.response?.status !== 400) throw err2;
+      return await apiConfig.put(`/booking/${id}/approved`, null, {
+        params: { tableId: tId },
+      });
+    }
+  }
+}
+
+export async function listBookingsByTableDate(tableId, date) {
+  if (!tableId) throw new Error("Thiếu tableId.");
+
+  const toDateOnly = (date) => {
+    if (!date) return new Date();
+    const newDate = new Date(date);
+    return isNaN(newDate) ? new Date() : newDate;
+  };
+  const d = toDateOnly(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const dayStr = `${year}-${month}-${day}`;
+
+  const res = await apiConfig.get("/booking/by_tableDate", {
+    params: { tableId: Number(tableId), date: dayStr },
   });
-  return res;
+
+  const list = Array.isArray(res)
+    ? res
+    : Array.isArray(res?.result)
+    ? res.result
+    : Array.isArray(res?.content)
+    ? res.content
+    : [];
+
+  return list.map(normalizeBooking);
 }

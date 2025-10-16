@@ -6,7 +6,6 @@ export default function TableLayout({
   onTableClick,
   selectedTableId,
 }) {
-
   const list = [...tables].sort(
     (a, b) => (a.number || a.id) - (b.number || b.id)
   );
@@ -32,7 +31,9 @@ export default function TableLayout({
             <div
               key={table.id}
               className={`bg-gradient-to-br from-white to-orange-50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-orange-200 group cursor-pointer transform hover:scale-105 ${
-                selectedTableId === table.id ? "ring-2 ring-orange-500 shadow-orange-200" : ""
+                selectedTableId === table.id
+                  ? "ring-2 ring-orange-500 shadow-orange-200"
+                  : ""
               }`}
               onClick={() => onTableClick?.(table.id)}
             >
@@ -45,7 +46,7 @@ export default function TableLayout({
                     Bàn {number}
                   </span>
                 </div>
-                
+
                 <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl p-4 border border-orange-300">
                   <div className="text-3xl font-bold text-orange-800 mb-1">
                     {capacity}

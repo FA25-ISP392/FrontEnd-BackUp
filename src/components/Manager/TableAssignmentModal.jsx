@@ -13,28 +13,20 @@ export default function TableAssignmentModal({
 
   if (!isOpen || !booking) return null;
 
-  // Tạo danh sách bàn phù hợp với số người
-  const suitableTables = [
-    { id: 1, capacity: 2, name: "Bàn 1" },
-    { id: 2, capacity: 2, name: "Bàn 2" },
-    { id: 3, capacity: 4, name: "Bàn 3" },
-    { id: 4, capacity: 4, name: "Bàn 4" },
-    { id: 5, capacity: 6, name: "Bàn 5" },
-    { id: 6, capacity: 6, name: "Bàn 6" },
-    { id: 7, capacity: 8, name: "Bàn 7" },
-    { id: 8, capacity: 8, name: "Bàn 8" },
-  ].filter((table) => {
-    // Lọc bàn phù hợp với số người
-    const isSuitable = table.capacity >= booking.seat;
-    // Kiểm tra bàn có đang được sử dụng không (kiểm tra cả status và assignedTableId)
-    const isOccupied = tables.find(
-      (t) => t.id === table.id && t.status === "occupied"
+  const suitableTables = (tables || [])
+    .map((t) => ({
+      id: t.id,
+      name: t.name || `Bàn ${t.number ?? t.id}`,
+      capacity: t.capacity ?? t.seatTable ?? t.seat ?? t.seat_table ?? 0,
+      status: String(
+        t.status || (t.isAvailable ? "empty" : "serving")
+      ).toLowerCase(),
+    }))
+    .filter(
+      (t) =>
+        (t.capacity || 0) >= (booking.seat || 1) &&
+        !["serving", "occupied", "reserved"].includes(t.status)
     );
-    const isReserved = tables.find(
-      (t) => t.id === table.id && t.status === "reserved"
-    );
-    return isSuitable && !isOccupied && !isReserved;
-  });
 
   const handleAssign = async () => {
     if (!selectedTableId) return;
@@ -59,6 +51,7 @@ export default function TableAssignmentModal({
   const getTableColor = (status) => {
     switch (status) {
       case "occupied":
+      case "serving":
         return "bg-red-100 border-red-300 text-red-800";
       case "reserved":
         return "bg-yellow-100 border-yellow-300 text-yellow-800";
@@ -98,7 +91,7 @@ export default function TableAssignmentModal({
           <h3 className="text-lg font-semibold text-neutral-900 mb-6">
             Thông Tin Đơn Đặt Bàn
           </h3>
-          
+
           {/* Thông tin khách hàng */}
           <div className="bg-gradient-to-r from-neutral-50 to-neutral-100 rounded-xl p-4 mb-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -108,7 +101,9 @@ export default function TableAssignmentModal({
                     <Users className="h-4 w-4 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm text-neutral-600 mb-1">Tên khách hàng</div>
+                    <div className="text-sm text-neutral-600 mb-1">
+                      Tên khách hàng
+                    </div>
                     <div className="font-semibold text-neutral-900">
                       {booking.customerName}
                     </div>
@@ -120,7 +115,9 @@ export default function TableAssignmentModal({
                     <Phone className="h-4 w-4 text-green-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm text-neutral-600 mb-1">Số điện thoại</div>
+                    <div className="text-sm text-neutral-600 mb-1">
+                      Số điện thoại
+                    </div>
                     <div className="font-semibold text-neutral-900">
                       {booking.phone || "Chưa có"}
                     </div>
@@ -146,7 +143,9 @@ export default function TableAssignmentModal({
                     <Clock className="h-4 w-4 text-orange-600" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm text-neutral-600 mb-1">Thời gian đến</div>
+                    <div className="text-sm text-neutral-600 mb-1">
+                      Thời gian đến
+                    </div>
                     <div className="font-semibold text-neutral-900">
                       {new Date(booking.bookingDate).toLocaleString("vi-VN")}
                     </div>
