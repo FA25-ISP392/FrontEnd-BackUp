@@ -6,9 +6,9 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        // target: "https://api-monngon88.purintech.id.vn",
+        target: "https://api-monngon88.purintech.id.vn",
         // target: "https://backend2-production-00a1.up.railway.app",
-        target: "https://backend-production-0865.up.railway.app",
+        // target: "https://backend-production-0865.up.railway.app",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, "/isp392"),
         secure: true,

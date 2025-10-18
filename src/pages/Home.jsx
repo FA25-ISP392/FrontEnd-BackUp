@@ -3,6 +3,7 @@ import VisionSection from "../components/Home/VisionSection";
 import MenuSection from "../components/Home/MenuSection";
 import LoginForm from "../components/Home/LoginForm";
 import RegisterForm from "../components/Home/RegisterForm";
+import ForgotPasswordSidebar from "../components/Home/ForgotPasswordSidebar";
 import BookingForm from "../components/Home/BookingForm";
 import UserAccountDropdown from "../components/Home/UserAccountDropdown";
 import { MapPin, Phone, Mail, X, Star } from "lucide-react";
@@ -19,6 +20,7 @@ export default function Home() {
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isLoginForm, setIsLoginForm] = useState(true);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const {
@@ -91,6 +93,16 @@ export default function Home() {
 
   const switchToRegister = () => setIsLoginForm(false);
   const switchToLogin = () => setIsLoginForm(true);
+  const handleForgotPassword = () => {
+    setIsLoginOpen(false);
+    setIsForgotPasswordOpen(true);
+  };
+
+  const handleBackToLogin = () => {
+    setIsForgotPasswordOpen(false);
+    setIsLoginOpen(true);
+    setIsLoginForm(true);
+  };
 
   const handleLogout = () => {
     logoutCustomer("/home");
@@ -392,6 +404,7 @@ export default function Home() {
                   <LoginForm
                     onSubmit={handleLoginSubmit}
                     onSwitchToRegister={switchToRegister}
+                    onForgotPassword={handleForgotPassword}
                   />
                 ) : (
                   <RegisterForm onSwitchToLogin={switchToLogin} />
@@ -400,6 +413,14 @@ export default function Home() {
             </div>
           </div>
         </div>
+      )}
+
+      {isForgotPasswordOpen && (
+        <ForgotPasswordSidebar
+          isOpen={isForgotPasswordOpen}
+          onClose={() => setIsForgotPasswordOpen(false)}
+          onBackToLogin={handleBackToLogin}
+        />
       )}
     </div>
   );

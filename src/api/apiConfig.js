@@ -2,10 +2,10 @@ import axios from "axios";
 import { getToken } from "../lib/auth";
 
 const BASE_API =
-  //   import.meta.env.VITE_API_BASE || "https://api-monngon88.purintech.id.vn";
-  //   import.meta.env.VITE_API_BASE || "https://backend2-production-00a1.up.railway.app";
-  import.meta.env.VITE_API_BASE ||
-  "https://backend-production-0865.up.railway.app";
+  import.meta.env.VITE_API_BASE || "https://api-monngon88.purintech.id.vn";
+//   import.meta.env.VITE_API_BASE || "https://backend2-production-00a1.up.railway.app";
+// import.meta.env.VITE_API_BASE ||
+// "https://backend-production-0865.up.railway.app";
 const API_PREFIX = import.meta.env.VITE_API_PREFIX || "/isp392";
 
 const apiConfig = axios.create({

@@ -2,7 +2,7 @@ import { useCustomerLogin } from "../../hooks/useCustomerLogin";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
-export default function LoginForm({ onSubmit, onSwitchToRegister }) {
+export default function LoginForm({ onSubmit, onSwitchToRegister, onForgotPassword }) {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -76,6 +76,14 @@ export default function LoginForm({ onSubmit, onSwitchToRegister }) {
               ) : (
                 <Eye className="w-4 h-4" />
               )}
+            </button>
+          </div>
+          <div className="mt-2 text-left">
+            <button
+              onClick={onForgotPassword}
+              className="text-sm text-orange-600 hover:text-orange-700 font-medium transition-all duration-300 hover:underline"
+            >
+              Quên mật khẩu?
             </button>
           </div>
         </div>
