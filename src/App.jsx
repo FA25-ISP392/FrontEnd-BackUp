@@ -17,6 +17,7 @@ export default function App() {
       <Route path="/" element={<Login />} />
       <Route path="/menu" element={<Menu />} />
       <Route path="/home" element={<Home />} />
+      <Route path="*" element={<Home />} />
 
       {/* Protected Routes with MainLayout */}
       <Route

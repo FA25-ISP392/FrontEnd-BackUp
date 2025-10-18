@@ -4,10 +4,11 @@ import MenuSection from "../components/Home/MenuSection";
 import LoginForm from "../components/Home/LoginForm";
 import RegisterForm from "../components/Home/RegisterForm";
 import ForgotPasswordSidebar from "../components/Home/ForgotPasswordSidebar";
+import ResetPasswordSidebar from "../components/Home/ResetPasswordSidebar";
 import BookingForm from "../components/Home/BookingForm";
 import UserAccountDropdown from "../components/Home/UserAccountDropdown";
 import { MapPin, Phone, Mail, X, Star } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { logoutCustomer } from "../lib/auth";
 import { createBooking } from "../lib/apiBooking";
@@ -15,12 +16,15 @@ import { useBooking } from "../hooks/useBooking";
 import ToastHost, { showToast } from "../common/ToastHost";
 
 export default function Home() {
+  const [searchParams] = useSearchParams();
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isLoginForm, setIsLoginForm] = useState(true);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+  const [resetToken, setResetToken] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const {
@@ -58,6 +62,13 @@ export default function Home() {
       window.removeEventListener("auth:changed", syncAuth);
     };
   }, []);
+
+  useEffect(() => {
+    const token = searchParams.get("token");
+    if (!token) return;
+    setResetToken(token);
+    setIsResetPasswordOpen(true);
+  }, [searchParams]);
 
   const handleBookingSubmit = async (formData) => {
     try {
@@ -100,15 +111,21 @@ export default function Home() {
 
   const handleBackToLogin = () => {
     setIsForgotPasswordOpen(false);
+    setIsResetPasswordOpen(false);
     setIsLoginOpen(true);
     setIsLoginForm(true);
+  };
+
+  const closeReset = () => {
+    setIsResetPasswordOpen(false);
+    setResetToken(null);
+    window.history.replaceState({}, "", "/home");
   };
 
   const handleLogout = () => {
     logoutCustomer("/home");
   };
 
-  // Mock menu data for preview
   const menuCategories = {
     "Best Sellers": [
       { name: "Pizza Margherita", price: "299,000đ", image: "🍕" },
@@ -132,7 +149,7 @@ export default function Home() {
             className="text-2xl font-bold text-orange-600"
             aria-label="Go to home"
           >
-            PersonaDine
+            MónCủaBạn
           </Link>
 
           <nav className="flex items-center gap-8">
@@ -211,9 +228,7 @@ export default function Home() {
                 </div>
                 <div className="flex items-center gap-3">
                   <Mail className="h-5 w-5 text-orange-500" />
-                  <span className="text-neutral-700">
-                    comqueduongbau@restaurant.com
-                  </span>
+                  <span className="text-neutral-700">moncuaban@gmail.com</span>
                 </div>
               </div>
             </div>
@@ -420,6 +435,15 @@ export default function Home() {
           isOpen={isForgotPasswordOpen}
           onClose={() => setIsForgotPasswordOpen(false)}
           onBackToLogin={handleBackToLogin}
+        />
+      )}
+
+      {isResetPasswordOpen && (
+        <ResetPasswordSidebar
+          isOpen={isResetPasswordOpen}
+          onClose={closeReset}
+          onBackToLogin={handleBackToLogin}
+          token={resetToken}
         />
       )}
     </div>

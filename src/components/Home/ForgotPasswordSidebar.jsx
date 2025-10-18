@@ -9,14 +9,31 @@ export default function ForgotPasswordSidebar({
 }) {
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const { forgotPassword, isLoading, error, success, clearError } =
-    useForgotPassword();
+  const {
+    forgotPassword,
+    isLoading,
+    error,
+    success,
+    clearError,
+    clearSuccess,
+  } = useForgotPassword();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     clearError();
     await forgotPassword(email);
   };
+
+  const maskEmail = (raw) => {
+    const email = String(raw || "").trim();
+    const [local = "", domain = ""] = email.split("@");
+    if (!local || !domain) return email;
+
+    const visible = local.slice(0, 5);
+    return `${visible}${local.length > 5 ? "***" : "*"}@${domain}`;
+  };
+
+  const masked = maskEmail(email);
 
   const handleBackToLogin = () => {
     setEmail("");
@@ -106,7 +123,7 @@ export default function ForgotPasswordSidebar({
                 </h3>
                 <p className="text-sm text-gray-600 mb-6">
                   Chúng tôi đã gửi liên kết đặt lại mật khẩu đến{" "}
-                  <span className="font-medium text-gray-900">{email}</span>.
+                  <span className="font-medium text-gray-900">{masked}</span>.
                   Vui lòng kiểm tra hộp thư và làm theo hướng dẫn.
                 </p>
                 <div className="space-y-3">
