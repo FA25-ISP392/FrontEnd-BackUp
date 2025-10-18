@@ -7,6 +7,7 @@ import ForgotPasswordSidebar from "../components/Home/ForgotPasswordSidebar";
 import ResetPasswordSidebar from "../components/Home/ResetPasswordSidebar";
 import BookingForm from "../components/Home/BookingForm";
 import UserAccountDropdown from "../components/Home/UserAccountDropdown";
+import BookingHistoryModal from "../components/Home/BookingHistoryModal";
 import { MapPin, Phone, Mail, X, Star } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -27,6 +28,9 @@ export default function Home() {
   const [resetToken, setResetToken] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
+  const [isBookingHistoryOpen, setIsBookingHistoryOpen] = useState(false);
+  const [isEditAccountOpen, setIsEditAccountOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const {
     bookingDraft,
     saveBookingDraft,
@@ -70,6 +74,39 @@ export default function Home() {
     setIsResetPasswordOpen(true);
   }, [searchParams]);
 
+  useEffect(() => {
+    // Kiểm tra route hiện tại và tự động mở modal tương ứng
+    const currentPath = window.location.pathname;
+    
+    // Các route cần đăng nhập
+    if (isLoggedIn) {
+      if (currentPath === "/home/lichsudatban") {
+        setIsBookingHistoryOpen(true);
+      } else if (currentPath === "/home/doimatkhau") {
+        setIsChangePasswordOpen(true);
+      } else if (currentPath === "/home/suathongtin") {
+        setIsEditAccountOpen(true);
+      }
+    }
+
+    // Các route không cần đăng nhập
+    if (currentPath === "/home/vechungtoi") {
+      setIsAboutOpen(true);
+    } else if (currentPath === "/home/dangnhap") {
+      setIsLoginOpen(true);
+      setIsLoginForm(true);
+    } else if (currentPath === "/home/dangky") {
+      setIsLoginOpen(true);
+      setIsLoginForm(false);
+    } else if (currentPath === "/home/quenmatkhau") {
+      setIsForgotPasswordOpen(true);
+    } else if (currentPath === "/home/xemtruocthucdon") {
+      setIsMenuOpen(true);
+    } else if (currentPath === "/home/datban") {
+      setIsBookingOpen(true);
+    }
+  }, [isLoggedIn]);
+
   const handleBookingSubmit = async (formData) => {
     try {
       await createBooking(formData);
@@ -102,11 +139,20 @@ export default function Home() {
     }
   };
 
-  const switchToRegister = () => setIsLoginForm(false);
-  const switchToLogin = () => setIsLoginForm(true);
+  const switchToRegister = () => {
+    setIsLoginForm(false);
+    window.history.pushState({}, "", "/home/dangky");
+  };
+  
+  const switchToLogin = () => {
+    setIsLoginForm(true);
+    window.history.pushState({}, "", "/home/dangnhap");
+  };
+  
   const handleForgotPassword = () => {
     setIsLoginOpen(false);
     setIsForgotPasswordOpen(true);
+    window.history.pushState({}, "", "/home/quenmatkhau");
   };
 
   const handleBackToLogin = () => {
@@ -114,6 +160,7 @@ export default function Home() {
     setIsResetPasswordOpen(false);
     setIsLoginOpen(true);
     setIsLoginForm(true);
+    window.history.pushState({}, "", "/home/dangnhap");
   };
 
   const closeReset = () => {
@@ -124,6 +171,102 @@ export default function Home() {
 
   const handleLogout = () => {
     logoutCustomer("/home");
+  };
+
+  const handleBookingHistoryClick = () => {
+    setIsBookingHistoryOpen(true);
+    // Chuyển đến route lịch sử đặt bàn
+    window.history.pushState({}, "", "/home/lichsudatban");
+  };
+
+  const handleCloseBookingHistory = () => {
+    setIsBookingHistoryOpen(false);
+    // Chuyển về route home
+    window.history.pushState({}, "", "/home");
+  };
+
+  const handleEditAccountClick = () => {
+    setIsEditAccountOpen(true);
+    // Chuyển đến route sửa thông tin
+    window.history.pushState({}, "", "/home/suathongtin");
+  };
+
+  const handleChangePasswordClick = () => {
+    setIsChangePasswordOpen(true);
+    // Chuyển đến route đổi mật khẩu
+    window.history.pushState({}, "", "/home/doimatkhau");
+  };
+
+  const handleCloseEditAccount = () => {
+    setIsEditAccountOpen(false);
+    // Chuyển về route home
+    window.history.pushState({}, "", "/home");
+  };
+
+  const handleCloseChangePassword = () => {
+    setIsChangePasswordOpen(false);
+    // Chuyển về route home
+    window.history.pushState({}, "", "/home");
+  };
+
+  const handleLogoClick = () => {
+    // Reload trang
+    window.location.reload();
+  };
+
+  const handleAboutClick = () => {
+    setIsAboutOpen(true);
+    // Chuyển đến route về chúng tôi
+    window.history.pushState({}, "", "/home/vechungtoi");
+  };
+
+  const handleLoginClick = () => {
+    setIsLoginOpen(true);
+    setIsLoginForm(true);
+    // Chuyển đến route đăng nhập
+    window.history.pushState({}, "", "/home/dangnhap");
+  };
+
+  const handleMenuClick = () => {
+    setIsMenuOpen(true);
+    // Chuyển đến route xem trước thực đơn
+    window.history.pushState({}, "", "/home/xemtruocthucdon");
+  };
+
+  const handleBookingClick = () => {
+    setIsBookingOpen(true);
+    // Chuyển đến route đặt bàn
+    window.history.pushState({}, "", "/home/datban");
+  };
+
+  const handleCloseAbout = () => {
+    setIsAboutOpen(false);
+    // Chuyển về route home
+    window.history.pushState({}, "", "/home");
+  };
+
+  const handleCloseLogin = () => {
+    setIsLoginOpen(false);
+    // Chuyển về route home
+    window.history.pushState({}, "", "/home");
+  };
+
+  const handleCloseMenu = () => {
+    setIsMenuOpen(false);
+    // Chuyển về route home
+    window.history.pushState({}, "", "/home");
+  };
+
+  const handleCloseBooking = () => {
+    setIsBookingOpen(false);
+    // Chuyển về route home
+    window.history.pushState({}, "", "/home");
+  };
+
+  const handleCloseForgotPassword = () => {
+    setIsForgotPasswordOpen(false);
+    // Chuyển về route home
+    window.history.pushState({}, "", "/home");
   };
 
   const menuCategories = {
@@ -144,17 +287,17 @@ export default function Home() {
       <ToastHost />
       <header className="fixed top-0 left-0 right-0 w-full bg-white shadow-sm z-50">
         <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
-          <Link
-            to="/home"
-            className="text-2xl font-bold text-orange-600"
-            aria-label="Go to home"
+          <button
+            onClick={handleLogoClick}
+            className="text-2xl font-bold text-orange-600 hover:text-orange-700 transition-colors"
+            aria-label="Reload page"
           >
             MónCủaBạn
-          </Link>
+          </button>
 
           <nav className="flex items-center gap-8">
             <button
-              onClick={() => setIsAboutOpen(true)}
+              onClick={handleAboutClick}
               className="text-gray-700 hover:text-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-md px-3 py-1 rounded-lg"
             >
               Về Chúng Tôi
@@ -162,7 +305,7 @@ export default function Home() {
 
             {!isLoggedIn && (
               <button
-                onClick={() => setIsLoginOpen(true)}
+                onClick={handleLoginClick}
                 className="text-gray-700 hover:text-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-md px-3 py-1 rounded-lg"
               >
                 Đăng Nhập
@@ -170,14 +313,14 @@ export default function Home() {
             )}
 
             <button
-              onClick={() => setIsBookingOpen(true)}
+              onClick={handleBookingClick}
               className="text-gray-700 hover:text-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-md px-3 py-1 rounded-lg"
             >
               Đặt Bàn
             </button>
 
             <button
-              onClick={() => setIsMenuOpen(true)}
+              onClick={handleMenuClick}
               className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg transform"
             >
               Thực Đơn
@@ -187,6 +330,11 @@ export default function Home() {
               isLoggedIn={isLoggedIn}
               userInfo={userInfo}
               onLogout={handleLogout}
+              onBookingHistoryClick={handleBookingHistoryClick}
+              onEditAccountClick={handleEditAccountClick}
+              onChangePasswordClick={handleChangePasswordClick}
+              onCloseEditAccount={handleCloseEditAccount}
+              onCloseChangePassword={handleCloseChangePassword}
             />
           </nav>
         </div>
@@ -257,14 +405,14 @@ export default function Home() {
         <div className="fixed inset-0 z-50 transition-opacity duration-300">
           <div
             className="absolute inset-0 bg-black/40"
-            onClick={() => setIsBookingOpen(false)}
+            onClick={handleCloseBooking}
           />
           <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transform transition-transform duration-300">
             <div className="p-6 h-full overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">Đặt Bàn</h2>
                 <button
-                  onClick={() => setIsBookingOpen(false)}
+                  onClick={handleCloseBooking}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                 >
                   <X className="w-5 h-5" />
@@ -286,14 +434,14 @@ export default function Home() {
         <div className="fixed inset-0 z-50 transition-opacity duration-300">
           <div
             className="absolute inset-0 bg-black/40"
-            onClick={() => setIsMenuOpen(false)}
+            onClick={handleCloseMenu}
           />
           <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transform transition-transform duration-300">
             <div className="p-6 h-full overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">Thực Đơn</h2>
                 <button
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={handleCloseMenu}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                 >
                   <X className="w-5 h-5" />
@@ -339,7 +487,7 @@ export default function Home() {
         <div className="fixed inset-0 z-50 transition-opacity duration-300">
           <div
             className="absolute inset-0 bg-black/40"
-            onClick={() => setIsAboutOpen(false)}
+            onClick={handleCloseAbout}
           />
           <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transform transition-transform duration-300">
             <div className="p-6 h-full overflow-y-auto">
@@ -348,7 +496,7 @@ export default function Home() {
                   Về Chúng Tôi
                 </h2>
                 <button
-                  onClick={() => setIsAboutOpen(false)}
+                  onClick={handleCloseAbout}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                 >
                   <X className="w-5 h-5" />
@@ -398,7 +546,7 @@ export default function Home() {
         <div className="fixed inset-0 z-50 transition-opacity duration-300">
           <div
             className="absolute inset-0 bg-black/40"
-            onClick={() => setIsLoginOpen(false)}
+            onClick={handleCloseLogin}
           />
           <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transform transition-transform duration-300">
             <div className="p-6 h-full overflow-y-auto">
@@ -407,7 +555,7 @@ export default function Home() {
                   {isLoginForm ? "Đăng Nhập" : "Đăng Ký"}
                 </h2>
                 <button
-                  onClick={() => setIsLoginOpen(false)}
+                  onClick={handleCloseLogin}
                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
                 >
                   <X className="w-5 h-5" />
@@ -433,7 +581,7 @@ export default function Home() {
       {isForgotPasswordOpen && (
         <ForgotPasswordSidebar
           isOpen={isForgotPasswordOpen}
-          onClose={() => setIsForgotPasswordOpen(false)}
+          onClose={handleCloseForgotPassword}
           onBackToLogin={handleBackToLogin}
         />
       )}
@@ -444,6 +592,14 @@ export default function Home() {
           onClose={closeReset}
           onBackToLogin={handleBackToLogin}
           token={resetToken}
+        />
+      )}
+
+      {isBookingHistoryOpen && (
+        <BookingHistoryModal
+          isOpen={isBookingHistoryOpen}
+          onClose={handleCloseBookingHistory}
+          userInfo={userInfo}
         />
       )}
     </div>

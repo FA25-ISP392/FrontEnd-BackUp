@@ -17,6 +17,15 @@ export default function App() {
       <Route path="/" element={<Login />} />
       <Route path="/menu" element={<Menu />} />
       <Route path="/home" element={<Home />} />
+      <Route path="/home/lichsudatban" element={<Home />} />
+      <Route path="/home/doimatkhau" element={<Home />} />
+      <Route path="/home/suathongtin" element={<Home />} />
+      <Route path="/home/datban" element={<Home />} />
+      <Route path="/home/dangky" element={<Home />} />
+      <Route path="/home/quenmatkhau" element={<Home />} />
+      <Route path="/home/vechungtoi" element={<Home />} />
+      <Route path="/home/dangnhap" element={<Home />} />
+      <Route path="/home/xemtruocthucdon" element={<Home />} />
       <Route path="*" element={<Home />} />
 
       {/* Protected Routes with MainLayout */}

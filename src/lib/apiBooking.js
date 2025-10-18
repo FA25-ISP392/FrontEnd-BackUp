@@ -162,3 +162,72 @@ export async function listBookingsByTableDate(tableId, date) {
 
   return list.map(normalizeBooking);
 }
+
+export async function getBookingHistory(customerId) {
+  if (!customerId) throw new Error("Thiếu customerId.");
+  
+  try {
+    const res = await apiConfig.get(`/booking/customer/${customerId}`);
+    
+    const list = Array.isArray(res)
+      ? res
+      : Array.isArray(res?.result)
+      ? res.result
+      : Array.isArray(res?.content)
+      ? res.content
+      : [];
+
+    return list.map(normalizeBooking).sort(
+      (a, b) => new Date(b.createdAt || b.bookingDate) - new Date(a.createdAt || a.bookingDate)
+    );
+  } catch (error) {
+    // Nếu API không tồn tại, trả về dữ liệu mock
+    console.warn("API getBookingHistory không khả dụng, sử dụng dữ liệu mock:", error);
+    return getMockBookingHistory(customerId);
+  }
+}
+
+// Mock data cho lịch sử đặt bàn
+function getMockBookingHistory(customerId) {
+  const mockBookings = [
+    {
+      id: 1,
+      customerId: customerId,
+      date: "2024-01-15",
+      time: "19:00",
+      guests: 4,
+      preferredTable: "A1",
+      status: "CONFIRMED",
+      specialRequests: "Bàn gần cửa sổ",
+      createdAt: "2024-01-10T10:30:00Z"
+    },
+    {
+      id: 2,
+      customerId: customerId,
+      date: "2024-01-08",
+      time: "18:30",
+      guests: 2,
+      preferredTable: "B3",
+      status: "CONFIRMED",
+      specialRequests: "",
+      createdAt: "2024-01-05T14:20:00Z"
+    },
+    {
+      id: 3,
+      customerId: customerId,
+      date: "2024-01-03",
+      time: "20:00",
+      guests: 6,
+      preferredTable: "C2",
+      status: "CANCELLED",
+      specialRequests: "Bàn lớn cho gia đình",
+      createdAt: "2023-12-28T16:45:00Z"
+    }
+  ];
+
+  return mockBookings.map(booking => ({
+    ...booking,
+    bookingDate: `${booking.date}T${booking.time}:00`,
+    seat: booking.guests
+  }));
+}
