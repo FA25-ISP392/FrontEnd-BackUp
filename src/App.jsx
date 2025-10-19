@@ -1,3 +1,4 @@
+// App.jsx
 import { Routes, Route } from "react-router-dom";
 import MainLayout from "./layout/MainLayout.jsx";
 import Login from "./pages/Login.jsx";
@@ -13,22 +14,11 @@ import "./App.css";
 export default function App() {
   return (
     <Routes>
-      {/* Routes without layout */}
       <Route path="/" element={<Login />} />
       <Route path="/menu" element={<Menu />} />
-      <Route path="/home" element={<Home />} />
-      <Route path="/home/lichsudatban" element={<Home />} />
-      <Route path="/home/doimatkhau" element={<Home />} />
-      <Route path="/home/suathongtin" element={<Home />} />
-      <Route path="/home/datban" element={<Home />} />
-      <Route path="/home/dangky" element={<Home />} />
-      <Route path="/home/quenmatkhau" element={<Home />} />
-      <Route path="/home/vechungtoi" element={<Home />} />
-      <Route path="/home/dangnhap" element={<Home />} />
-      <Route path="/home/xemtruocthucdon" element={<Home />} />
+      <Route path="/home/*" element={<Home />} />
       <Route path="*" element={<Home />} />
 
-      {/* Protected Routes with MainLayout */}
       <Route
         path="/staff"
         element={

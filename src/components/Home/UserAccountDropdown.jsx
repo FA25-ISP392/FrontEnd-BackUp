@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { User, LogOut, Edit3, Lock, ChevronDown, X, History } from "lucide-react";
+import {
+  User,
+  LogOut,
+  Edit3,
+  Lock,
+  ChevronDown,
+  X,
+  History,
+} from "lucide-react";
 import EditAccountModal from "./EditAccountModal";
 import ChangePasswordModal from "./ChangePasswordModal";
 
