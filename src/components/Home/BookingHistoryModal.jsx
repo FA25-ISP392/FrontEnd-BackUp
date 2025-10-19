@@ -9,7 +9,6 @@ import {
   XCircle,
   AlertCircle,
 } from "lucide-react";
-import { getBookingHistory } from "../../lib/apiBooking";
 
 export default function BookingHistoryModal({ isOpen, onClose, userInfo }) {
   const [bookings, setBookings] = useState([]);

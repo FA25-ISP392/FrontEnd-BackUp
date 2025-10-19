@@ -18,10 +18,12 @@ apiConfig.interceptors.request.use((config) => {
   const token = raw ? String(raw).replace(/^Bearer\s+/i, "") : "";
   const url = String(config.url || "");
   const method = String(config.method || "get").toLowerCase();
-  const isAuth = /\/auth(\/|$)/.test(url);
+  const isOauthPublic =
+    /\/auth\/(google|success|login|register|callback)(\/|$)?/i.test(url);
   const isPublicCustomerCreate =
     /\/customer(\/|$)/.test(url) && method === "post";
-  const isPublic = isAuth || isPublicCustomerCreate;
+  const isPublic = isOauthPublic || isPublicCustomerCreate;
+
   if (token && !isPublic) {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;

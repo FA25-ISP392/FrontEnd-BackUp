@@ -21,23 +21,34 @@ export async function createBooking({ date, time, guests, preferredTable }) {
 export const normalizeBooking = (b = {}) => ({
   id: b.bookingId ?? b.id,
   customerId: b.customerId ?? b.customer?.id ?? null,
-  customerName: b.customerName ?? b.customer?.fullName ?? "",
-  phone: b.customerPhone ?? b.customer?.phone ?? "",
-  email: b.customerEmail ?? b.customer?.email ?? "",
-  seat: b.seat ?? b.guestCount ?? 1,
+  customerName: b.customerName ?? "",
+  phone: b.customerPhone ?? "",
+  email: b.customerEmail ?? "",
+  seat: b.seat ?? 1,
   bookingDate: normalizeISOFromAPI(b.bookingDate),
-  createdAt: b.createdAt ?? b.created_at ?? null,
-  preferredTable: b.preferredTable ?? b.wantTable ?? b.wanttable ?? "",
-  assignedTableId:
-    b.assignedTableId ??
-    b.tableId ??
-    b.tableID ??
-    b.table_id ??
-    b.table?.id ??
-    b.table?.tableId ??
-    null,
-  status: String(b.status || "PENDING").toUpperCase(),
+  createdAt: b.createdAt ?? null,
+  preferredTable: b.wantTable ?? "",
+  assignedTableId: b.tableId ?? null,
+  status: normalizeStatus(b.status),
 });
+
+function normalizeStatus(u) {
+  const s = String(u || "PENDING").toUpperCase();
+  if (s === "REJECT") return "REJECTED";
+  if (s === "APPROVE") return "APPROVED";
+  if (s === "CANCEL" || s === "CANCELED") return "CANCELLED";
+  return s;
+}
+
+function mapFilterStatusForAPI(u) {
+  const s = String(u || "ALL").toUpperCase();
+  if (s === "ALL") return "ALL";
+  if (s === "REJECTED" || s === "REJECT") return "REJECT";
+  if (s === "APPROVED" || s === "APPROVE") return "APPROVED";
+  if (["CANCELLED", "CANCELED", "CANCEL"].includes(s)) return "CANCEL";
+  if (s === "PENDING") return "PENDING";
+  return s;
+}
 
 function normalizeStatusFilter(status) {
   if (!status) return "ALL";
@@ -163,71 +174,37 @@ export async function listBookingsByTableDate(tableId, date) {
   return list.map(normalizeBooking);
 }
 
-export async function getBookingHistory(customerId) {
-  if (!customerId) throw new Error("Thiếu customerId.");
-  
-  try {
-    const res = await apiConfig.get(`/booking/customer/${customerId}`);
-    
-    const list = Array.isArray(res)
-      ? res
-      : Array.isArray(res?.result)
-      ? res.result
-      : Array.isArray(res?.content)
-      ? res.content
-      : [];
-
-    return list.map(normalizeBooking).sort(
-      (a, b) => new Date(b.createdAt || b.bookingDate) - new Date(a.createdAt || a.bookingDate)
-    );
-  } catch (error) {
-    // Nếu API không tồn tại, trả về dữ liệu mock
-    console.warn("API getBookingHistory không khả dụng, sử dụng dữ liệu mock:", error);
-    return getMockBookingHistory(customerId);
-  }
+export async function cancelBooking(id) {
+  if (!id) throw new Error("Thiếu bookingId.");
+  const res = await apiConfig.put(`/booking/${id}/cancel`, {});
+  return normalizeBooking(res?.result ?? res);
 }
 
-// Mock data cho lịch sử đặt bàn
-function getMockBookingHistory(customerId) {
-  const mockBookings = [
-    {
-      id: 1,
-      customerId: customerId,
-      date: "2024-01-15",
-      time: "19:00",
-      guests: 4,
-      preferredTable: "A1",
-      status: "CONFIRMED",
-      specialRequests: "Bàn gần cửa sổ",
-      createdAt: "2024-01-10T10:30:00Z"
-    },
-    {
-      id: 2,
-      customerId: customerId,
-      date: "2024-01-08",
-      time: "18:30",
-      guests: 2,
-      preferredTable: "B3",
-      status: "CONFIRMED",
-      specialRequests: "",
-      createdAt: "2024-01-05T14:20:00Z"
-    },
-    {
-      id: 3,
-      customerId: customerId,
-      date: "2024-01-03",
-      time: "20:00",
-      guests: 6,
-      preferredTable: "C2",
-      status: "CANCELLED",
-      specialRequests: "Bàn lớn cho gia đình",
-      createdAt: "2023-12-28T16:45:00Z"
-    }
-  ];
+export async function updateBooking1(id, payload) {
+  const rawSeat = parseInt(payload.guests, 10) || 1;
+  const seat = Math.max(1, Math.min(8, rawSeat));
+  const bookingDate =
+    payload.bookingDate ||
+    (payload.date ? buildISOFromVN(payload.date, payload.time) : null);
+  const body = {
+    seat,
+    bookingDate,
+    ...(payload.wantTable ? { wantTable: Number(payload.wantTable) } : {}),
+  };
 
-  return mockBookings.map(booking => ({
-    ...booking,
-    bookingDate: `${booking.date}T${booking.time}:00`,
-    seat: booking.guests
-  }));
+  const res = await apiConfig.put(`/booking/${id}`, body);
+  return normalizeBooking(res?.result ?? res);
+}
+
+export async function getBookingHistory(customerId) {
+  if (!customerId) throw new Error("Thiếu customerId.");
+  const res = await apiConfig.get(`/booking/customer/${customerId}`);
+  const list = Array.isArray(res)
+    ? res
+    : Array.isArray(res?.result)
+    ? res.result
+    : Array.isArray(res?.content)
+    ? res.content
+    : [];
+  return list.map(normalizeBooking);
 }

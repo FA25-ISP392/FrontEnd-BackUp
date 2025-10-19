@@ -1,14 +1,20 @@
 import { useCustomerLogin } from "../../hooks/useCustomerLogin";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { loginWithGooglePopup } from "../../lib/googleAuth";
 
-export default function LoginForm({ onSubmit, onSwitchToRegister, onForgotPassword }) {
+export default function LoginForm({
+  onSubmit,
+  onSwitchToRegister,
+  onForgotPassword,
+}) {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const { login, isLoading, error, clearError } = useCustomerLogin();
+  const [isGoogleLoading, setGoogleLoading] = useState(false);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -25,6 +31,20 @@ export default function LoginForm({ onSubmit, onSwitchToRegister, onForgotPasswo
         if (typeof onSubmit === "function") onSubmit(formData);
       },
     });
+  };
+
+  const handleGoogleLogin = async () => {
+    if (isGoogleLoading) return;
+    setGoogleLoading(true);
+    try {
+      await loginWithGooglePopup();
+      if (typeof onSubmit === "function") onSubmit();
+    } catch (e) {
+      console.error(e);
+      alert(e?.message || "Đăng nhập Google thất bại.");
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -97,7 +117,6 @@ export default function LoginForm({ onSubmit, onSwitchToRegister, onForgotPasswo
         </button>
       </form>
 
-      {/* Google Login Section */}
       <div className="mt-6">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -111,10 +130,8 @@ export default function LoginForm({ onSubmit, onSwitchToRegister, onForgotPasswo
         <div className="mt-6">
           <button
             type="button"
-            onClick={() => {
-              // TODO: Implement Google login logic
-              console.log("Google login clicked");
-            }}
+            onClick={handleGoogleLogin}
+            disabled={isGoogleLoading}
             className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all duration-300"
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -135,7 +152,9 @@ export default function LoginForm({ onSubmit, onSwitchToRegister, onForgotPasswo
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Đăng nhập bằng Google
+            {isGoogleLoading
+              ? "Đang xác thực Google..."
+              : "Đăng nhập bằng Google"}
           </button>
         </div>
       </div>

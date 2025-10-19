@@ -18,6 +18,7 @@ import { createBooking } from "../lib/apiBooking";
 import { useBooking } from "../hooks/useBooking";
 import ToastHost, { showToast } from "../common/ToastHost";
 import { HOME, HOME_ROUTES, NEED_AUTH } from "../constant/routes";
+import CustomerBookingHistory from "../components/Home/CustomerBookingHistory";
 
 export default function Home() {
   const location = useLocation();
@@ -456,7 +457,11 @@ export default function Home() {
       )}
 
       {modal === "history" && (
-        <BookingHistoryModal isOpen onClose={closeToHome} userInfo={userInfo} />
+        <CustomerBookingHistory
+          isOpen
+          onClose={closeToHome}
+          userInfo={userInfo}
+        />
       )}
     </div>
   );
