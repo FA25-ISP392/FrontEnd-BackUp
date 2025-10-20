@@ -1,4 +1,11 @@
-import { ShoppingCart, User, Bell, CreditCard, ChefHat, Table } from "lucide-react";
+import {
+  ShoppingCart,
+  User,
+  Bell,
+  CreditCard,
+  ChefHat,
+  Table,
+} from "lucide-react";
 
 export default function MenuHeader({
   cartItemCount,
@@ -29,7 +36,7 @@ export default function MenuHeader({
                 <p className="text-xs text-neutral-600">Fine Dining</p>
               </div>
             </button>
-            
+
             {/* Table Information */}
             {tableId && (
               <div className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg border border-blue-200">
