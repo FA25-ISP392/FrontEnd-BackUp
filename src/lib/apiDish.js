@@ -82,9 +82,39 @@ export async function getDish(id) {
 // 🟠 Cập nhật món ăn
 export async function updateDish(id, payload) {
   const token = localStorage.getItem("token");
-  const res = await apiConfig.put(`/dish/${id}`, payload, {
-    headers: { Authorization: `Bearer ${token}` },
+  const formData = new FormData();
+
+  // 🧩 Gói object dish vào JSON blob
+  formData.append(
+    "dish",
+    new Blob(
+      [
+        JSON.stringify({
+          dishName: payload.dishName,
+          description: payload.description,
+          price: payload.price,
+          calo: payload.calo,
+          category: payload.category,
+          isAvailable: payload.isAvailable,
+          type: payload.type || "BUILD_MUSCLE",
+        }),
+      ],
+      { type: "application/json" },
+    ),
+  );
+
+  // 🧩 Nếu có hình ảnh thì mới append (optional)
+  if (payload.imageFile instanceof File) {
+    formData.append("image", payload.imageFile);
+  }
+
+  const res = await apiConfig.put(`/dish/${id}`, formData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "multipart/form-data",
+    },
   });
+
   return res;
 }
 
