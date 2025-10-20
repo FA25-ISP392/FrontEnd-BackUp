@@ -27,6 +27,7 @@ export default function Menu() {
 
   const [tableId, setTableId] = useState(null);
   const [customerId, setCustomerId] = useState(null);
+  const [customerName, setCustomerName] = useState(null);
   const [orderId, setOrderId] = useState(
     () => sessionStorage.getItem("orderId") || null
   );
@@ -50,6 +51,10 @@ export default function Menu() {
           if (cid != null) {
             setCustomerId(String(cid));
             sessionStorage.setItem("customerId", String(cid));
+          }
+          // Lấy tên khách hàng
+          if (userData.name || userData.fullName || userData.username) {
+            setCustomerName(userData.name || userData.fullName || userData.username);
           }
         } catch (error) {
           console.error("Error parsing user data:", error);
@@ -232,9 +237,24 @@ export default function Menu() {
         tableId={tableId}
         customerId={customerId}
       />
-      {orderId ? (
-        <div className="px-4 py-2 text-xs text-neutral-600 text-center">
-          Mã đơn hiện tại: <span className="font-semibold">{orderId}</span>
+      {orderId && tableId && customerId ? (
+        <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
+          <div className="max-w-7xl mx-auto flex items-center justify-center space-x-6 text-sm">
+            <div className="flex items-center space-x-2">
+              <span className="text-blue-600 font-medium">👋 Chào mừng</span>
+              <span className="text-blue-800 font-semibold">
+                {customerName || `Khách hàng #${customerId}`}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-indigo-600 font-medium">🪑 Bàn</span>
+              <span className="text-indigo-800 font-semibold">{tableId}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-purple-600 font-medium">📋 Mã đơn</span>
+              <span className="text-purple-800 font-semibold">{orderId}</span>
+            </div>
+          </div>
         </div>
       ) : null}
 

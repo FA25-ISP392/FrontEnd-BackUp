@@ -37,20 +37,6 @@ export default function MenuHeader({
               </div>
             </button>
 
-            {/* Table Information */}
-            {tableId && (
-              <div className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg border border-blue-200">
-                <Table className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-800">
-                  Bàn {tableId}
-                </span>
-                {customerId && (
-                  <span className="text-xs text-blue-600">
-                    (ID: {customerId})
-                  </span>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Navigation Buttons */}
