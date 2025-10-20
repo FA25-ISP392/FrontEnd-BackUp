@@ -9,7 +9,6 @@ export const roleRoutes = {
   CHEF: "/chef",
 };
 
-// ==================== JWT & SESSION ====================
 export function parseJWT(token) {
   try {
     const base64Url = token.split(".")[1];

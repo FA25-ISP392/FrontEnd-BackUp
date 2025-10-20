@@ -1,7 +1,19 @@
 import apiConfig from "../api/apiConfig";
 import { parseJWT } from "./auth";
 
-const apiOrigin = new URL(apiConfig.defaults.baseURL).origin;
+function getApiURL() {
+  const raw = String(apiConfig?.defaults?.baseURL || "");
+  try {
+    // Cho DEV: "/api" -> "http(s)://<frontend-origin>/api"
+    // Cho PROD: "https://api.../isp392" giữ nguyên
+    return new URL(raw, window.location.origin);
+  } catch {
+    return new URL("/", window.location.origin);
+  }
+}
+
+const apiURL = getApiURL();
+const apiOrigin = apiURL.origin;
 
 function openPopup(url, name = "google_oauth", w = 520, h = 640) {
   const left =
@@ -19,7 +31,14 @@ function openPopup(url, name = "google_oauth", w = 520, h = 640) {
 }
 
 export async function loginWithGooglePopup() {
-  const loginUrl = `${apiConfig.defaults.baseURL}/oauth2/authorization/google`;
+  // baseURL có thể là "/api" (DEV) hoặc "https://api.../isp392" (PROD)
+  const base = String(apiConfig?.defaults?.baseURL || "");
+  const loginUrl = new URL(
+    // luôn tạo URL tuyệt đối để tránh lỗi tương tự
+    `${base.replace(/\/$/, "")}/oauth2/authorization/google`,
+    window.location.origin
+  ).toString();
+
   const popup = openPopup(loginUrl);
 
   return new Promise((resolve, reject) => {
@@ -41,13 +60,16 @@ export async function loginWithGooglePopup() {
         const user = parseJWT(token) || {};
         localStorage.setItem("user", JSON.stringify(user));
       } catch {}
+
       window.dispatchEvent(new Event("auth:changed"));
+      window.location.reload();
+
       cleanup();
       resolve({ token });
     };
 
     const onMessage = (ev) => {
-      console.log("msg from:", ev.origin, ev.data);
+      // chấp nhận từ FE origin hiện tại và từ API origin
       const allowedOrigins = [window.location.origin, apiOrigin];
       if (!allowedOrigins.includes(ev.origin)) return;
       const msg = ev.data || {};
@@ -55,7 +77,9 @@ export async function loginWithGooglePopup() {
         finish(msg.token);
       }
     };
+
     window.addEventListener("message", onMessage);
+
     const pollClosed = setInterval(() => {
       if (popup.closed && !finished) {
         cleanup();
