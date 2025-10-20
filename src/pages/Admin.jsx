@@ -17,7 +17,7 @@ import {
 import { updateStaff, deleteStaff, listStaffPaging } from "../lib/apiStaff";
 import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
 import { findStaffByUsername, normalizeStaff } from "../lib/apiStaff";
-
+//h
 export default function Admin() {
   const [adminName, setAdminName] = useState("");
   const [activeSection, setActiveSection] = useState("overview");
@@ -107,7 +107,7 @@ export default function Admin() {
       } catch (err) {
         if (!cancelled)
           setAccountsError(
-            err.message || "Không tải được danh sách nhân viên.",
+            err.message || "Không tải được danh sách nhân viên."
           );
       } finally {
         if (!cancelled) setLoadingAccounts(false);
@@ -153,7 +153,7 @@ export default function Admin() {
       const response = await updateStaff(staffId, payload);
       const updated = normalizeStaff(response?.result ?? response);
       setAccounts((prev) =>
-        prev.map((arr) => (arr.id === staffId ? { ...arr, ...updated } : arr)),
+        prev.map((arr) => (arr.id === staffId ? { ...arr, ...updated } : arr))
       );
     } catch (err) {
       const data = err?.response?.data || err?.data || {};
@@ -175,7 +175,7 @@ export default function Admin() {
   const deleteAccount = async (staffId) => {
     if (!staffId) return;
     const targetDelete = accounts.find(
-      (arr) => Number(arr.staffId) === Number(staffId),
+      (arr) => Number(arr.staffId) === Number(staffId)
     );
     if (!targetDelete) return;
     const me = getCurrentUser() || {};
@@ -227,7 +227,7 @@ export default function Admin() {
   // Calculate totals
   const totalRevenue = mockAdminRevenueData.reduce(
     (sum, item) => sum + item.revenue,
-    0,
+    0
   );
   const totalAccounts = accounts.length;
   const totalDishes = dishes.length;
@@ -328,8 +328,8 @@ export default function Admin() {
           if (updatedDish) {
             setDishes((prev) =>
               prev.map((dish) =>
-                dish.id === updatedDish.id ? updatedDish : dish,
-              ),
+                dish.id === updatedDish.id ? updatedDish : dish
+              )
             );
           }
         }}
