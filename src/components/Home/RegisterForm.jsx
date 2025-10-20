@@ -59,9 +59,6 @@ export default function RegisterForm({ onSwitchToLogin }) {
       errs.username = "Vui lòng nhập tên đăng nhập.";
     } else if (cleaned.username.length < 3 || cleaned.username.length > 30) {
       errs.username = "Tên đăng nhập phải từ 3–30 ký tự.";
-    } else if (!/^[a-z0-9._-]+$/.test(cleaned.username)) {
-      errs.username =
-        "Chỉ gồm a–z, 0–9, dấu chấm (.), gạch dưới (_), gạch nối (-).";
     }
 
     if (!cleaned.password) {
@@ -80,8 +77,6 @@ export default function RegisterForm({ onSwitchToLogin }) {
       errs.fullName = "Vui lòng nhập họ và tên.";
     } else if (cleaned.fullName.length < 2 || cleaned.fullName.length > 50) {
       errs.fullName = "Họ tên phải từ 2–50 ký tự.";
-    } else if (/\d/.test(cleaned.fullName)) {
-      errs.fullName = "Họ tên không được chứa chữ số.";
     }
 
     if (!cleaned.email) {

@@ -20,7 +20,6 @@ export default function MenuHeader({
     <header className="bg-white/90 backdrop-blur-md shadow-lg border-b border-white/20 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo and Table Info */}
           <div className="flex items-center space-x-6">
             <button
               onClick={() => window.location.reload()}
@@ -31,15 +30,12 @@ export default function MenuHeader({
               </div>
               <div>
                 <h1 className="text-xl font-bold text-neutral-900">
-                  Restaurant
+                  MónCủaBạn
                 </h1>
-                <p className="text-xs text-neutral-600">Fine Dining</p>
               </div>
             </button>
-
           </div>
 
-          {/* Navigation Buttons */}
           <div className="flex items-center space-x-4">
             <button
               onClick={onPersonalize}

@@ -32,35 +32,48 @@ export default function Menu() {
     () => sessionStorage.getItem("orderId") || null
   );
 
+  const readAuthUser = () => {
+    try {
+      const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const getDisplayName = (u) =>
+    String(u?.fullName || u?.name || u?.username || "").trim();
+
   useEffect(() => {
     const storedTableId = sessionStorage.getItem("customerTableId");
-    const storedCustomerId = sessionStorage.getItem("customerId");
+    if (storedTableId) setTableId(storedTableId);
 
-    if (storedTableId) {
-      setTableId(storedTableId);
+    const user = readAuthUser();
+    const cid =
+      user?.customerId ?? user?.id ?? sessionStorage.getItem("customerId");
+    if (cid != null) {
+      setCustomerId(String(cid));
+      sessionStorage.setItem("customerId", String(cid));
     }
+    const name = getDisplayName(user);
+    if (name) setCustomerName(name);
 
-    if (storedCustomerId) {
-      setCustomerId(storedCustomerId);
-    } else {
-      const user = localStorage.getItem("user");
-      if (user) {
-        try {
-          const userData = JSON.parse(user);
-          const cid = userData.customerId ?? userData.id;
-          if (cid != null) {
-            setCustomerId(String(cid));
-            sessionStorage.setItem("customerId", String(cid));
-          }
-          // Lấy tên khách hàng
-          if (userData.name || userData.fullName || userData.username) {
-            setCustomerName(userData.name || userData.fullName || userData.username);
-          }
-        } catch (error) {
-          console.error("Error parsing user data:", error);
-        }
+    const sync = () => {
+      const u = readAuthUser();
+      const c = u?.customerId ?? u?.id;
+      if (c != null) {
+        setCustomerId(String(c));
+        sessionStorage.setItem("customerId", String(c));
       }
-    }
+      const n = getDisplayName(u);
+      if (n) setCustomerName(n);
+    };
+    window.addEventListener("storage", sync);
+    window.addEventListener("auth:changed", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("auth:changed", sync);
+    };
   }, []);
 
   useEffect(() => {
@@ -241,17 +254,17 @@ export default function Menu() {
         <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
           <div className="max-w-7xl mx-auto flex items-center justify-center space-x-6 text-sm">
             <div className="flex items-center space-x-2">
-              <span className="text-blue-600 font-medium">👋 Chào mừng</span>
+              <span className="text-blue-600 font-medium">Chào Mừng</span>
               <span className="text-blue-800 font-semibold">
-                {customerName || `Khách hàng #${customerId}`}
+                {customerName}
               </span>
             </div>
             <div className="flex items-center space-x-2">
-              <span className="text-indigo-600 font-medium">🪑 Bàn</span>
+              <span className="text-indigo-600 font-medium">Bàn</span>
               <span className="text-indigo-800 font-semibold">{tableId}</span>
             </div>
             <div className="flex items-center space-x-2">
-              <span className="text-purple-600 font-medium">📋 Mã đơn</span>
+              <span className="text-purple-600 font-medium">Mã Đơn</span>
               <span className="text-purple-800 font-semibold">{orderId}</span>
             </div>
           </div>
