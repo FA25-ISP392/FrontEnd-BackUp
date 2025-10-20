@@ -5,8 +5,6 @@ import AdminCharts from "../components/Admin/AdminCharts";
 import AdminInvoices from "../components/Admin/Invoices";
 import AdminAccountManagement from "../components/Admin/AccountManagement";
 import AdminEditAccountModal from "../components/Admin/EditAccountModal";
-import AdminDishesManagement from "../components/Admin/DishesManagement";
-import AdminEditDishModal from "../components/Admin/EditDishModal";
 
 import {
   mockAdminInvoices,
@@ -268,16 +266,16 @@ export default function Admin() {
             currentUser={getCurrentUser()}
           />
         );
-      case "dishes":
-        return (
-          <AdminDishesManagement
-            dishes={dishes}
-            setDishes={setDishes}
-            setIsEditingDish={setIsEditingDish}
-            setEditingItem={setEditingItem}
-            loading={loadingDishes}
-          />
-        );
+      // case "dishes":
+      //   return (
+      //     <AdminDishesManagement
+      //       dishes={dishes}
+      //       setDishes={setDishes}
+      //       setIsEditingDish={setIsEditingDish}
+      //       setEditingItem={setEditingItem}
+      //       loading={loadingDishes}
+      //     />
+      //   );
       case "invoices":
         return <AdminInvoices invoices={invoices} />;
       default:
@@ -319,7 +317,7 @@ export default function Admin() {
         setDeletingIds={deletingIds}
         accounts={accounts}
       />
-      <AdminEditDishModal
+      {/* <AdminEditDishModal
         isEditingDish={isEditingDish}
         setIsEditingDish={setIsEditingDish}
         editingItem={editingItem}
@@ -333,7 +331,7 @@ export default function Admin() {
             );
           }
         }}
-      />
+      /> */}
     </div>
   );
 }
