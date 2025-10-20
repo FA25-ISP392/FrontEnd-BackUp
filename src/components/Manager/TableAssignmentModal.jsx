@@ -93,7 +93,6 @@ export default function TableAssignmentModal({
             Thông Tin Đơn Đặt Bàn
           </h3>
 
-          {/* Thông tin khách hàng */}
           <div className="bg-gradient-to-r from-neutral-50 to-neutral-100 rounded-xl p-4 mb-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
@@ -156,7 +155,6 @@ export default function TableAssignmentModal({
             </div>
           </div>
 
-          {/* Thông tin số người */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
             <div className="flex items-center justify-center gap-3">
               <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
@@ -172,7 +170,6 @@ export default function TableAssignmentModal({
           </div>
         </div>
 
-        {/* Table Selection */}
         <div className="p-6">
           <h3 className="text-lg font-semibold text-neutral-900 mb-4">
             Chọn Bàn Phù Hợp
@@ -235,7 +232,6 @@ export default function TableAssignmentModal({
           )}
         </div>
 
-        {/* Actions */}
         <div className="flex items-center justify-end gap-3 p-6 border-t border-neutral-200">
           <button
             onClick={onClose}
