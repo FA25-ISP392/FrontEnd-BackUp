@@ -83,6 +83,15 @@ export default function Home() {
     }
   }, [location.pathname, isLoggedIn, navigate]);
 
+  // Handle tableId parameter for QR code login
+  useEffect(() => {
+    const tableId = searchParams.get("tableId");
+    if (tableId && modal === "login") {
+      // Store tableId in session storage for later use
+      sessionStorage.setItem("currentTableId", tableId);
+    }
+  }, [searchParams, modal]);
+
   const resetToken = searchParams.get("token");
   const isResetOpen = Boolean(resetToken);
   const closeReset = () => {
@@ -124,6 +133,16 @@ export default function Home() {
   };
 
   const handleLoginSubmit = () => {
+    // Check if user came from QR code (has tableId)
+    const tableId = sessionStorage.getItem("currentTableId");
+    
+    if (tableId) {
+      // User came from QR code, redirect to menu
+      sessionStorage.setItem("customerTableId", tableId);
+      navigate("/menu");
+      return;
+    }
+    
     if (bookingDraft) {
       reloadBookingDraft();
       open(HOME_ROUTES.BOOKING);

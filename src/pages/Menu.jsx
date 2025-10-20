@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { CheckCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { CheckCircle, Table } from "lucide-react";
 import MenuHeader from "../components/Menu/MenuHeader";
 import MenuContent from "../components/Menu/MenuContent";
 import MenuFooter from "../components/Menu/MenuFooter";
@@ -23,6 +23,36 @@ export default function Menu() {
   const [estimatedCalories, setEstimatedCalories] = useState(2000);
   // Removed search and category dropdown per requirements
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  
+  // Table information state
+  const [tableId, setTableId] = useState(null);
+  const [customerId, setCustomerId] = useState(null);
+
+  // Load table and customer information from session storage
+  useEffect(() => {
+    const storedTableId = sessionStorage.getItem("customerTableId");
+    const storedCustomerId = sessionStorage.getItem("customerId");
+    
+    if (storedTableId) {
+      setTableId(storedTableId);
+    }
+    
+    if (storedCustomerId) {
+      setCustomerId(storedCustomerId);
+    } else {
+      // Get customer ID from localStorage if available
+      const user = localStorage.getItem("user");
+      if (user) {
+        try {
+          const userData = JSON.parse(user);
+          setCustomerId(userData.id);
+          sessionStorage.setItem("customerId", userData.id);
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+        }
+      }
+    }
+  }, []);
 
   // Personalization form state
   const [personalizationForm, setPersonalizationForm] = useState({
@@ -175,6 +205,8 @@ export default function Menu() {
           }, 2000);
         }}
         onCheckout={() => setIsPaymentOpen(true)}
+        tableId={tableId}
+        customerId={customerId}
       />
 
       <MenuContent
