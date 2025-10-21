@@ -25,31 +25,23 @@ export default function Menu() {
   const [selectedDish, setSelectedDish] = useState(null);
   const [cart, setCart] = useState([]);
   const [caloriesConsumed, setCaloriesConsumed] = useState(0);
-
-  // Cờ đã cá nhân hoá (để ẩn/hiện thanh calorie)
   const [isPersonalized, setIsPersonalized] = useState(false);
-
   const [paymentMethod, setPaymentMethod] = useState("cash");
-
   const [tableId, setTableId] = useState(null);
   const [customerId, setCustomerId] = useState(null);
   const [customerName, setCustomerName] = useState(null);
   const [orderId, setOrderId] = useState(
     () => sessionStorage.getItem("orderId") || null
   );
-
-  // Base TDEE (đã chia theo buổi nếu có) – trước khi áp mục tiêu
   const [baseCalories, setBaseCalories] = useState(null);
-  // Calorie hiện thị ngoài (sau khi áp mục tiêu)
   const [estimatedCalories, setEstimatedCalories] = useState(null);
 
-  // === helpers ===
   const PERSONAL_KEY = (cid) => `personalization:${cid}`;
   const applyGoal = (cals, goal) => {
     if (typeof cals !== "number" || !isFinite(cals)) return null;
     if (goal === "lose") return Math.max(0, cals - 500);
     if (goal === "gain") return cals + 500;
-    return cals; // maintain hoặc rỗng
+    return cals;
   };
 
   const readAuthUser = () => {
@@ -123,7 +115,6 @@ export default function Menu() {
     })();
   }, [customerId, tableId]);
 
-  // Dishes
   const hiddenNames = (() => {
     try {
       return JSON.parse(localStorage.getItem("hidden_dishes")) || [];
@@ -135,11 +126,9 @@ export default function Menu() {
     (dish) => dish.available && !hiddenNames.includes(dish.name)
   );
 
-  // Personalization hook (chỉ để lọc món + giữ form)
   const { personalizationForm, setPersonalizationForm, personalizedDishes } =
     useMenuPersonalization(filteredDishes);
 
-  // Prefill form từ cache/BE + khôi phục thanh calorie nếu đã từng tạo
   useEffect(() => {
     if (!customerId) return;
 
@@ -164,7 +153,6 @@ export default function Menu() {
       return;
     }
 
-    // Không có cache → gọi BE để prefill (không bật hiển thị)
     (async () => {
       try {
         const cus = await getCustomerDetail(customerId);
@@ -188,7 +176,6 @@ export default function Menu() {
     })();
   }, [customerId]);
 
-  // === Cart ops ===
   const addToCart = (dish, notes = "") => {
     const existingItem = cart.find(
       (item) => item.id === dish.id && item.notes === notes
@@ -236,7 +223,6 @@ export default function Menu() {
     }
   };
 
-  // Khi user bấm “Tạo Menu Cá Nhân”
   const handlePersonalizationSubmit = async (form) => {
     if (!customerId) {
       alert("Không tìm thấy tài khoản khách hàng.");
@@ -245,13 +231,11 @@ export default function Menu() {
     try {
       await updateCustomerPersonalization(customerId, form);
 
-      // BMR gốc
       const bmr =
         form.gender === "male"
           ? 10 * form.weight + 6.25 * form.height - 5 * form.age + 5
           : 10 * form.weight + 6.25 * form.height - 5 * form.age - 161;
 
-      // Hệ số vận động -> TDEE
       const multiplier =
         {
           sedentary: 1.2,
@@ -262,7 +246,6 @@ export default function Menu() {
         }[form.exerciseLevel] || 1.2;
       const tdee = Math.round(bmr * multiplier);
 
-      // Số buổi/tuần đại diện
       const sessionsMap = {
         sedentary: 0,
         light: 2,
@@ -283,7 +266,6 @@ export default function Menu() {
       setEstimatedCalories(finalCals);
       setIsPersonalized(true);
 
-      // cache
       localStorage.setItem(
         PERSONAL_KEY(customerId),
         JSON.stringify({
@@ -301,7 +283,6 @@ export default function Menu() {
     }
   };
 
-  // Đổi mục tiêu từ UI bên ngoài
   const handleGoalChange = (goalId) => {
     setPersonalizationForm((prev) => ({ ...prev, goal: goalId }));
     const base = baseCalories ?? estimatedCalories; // fallback
@@ -381,9 +362,9 @@ export default function Menu() {
           setIsDishOptionsOpen(true);
         }}
         caloriesConsumed={caloriesConsumed}
-        estimatedCalories={estimatedCalories} // null -> ẩn thanh
-        onGoalChange={handleGoalChange} // cập nhật mục tiêu +/-500
-        isPersonalized={isPersonalized} // điều khiển ẩn/hiện thanh
+        estimatedCalories={estimatedCalories}
+        onGoalChange={handleGoalChange}
+        isPersonalized={isPersonalized}
         currentGoal={personalizationForm.goal}
       />
 
