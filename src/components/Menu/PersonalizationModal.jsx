@@ -24,11 +24,31 @@ export default function PersonalizationModal({
   ];
 
   const exerciseLevels = [
-    { id: "sedentary", name: "Rất ít hoặc không hoạt động thể dục", description: "Ít hoặc không tập thể dục" },
-    { id: "light", name: "1-3 ngày/tuần", description: "Tập nhẹ 1-3 ngày mỗi tuần" },
-    { id: "moderate", name: "3-5 ngày/tuần", description: "Tập vừa phải 3-5 ngày mỗi tuần" },
-    { id: "active", name: "6-7 ngày/tuần", description: "Tập thường xuyên 6-7 ngày mỗi tuần" },
-    { id: "very_active", name: "Tập luyện mỗi ngày với hơn 90 phút/lần tập", description: "Tập cường độ cao mỗi ngày" },
+    {
+      id: "sedentary",
+      name: "Rất ít hoặc không hoạt động thể dục",
+      description: "Ít hoặc không tập thể dục",
+    },
+    {
+      id: "light",
+      name: "1-3 ngày/tuần",
+      description: "Tập nhẹ 1-3 ngày mỗi tuần",
+    },
+    {
+      id: "moderate",
+      name: "3-5 ngày/tuần",
+      description: "Tập vừa phải 3-5 ngày mỗi tuần",
+    },
+    {
+      id: "active",
+      name: "6-7 ngày/tuần",
+      description: "Tập thường xuyên 6-7 ngày mỗi tuần",
+    },
+    {
+      id: "very_active",
+      name: "Tập luyện mỗi ngày với hơn 90 phút/lần tập",
+      description: "Tập cường độ cao mỗi ngày",
+    },
   ];
 
   const calculateBMI = (height, weight) => {
@@ -45,7 +65,7 @@ export default function PersonalizationModal({
 
   const bmi = calculateBMI(
     personalizationForm.height,
-    personalizationForm.weight,
+    personalizationForm.weight
   );
   const bmiInfo = getBMICategory(bmi);
 
@@ -258,7 +278,7 @@ export default function PersonalizationModal({
                   <input
                     type="checkbox"
                     checked={personalizationForm.preferences.includes(
-                      preference.id,
+                      preference.id
                     )}
                     onChange={(e) =>
                       handlePreferenceChange(preference.id, e.target.checked)

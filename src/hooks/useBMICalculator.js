@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo } from "react";
 
 /**
  * Hook tính toán BMI và phân loại sức khỏe
@@ -17,25 +17,28 @@ export function useBMICalculator(initialHeight = 170, initialWeight = 70) {
   // Thuật toán phân loại BMI theo WHO
   const getBMICategory = useMemo(() => {
     const bmi = parseFloat(calculateBMI);
-    if (bmi < 18.5) return { 
-      category: "Thiếu cân", 
-      color: "text-blue-600",
-      recommendation: "Nên tăng cân để đạt sức khỏe tối ưu"
-    };
-    if (bmi < 25) return { 
-      category: "Bình thường", 
-      color: "text-green-600",
-      recommendation: "Duy trì cân nặng hiện tại"
-    };
-    if (bmi < 30) return { 
-      category: "Thừa cân", 
-      color: "text-yellow-600",
-      recommendation: "Nên giảm cân để cải thiện sức khỏe"
-    };
-    return { 
-      category: "Béo phì", 
+    if (bmi < 18.5)
+      return {
+        category: "Thiếu cân",
+        color: "text-blue-600",
+        recommendation: "Nên tăng cân để đạt sức khỏe tối ưu",
+      };
+    if (bmi < 25)
+      return {
+        category: "Bình thường",
+        color: "text-green-600",
+        recommendation: "Duy trì cân nặng hiện tại",
+      };
+    if (bmi < 30)
+      return {
+        category: "Thừa cân",
+        color: "text-yellow-600",
+        recommendation: "Nên giảm cân để cải thiện sức khỏe",
+      };
+    return {
+      category: "Béo phì",
       color: "text-red-600",
-      recommendation: "Cần giảm cân nghiêm túc để tránh rủi ro sức khỏe"
+      recommendation: "Cần giảm cân nghiêm túc để tránh rủi ro sức khỏe",
     };
   }, [calculateBMI]);
 
@@ -55,6 +58,6 @@ export function useBMICalculator(initialHeight = 170, initialWeight = 70) {
     setWeight,
     bmi: calculateBMI,
     bmiCategory: getBMICategory,
-    estimatedCalories: calculateEstimatedCalories
+    estimatedCalories: calculateEstimatedCalories,
   };
 }
