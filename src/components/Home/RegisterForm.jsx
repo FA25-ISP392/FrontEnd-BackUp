@@ -181,10 +181,9 @@ export default function RegisterForm({ onSwitchToLogin }) {
     try {
       setLoading(true);
       await createCustomer(cleaned);
-      setFormMsg("Tạo tài khoản thành công! Vui lòng đăng nhập...");
-      setTimeout(() => {
-        onSwitchToLogin?.();
-      }, 1200);
+      setFormMsg(
+        "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản trước khi đăng nhập."
+      );
     } catch (err) {
       console.error(err);
       const { fieldErrors, message } = parseBackendError(err);
