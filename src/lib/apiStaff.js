@@ -31,7 +31,8 @@ export async function findStaffByUsername(username) {
     : [];
   const exact = list.find(
     (x) =>
-      String(x?.username || "").toLowerCase() === String(username).toLowerCase()
+      String(x?.username || "").toLowerCase() ===
+      String(username).toLowerCase(),
   );
   return exact ? normalizeStaff(exact) : null;
 }
@@ -61,7 +62,7 @@ export async function listStaffPaging({
 
   const blacklist = new Set(excludeRoles.map((r) => String(r).toUpperCase()));
   const filtered = data.filter(
-    (x) => !blacklist.has(String(x.role || "").toUpperCase())
+    (x) => !blacklist.has(String(x.role || "").toUpperCase()),
   );
 
   const totalElements = filtered.length;
@@ -95,4 +96,45 @@ export async function updateStaff(staffId, payload) {
 export async function deleteStaff(staffId) {
   const res = await apiConfig.delete(`/staff/${staffId}`);
   return res ?? null;
+}
+import { getCurrentUser } from "./auth";
+
+/**
+ * 🔍 Lấy thông tin Staff tương ứng với tài khoản đang đăng nhập
+ * Dựa vào username trong token => map sang staffId thực tế
+ */
+
+export async function getMyStaffProfile() {
+  const user = getCurrentUser();
+  if (!user?.username)
+    throw new Error("⚠️ Không xác định được tài khoản hiện tại!");
+
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("⚠️ Chưa có token đăng nhập!");
+
+  const res = await apiConfig.get("/staff", {
+    params: { page: 0, size: 1000 },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const list = Array.isArray(res)
+    ? res
+    : Array.isArray(res?.result)
+    ? res.result
+    : Array.isArray(res?.content)
+    ? res.content
+    : [];
+
+  const exact = list.find(
+    (x) =>
+      String(x?.username || "").toLowerCase() ===
+      String(user.username || "").toLowerCase(),
+  );
+
+  if (!exact)
+    throw new Error("❌ Không tìm thấy thông tin staff cho user hiện tại!");
+  return {
+    staffId: exact.staffId ?? exact.id,
+    ...exact,
+  };
 }

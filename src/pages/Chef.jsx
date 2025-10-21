@@ -6,6 +6,7 @@ import { mockChefOrders, mockChefDishes } from "../lib/chefData";
 import { getCurrentUser } from "../lib/auth";
 import ChefDailyPlan from "../components/Chef/ChefDailyPlan";
 import ChefDailyDishes from "../components/Chef/ChefDailyDishes";
+import ChefRejectedDishes from "../components/Chef/ChefRejectedDishes"; // 🆕 import thêm
 
 export default function Chef() {
   const [chefName, setChefName] = useState("");
@@ -14,7 +15,7 @@ export default function Chef() {
   const [dishes, setDishes] = useState(mockChefDishes);
   const [dishRequests, setDishRequests] = useState([]); // Requests sent to Manager
 
-  //lấy tên để welcome
+  // 🧩 Lấy tên user để hiển thị welcome
   useEffect(() => {
     const u = getCurrentUser();
     const name =
@@ -27,18 +28,7 @@ export default function Chef() {
     setChefName(name || "Chef");
   }, []);
 
-  // Calculate stats
-  const pendingOrders = orders.filter(
-    (order) => order.status === "pending",
-  ).length;
-  const preparingOrders = orders.filter(
-    (order) => order.status === "preparing",
-  ).length;
-  const availableDishes = dishes.filter(
-    (dish) => dish.status === "available",
-  ).length;
-  const totalRevenue = 1250.5; // Mock total revenue
-
+  // 🧩 Cập nhật trạng thái order
   const updateOrderStatus = (orderId, newStatus) => {
     setOrders((prevOrders) =>
       prevOrders.map((order) =>
@@ -47,6 +37,7 @@ export default function Chef() {
     );
   };
 
+  // 🧩 Gửi request món ăn (hiện tại mock)
   const submitDishRequest = (request) => {
     const newRequest = {
       ...request,
@@ -55,21 +46,20 @@ export default function Chef() {
       status: "pending",
     };
     setDishRequests((prev) => [...prev, newRequest]);
-    // In a real app, this would be sent to backend/server
     console.log("Dish request submitted:", newRequest);
   };
 
+  // 🧩 Điều hướng giữa các mục
   const renderContent = () => {
     switch (activeSection) {
       case "overview":
         return (
-          <>
-            <OrdersManagement
-              orders={orders}
-              updateOrderStatus={updateOrderStatus}
-            />
-          </>
+          <OrdersManagement
+            orders={orders}
+            updateOrderStatus={updateOrderStatus}
+          />
         );
+
       case "orders":
         return (
           <OrdersManagement
@@ -77,6 +67,7 @@ export default function Chef() {
             updateOrderStatus={updateOrderStatus}
           />
         );
+
       case "dishes":
         return (
           <DishQuantityManagement
@@ -84,10 +75,15 @@ export default function Chef() {
             onSubmitRequest={submitDishRequest}
           />
         );
+
       case "dailyPlan":
         return <ChefDailyPlan />;
+
       case "dailyDishes":
         return <ChefDailyDishes />;
+
+      case "rejectedDishes": // 🆕 Tab mới cho món bị từ chối
+        return <ChefRejectedDishes />;
 
       case "invoices":
         return (
@@ -100,6 +96,7 @@ export default function Chef() {
             </p>
           </div>
         );
+
       case "settings":
         return (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
@@ -109,21 +106,24 @@ export default function Chef() {
             </p>
           </div>
         );
+
       default:
         return null;
     }
   };
 
+  // 🧩 Giao diện chính
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
       <div className="flex">
+        {/* Sidebar */}
         <ChefSidebar
           activeSection={activeSection}
           setActiveSection={setActiveSection}
         />
 
+        {/* Nội dung chính */}
         <main className="flex-1 p-6">
-          {/* Main Content Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-neutral-900 mb-2">
               Chào mừng trở lại, {chefName}!
@@ -133,7 +133,7 @@ export default function Chef() {
             </p>
           </div>
 
-          {/* Dynamic Content */}
+          {/* Render nội dung tương ứng */}
           {renderContent()}
         </main>
       </div>
