@@ -1,4 +1,5 @@
 import { X, Save, User } from "lucide-react";
+import { useMemo } from "react";
 
 export default function PersonalizationModal({
   isOpen,
@@ -9,13 +10,6 @@ export default function PersonalizationModal({
 }) {
   if (!isOpen) return null;
 
-  const preferences = [
-    { id: "spicy", name: "Cay", description: "Thích đồ cay" },
-    { id: "fatty", name: "Béo", description: "Thích đồ béo" },
-    { id: "sweet", name: "Ngọt", description: "Thích đồ ngọt" },
-    { id: "salty", name: "Mặn", description: "Thích đồ mặn" },
-    { id: "sour", name: "Chua", description: "Thích đồ chua" },
-  ];
 
   const goals = [
     { id: "lose", name: "Giảm cân", description: "Muốn giảm cân" },
@@ -31,32 +25,64 @@ export default function PersonalizationModal({
     { id: "very_active", name: "Tập luyện mỗi ngày với hơn 90 phút/lần tập", description: "Tập cường độ cao mỗi ngày" },
   ];
 
-  const calculateBMI = (height, weight) => {
-    const heightInMeters = height / 100;
-    return (weight / (heightInMeters * heightInMeters)).toFixed(1);
-  };
-
-  const getBMICategory = (bmi) => {
-    if (bmi < 18.5) return { category: "Thiếu cân", color: "text-blue-600" };
-    if (bmi < 25) return { category: "Bình thường", color: "text-green-600" };
-    if (bmi < 30) return { category: "Thừa cân", color: "text-yellow-600" };
-    return { category: "Béo phì", color: "text-red-600" };
-  };
-
-  const bmi = calculateBMI(
+  // Tính toán BMR real-time
+  const { dailyCalories, calorieAssessment } = useMemo(() => {
+    // Công thức Mifflin-St Jeor Equation
+    let bmr;
+    if (personalizationForm.gender === 'male') {
+      bmr = (10 * personalizationForm.weight) + (6.25 * personalizationForm.height) - (5 * personalizationForm.age) + 5;
+    } else {
+      bmr = (10 * personalizationForm.weight) + (6.25 * personalizationForm.height) - (5 * personalizationForm.age) - 161;
+    }
+    
+    // Hệ số hoạt động thể chất
+    const activityMultipliers = {
+      sedentary: 1.2,
+      light: 1.375,
+      moderate: 1.55,
+      active: 1.725,
+      very_active: 1.9
+    };
+    
+    const dailyCalories = Math.round(bmr * activityMultipliers[personalizationForm.exerciseLevel]);
+    
+    // Đánh giá mức độ phù hợp của calo
+    let calorieAssessment;
+    if (dailyCalories < 1200) {
+      calorieAssessment = {
+        status: "Thấp",
+        color: "text-red-600",
+        recommendation: "Nhu cầu calo quá thấp, cần tăng cường dinh dưỡng"
+      };
+    } else if (dailyCalories < 1500) {
+      calorieAssessment = {
+        status: "Trung bình thấp",
+        color: "text-yellow-600",
+        recommendation: "Nên tăng cường hoạt động thể chất để tăng nhu cầu calo"
+      };
+    } else if (dailyCalories < 2500) {
+      calorieAssessment = {
+        status: "Phù hợp",
+        color: "text-green-600",
+        recommendation: "Mức calo phù hợp cho lối sống hiện tại"
+      };
+    } else {
+      calorieAssessment = {
+        status: "Cao",
+        color: "text-blue-600",
+        recommendation: "Nhu cầu calo cao, phù hợp với lối sống năng động"
+      };
+    }
+    
+    return { dailyCalories, calorieAssessment };
+  }, [
     personalizationForm.height,
     personalizationForm.weight,
-  );
-  const bmiInfo = getBMICategory(bmi);
+    personalizationForm.age,
+    personalizationForm.gender,
+    personalizationForm.exerciseLevel
+  ]);
 
-  const handlePreferenceChange = (preferenceId, checked) => {
-    setPersonalizationForm((prev) => ({
-      ...prev,
-      preferences: checked
-        ? [...prev.preferences, preferenceId]
-        : prev.preferences.filter((id) => id !== preferenceId),
-    }));
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -93,109 +119,136 @@ export default function PersonalizationModal({
           onSubmit={handleSubmit}
           className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]"
         >
-          {/* Height and Weight */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-3">
-                Chiều cao: {personalizationForm.height} cm
-              </label>
-              <input
-                type="range"
-                min="120"
-                max="220"
-                value={personalizationForm.height}
-                onChange={(e) =>
-                  setPersonalizationForm((prev) => ({
-                    ...prev,
-                    height: parseInt(e.target.value),
-                  }))
-                }
-                className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer slider"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-3">
-                Cân nặng: {personalizationForm.weight} kg
-              </label>
-              <input
-                type="range"
-                min="30"
-                max="150"
-                value={personalizationForm.weight}
-                onChange={(e) =>
-                  setPersonalizationForm((prev) => ({
-                    ...prev,
-                    weight: parseInt(e.target.value),
-                  }))
-                }
-                className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer slider"
-              />
-            </div>
-          </div>
-
-          {/* Gender */}
-          <div className="mb-6">
-            <h3 className="text-lg font-bold text-neutral-900 mb-4">
-              Giới tính
+          {/* Thông tin cơ bản - Chiều cao, Cân nặng, Tuổi, Cữ ăn theo ngày, Giới tính */}
+          <div className="mb-8">
+            <h3 className="text-lg font-bold text-neutral-900 mb-6">
+              Thông tin cơ bản
             </h3>
-            <div className="flex gap-4">
-              <label className="flex items-center space-x-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 cursor-pointer transition-colors">
+            
+            {/* Chiều cao và Cân nặng */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  Chiều cao: {personalizationForm.height} cm
+                </label>
                 <input
-                  type="radio"
-                  name="gender"
-                  value="male"
-                  checked={personalizationForm.gender === "male"}
+                  type="range"
+                  min="120"
+                  max="220"
+                  value={personalizationForm.height}
                   onChange={(e) =>
                     setPersonalizationForm((prev) => ({
                       ...prev,
-                      gender: e.target.value,
+                      height: parseInt(e.target.value),
                     }))
                   }
-                  className="w-5 h-5 text-purple-500 border-neutral-300 focus:ring-purple-500"
+                  className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer slider"
                 />
-                <span className="font-medium text-neutral-900">Nam</span>
-              </label>
-              <label className="flex items-center space-x-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 cursor-pointer transition-colors">
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  Cân nặng: {personalizationForm.weight} kg
+                </label>
                 <input
-                  type="radio"
-                  name="gender"
-                  value="female"
-                  checked={personalizationForm.gender === "female"}
+                  type="range"
+                  min="30"
+                  max="150"
+                  value={personalizationForm.weight}
                   onChange={(e) =>
                     setPersonalizationForm((prev) => ({
                       ...prev,
-                      gender: e.target.value,
+                      weight: parseInt(e.target.value),
                     }))
                   }
-                  className="w-5 h-5 text-purple-500 border-neutral-300 focus:ring-purple-500"
+                  className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer slider"
                 />
-                <span className="font-medium text-neutral-900">Nữ</span>
+              </div>
+            </div>
+
+            {/* Tuổi và Cữ ăn theo ngày */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  Tuổi: {personalizationForm.age} tuổi
+                </label>
+                <input
+                  type="range"
+                  min="16"
+                  max="80"
+                  value={personalizationForm.age}
+                  onChange={(e) =>
+                    setPersonalizationForm((prev) => ({
+                      ...prev,
+                      age: parseInt(e.target.value),
+                    }))
+                  }
+                  className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  Cữ ăn theo ngày: {personalizationForm.mealsPerDay || 3} bữa
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="6"
+                  value={personalizationForm.mealsPerDay || 3}
+                  onChange={(e) =>
+                    setPersonalizationForm((prev) => ({
+                      ...prev,
+                      mealsPerDay: parseInt(e.target.value),
+                    }))
+                  }
+                  className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer slider"
+                />
+              </div>
+            </div>
+
+            {/* Giới tính */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-neutral-700 mb-3">
+                Giới tính
               </label>
+              <div className="flex gap-4">
+                <label className="flex items-center space-x-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="gender"
+                    value="male"
+                    checked={personalizationForm.gender === "male"}
+                    onChange={(e) =>
+                      setPersonalizationForm((prev) => ({
+                        ...prev,
+                        gender: e.target.value,
+                      }))
+                    }
+                    className="w-5 h-5 text-purple-500 border-neutral-300 focus:ring-purple-500"
+                  />
+                  <span className="font-medium text-neutral-900">Nam</span>
+                </label>
+                <label className="flex items-center space-x-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    name="gender"
+                    value="female"
+                    checked={personalizationForm.gender === "female"}
+                    onChange={(e) =>
+                      setPersonalizationForm((prev) => ({
+                        ...prev,
+                        gender: e.target.value,
+                      }))
+                    }
+                    className="w-5 h-5 text-purple-500 border-neutral-300 focus:ring-purple-500"
+                  />
+                  <span className="font-medium text-neutral-900">Nữ</span>
+                </label>
+              </div>
             </div>
           </div>
 
-          {/* Age */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-neutral-700 mb-3">
-              Tuổi: {personalizationForm.age} tuổi
-            </label>
-            <input
-              type="range"
-              min="16"
-              max="80"
-              value={personalizationForm.age}
-              onChange={(e) =>
-                setPersonalizationForm((prev) => ({
-                  ...prev,
-                  age: parseInt(e.target.value),
-                }))
-              }
-              className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer slider"
-            />
-          </div>
-
-          {/* Exercise Level */}
-          <div className="mb-6">
+          {/* Lượng tập thể dục trong tuần */}
+          <div className="mb-8">
             <h3 className="text-lg font-bold text-neutral-900 mb-4">
               Lượng tập thể dục trong tuần
             </h3>
@@ -231,63 +284,35 @@ export default function PersonalizationModal({
             </div>
           </div>
 
-          {/* BMI Display */}
-          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4 mb-6 border border-blue-200">
+          {/* BMR Display */}
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 mb-6 border border-green-200">
             <div className="text-center">
               <h3 className="text-lg font-bold text-neutral-900 mb-2">
-                Chỉ số BMI của bạn
+                Nhu cầu calo hàng ngày (BMR)
               </h3>
-              <div className="text-3xl font-bold text-blue-600 mb-1">{bmi}</div>
-              <div className={`text-lg font-medium ${bmiInfo.color}`}>
-                {bmiInfo.category}
+              <div className="text-3xl font-bold text-green-600 mb-1">{dailyCalories}</div>
+              <div className="text-sm text-neutral-600 mb-2">
+                calo/ngày
+              </div>
+              <div className={`text-sm font-medium ${calorieAssessment.color}`}>
+                {calorieAssessment.status}
+              </div>
+              <div className="text-xs text-neutral-500 mt-1">
+                {calorieAssessment.recommendation}
               </div>
             </div>
           </div>
 
-          {/* Preferences */}
-          <div className="mb-6">
+          {/* Mục tiêu cá nhân */}
+          <div className="mb-8">
             <h3 className="text-lg font-bold text-neutral-900 mb-4">
-              Sở thích ẩm thực
+              Mục tiêu cá nhân
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {preferences.map((preference) => (
-                <label
-                  key={preference.id}
-                  className="flex items-center space-x-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 cursor-pointer transition-colors"
-                >
-                  <input
-                    type="checkbox"
-                    checked={personalizationForm.preferences.includes(
-                      preference.id,
-                    )}
-                    onChange={(e) =>
-                      handlePreferenceChange(preference.id, e.target.checked)
-                    }
-                    className="w-5 h-5 text-purple-500 border-neutral-300 rounded focus:ring-purple-500"
-                  />
-                  <div>
-                    <div className="font-medium text-neutral-900">
-                      {preference.name}
-                    </div>
-                    <div className="text-sm text-neutral-600">
-                      {preference.description}
-                    </div>
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Goals */}
-          <div className="mb-6">
-            <h3 className="text-lg font-bold text-neutral-900 mb-4">
-              Mục tiêu của bạn
-            </h3>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {goals.map((goal) => (
                 <label
                   key={goal.id}
-                  className="flex items-center space-x-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 cursor-pointer transition-colors"
+                  className="flex items-center space-x-3 p-3 border border-neutral-200 rounded-lg hover:bg-neutral-50 cursor-pointer transition-colors"
                 >
                   <input
                     type="radio"
@@ -300,13 +325,13 @@ export default function PersonalizationModal({
                         goal: e.target.value,
                       }))
                     }
-                    className="w-5 h-5 text-purple-500 border-neutral-300 focus:ring-purple-500"
+                    className="w-4 h-4 text-purple-500 border-neutral-300 focus:ring-purple-500"
                   />
                   <div>
-                    <div className="font-medium text-neutral-900">
+                    <div className="font-medium text-neutral-900 text-sm">
                       {goal.name}
                     </div>
-                    <div className="text-sm text-neutral-600">
+                    <div className="text-xs text-neutral-600">
                       {goal.description}
                     </div>
                   </div>
@@ -316,17 +341,17 @@ export default function PersonalizationModal({
           </div>
 
           {/* Submit Button */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-6 border-t border-neutral-200">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-3 border border-neutral-300 text-neutral-700 rounded-xl hover:bg-neutral-50 transition-all font-medium"
+              className="flex-1 px-6 py-3 border border-neutral-300 text-neutral-700 rounded-xl hover:bg-neutral-50 transition-all font-medium"
             >
               Hủy
             </button>
             <button
               type="submit"
-              className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-3 rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all font-medium flex items-center justify-center gap-2"
+              className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all font-medium flex items-center justify-center gap-2"
             >
               <Save className="h-4 w-4" />
               Tạo Menu Cá Nhân

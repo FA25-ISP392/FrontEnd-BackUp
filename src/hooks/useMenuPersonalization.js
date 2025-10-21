@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useBMRCalculator } from './useBMRCalculator';
 
 /**
  * Hook cá nhân hóa menu dựa trên sở thích và mục tiêu
@@ -10,21 +11,14 @@ export function useMenuPersonalization(allDishes = []) {
     weight: 70,
     gender: 'male',
     age: 25,
+    mealsPerDay: 3,
     exerciseLevel: 'moderate',
-    preferences: [],
     goal: '',
   });
 
-  // Thuật toán lọc món ăn theo sở thích
+  // Thuật toán lọc món ăn theo mục tiêu
   const getPersonalizedDishes = useMemo(() => {
     return allDishes.filter((dish) => {
-      // Lọc theo sở thích ăn uống
-      if (personalizationForm.preferences.includes('spicy') && !dish.spicy) return false;
-      if (personalizationForm.preferences.includes('fatty') && !dish.fatty) return false;
-      if (personalizationForm.preferences.includes('sweet') && !dish.sweet) return false;
-      if (personalizationForm.preferences.includes('salty') && !dish.salty) return false;
-      if (personalizationForm.preferences.includes('sour') && !dish.sour) return false;
-
       // Lọc theo mục tiêu sức khỏe
       if (personalizationForm.goal === 'lose' && dish.calories > 300) return false;
       if (personalizationForm.goal === 'gain' && dish.calories < 200) return false;
@@ -34,29 +28,19 @@ export function useMenuPersonalization(allDishes = []) {
     });
   }, [allDishes, personalizationForm]);
 
-  // Thuật toán tính calories theo mức độ vận động
-  const calculateCaloriesByActivity = useMemo(() => {
-    const { weight, gender, age, exerciseLevel } = personalizationForm;
-    
-    // Công thức Harris-Benedict cải tiến
-    let bmr;
-    if (gender === 'male') {
-      bmr = 88.362 + (13.397 * weight) + (4.799 * personalizationForm.height) - (5.677 * age);
-    } else {
-      bmr = 447.593 + (9.247 * weight) + (3.098 * personalizationForm.height) - (4.330 * age);
-    }
-
-    // Hệ số hoạt động
-    const activityMultipliers = {
-      sedentary: 1.2,    // Ít vận động
-      light: 1.375,      // Vận động nhẹ
-      moderate: 1.55,    // Vận động vừa
-      active: 1.725,     // Vận động nhiều
-      very_active: 1.9   // Vận động rất nhiều
-    };
-
-    return Math.round(bmr * activityMultipliers[exerciseLevel]);
-  }, [personalizationForm]);
+  // Sử dụng useBMRCalculator để tính toán chính xác
+  const {
+    dailyCalories,
+    bmr,
+    mealCalories,
+    calorieAssessment
+  } = useBMRCalculator(
+    personalizationForm.height,
+    personalizationForm.weight,
+    personalizationForm.age,
+    personalizationForm.gender,
+    personalizationForm.exerciseLevel
+  );
 
   // Thuật toán gợi ý món ăn theo thời gian
   const getSuggestedMealsByTime = useMemo(() => {
@@ -86,19 +70,28 @@ export function useMenuPersonalization(allDishes = []) {
     }
   }, [getPersonalizedDishes]);
 
-  // Thuật toán tính điểm phù hợp cho từng món
+  // Thuật toán tính điểm phù hợp cho từng món dựa trên BMR
   const calculateDishScore = (dish) => {
     let score = 0;
     
-    // Điểm theo sở thích
-    personalizationForm.preferences.forEach(pref => {
-      if (dish[pref]) score += 20;
-    });
+    // Điểm theo mục tiêu và BMR
+    const targetCaloriesPerMeal = mealCalories;
+    const calorieDiff = Math.abs(dish.calories - targetCaloriesPerMeal);
     
-    // Điểm theo mục tiêu
-    if (personalizationForm.goal === 'lose' && dish.calories <= 300) score += 30;
-    if (personalizationForm.goal === 'gain' && dish.calories >= 400) score += 30;
-    if (personalizationForm.goal === 'maintain' && dish.calories >= 200 && dish.calories <= 350) score += 30;
+    // Điểm theo mục tiêu sức khỏe
+    if (personalizationForm.goal === 'lose') {
+      if (dish.calories <= targetCaloriesPerMeal * 0.8) score += 30;
+      else if (dish.calories <= targetCaloriesPerMeal) score += 20;
+      else score -= 10;
+    } else if (personalizationForm.goal === 'gain') {
+      if (dish.calories >= targetCaloriesPerMeal * 1.2) score += 30;
+      else if (dish.calories >= targetCaloriesPerMeal) score += 20;
+      else score -= 5;
+    } else if (personalizationForm.goal === 'maintain') {
+      if (calorieDiff <= targetCaloriesPerMeal * 0.2) score += 30;
+      else if (calorieDiff <= targetCaloriesPerMeal * 0.4) score += 20;
+      else score += 10;
+    }
     
     // Điểm theo giá trị dinh dưỡng
     if (dish.protein && dish.protein > 15) score += 10;
@@ -122,7 +115,13 @@ export function useMenuPersonalization(allDishes = []) {
     personalizationForm,
     setPersonalizationForm,
     personalizedDishes: getPersonalizedDishes,
-    estimatedCalories: calculateCaloriesByActivity,
+    // BMR Calculator values
+    dailyCalories,
+    bmr,
+    mealCalories,
+    calorieAssessment,
+    // Legacy compatibility
+    estimatedCalories: dailyCalories,
     suggestedMeals: getSuggestedMealsByTime,
     rankedDishes,
     calculateDishScore

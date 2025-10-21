@@ -9,6 +9,7 @@ import PaymentSidebar from "../components/Menu/PaymentSidebar";
 import DishOptionsModal from "../components/Menu/DishOptionsModal";
 import { mockMenuDishes } from "../lib/menuData";
 import { createOrder } from "../lib/apiOrder";
+import { useMenuPersonalization } from "../hooks";
 
 export default function Menu() {
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
@@ -19,9 +20,7 @@ export default function Menu() {
   const [activeMenuTab, setActiveMenuTab] = useState("all");
   const [selectedDish, setSelectedDish] = useState(null);
   const [cart, setCart] = useState([]);
-  const [personalizedMenu, setPersonalizedMenu] = useState([]);
   const [caloriesConsumed, setCaloriesConsumed] = useState(0);
-  const [estimatedCalories, setEstimatedCalories] = useState(2000);
 
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
@@ -105,16 +104,6 @@ export default function Menu() {
     })();
   }, [customerId, tableId]);
 
-  const [personalizationForm, setPersonalizationForm] = useState({
-    height: 170,
-    weight: 70,
-    gender: "male",
-    age: 25,
-    exerciseLevel: "moderate",
-    preferences: [],
-    goal: "",
-  });
-
   const hiddenNames = (() => {
     try {
       return JSON.parse(localStorage.getItem("hidden_dishes")) || [];
@@ -126,6 +115,17 @@ export default function Menu() {
   const filteredDishes = mockMenuDishes.filter(
     (dish) => dish.available && !hiddenNames.includes(dish.name)
   );
+
+  // Sử dụng useMenuPersonalization hook
+  const {
+    personalizationForm,
+    setPersonalizationForm,
+    personalizedDishes,
+    dailyCalories,
+    bmr,
+    mealCalories,
+    calorieAssessment
+  } = useMenuPersonalization(filteredDishes);
 
   const addToCart = (dish, notes = "") => {
     const existingItem = cart.find(
@@ -175,47 +175,12 @@ export default function Menu() {
     }
   };
 
-  const getPersonalizedDishes = (form) => {
-    return mockMenuDishes.filter((dish) => {
-      if (form.preferences.includes("spicy") && !dish.spicy) return false;
-      if (form.preferences.includes("fatty") && !dish.fatty) return false;
-      if (form.preferences.includes("sweet") && !dish.sweet) return false;
-
-      if (form.goal === "lose" && dish.calories > 300) return false;
-      if (form.goal === "gain" && dish.calories < 200) return false;
-
-      return dish.available;
-    });
-  };
-
   const handlePersonalizationSubmit = (form) => {
-    const personalized = getPersonalizedDishes(form);
-    setPersonalizedMenu(personalized);
     setIsPersonalizationOpen(false);
-
-    const bmi = form.weight / Math.pow(form.height / 100, 2);
-    if (bmi < 18.5) {
-      setEstimatedCalories(2200);
-    } else if (bmi < 25) {
-      setEstimatedCalories(2000);
-    } else if (bmi < 30) {
-      setEstimatedCalories(1800);
-    } else {
-      setEstimatedCalories(1600);
-    }
   };
 
   const handleGoalChange = (goalId, checked) => {
-    if (checked) {
-      const filtered = personalizedMenu.filter((dish) => {
-        if (goalId === "lose" && dish.calories > 300) return false;
-        if (goalId === "gain" && dish.calories < 200) return false;
-        return true;
-      });
-      setPersonalizedMenu(filtered);
-    } else {
-      setPersonalizedMenu(getPersonalizedDishes(personalizationForm));
-    }
+    // Logic này sẽ được xử lý bởi useMenuPersonalization hook
   };
 
   const handleOrderFood = () => {
@@ -275,13 +240,13 @@ export default function Menu() {
         activeMenuTab={activeMenuTab}
         setActiveMenuTab={setActiveMenuTab}
         filteredDishes={filteredDishes}
-        personalizedMenu={personalizedMenu}
+        personalizedMenu={personalizedDishes}
         onDishSelect={(dish) => {
           setSelectedDish(dish);
           setIsDishOptionsOpen(true);
         }}
         caloriesConsumed={caloriesConsumed}
-        estimatedCalories={estimatedCalories}
+        estimatedCalories={dailyCalories}
         onGoalChange={handleGoalChange}
       />
 

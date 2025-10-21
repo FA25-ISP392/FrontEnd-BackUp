@@ -1,6 +1,6 @@
 export * from "./common";
 
-export * from "./useBMICalculator";
+export * from "./useBMRCalculator";
 export * from "./useMenuPersonalization";
 export * from "./useCartCalculator";
 export * from "./useStockManager";
