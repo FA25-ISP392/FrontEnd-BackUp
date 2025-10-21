@@ -21,7 +21,7 @@ function isPublicEndpoint(url = "", method = "get") {
 
   const isVerifyEmail = /\/auth\/verify-email(\/|\?|$)/i.test(u) && m === "get";
 
-  return isOauthPublic || isPublicCustomerCreate;
+  return isOauthPublic || isPublicCustomerCreate || isVerifyEmail;
 }
 
 function unwrapResponse(res) {

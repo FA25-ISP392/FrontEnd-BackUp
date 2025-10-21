@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, Table } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import MenuHeader from "../components/Menu/MenuHeader";
 import MenuContent from "../components/Menu/MenuContent";
 import MenuFooter from "../components/Menu/MenuFooter";
@@ -9,6 +9,11 @@ import PaymentSidebar from "../components/Menu/PaymentSidebar";
 import DishOptionsModal from "../components/Menu/DishOptionsModal";
 import { mockMenuDishes } from "../lib/menuData";
 import { createOrder } from "../lib/apiOrder";
+import { useMenuPersonalization } from "../hooks";
+import {
+  updateCustomerPersonalization,
+  getCustomerDetail,
+} from "../lib/apiCustomer";
 
 export default function Menu() {
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
@@ -19,9 +24,10 @@ export default function Menu() {
   const [activeMenuTab, setActiveMenuTab] = useState("all");
   const [selectedDish, setSelectedDish] = useState(null);
   const [cart, setCart] = useState([]);
-  const [personalizedMenu, setPersonalizedMenu] = useState([]);
   const [caloriesConsumed, setCaloriesConsumed] = useState(0);
-  const [estimatedCalories, setEstimatedCalories] = useState(2000);
+
+  // Cờ đã cá nhân hoá (để ẩn/hiện thanh calorie)
+  const [isPersonalized, setIsPersonalized] = useState(false);
 
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
@@ -32,6 +38,20 @@ export default function Menu() {
     () => sessionStorage.getItem("orderId") || null
   );
 
+  // Base TDEE (đã chia theo buổi nếu có) – trước khi áp mục tiêu
+  const [baseCalories, setBaseCalories] = useState(null);
+  // Calorie hiện thị ngoài (sau khi áp mục tiêu)
+  const [estimatedCalories, setEstimatedCalories] = useState(null);
+
+  // === helpers ===
+  const PERSONAL_KEY = (cid) => `personalization:${cid}`;
+  const applyGoal = (cals, goal) => {
+    if (typeof cals !== "number" || !isFinite(cals)) return null;
+    if (goal === "lose") return Math.max(0, cals - 500);
+    if (goal === "gain") return cals + 500;
+    return cals; // maintain hoặc rỗng
+  };
+
   const readAuthUser = () => {
     try {
       const raw = localStorage.getItem("user");
@@ -40,7 +60,6 @@ export default function Menu() {
       return null;
     }
   };
-
   const getDisplayName = (u) =>
     String(u?.fullName || u?.name || u?.username || "").trim();
 
@@ -81,7 +100,6 @@ export default function Menu() {
     if (!ready) return;
 
     const existed = sessionStorage.getItem("orderId");
-
     if (existed) {
       setOrderId(existed);
       return;
@@ -105,16 +123,7 @@ export default function Menu() {
     })();
   }, [customerId, tableId]);
 
-  const [personalizationForm, setPersonalizationForm] = useState({
-    height: 170,
-    weight: 70,
-    gender: "male",
-    age: 25,
-    exerciseLevel: "moderate",
-    preferences: [],
-    goal: "",
-  });
-
+  // Dishes
   const hiddenNames = (() => {
     try {
       return JSON.parse(localStorage.getItem("hidden_dishes")) || [];
@@ -122,11 +131,64 @@ export default function Menu() {
       return [];
     }
   })();
-
   const filteredDishes = mockMenuDishes.filter(
     (dish) => dish.available && !hiddenNames.includes(dish.name)
   );
 
+  // Personalization hook (chỉ để lọc món + giữ form)
+  const { personalizationForm, setPersonalizationForm, personalizedDishes } =
+    useMenuPersonalization(filteredDishes);
+
+  // Prefill form từ cache/BE + khôi phục thanh calorie nếu đã từng tạo
+  useEffect(() => {
+    if (!customerId) return;
+
+    const cachedRaw = localStorage.getItem(PERSONAL_KEY(customerId));
+    if (cachedRaw) {
+      try {
+        const cached = JSON.parse(cachedRaw);
+        if (cached && typeof cached === "object") {
+          const data = cached.data || {};
+          setPersonalizationForm((prev) => ({ ...prev, ...data }));
+
+          if (typeof cached.perWorkout === "number") {
+            setBaseCalories(cached.perWorkout);
+            setEstimatedCalories(applyGoal(cached.perWorkout, data.goal));
+            setIsPersonalized(true);
+          } else {
+            // đã có form nhưng chưa tính perWorkout (legacy)
+            setIsPersonalized(true);
+          }
+        }
+      } catch {}
+      return;
+    }
+
+    // Không có cache → gọi BE để prefill (không bật hiển thị)
+    (async () => {
+      try {
+        const cus = await getCustomerDetail(customerId);
+        const toForm = {
+          height: Number(cus.height ?? 170),
+          weight: Number(cus.weight ?? 70),
+          gender: cus.sex === true ? "male" : "female",
+          age: 25,
+          mealsPerDay: Number(cus.portion ?? 3),
+          exerciseLevel: "moderate",
+          goal: "",
+        };
+        setPersonalizationForm((prev) => ({ ...prev, ...toForm }));
+        localStorage.setItem(
+          PERSONAL_KEY(customerId),
+          JSON.stringify({ data: toForm, updatedAt: Date.now() })
+        );
+      } catch (e) {
+        console.warn("Không lấy được personalization từ BE:", e?.message || e);
+      }
+    })();
+  }, [customerId]);
+
+  // === Cart ops ===
   const addToCart = (dish, notes = "") => {
     const existingItem = cart.find(
       (item) => item.id === dish.id && item.notes === notes
@@ -150,85 +212,122 @@ export default function Menu() {
       removeFromCart(itemId);
       return;
     }
-
-    const item = cart.find((item) => item.id === itemId);
+    const item = cart.find((it) => it.id === itemId);
     if (item) {
-      const quantityDiff = newQuantity - item.quantity;
-      setCart((prevCart) =>
-        prevCart.map((item) =>
-          item.id === itemId ? { ...item, quantity: newQuantity } : item
+      const diff = newQuantity - item.quantity;
+      setCart((prev) =>
+        prev.map((it) =>
+          it.id === itemId ? { ...it, quantity: newQuantity } : it
         )
       );
       setCaloriesConsumed(
-        (prev) => prev + quantityDiff * (item.totalCalories || item.calories)
+        (prev) => prev + diff * (item.totalCalories || item.calories)
       );
     }
   };
 
   const removeFromCart = (itemId) => {
-    const item = cart.find((item) => item.id === itemId);
+    const item = cart.find((it) => it.id === itemId);
     if (item) {
-      setCart((prevCart) => prevCart.filter((item) => item.id !== itemId));
+      setCart((prev) => prev.filter((it) => it.id !== itemId));
       setCaloriesConsumed(
         (prev) => prev - (item.totalCalories || item.calories) * item.quantity
       );
     }
   };
 
-  const getPersonalizedDishes = (form) => {
-    return mockMenuDishes.filter((dish) => {
-      if (form.preferences.includes("spicy") && !dish.spicy) return false;
-      if (form.preferences.includes("fatty") && !dish.fatty) return false;
-      if (form.preferences.includes("sweet") && !dish.sweet) return false;
+  // Khi user bấm “Tạo Menu Cá Nhân”
+  const handlePersonalizationSubmit = async (form) => {
+    if (!customerId) {
+      alert("Không tìm thấy tài khoản khách hàng.");
+      return;
+    }
+    try {
+      await updateCustomerPersonalization(customerId, form);
 
-      if (form.goal === "lose" && dish.calories > 300) return false;
-      if (form.goal === "gain" && dish.calories < 200) return false;
+      // BMR gốc
+      const bmr =
+        form.gender === "male"
+          ? 10 * form.weight + 6.25 * form.height - 5 * form.age + 5
+          : 10 * form.weight + 6.25 * form.height - 5 * form.age - 161;
 
-      return dish.available;
-    });
-  };
+      // Hệ số vận động -> TDEE
+      const multiplier =
+        {
+          sedentary: 1.2,
+          light: 1.375,
+          moderate: 1.55,
+          active: 1.725,
+          very_active: 1.9,
+        }[form.exerciseLevel] || 1.2;
+      const tdee = Math.round(bmr * multiplier);
 
-  const handlePersonalizationSubmit = (form) => {
-    const personalized = getPersonalizedDishes(form);
-    setPersonalizedMenu(personalized);
-    setIsPersonalizationOpen(false);
+      // Số buổi/tuần đại diện
+      const sessionsMap = {
+        sedentary: 0,
+        light: 2,
+        moderate: 4,
+        active: 6,
+        very_active: 7,
+      };
+      const sessions = sessionsMap[form.exerciseLevel] ?? 0;
 
-    const bmi = form.weight / Math.pow(form.height / 100, 2);
-    if (bmi < 18.5) {
-      setEstimatedCalories(2200);
-    } else if (bmi < 25) {
-      setEstimatedCalories(2000);
-    } else if (bmi < 30) {
-      setEstimatedCalories(1800);
-    } else {
-      setEstimatedCalories(1600);
+      // Base để hiển thị ngoài (chia theo buổi nếu có)
+      const perWorkout = sessions > 0 ? Math.round(tdee / sessions) : tdee;
+
+      // Áp mục tiêu hiện tại (nếu người dùng đã tick trong modal)
+      const goal = form.goal || personalizationForm.goal || "";
+      const finalCals = applyGoal(perWorkout, goal);
+
+      setBaseCalories(perWorkout);
+      setEstimatedCalories(finalCals);
+      setIsPersonalized(true);
+
+      // cache
+      localStorage.setItem(
+        PERSONAL_KEY(customerId),
+        JSON.stringify({
+          data: { ...form, goal },
+          updatedAt: Date.now(),
+          perWorkout,
+        })
+      );
+
+      setIsPersonalizationOpen(false);
+      alert("Đã lưu thông tin cá nhân hoá!");
+    } catch (err) {
+      console.error("Cập nhật cá nhân hoá thất bại:", err);
+      alert(`Lưu thất bại: ${err?.message || "Vui lòng thử lại"}`);
     }
   };
 
-  const handleGoalChange = (goalId, checked) => {
-    if (checked) {
-      const filtered = personalizedMenu.filter((dish) => {
-        if (goalId === "lose" && dish.calories > 300) return false;
-        if (goalId === "gain" && dish.calories < 200) return false;
-        return true;
-      });
-      setPersonalizedMenu(filtered);
-    } else {
-      setPersonalizedMenu(getPersonalizedDishes(personalizationForm));
+  // Đổi mục tiêu từ UI bên ngoài
+  const handleGoalChange = (goalId) => {
+    setPersonalizationForm((prev) => ({ ...prev, goal: goalId }));
+    const base = baseCalories ?? estimatedCalories; // fallback
+    setEstimatedCalories(applyGoal(base, goalId));
+
+    if (customerId) {
+      try {
+        const cachedRaw = localStorage.getItem(PERSONAL_KEY(customerId));
+        const cached = cachedRaw ? JSON.parse(cachedRaw) : {};
+        localStorage.setItem(
+          PERSONAL_KEY(customerId),
+          JSON.stringify({
+            ...cached,
+            data: { ...(cached?.data || {}), goal: goalId },
+            perWorkout: cached?.perWorkout ?? baseCalories ?? null,
+            updatedAt: Date.now(),
+          })
+        );
+      } catch {}
     }
   };
 
-  const handleOrderFood = () => {
-    setIsCartOpen(false);
-    // Here you would typically send the order to the kitchen
-    // console.log("Order sent to kitchen:", cart);
-  };
-
+  const handleOrderFood = () => setIsCartOpen(false);
   const handlePayment = () => {
     setIsPaymentOpen(false);
     setIsCallStaffOpen(true);
-    // Here you would typically process the payment
-    // console.log("Payment processed:", { cart, paymentMethod });
   };
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -250,6 +349,7 @@ export default function Menu() {
         tableId={tableId}
         customerId={customerId}
       />
+
       {orderId && tableId && customerId ? (
         <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
           <div className="max-w-7xl mx-auto flex items-center justify-center space-x-6 text-sm">
@@ -275,14 +375,16 @@ export default function Menu() {
         activeMenuTab={activeMenuTab}
         setActiveMenuTab={setActiveMenuTab}
         filteredDishes={filteredDishes}
-        personalizedMenu={personalizedMenu}
+        personalizedMenu={personalizedDishes}
         onDishSelect={(dish) => {
           setSelectedDish(dish);
           setIsDishOptionsOpen(true);
         }}
         caloriesConsumed={caloriesConsumed}
-        estimatedCalories={estimatedCalories}
-        onGoalChange={handleGoalChange}
+        estimatedCalories={estimatedCalories} // null -> ẩn thanh
+        onGoalChange={handleGoalChange} // cập nhật mục tiêu +/-500
+        isPersonalized={isPersonalized} // điều khiển ẩn/hiện thanh
+        currentGoal={personalizationForm.goal}
       />
 
       <MenuFooter />

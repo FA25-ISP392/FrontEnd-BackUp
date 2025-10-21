@@ -1,36 +1,19 @@
 import { useState, useMemo } from "react";
+import { useBMRCalculator } from "./useBMRCalculator";
 
-/**
- * Hook cá nhân hóa menu dựa trên sở thích và mục tiêu
- * Trích xuất từ Menu.jsx và PersonalizationModal.jsx
- */
 export function useMenuPersonalization(allDishes = []) {
   const [personalizationForm, setPersonalizationForm] = useState({
     height: 170,
     weight: 70,
     gender: "male",
     age: 25,
+    mealsPerDay: 3,
     exerciseLevel: "moderate",
-    preferences: [],
     goal: "",
   });
 
-  // Thuật toán lọc món ăn theo sở thích
   const getPersonalizedDishes = useMemo(() => {
     return allDishes.filter((dish) => {
-      // Lọc theo sở thích ăn uống
-      if (personalizationForm.preferences.includes("spicy") && !dish.spicy)
-        return false;
-      if (personalizationForm.preferences.includes("fatty") && !dish.fatty)
-        return false;
-      if (personalizationForm.preferences.includes("sweet") && !dish.sweet)
-        return false;
-      if (personalizationForm.preferences.includes("salty") && !dish.salty)
-        return false;
-      if (personalizationForm.preferences.includes("sour") && !dish.sour)
-        return false;
-
-      // Lọc theo mục tiêu sức khỏe
       if (personalizationForm.goal === "lose" && dish.calories > 300)
         return false;
       if (personalizationForm.goal === "gain" && dish.calories < 200)
@@ -45,50 +28,24 @@ export function useMenuPersonalization(allDishes = []) {
     });
   }, [allDishes, personalizationForm]);
 
-  // Thuật toán tính calories theo mức độ vận động
-  const calculateCaloriesByActivity = useMemo(() => {
-    const { weight, gender, age, exerciseLevel } = personalizationForm;
+  const { dailyCalories, bmr, mealCalories, calorieAssessment } =
+    useBMRCalculator(
+      personalizationForm.height,
+      personalizationForm.weight,
+      personalizationForm.age,
+      personalizationForm.gender,
+      personalizationForm.exerciseLevel
+    );
 
-    // Công thức Harris-Benedict cải tiến
-    let bmr;
-    if (gender === "male") {
-      bmr =
-        88.362 +
-        13.397 * weight +
-        4.799 * personalizationForm.height -
-        5.677 * age;
-    } else {
-      bmr =
-        447.593 +
-        9.247 * weight +
-        3.098 * personalizationForm.height -
-        4.33 * age;
-    }
-
-    // Hệ số hoạt động
-    const activityMultipliers = {
-      sedentary: 1.2, // Ít vận động
-      light: 1.375, // Vận động nhẹ
-      moderate: 1.55, // Vận động vừa
-      active: 1.725, // Vận động nhiều
-      very_active: 1.9, // Vận động rất nhiều
-    };
-
-    return Math.round(bmr * activityMultipliers[exerciseLevel]);
-  }, [personalizationForm]);
-
-  // Thuật toán gợi ý món ăn theo thời gian
   const getSuggestedMealsByTime = useMemo(() => {
     const currentHour = new Date().getHours();
     const personalizedDishes = getPersonalizedDishes;
 
     if (currentHour >= 6 && currentHour < 11) {
-      // Sáng: Ưu tiên món nhẹ, ít calories
       return personalizedDishes
         .filter((dish) => dish.category === "breakfast" || dish.calories < 250)
         .slice(0, 5);
     } else if (currentHour >= 11 && currentHour < 14) {
-      // Trưa: Món chính, calories trung bình
       return personalizedDishes
         .filter(
           (dish) =>
@@ -97,14 +54,12 @@ export function useMenuPersonalization(allDishes = []) {
         )
         .slice(0, 8);
     } else if (currentHour >= 14 && currentHour < 17) {
-      // Chiều: Đồ uống, món nhẹ
       return personalizedDishes
         .filter(
           (dish) => dish.category === "drink" || dish.category === "snack"
         )
         .slice(0, 4);
     } else {
-      // Tối: Món chính nhưng ít calories hơn
       return personalizedDishes
         .filter(
           (dish) => dish.category === "main" || dish.category === "dinner"
@@ -113,26 +68,25 @@ export function useMenuPersonalization(allDishes = []) {
     }
   }, [getPersonalizedDishes]);
 
-  // Thuật toán tính điểm phù hợp cho từng món
   const calculateDishScore = (dish) => {
     let score = 0;
 
-    // Điểm theo sở thích
-    personalizationForm.preferences.forEach((pref) => {
-      if (dish[pref]) score += 20;
-    });
+    const targetCaloriesPerMeal = mealCalories;
+    const calorieDiff = Math.abs(dish.calories - targetCaloriesPerMeal);
 
-    // Điểm theo mục tiêu
-    if (personalizationForm.goal === "lose" && dish.calories <= 300)
-      score += 30;
-    if (personalizationForm.goal === "gain" && dish.calories >= 400)
-      score += 30;
-    if (
-      personalizationForm.goal === "maintain" &&
-      dish.calories >= 200 &&
-      dish.calories <= 350
-    )
-      score += 30;
+    if (personalizationForm.goal === "lose") {
+      if (dish.calories <= targetCaloriesPerMeal * 0.8) score += 30;
+      else if (dish.calories <= targetCaloriesPerMeal) score += 20;
+      else score -= 10;
+    } else if (personalizationForm.goal === "gain") {
+      if (dish.calories >= targetCaloriesPerMeal * 1.2) score += 30;
+      else if (dish.calories >= targetCaloriesPerMeal) score += 20;
+      else score -= 5;
+    } else if (personalizationForm.goal === "maintain") {
+      if (calorieDiff <= targetCaloriesPerMeal * 0.2) score += 30;
+      else if (calorieDiff <= targetCaloriesPerMeal * 0.4) score += 20;
+      else score += 10;
+    }
 
     // Điểm theo giá trị dinh dưỡng
     if (dish.protein && dish.protein > 15) score += 10;
@@ -142,7 +96,6 @@ export function useMenuPersonalization(allDishes = []) {
     return score;
   };
 
-  // Sắp xếp món ăn theo điểm phù hợp
   const rankedDishes = useMemo(() => {
     return getPersonalizedDishes
       .map((dish) => ({
@@ -156,7 +109,11 @@ export function useMenuPersonalization(allDishes = []) {
     personalizationForm,
     setPersonalizationForm,
     personalizedDishes: getPersonalizedDishes,
-    estimatedCalories: calculateCaloriesByActivity,
+    dailyCalories,
+    bmr,
+    mealCalories,
+    calorieAssessment,
+    estimatedCalories: dailyCalories,
     suggestedMeals: getSuggestedMealsByTime,
     rankedDishes,
     calculateDishScore,
