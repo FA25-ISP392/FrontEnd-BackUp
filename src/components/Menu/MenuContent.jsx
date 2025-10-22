@@ -28,7 +28,7 @@ export default function MenuContent({
   const percent = canShowCalorie
     ? Math.min(
         100,
-        Math.max(0, Math.round((caloriesConsumed / estimatedCalories) * 100)),
+        Math.max(0, Math.round((caloriesConsumed / estimatedCalories) * 100))
       )
     : 0;
 
@@ -145,7 +145,7 @@ export default function MenuContent({
                 {(activeMenuTab === "all" ? filteredDishes : personalizedMenu)
                   .filter(
                     (d) =>
-                      d.category?.toLowerCase() === category.id?.toLowerCase(),
+                      d.category?.toLowerCase() === category.id?.toLowerCase()
                   )
                   .map((dish) => (
                     <div

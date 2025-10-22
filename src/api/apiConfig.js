@@ -79,9 +79,6 @@ apiConfig.interceptors.request.use((config) => {
   const url = config.url || "";
   const method = config.method || "get";
 
-  // Compute and log the full request URL (base + path) for easier debugging in dev.
-  // Use simple join rules similar to axios: trim trailing slash from base and leading
-  // slash from url, then join with a single '/'. This preserves a relative base like '/api'.
   try {
     let fullUrl = String(url || "");
     if (!/^https?:\/\//i.test(fullUrl)) {
@@ -97,7 +94,6 @@ apiConfig.interceptors.request.use((config) => {
       console.info("[API REQUEST]", (method || "").toUpperCase(), fullUrl);
     }
   } catch (e) {
-    // don't break requests if logging fails
     console.debug("[API REQUEST] unable to compute full url", e);
   }
 
@@ -111,13 +107,9 @@ apiConfig.interceptors.request.use((config) => {
 
 apiConfig.interceptors.response.use(
   (res) => unwrapResponse(res),
-  (error) => Promise.reject(wrapError(error)),
+  (error) => Promise.reject(wrapError(error))
 );
 
-// Export resolved backend information so other modules can know the original backend URL.
-// Note: in Vite dev mode requests go through the proxy (e.g. '/api'), so the browser
-// will see proxied paths. Use these exported values to know the real target used
-// in production or the configured fallback target.
 export const REAL_BACKEND_BASE = `${BASE_API}${API_PREFIX}`;
 export { PROXY_PREFIX };
 export function getOriginalBackendUrl() {

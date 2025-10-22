@@ -12,21 +12,18 @@ export default function CartSidebar({
 
   const totalAmount = cart.reduce(
     (sum, item) => sum + (item.totalPrice || item.price) * item.quantity,
-    0,
+    0
   );
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
         onClick={onClose}
       />
 
-      {/* Sidebar */}
       <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out">
         <div className="flex flex-col h-full">
-          {/* Header */}
           <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-6 text-white">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -47,7 +44,6 @@ export default function CartSidebar({
             </div>
           </div>
 
-          {/* Cart Items */}
           <div className="flex-1 overflow-y-auto p-6">
             {cart.length === 0 ? (
               <div className="text-center py-12">
@@ -74,16 +70,23 @@ export default function CartSidebar({
                         <p className="text-sm text-neutral-600">
                           ${item.totalPrice || item.price}
                         </p>
-                        {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
-                          <div className="text-xs text-neutral-500 mt-1">
-                            {Object.values(item.selectedOptions).map((option, index) => (
-                              <span key={index}>
-                                {option.name}
-                                {index < Object.values(item.selectedOptions).length - 1 ? ", " : ""}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                        {item.selectedOptions &&
+                          Object.keys(item.selectedOptions).length > 0 && (
+                            <div className="text-xs text-neutral-500 mt-1">
+                              {Object.values(item.selectedOptions).map(
+                                (option, index) => (
+                                  <span key={index}>
+                                    {option.name}
+                                    {index <
+                                    Object.values(item.selectedOptions).length -
+                                      1
+                                      ? ", "
+                                      : ""}
+                                  </span>
+                                )
+                              )}
+                            </div>
+                          )}
                         {item.notes && (
                           <p className="text-xs text-neutral-500 mt-1">
                             Ghi chú: {item.notes}
@@ -121,7 +124,10 @@ export default function CartSidebar({
                         </button>
                       </div>
                       <span className="font-bold text-blue-600">
-                        ${((item.totalPrice || item.price) * item.quantity).toFixed(2)}
+                        $
+                        {(
+                          (item.totalPrice || item.price) * item.quantity
+                        ).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -130,7 +136,6 @@ export default function CartSidebar({
             )}
           </div>
 
-          {/* Footer */}
           {cart.length > 0 && (
             <div className="border-t border-neutral-200 p-6">
               <div className="flex items-center justify-between mb-4">
