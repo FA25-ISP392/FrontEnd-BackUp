@@ -7,11 +7,13 @@ export default function DishOptionsModal({
   dish,
   onAddToCart,
 }) {
+  // 🧩 State
   const [selectedToppings, setSelectedToppings] = useState([]);
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
   const [imageError, setImageError] = useState(false);
 
+  // Reset khi mở món mới
   useEffect(() => {
     if (dish) {
       setSelectedToppings([]);
@@ -23,47 +25,26 @@ export default function DishOptionsModal({
 
   if (!isOpen || !dish) return null;
 
-  // ✅ Tự động xác định URL ảnh
-  const getDishImageUrl = (picture) => {
-    if (!picture) return null;
-
-    // Nếu là Cloudinary URL sẵn
-    if (picture.startsWith("http") || picture.startsWith("https"))
-      return picture;
-
-    // Nếu BE trả tên file (vd: "pizza_bo.jpg")
-    return `https://api-monngon88.purintech.id.vn/isp392/uploads/${picture}`;
-  };
-
-  const imageUrl = getDishImageUrl(dish.picture);
-
-  // ✅ Dữ liệu cơ bản
+  // 🧩 Dữ liệu món
+  const imageUrl = dish.picture;
   const basePrice = dish.price ?? 0;
   const baseCalo = dish.calo ?? dish.calories ?? 0;
   const toppings = dish.optionalToppings ?? [];
 
-  const selectedPrice = selectedToppings.reduce(
-    (sum, t) => sum + (t.price ?? 0),
+  // 🧮 Tính tổng giá & calo theo topping + số lượng
+  const toppingsTotalPrice = selectedToppings.reduce(
+    (sum, t) => sum + (t.price || 0),
     0,
   );
-  const selectedCalo = selectedToppings.reduce(
-    (sum, t) => sum + (t.calories ?? 0),
+  const toppingsTotalCalo = selectedToppings.reduce(
+    (sum, t) => sum + (t.calories || t.calo || 0),
     0,
   );
 
-  const totalPrice = (basePrice + selectedPrice) * quantity;
-  const totalCalories = (baseCalo + selectedCalo) * quantity;
+  const totalPrice = (basePrice + toppingsTotalPrice) * quantity;
+  const totalCalories = (baseCalo + toppingsTotalCalo) * quantity;
 
-  // ✅ Toggle topping
-  const toggleTopping = (topping) => {
-    setSelectedToppings((prev) =>
-      prev.find((t) => t.toppingId === topping.toppingId)
-        ? prev.filter((t) => t.toppingId !== topping.toppingId)
-        : [...prev, topping],
-    );
-  };
-
-  // ✅ Thêm vào giỏ hàng
+  // 🟢 Xử lý thêm vào giỏ
   const handleAddToCart = () => {
     const dishWithOptions = {
       ...dish,
@@ -83,7 +64,7 @@ export default function DishOptionsModal({
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white flex justify-between items-start">
           <div>
-            <h2 className="text-2xl font-bold">{dish.dishName}</h2>
+            <h2 className="text-2xl font-bold">{dish.dishName || dish.name}</h2>
             <p className="text-orange-100">Tùy chỉnh món ăn của bạn</p>
           </div>
           <button
@@ -94,14 +75,14 @@ export default function DishOptionsModal({
           </button>
         </div>
 
-        {/* Nội dung chính */}
+        {/* Nội dung */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
           {/* Thông tin món */}
           <div className="mb-6">
             {imageUrl && !imageError ? (
               <img
                 src={imageUrl}
-                alt={dish.dishName}
+                alt={dish.name}
                 onError={() => setImageError(true)}
                 className="w-full h-56 object-cover rounded-xl mb-4"
               />
@@ -125,39 +106,49 @@ export default function DishOptionsModal({
             </div>
           </div>
 
-          {/* Topping */}
+          {/* 🧀 Topping thêm */}
           {toppings.length > 0 && (
             <div className="mb-6">
               <h3 className="text-lg font-bold text-neutral-900 mb-3">
                 Topping thêm
               </h3>
               <div className="space-y-2">
-                {toppings.map((topping) => {
-                  const isChecked = selectedToppings.some(
-                    (t) => t.toppingId === topping.toppingId,
+                {toppings.map((t) => {
+                  const checked = selectedToppings.some(
+                    (x) => x.toppingId === t.toppingId,
                   );
                   return (
                     <label
-                      key={topping.toppingId}
+                      key={t.toppingId}
                       className={`flex justify-between items-center p-3 border rounded-xl cursor-pointer transition ${
-                        isChecked
+                        checked
                           ? "border-orange-400 bg-orange-50"
                           : "border-neutral-200"
                       }`}
-                      onClick={() => toggleTopping(topping)}
+                      onClick={() => {
+                        setSelectedToppings((prev) => {
+                          if (!Array.isArray(prev)) prev = [];
+                          const exists = prev.some(
+                            (x) => x.toppingId === t.toppingId,
+                          );
+                          return exists
+                            ? prev.filter((x) => x.toppingId !== t.toppingId)
+                            : [...prev, t];
+                        });
+                      }}
                     >
                       <div className="flex items-center gap-3">
                         <input
                           type="checkbox"
-                          checked={isChecked}
-                          onChange={() => toggleTopping(topping)}
+                          checked={checked}
+                          readOnly
                           className="w-5 h-5 accent-orange-500"
                         />
-                        <span className="font-medium">{topping.name}</span>
+                        <span className="font-medium">{t.name}</span>
                       </div>
                       <div className="text-sm text-neutral-600">
-                        +{topping.price?.toLocaleString("vi-VN")}₫ •{" "}
-                        {topping.calories ?? 0} cal
+                        +{t.price?.toLocaleString("vi-VN")}₫ •{" "}
+                        {t.calories ?? t.calo ?? 0} cal
                       </div>
                     </label>
                   );
@@ -212,7 +203,7 @@ export default function DishOptionsModal({
                   Tổng cộng
                 </div>
                 <div className="text-sm text-neutral-600">
-                  {quantity} x {dish.dishName}
+                  {quantity} x {dish.name}
                 </div>
               </div>
               <div className="text-right">

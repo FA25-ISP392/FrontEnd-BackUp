@@ -14,6 +14,7 @@ import {
   updateCustomerPersonalization,
   getCustomerDetail,
 } from "../lib/apiCustomer";
+import { getToppingsByDishId } from "../lib/apiDishTopping"; // 🟣 thêm dòng này
 
 export default function Menu() {
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
@@ -303,7 +304,14 @@ export default function Menu() {
         personalizedMenu={personalizedDishes}
         onDishSelect={async (dish) => {
           try {
-            const fullDish = await getDish(dish.id);
+            let fullDish = await getDish(dish.id);
+
+            // 🟣 Nếu BE chưa trả optionalToppings, gọi thêm bảng dish-topping
+            if (!fullDish.optionalToppings?.length) {
+              const toppings = await getToppingsByDishId(dish.id);
+              fullDish = { ...fullDish, optionalToppings: toppings };
+            }
+
             setSelectedDish(fullDish);
             setIsDishOptionsOpen(true);
           } catch (err) {
