@@ -4,9 +4,9 @@ import {
   Package,
   FileText,
   Table,
-  Settings,
   Salad,
   ClipboardList,
+  CheckCircle,
 } from "lucide-react";
 
 const sidebarItems = [
@@ -15,7 +15,8 @@ const sidebarItems = [
   { id: "accounts", label: "Quản Lý Đặt Bàn", icon: Users },
   { id: "dishes", label: "Món Ăn", icon: Package },
   { id: "toppings", label: "Topping", icon: Salad },
-  { id: "dailyPlan", label: "Kế Hoạch Trong Ngày", icon: ClipboardList }, // 🆕
+  { id: "dailyPlan", label: "Kế Hoạch Trong Ngày", icon: ClipboardList },
+  { id: "dailyDishes", label: "Món Trong Ngày", icon: CheckCircle }, // 🆕 dùng id + label chuẩn
   { id: "invoices", label: "Hóa Đơn", icon: FileText },
 ];
 

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { X, Plus, Minus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Plus, Minus, ImageOff } from "lucide-react";
 
 export default function DishOptionsModal({
   isOpen,
@@ -7,90 +7,52 @@ export default function DishOptionsModal({
   dish,
   onAddToCart,
 }) {
-  const [selectedOptions, setSelectedOptions] = useState({});
+  // 🧩 State
+  const [selectedToppings, setSelectedToppings] = useState([]);
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
+  const [imageError, setImageError] = useState(false);
+
+  // Reset khi mở món mới
+  useEffect(() => {
+    if (dish) {
+      setSelectedToppings([]);
+      setQuantity(1);
+      setNotes("");
+      setImageError(false);
+    }
+  }, [dish]);
 
   if (!isOpen || !dish) return null;
 
-  // Mock options for each dish
-  const dishOptions = {
-    "Caesar Salad": [
-      { id: "size", name: "Kích thước", options: [
-        { id: "small", name: "Nhỏ", price: 0, calories: 0 },
-        { id: "medium", name: "Vừa", price: 2, calories: 50 },
-        { id: "large", name: "Lớn", price: 4, calories: 100 }
-      ]},
-      { id: "dressing", name: "Nước sốt", options: [
-        { id: "caesar", name: "Caesar", price: 0, calories: 0 },
-        { id: "ranch", name: "Ranch", price: 1, calories: 30 },
-        { id: "italian", name: "Italian", price: 1, calories: 25 }
-      ]},
-      { id: "extra", name: "Thêm", options: [
-        { id: "chicken", name: "Gà nướng", price: 5, calories: 150 },
-        { id: "bacon", name: "Thịt xông khói", price: 3, calories: 80 },
-        { id: "cheese", name: "Phô mai", price: 2, calories: 60 }
-      ]}
-    ],
-    "Grilled Chicken": [
-      { id: "side", name: "Món phụ", options: [
-        { id: "rice", name: "Cơm", price: 2, calories: 200 },
-        { id: "fries", name: "Khoai tây chiên", price: 3, calories: 250 },
-        { id: "salad", name: "Salad", price: 1, calories: 50 }
-      ]},
-      { id: "sauce", name: "Nước sốt", options: [
-        { id: "bbq", name: "BBQ", price: 0, calories: 0 },
-        { id: "teriyaki", name: "Teriyaki", price: 1, calories: 20 },
-        { id: "lemon", name: "Chanh", price: 0, calories: 0 }
-      ]}
-    ],
-    "Pizza Margherita": [
-      { id: "size", name: "Kích thước", options: [
-        { id: "small", name: "Nhỏ (8 inch)", price: 0, calories: 0 },
-        { id: "medium", name: "Vừa (12 inch)", price: 5, calories: 200 },
-        { id: "large", name: "Lớn (16 inch)", price: 10, calories: 400 }
-      ]},
-      { id: "toppings", name: "Topping thêm", options: [
-        { id: "pepperoni", name: "Pepperoni", price: 3, calories: 100 },
-        { id: "mushrooms", name: "Nấm", price: 2, calories: 30 },
-        { id: "olives", name: "Ô liu", price: 2, calories: 40 }
-      ]}
-    ]
-  };
+  // 🧩 Dữ liệu món
+  const imageUrl = dish.picture;
+  const basePrice = dish.price ?? 0;
+  const baseCalo = dish.calo ?? dish.calories ?? 0;
+  const toppings = dish.optionalToppings ?? [];
 
-  const currentOptions = dishOptions[dish.name] || [];
+  // 🧮 Tính tổng giá & calo theo topping + số lượng
+  const toppingsTotalPrice = selectedToppings.reduce(
+    (sum, t) => sum + (t.price || 0),
+    0,
+  );
+  const toppingsTotalCalo = selectedToppings.reduce(
+    (sum, t) => sum + (t.calories || t.calo || 0),
+    0,
+  );
 
-  const calculateTotalPrice = () => {
-    let total = dish.price;
-    Object.values(selectedOptions).forEach(option => {
-      if (option) total += option.price;
-    });
-    return total * quantity;
-  };
+  const totalPrice = (basePrice + toppingsTotalPrice) * quantity;
+  const totalCalories = (baseCalo + toppingsTotalCalo) * quantity;
 
-  const calculateTotalCalories = () => {
-    let total = dish.calories;
-    Object.values(selectedOptions).forEach(option => {
-      if (option) total += option.calories;
-    });
-    return total * quantity;
-  };
-
-  const handleOptionChange = (optionGroupId, option) => {
-    setSelectedOptions(prev => ({
-      ...prev,
-      [optionGroupId]: option
-    }));
-  };
-
+  // 🟢 Xử lý thêm vào giỏ
   const handleAddToCart = () => {
     const dishWithOptions = {
       ...dish,
-      selectedOptions,
+      selectedToppings,
       quantity,
       notes,
-      totalPrice: calculateTotalPrice(),
-      totalCalories: calculateTotalCalories()
+      totalPrice,
+      totalCalories,
     };
     onAddToCart(dishWithOptions);
     onClose();
@@ -100,78 +62,102 @@ export default function DishOptionsModal({
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold">{dish.name}</h2>
-              <p className="text-orange-100">Tùy chỉnh món ăn của bạn</p>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-lg transition"
-            >
-              <X className="h-6 w-6" />
-            </button>
+        <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white flex justify-between items-start">
+          <div>
+            <h2 className="text-2xl font-bold">{dish.dishName || dish.name}</h2>
+            <p className="text-orange-100">Tùy chỉnh món ăn của bạn</p>
           </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-white/20 rounded-lg transition"
+          >
+            <X className="h-6 w-6" />
+          </button>
         </div>
 
+        {/* Nội dung */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-          {/* Dish Info */}
+          {/* Thông tin món */}
           <div className="mb-6">
-            <img
-              src={dish.image}
-              alt={dish.name}
-              className="w-full h-48 object-cover rounded-xl mb-4"
-            />
-            <p className="text-neutral-600 mb-4">{dish.description}</p>
-            <div className="flex items-center justify-between">
+            {imageUrl && !imageError ? (
+              <img
+                src={imageUrl}
+                alt={dish.name}
+                onError={() => setImageError(true)}
+                className="w-full h-56 object-cover rounded-xl mb-4"
+              />
+            ) : (
+              <div className="w-full h-56 flex items-center justify-center bg-neutral-100 rounded-xl mb-4">
+                <ImageOff className="w-10 h-10 text-neutral-400" />
+              </div>
+            )}
+
+            <h3 className="text-lg font-semibold mb-1 text-gray-800">
+              {dish.category} • {dish.type}
+            </h3>
+            <p className="text-gray-600 mb-3">{dish.description}</p>
+            <div className="flex justify-between items-center">
               <span className="text-2xl font-bold text-orange-600">
-                ${dish.price}
+                {dish.price?.toLocaleString("vi-VN")}₫
               </span>
               <span className="text-sm text-neutral-500">
-                {dish.calories} cal
+                {dish.calo ?? dish.calories} cal
               </span>
             </div>
           </div>
 
-          {/* Options */}
-          {currentOptions.map((optionGroup) => (
-            <div key={optionGroup.id} className="mb-6">
+          {/* 🧀 Topping thêm */}
+          {toppings.length > 0 && (
+            <div className="mb-6">
               <h3 className="text-lg font-bold text-neutral-900 mb-3">
-                {optionGroup.name}
+                Topping thêm
               </h3>
               <div className="space-y-2">
-                {optionGroup.options.map((option) => (
-                  <label
-                    key={option.id}
-                    className="flex items-center justify-between p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 cursor-pointer transition-colors"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <input
-                        type="radio"
-                        name={optionGroup.id}
-                        checked={selectedOptions[optionGroup.id]?.id === option.id}
-                        onChange={() => handleOptionChange(optionGroup.id, option)}
-                        className="w-5 h-5 text-orange-500 border-neutral-300 focus:ring-orange-500"
-                      />
-                      <div>
-                        <div className="font-medium text-neutral-900">
-                          {option.name}
-                        </div>
-                        {option.price > 0 && (
-                          <div className="text-sm text-neutral-600">
-                            +${option.price} • +{option.calories} cal
-                          </div>
-                        )}
+                {toppings.map((t) => {
+                  const checked = selectedToppings.some(
+                    (x) => x.toppingId === t.toppingId,
+                  );
+                  return (
+                    <label
+                      key={t.toppingId}
+                      className={`flex justify-between items-center p-3 border rounded-xl cursor-pointer transition ${
+                        checked
+                          ? "border-orange-400 bg-orange-50"
+                          : "border-neutral-200"
+                      }`}
+                      onClick={() => {
+                        setSelectedToppings((prev) => {
+                          if (!Array.isArray(prev)) prev = [];
+                          const exists = prev.some(
+                            (x) => x.toppingId === t.toppingId,
+                          );
+                          return exists
+                            ? prev.filter((x) => x.toppingId !== t.toppingId)
+                            : [...prev, t];
+                        });
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          readOnly
+                          className="w-5 h-5 accent-orange-500"
+                        />
+                        <span className="font-medium">{t.name}</span>
                       </div>
-                    </div>
-                  </label>
-                ))}
+                      <div className="text-sm text-neutral-600">
+                        +{t.price?.toLocaleString("vi-VN")}₫ •{" "}
+                        {t.calories ?? t.calo ?? 0} cal
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
             </div>
-          ))}
+          )}
 
-          {/* Quantity */}
+          {/* Số lượng */}
           <div className="mb-6">
             <h3 className="text-lg font-bold text-neutral-900 mb-3">
               Số lượng
@@ -195,7 +181,7 @@ export default function DishOptionsModal({
             </div>
           </div>
 
-          {/* Notes */}
+          {/* Ghi chú */}
           <div className="mb-6">
             <h3 className="text-lg font-bold text-neutral-900 mb-3">
               Ghi chú đặc biệt
@@ -209,7 +195,7 @@ export default function DishOptionsModal({
             />
           </div>
 
-          {/* Total */}
+          {/* Tổng cộng */}
           <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-4 mb-6 border border-orange-200">
             <div className="flex justify-between items-center">
               <div>
@@ -222,10 +208,10 @@ export default function DishOptionsModal({
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-orange-600">
-                  ${calculateTotalPrice().toFixed(2)}
+                  {totalPrice.toLocaleString("vi-VN")}₫
                 </div>
                 <div className="text-sm text-neutral-600">
-                  {calculateTotalCalories()} cal
+                  {totalCalories} cal
                 </div>
               </div>
             </div>

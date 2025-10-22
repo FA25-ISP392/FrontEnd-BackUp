@@ -14,7 +14,7 @@ function isPublicEndpoint(url = "", method = "get") {
   const m = String(method || "get").toLowerCase();
 
   const isOauthPublic =
-    /\/auth\/(google|success|login|register|callback)(\/|$)?/i.test(u) ||
+    /\/auth\/(token|google|success|login|register|callback)(\/|$)?/i.test(u) ||
     /\/login\/oauth2\/code\/(google|github|facebook)(\/|$)?/i.test(u);
 
   const isPublicCustomerCreate = /\/customer(\/|$)/i.test(u) && m === "post";
@@ -79,6 +79,28 @@ apiConfig.interceptors.request.use((config) => {
   const url = config.url || "";
   const method = config.method || "get";
 
+  // Compute and log the full request URL (base + path) for easier debugging in dev.
+  // Use simple join rules similar to axios: trim trailing slash from base and leading
+  // slash from url, then join with a single '/'. This preserves a relative base like '/api'.
+  try {
+    let fullUrl = String(url || "");
+    if (!/^https?:\/\//i.test(fullUrl)) {
+      const base = String(config.baseURL || baseURL || "");
+      const baseWithOrigin = base.startsWith("/")
+        ? `${location.origin}${base}`
+        : base || location.origin;
+      const baseNoSlash = baseWithOrigin.replace(/\/$/, "");
+      const urlNoLeading = fullUrl.replace(/^\//, "");
+      fullUrl = `${baseNoSlash}/${urlNoLeading}`;
+    }
+    if (import.meta.env.DEV) {
+      console.info("[API REQUEST]", (method || "").toUpperCase(), fullUrl);
+    }
+  } catch (e) {
+    // don't break requests if logging fails
+    console.debug("[API REQUEST] unable to compute full url", e);
+  }
+
   if (token && !isPublicEndpoint(url, method)) {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
@@ -89,7 +111,17 @@ apiConfig.interceptors.request.use((config) => {
 
 apiConfig.interceptors.response.use(
   (res) => unwrapResponse(res),
-  (error) => Promise.reject(wrapError(error))
+  (error) => Promise.reject(wrapError(error)),
 );
+
+// Export resolved backend information so other modules can know the original backend URL.
+// Note: in Vite dev mode requests go through the proxy (e.g. '/api'), so the browser
+// will see proxied paths. Use these exported values to know the real target used
+// in production or the configured fallback target.
+export const REAL_BACKEND_BASE = `${BASE_API}${API_PREFIX}`;
+export { PROXY_PREFIX };
+export function getOriginalBackendUrl() {
+  return REAL_BACKEND_BASE;
+}
 
 export default apiConfig;

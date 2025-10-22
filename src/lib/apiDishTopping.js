@@ -59,3 +59,20 @@ export async function addDishToppingsBatch(dishId, toppingIds = []) {
     throw err;
   }
 }
+// 🟣 Lấy danh sách topping của một món ăn cụ thể
+export async function getToppingsByDishId(dishId) {
+  if (!dishId) throw new Error("Thiếu dishId khi lấy topping");
+
+  try {
+    const token = localStorage.getItem("token");
+    const res = await apiConfig.get(`/dish-topping/${dishId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log(`🍕 Topping của món ${dishId}:`, res);
+    return Array.isArray(res) ? res : res?.result ?? [];
+  } catch (err) {
+    console.error("❌ Lỗi khi lấy topping của món:", err);
+    throw err;
+  }
+}

@@ -1,33 +1,29 @@
-// src/lib/apiDailyPlan.js
 import apiConfig from "../api/apiConfig";
 import { getCurrentUser } from "./auth";
 
-/** Enum đúng theo Swagger */
 export const ITEM_TYPES = {
   DISH: "DISH",
   TOPPING: "TOPPING",
 };
 
-/** Chuẩn hoá bản ghi plan */
+// 🧩 Chuẩn hóa dữ liệu DailyPlan
 export function normalizeDailyPlan(p = {}) {
   return {
-    id: p.planId ?? p.id ?? null,
     planId: p.planId ?? p.id ?? null,
     itemId: p.itemId ?? null,
     itemName: p.itemName ?? "",
-    itemType: p.itemType ?? "",
+    itemType: p.itemType ?? "DISH",
     planDate: p.planDate ?? "",
     plannedQuantity: Number(p.plannedQuantity ?? 0),
     remainingQuantity: Number(p.remainingQuantity ?? 0),
-    status: Boolean(p.status),
+    status: p.status ?? false,
     staffId: p.staffId ?? null,
     staffName: p.staffName ?? "",
     approvedByStaffId: p.approvedByStaffId ?? null,
-    approverName: p.approverName ?? null,
+    approverName: p.approverName ?? "",
   };
 }
 
-/** unwrap theo style apiConfig của bạn (có thể trả thẳng data hoặc {result}) */
 function pickResult(res) {
   if (!res) return null;
   if (Array.isArray(res)) return res;
@@ -38,61 +34,20 @@ function pickResult(res) {
 
 function authHeaders() {
   const token = localStorage.getItem("token");
-  return token
-    ? {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    : {};
+  return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 }
 
-/* ========================= READ ========================= */
-
+/* ================= READ ================= */
 export async function listDailyPlans() {
   const res = await apiConfig.get("/daily-plans", authHeaders());
   const data = pickResult(res) ?? [];
   return Array.isArray(data) ? data.map(normalizeDailyPlan) : [];
 }
 
-export async function getDailyPlan(planId) {
-  const res = await apiConfig.get(`/daily-plans/${planId}`, authHeaders());
-  return normalizeDailyPlan(pickResult(res) ?? {});
-}
-
-/* ========================= CREATE ========================= */
-
-/**
- * Tạo 1 kế hoạch (POST /daily-plans)
- * ⚠️ Body phải là **một object** (không phải array)
- */
-export async function createDailyPlan(payload) {
-  const user = getCurrentUser() || {};
-  const staffId = payload?.staffId ?? user?.staffId ?? user?.id;
-
-  const body = {
-    itemId: Number(payload.itemId),
-    itemType: String(payload.itemType || ITEM_TYPES.DISH).toUpperCase(),
-    plannedQuantity: Number(payload.plannedQuantity),
-    planDate: payload.planDate, // "YYYY-MM-DD"
-    staffId: Number(staffId),
-  };
-
-  const res = await apiConfig.post("/daily-plans", body, authHeaders());
-  const data = pickResult(res);
-  if (Array.isArray(data)) return data.map(normalizeDailyPlan);
-  return normalizeDailyPlan(data || {});
-}
-
-/**
- * Tạo nhiều kế hoạch (POST /daily-plans/batch)
- * ⚠️ Body phải là **mảng** các object
- */
+/* ================= CREATE (BATCH) ================= */
 export async function createDailyPlansBatch(listPayload = []) {
   const user = getCurrentUser() || {};
   const staffId = user?.staffId ?? user?.id;
-  if (!staffId) throw new Error("Không tìm thấy staffId trong token!");
-
   const body = listPayload.map((p) => ({
     itemId: Number(p.itemId),
     itemType: String(p.itemType || ITEM_TYPES.DISH).toUpperCase(),
@@ -101,73 +56,65 @@ export async function createDailyPlansBatch(listPayload = []) {
     staffId: Number(p.staffId ?? staffId),
   }));
 
-  const res = await apiConfig.post("/daily-plans/batch", body, authHeaders());
-  const data = pickResult(res) ?? [];
-  return Array.isArray(data) ? data.map(normalizeDailyPlan) : [];
+  console.log("📦 Payload gửi lên batch:", JSON.stringify(body, null, 2));
+  try {
+    const res = await apiConfig.post("/daily-plans/batch", body, authHeaders());
+    const data = pickResult(res) ?? [];
+    return Array.isArray(data) ? data.map(normalizeDailyPlan) : [];
+  } catch (err) {
+    console.warn("⚠️ BE trả lỗi mapper nhưng dữ liệu có thể vẫn lưu:", err);
+    throw err;
+  }
 }
 
-/* ========================= UPDATE ========================= */
-
-/**
- * Cập nhật (PUT /daily-plans/{id})
- * Chef: { plannedQuantity?, remainingQuantity? }
- * Manager/Admin: thêm { status? }
- */
+/* ================= UPDATE ================= */
 export async function updateDailyPlan(planId, payload = {}) {
+  if (!planId) throw new Error("Thiếu planId để cập nhật!");
+
   const body = {};
   if (payload.plannedQuantity != null)
     body.plannedQuantity = Number(payload.plannedQuantity);
   if (payload.remainingQuantity != null)
     body.remainingQuantity = Number(payload.remainingQuantity);
-  if (typeof payload.status === "boolean") body.status = payload.status;
+  if (payload.status != null) body.status = payload.status;
 
+  console.log("📤 [PUT] Gửi updateDailyPlan:", planId, body); // ✅ log payload gửi lên
+
+  if (Object.keys(body).length === 0) {
+    console.warn("⚠️ Không có trường nào để cập nhật!");
+    return;
+  }
+
+  try {
+    const res = await apiConfig.put(
+      `/daily-plans/${planId}`,
+      body,
+      authHeaders(),
+    );
+    console.log("✅ [PUT] BE trả về:", res);
+    return normalizeDailyPlan(pickResult(res) ?? {});
+  } catch (err) {
+    console.error("❌ [PUT] Lỗi update plan:", err.response || err);
+    throw err;
+  }
+}
+
+/* ================= APPROVE BATCH ================= */
+export async function approveAllDailyPlans(plans = []) {
+  if (!plans.length) return [];
+  const body = { planIds: plans.map((p) => p.planId) };
   const res = await apiConfig.put(
-    `/daily-plans/${planId}`,
+    "/daily-plans/batch-approve",
     body,
     authHeaders(),
   );
-  return normalizeDailyPlan(pickResult(res) ?? {});
+  const data = pickResult(res) ?? [];
+  return Array.isArray(data) ? data.map(normalizeDailyPlan) : [];
 }
 
-/* ========================= MANAGER actions ========================= */
-
-// ✅ Duyệt kế hoạch
-export async function approveDailyPlan(planId) {
-  // BE của bạn không có /approve riêng, dùng PUT với { status: true }
-  return updateDailyPlan(planId, { status: true });
-}
-
-// ⚠️ Từ chối (fallback dùng updateDailyPlan nếu chưa có DELETE)
-export async function rejectDailyPlan(planId) {
-  return updateDailyPlan(planId, { status: false });
-}
-
-/**
- * ❌ Xoá kế hoạch (Manager từ chối xoá luôn record)
- * Nếu BE chưa có DELETE /daily-plans/{id} → dùng rejectDailyPlan() thay thế
- */
+/* ================= DELETE ================= */
 export async function deleteDailyPlan(planId) {
   if (!planId) throw new Error("Thiếu planId để xoá!");
-  try {
-    const res = await apiConfig.delete(`/daily-plans/${planId}`, authHeaders());
-    return pickResult(res);
-  } catch (err) {
-    console.warn(
-      "⚠️ DELETE không khả dụng, fallback sang updateDailyPlan(status=false)",
-    );
-    return rejectDailyPlan(planId);
-  }
-}
-
-export async function approveAllDailyPlans(plans = []) {
-  const results = [];
-  for (const p of plans) {
-    try {
-      const res = await updateDailyPlan(p.planId, { status: true });
-      results.push(res);
-    } catch (err) {
-      console.error(`❌ Lỗi duyệt ${p.planId}:`, err);
-    }
-  }
-  return results;
+  const res = await apiConfig.delete(`/daily-plans/${planId}`, authHeaders());
+  return pickResult(res);
 }

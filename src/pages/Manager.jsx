@@ -9,6 +9,7 @@ import EditToppingModal from "../components/Manager/Topping/EditToppingModal";
 import ToppingsManagement from "../components/Manager/Topping/ToppingManagement";
 import ManagerDishPage from "../components/Manager/Dish/ManagerDishPage";
 import ManagerDailyPlan from "../components/Manager/ManagerDailyPlan";
+import ManagerDailyApprovedDishes from "../components/Manager/ManagerDailyApprovedDishes";
 
 import {
   mockTables,
@@ -163,13 +164,13 @@ export default function Manager() {
   // 🧩 Booking actions
   const handleReject = async (id) => {
     setBookings((prev) =>
-      prev.map((x) => (x.id === id ? { ...x, status: "REJECT" } : x))
+      prev.map((x) => (x.id === id ? { ...x, status: "REJECT" } : x)),
     );
     try {
       await rejectBooking(id);
     } catch (err) {
       setBookings((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, status: "PENDING" } : x))
+        prev.map((x) => (x.id === id ? { ...x, status: "PENDING" } : x)),
       );
       alert(err.message || "Từ chối thất bại");
     }
@@ -182,21 +183,21 @@ export default function Manager() {
         prev.map((b) =>
           b.id === bookingId
             ? { ...b, status: "APPROVED", assignedTableId: tableId }
-            : b
-        )
+            : b,
+        ),
       );
       setTables((prev) =>
         prev.map((t) =>
           t.id === tableId
             ? { ...t, status: "reserved", isAvailable: false }
-            : t
-        )
+            : t,
+        ),
       );
     } catch (error) {
       alert(
         error?.response?.data?.message ||
           error.message ||
-          "Không thể gán bàn cho đơn đặt."
+          "Không thể gán bàn cho đơn đặt.",
       );
     }
   };
@@ -205,7 +206,7 @@ export default function Manager() {
     try {
       setSavingBooking(true);
       setBookings((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, seat, bookingDate } : x))
+        prev.map((x) => (x.id === id ? { ...x, seat, bookingDate } : x)),
       );
       await updateBooking(id, { seat, bookingDate });
       await refetchBookings();
@@ -222,7 +223,7 @@ export default function Manager() {
   // 🧩 Thống kê tổng
   const totalRevenue = mockRevenueData.reduce(
     (sum, item) => sum + item.revenue,
-    0
+    0,
   );
   const totalBookings = bookings.length;
   const totalTables = tables.length;
@@ -231,8 +232,8 @@ export default function Manager() {
   const updateOrderStatus = (tableId, updatedOrder) => {
     setTables((prevTables) =>
       prevTables.map((table) =>
-        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table
-      )
+        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table,
+      ),
     );
   };
 
@@ -305,6 +306,9 @@ export default function Manager() {
         );
       case "dailyPlan":
         return <ManagerDailyPlan />;
+      case "dailyDishes":
+        return <ManagerDailyApprovedDishes />;
+
       case "invoices":
         return (
           <ManagerInvoicesToday
