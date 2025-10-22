@@ -3,7 +3,6 @@ import ManagerSidebar from "../components/Manager/ManagerSidebar";
 import StatsCards from "../components/Manager/StatsCards";
 import Charts from "../components/Manager/Charts";
 import TablesManagement from "../components/Manager/TablesManagement";
-import AccountManagement from "../components/Manager/AccountManagement";
 import ManagerInvoicesToday from "../components/Manager/InvoicesToday";
 import TableDetailsModal from "../components/Manager/TableDetailsModal";
 import EditToppingModal from "../components/Manager/Topping/EditToppingModal";

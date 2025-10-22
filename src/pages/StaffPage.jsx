@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Timer,
   DollarSign,
+  Table,
 } from "lucide-react";
 import StaffSidebar from "../components/Staff/StaffSidebar";
 
@@ -20,7 +21,7 @@ import { getCurrentUser } from "../lib/auth";
 
 export default function StaffPage() {
   const [staffName, setStaffName] = useState("");
-  const [activeSection, setActiveSection] = useState("dashboard");
+  const [activeSection, setActiveSection] = useState("tableLayout");
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [selectedTable, setSelectedTable] = useState(null);
   const [tables] = useState([
@@ -228,11 +229,7 @@ export default function StaffPage() {
     window.location.href = "/";
   };
 
-  const sidebarItems = [
-    { id: "dashboard", label: "Dashboard", icon: Users },
-    { id: "tables", label: "Table Overview", icon: ClipboardList },
-    { id: "orders", label: "Orders by Table", icon: ClipboardList },
-  ];
+  // Removed sidebarItems as it's now handled in StaffSidebar component
 
   const getTableStatusColor = (status) => {
     switch (status) {
@@ -311,11 +308,60 @@ export default function StaffPage() {
         />
 
         <main className="flex-1 p-6">
-          {/* Dashboard Section */}
-          {activeSection === "dashboard" && (
+          {/* Sơ Đồ Bàn Section */}
+          {activeSection === "tableLayout" && (
             <div className="space-y-6">
-              <h1 className="text-2xl font-bold">Dashboard Tổng Quan</h1>
+              <h1 className="text-2xl font-bold">Sơ Đồ Bàn</h1>
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+                    Sơ đồ bàn nhà hàng
+                  </h3>
+                  <p className="text-sm text-neutral-600">
+                    Nhấp vào bàn để xem thông tin chi tiết
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-6">
+                  {tables.slice(0, 8).map((table) => (
+                    <div
+                      key={table.id}
+                      className={`bg-gradient-to-br from-white to-orange-50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-orange-200 group cursor-pointer transform hover:scale-105 ${
+                        selectedTable?.id === table.id
+                          ? "ring-2 ring-orange-500 shadow-orange-200"
+                          : ""
+                      }`}
+                      onClick={() => setSelectedTable(table)}
+                    >
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-2 mb-4">
+                          <div className="p-2 bg-orange-100 rounded-lg">
+                            <Table className="h-6 w-6 text-orange-600" />
+                          </div>
+                          <span className="font-bold text-neutral-900 text-lg">
+                            Bàn {table.number}
+                          </span>
+                        </div>
+                        <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl p-4 border border-orange-300">
+                          <div className="text-3xl font-bold text-orange-800 mb-1">
+                            {table.guests || 0}
+                          </div>
+                          <div className="text-sm text-orange-700 font-medium">
+                            khách
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
+          {/* Tổng Quan Section */}
+          {activeSection === "overview" && (
+            <div className="space-y-6">
+              <h1 className="text-2xl font-bold">Tổng Quan</h1>
+              
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
@@ -375,7 +421,7 @@ export default function StaffPage() {
                   Trạng Thái Các Bàn
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {tables.map((table) => (
+                  {tables.slice(0, 8).map((table) => (
                     <div
                       key={table.id}
                       className={`relative p-4 rounded-lg cursor-pointer transition-all duration-300 hover:shadow-md ${
@@ -416,164 +462,16 @@ export default function StaffPage() {
                   ))}
                 </div>
               </div>
-
-              {/* Recent Orders */}
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h3 className="text-lg font-semibold mb-4">Đơn Hàng Gần Đây</h3>
-                <div className="space-y-3">
-                  {orders.slice(0, 5).map((order) => (
-                    <div
-                      key={order.id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-neutral-50 transition"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="font-semibold text-blue-600">
-                            {order.table}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-medium">Bàn {order.table}</p>
-                          <p className="text-sm text-neutral-600">
-                            {order.dishes.join(", ")}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${getOrderStatusColor(
-                            order.status,
-                          )}`}
-                        >
-                          {getOrderStatusText(order.status)}
-                        </span>
-                        <span className="text-green-600 font-semibold">
-                          ${order.total}
-                        </span>
-                        <button
-                          onClick={() =>
-                            setSelectedTable(
-                              tables.find((t) => t.number === order.table),
-                            )
-                          }
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           )}
 
-          {/* Table Overview Section */}
-          {activeSection === "tables" && (
+          {/* Đơn Món Theo Bàn Section */}
+          {activeSection === "ordersByTable" && (
             <div className="space-y-6">
-              <h1 className="text-2xl font-bold">Table Overview</h1>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {tables.map((table) => (
-                  <div
-                    key={table.id}
-                    className={`bg-white rounded-lg p-4 shadow-sm border-2 ${
-                      table.callStaff
-                        ? "border-red-500 bg-red-50"
-                        : table.status === "occupied"
-                        ? "border-blue-500"
-                        : table.status === "reserved"
-                        ? "border-yellow-500"
-                        : "border-green-500"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Users className="h-5 w-5 text-neutral-600" />
-                        <span className="font-semibold text-lg">
-                          Table {table.number}
-                        </span>
-                      </div>
-                      {table.callStaff && (
-                        <div className="flex items-center gap-1 text-red-600">
-                          <Phone className="h-4 w-4" />
-                          <span className="text-xs font-medium">CALL</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-neutral-600">Status:</span>
-                        <span
-                          className={`font-medium ${
-                            table.status === "occupied"
-                              ? "text-blue-600"
-                              : table.status === "reserved"
-                              ? "text-yellow-600"
-                              : "text-green-600"
-                          }`}
-                        >
-                          {table.status}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-neutral-600">Guests:</span>
-                        <span className="font-medium">{table.guests}</span>
-                      </div>
-                      {table.orderTime && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-neutral-600">Order:</span>
-                          <span className="font-medium">{table.orderTime}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Call Staff Notifications */}
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <Phone className="h-5 w-5 text-red-600" />
-                  Call Staff Notifications
-                </h3>
-                <div className="space-y-3">
-                  {tables
-                    .filter((table) => table.callStaff)
-                    .map((table) => (
-                      <div
-                        key={table.id}
-                        className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg"
-                      >
-                        <div>
-                          <p className="font-medium">Table {table.number}</p>
-                          <p className="text-sm text-neutral-600">
-                            {table.guests} guests
-                          </p>
-                        </div>
-                        <button className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition">
-                          Respond
-                        </button>
-                      </div>
-                    ))}
-                  {tables.filter((table) => table.callStaff).length === 0 && (
-                    <p className="text-neutral-600 text-center py-4">
-                      No staff calls at the moment
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Orders by Table Section */}
-          {activeSection === "orders" && (
-            <div className="space-y-6">
-              <h1 className="text-2xl font-bold">Orders by Table</h1>
+              <h1 className="text-2xl font-bold">Đơn Món Theo Bàn</h1>
 
               <div className="space-y-4">
-                {orders.map((order) => (
+                {orders.filter(order => order.table <= 8).map((order) => (
                   <div
                     key={order.id}
                     className="bg-white rounded-lg p-6 shadow-sm border"
@@ -582,18 +480,14 @@ export default function StaffPage() {
                       <div className="flex items-center gap-3">
                         <Users className="h-5 w-5 text-neutral-600" />
                         <span className="font-semibold text-lg">
-                          Table {order.table}
+                          Bàn {order.table}
                         </span>
                         <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            order.status === "ready"
-                              ? "bg-green-100 text-green-800"
-                              : order.status === "preparing"
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-neutral-100 text-neutral-800"
-                          }`}
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${getOrderStatusColor(
+                            order.status,
+                          )}`}
                         >
-                          {order.status}
+                          {getOrderStatusText(order.status)}
                         </span>
                       </div>
                       <span className="text-lg font-semibold text-green-600">
@@ -603,7 +497,7 @@ export default function StaffPage() {
 
                     <div className="space-y-2 mb-4">
                       <h4 className="font-medium text-sm text-neutral-600">
-                        Ordered Dishes:
+                        Món đã đặt:
                       </h4>
                       <div className="space-y-1">
                         {order.dishes.map((dish, index) => (
@@ -622,18 +516,18 @@ export default function StaffPage() {
                       {order.status === "preparing" && (
                         <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition flex items-center gap-1">
                           <Clock className="h-4 w-4" />
-                          Preparing
+                          Đang chuẩn bị
                         </button>
                       )}
                       {order.status === "ready" && (
                         <button className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition flex items-center gap-1">
                           <CheckCircle className="h-4 w-4" />
-                          Serve Order
+                          Phục vụ món
                         </button>
                       )}
                       {order.status === "served" && (
                         <span className="text-green-600 text-sm font-medium">
-                          Order Served
+                          Đã phục vụ
                         </span>
                       )}
                     </div>

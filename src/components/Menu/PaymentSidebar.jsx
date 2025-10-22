@@ -1,4 +1,4 @@
-import { X, CreditCard, Smartphone, QrCode } from "lucide-react";
+import { X, CreditCard, Bell } from "lucide-react";
 
 export default function PaymentSidebar({
   isOpen,
@@ -14,33 +14,6 @@ export default function PaymentSidebar({
     (sum, item) => sum + (item.totalPrice || item.price) * item.quantity,
     0,
   );
-
-  const paymentMethods = [
-    {
-      id: "cash",
-      name: "Tiền mặt",
-      icon: CreditCard,
-      description: "Thanh toán bằng tiền mặt",
-    },
-    {
-      id: "card",
-      name: "Thẻ",
-      icon: CreditCard,
-      description: "Thanh toán bằng thẻ",
-    },
-    {
-      id: "qr",
-      name: "QR Code",
-      icon: QrCode,
-      description: "Quét mã QR để thanh toán",
-    },
-    {
-      id: "mobile",
-      name: "Mobile Banking",
-      icon: Smartphone,
-      description: "Chuyển khoản qua mobile banking",
-    },
-  ];
 
   return (
     <>
@@ -126,65 +99,69 @@ export default function PaymentSidebar({
             </div>
           </div>
 
-          {/* Payment Methods */}
+          {/* Order Details */}
           <div className="flex-1 overflow-y-auto p-6">
             <h3 className="text-lg font-bold text-neutral-900 mb-4">
-              Phương thức thanh toán
+              Chi tiết đơn hàng
             </h3>
-            <div className="space-y-3">
-              {paymentMethods.map((method) => {
-                const Icon = method.icon;
-                return (
-                  <label
-                    key={method.id}
-                    className={`flex items-center space-x-3 p-4 border rounded-xl cursor-pointer transition-all ${
-                      paymentMethod === method.id
-                        ? "border-orange-500 bg-orange-50"
-                        : "border-neutral-200 hover:border-neutral-300"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value={method.id}
-                      checked={paymentMethod === method.id}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="w-5 h-5 text-orange-500 border-neutral-300 focus:ring-orange-500"
-                    />
-                    <Icon
-                      className={`h-6 w-6 ${
-                        paymentMethod === method.id
-                          ? "text-orange-600"
-                          : "text-neutral-600"
-                      }`}
-                    />
-                    <div className="flex-1">
-                      <div
-                        className={`font-medium ${
-                          paymentMethod === method.id
-                            ? "text-orange-900"
-                            : "text-neutral-900"
-                        }`}
-                      >
-                        {method.name}
+            <div className="space-y-4">
+              {cart.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CreditCard className="h-8 w-8 text-neutral-400" />
+                  </div>
+                  <p className="text-neutral-500">Chưa có món nào trong đơn hàng</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {cart.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between p-4 bg-neutral-50 rounded-xl"
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium text-neutral-900">
+                          {item.name}
+                        </div>
+                        <div className="text-sm text-neutral-600">
+                          Số lượng: {item.quantity}
+                        </div>
+                        {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
+                          <div className="text-xs text-neutral-500 mt-1">
+                            {Object.values(item.selectedOptions).map((option, index) => (
+                              <span key={index}>
+                                {option.name}
+                                {index < Object.values(item.selectedOptions).length - 1 ? ", " : ""}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {item.notes && (
+                          <div className="text-xs text-neutral-500 mt-1">
+                            Ghi chú: {item.notes}
+                          </div>
+                        )}
                       </div>
-                      <div className="text-sm text-neutral-600">
-                        {method.description}
+                      <div className="text-right">
+                        <div className="font-medium text-neutral-900">
+                          ${((item.totalPrice || item.price) * item.quantity).toFixed(2)}
+                        </div>
                       </div>
                     </div>
-                  </label>
-                );
-              })}
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Payment Button */}
+          {/* Call Staff Button */}
           <div className="border-t border-neutral-200 p-6">
             <button
               onClick={onPayment}
-              className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-4 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-medium"
+              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 px-4 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium flex items-center justify-center space-x-2"
             >
-              Thanh toán ${totalAmount.toFixed(2)}
+              <Bell className="h-5 w-5" />
+              <span>Gọi thanh toán</span>
             </button>
           </div>
         </div>

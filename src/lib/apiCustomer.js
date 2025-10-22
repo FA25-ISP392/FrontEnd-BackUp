@@ -89,3 +89,30 @@ export async function ensureCustomerForUser({
   const data = res?.result ?? res;
   return normalizeCustomer(data);
 }
+
+export async function updateCustomerPersonalization(customerId, form = {}) {
+  if (!customerId) throw new Error("Thiếu customerId");
+
+  const body = compact({
+    height: form.height != null ? Number(form.height) : undefined,
+    weight: form.weight != null ? Number(form.weight) : undefined,
+    sex:
+      typeof form.gender === "string"
+        ? String(form.gender).toLowerCase() === "male"
+        : undefined,
+    portion: form.mealsPerDay != null ? Number(form.mealsPerDay) : undefined,
+  });
+
+  if (Object.keys(body).length === 0) {
+    throw new Error("Không có trường nào để cập nhật.");
+  }
+
+  const res = await apiConfig.put(`/customer/${customerId}`, body);
+  return res?.result ?? res;
+}
+
+export async function getCustomerDetail(customerId) {
+  if (!customerId) throw new Error("Thiếu customerId");
+  const res = await apiConfig.get(`/customer/${customerId}`);
+  return res?.result ?? res;
+}
