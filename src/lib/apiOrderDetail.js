@@ -1,22 +1,45 @@
 import apiConfig from "../api/apiConfig";
 
-export const normalizeOrderDetail = (d = {}) => ({
-  orderDetailId: d.orderDetailId ?? d.id,
-  orderId: d.orderId,
-  dishId: d.dishId,
-  dishName: d.dishName,
-  totalPrice: Number(d.totalPrice ?? 0),
-  status: d.status,
-  note: d.note ?? d.notes ?? "",
-  toppings: Array.isArray(d.toppings)
-    ? d.toppings.map((t) => ({
-        toppingId: t.toppingId ?? t.id,
-        toppingName: t.toppingName ?? t.name ?? "",
-        quantity: Number(t.quantity ?? 1),
-        toppingPrice: Number(t.toppingPrice ?? t.price ?? 0),
-      }))
-    : [],
-});
+export const normalizeOrderDetail = (d = {}) => {
+  const rawNote = d.note ?? d.notes;
+  let finalNote = null;
+  if (rawNote !== null && rawNote !== undefined && rawNote !== "") {
+    finalNote = String(rawNote);
+  }
+
+  const finalToppings = Array.isArray(d.toppings)
+    ? d.toppings.map((t) => {
+        let finalQuantity = 1;
+        if (typeof t.quantity === "number" && !isNaN(t.quantity)) {
+          finalQuantity = t.quantity;
+        } else if (
+          t.quantity !== null &&
+          t.quantity !== undefined &&
+          t.quantity !== ""
+        ) {
+          finalQuantity = Number(t.quantity);
+        }
+
+        return {
+          toppingId: Number(t.toppingId ?? t.id),
+          toppingName: t.toppingName ?? t.name ?? "",
+          quantity: finalQuantity,
+          toppingPrice: Number(t.toppingPrice ?? t.price ?? 0),
+        };
+      })
+    : [];
+
+  return {
+    orderDetailId: Number(d.orderDetailId ?? d.id),
+    orderId: Number(d.orderId),
+    dishId: Number(d.dishId),
+    dishName: d.dishName,
+    totalPrice: Number(d.totalPrice ?? 0),
+    status: d.status,
+    note: finalNote,
+    toppings: finalToppings,
+  };
+};
 
 export async function createOrderDetail({
   orderId,
@@ -56,10 +79,43 @@ export async function createOrderDetailsFromCart(orderId, cart = []) {
         orderId,
         dishId: item.id ?? item.dishId,
         notes: item.notes || "",
-        toppings, // mỗi topping mặc định quantity = 1 (đã set trong hàm trên)
+        toppings,
       });
       results.push(od);
     }
   }
   return results;
+}
+
+export async function getOrderDetailsByStatus(status) {
+  if (!status) throw new Error("Cần cung cấp trạng thái (status)");
+  const formattedStatus = String(status).toUpperCase();
+  const res = await apiConfig.get(`/order-details/status/${formattedStatus}`);
+  if (Array.isArray(res)) {
+    return res.map(normalizeOrderDetail);
+  }
+  if (Array.isArray(res?.result)) {
+    return res.result.map(normalizeOrderDetail);
+  }
+  return [];
+}
+
+export async function updateOrderDetailStatus(
+  orderDetailId,
+  itemToUpdate,
+  newStatus
+) {
+  if (!orderDetailId) throw new Error("Cần cung cấp orderDetailId");
+  if (!newStatus) throw new Error("Cần cung cấp trạng thái mới (newStatus)");
+  if (!itemToUpdate) throw new Error("Cần cung cấp item object để cập nhật");
+  const formattedStatus = String(newStatus).toUpperCase();
+  const payload = {
+    orderDetailId: Number(itemToUpdate.orderDetailId),
+    status: formattedStatus,
+  };
+  const res = await apiConfig.put(
+    `/order-details/${Number(orderDetailId)}`,
+    payload
+  );
+  return normalizeOrderDetail(res?.result ?? res);
 }

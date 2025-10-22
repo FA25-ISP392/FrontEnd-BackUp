@@ -1,4 +1,5 @@
 import apiConfig from "../api/apiConfig";
+import { normalizeOrderDetail } from "./apiOrderDetail";
 
 export const normalizeOrder = (o = {}) => ({
   orderId: o.orderId ?? o.id,
@@ -25,4 +26,22 @@ export async function createOrder({ customerId, tableId }) {
   console.log("POST /orders payload:", payload);
   const res = await apiConfig.post("/orders", payload);
   return normalizeOrder(res?.result ?? res);
+}
+
+export async function getOrderById(orderId) {
+  if (!orderId) throw new Error("Thiếu orderId.");
+  const res = await apiConfig.get(`/orders/${orderId}`);
+  const raw = res?.result ?? res;
+  const order = normalizeOrder(raw);
+
+  const normalizedDetails = Array.isArray(raw?.orderDetails)
+    ? raw.orderDetails.map((d) => normalizeOrderDetail(d))
+    : [];
+
+  return { ...order, orderDetails: normalizedDetails };
+}
+
+export async function getOrderDetailsByOrderId(orderId) {
+  const order = await getOrderById(orderId);
+  return order.orderDetails || [];
 }

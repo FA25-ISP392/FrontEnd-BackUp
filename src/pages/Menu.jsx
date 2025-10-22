@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { CheckCircle } from "lucide-react";
+
 import MenuHeader from "../components/Menu/MenuHeader";
 import MenuContent from "../components/Menu/MenuContent";
 import MenuFooter from "../components/Menu/MenuFooter";
@@ -7,6 +8,8 @@ import PersonalizationModal from "../components/Menu/PersonalizationModal";
 import CartSidebar from "../components/Menu/CartSidebar";
 import PaymentSidebar from "../components/Menu/PaymentSidebar";
 import DishOptionsModal from "../components/Menu/DishOptionsModal";
+import OrderStatusSidebar from "../components/Menu/OrderStatusSidebar";
+
 import { createOrder } from "../lib/apiOrder";
 import { useMenuPersonalization } from "../hooks";
 import { listDish, getDish } from "../lib/apiDish";
@@ -16,6 +19,7 @@ import {
 } from "../lib/apiCustomer";
 import { getToppingsByDishId } from "../lib/apiDishTopping";
 import { createOrderDetailsFromCart } from "../lib/apiOrderDetail";
+import { getOrderDetailsByOrderId } from "../lib/apiOrder";
 
 export default function Menu() {
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
@@ -23,21 +27,27 @@ export default function Menu() {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isCallStaffOpen, setIsCallStaffOpen] = useState(false);
   const [isDishOptionsOpen, setIsDishOptionsOpen] = useState(false);
+  const [isStatusOpen, setIsStatusOpen] = useState(false);
+
   const [activeMenuTab, setActiveMenuTab] = useState("all");
   const [selectedDish, setSelectedDish] = useState(null);
   const [cart, setCart] = useState([]);
   const [caloriesConsumed, setCaloriesConsumed] = useState(0);
   const [isPersonalized, setIsPersonalized] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cash");
+
   const [tableId, setTableId] = useState(null);
   const [customerId, setCustomerId] = useState(null);
   const [customerName, setCustomerName] = useState(null);
   const [orderId, setOrderId] = useState(
     () => sessionStorage.getItem("orderId") || null
   );
+
   const [baseCalories, setBaseCalories] = useState(null);
   const [estimatedCalories, setEstimatedCalories] = useState(null);
+
   const [menuDishes, setMenuDishes] = useState([]);
+  const [orderDetails, setOrderDetails] = useState([]);
 
   const PERSONAL_KEY = (cid) => `personalization:${cid}`;
   const applyGoal = (cals, goal) => {
@@ -235,12 +245,6 @@ export default function Menu() {
     }
   };
 
-  const handleGoalChange = (goalId) => {
-    setPersonalizationForm((prev) => ({ ...prev, goal: goalId }));
-    const base = baseCalories ?? estimatedCalories;
-    setEstimatedCalories(applyGoal(base, goalId));
-  };
-
   const handleOrderFood = async () => {
     try {
       if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
@@ -252,11 +256,51 @@ export default function Menu() {
       setIsCartOpen(false);
       setCart([]);
       setCaloriesConsumed(0);
+
+      setIsStatusOpen(true);
       alert("Đã gửi món thành công!");
     } catch (err) {
       console.error("❌ Gửi món thất bại:", err);
       alert(`Gọi món thất bại: ${err?.message || "Vui lòng thử lại."}`);
     }
+  };
+
+  async function fetchOrderDetailsFromOrder() {
+    if (!orderId) return;
+    try {
+      const data = await getOrderDetailsByOrderId(orderId);
+      setOrderDetails(data);
+    } catch (err) {
+      console.error("❌ Lỗi lấy orderDetails theo orderId:", err);
+    }
+  }
+
+  useEffect(() => {
+    if (isStatusOpen) fetchOrderDetailsFromOrder();
+  }, [isStatusOpen, orderId]);
+
+  useEffect(() => {
+    let timer;
+    if (isStatusOpen) {
+      fetchOrderDetailsFromOrder();
+      timer = setInterval(fetchOrderDetailsFromOrder, 5000);
+    }
+    return () => clearInterval(timer);
+  }, [isStatusOpen, orderId]);
+
+  const groups = (() => {
+    const g = { pending: [], preparing: [], served: [], cancelled: [] };
+    for (const od of orderDetails) {
+      const key = String(od.status || "").toLowerCase();
+      if (g[key]) g[key].push(od);
+    }
+    return g;
+  })();
+
+  const handleGoalChange = (goalId) => {
+    setPersonalizationForm((prev) => ({ ...prev, goal: goalId }));
+    const base = baseCalories ?? estimatedCalories;
+    setEstimatedCalories(applyGoal(base, goalId));
   };
 
   const handlePayment = () => {
@@ -280,8 +324,15 @@ export default function Menu() {
           }, 2000);
         }}
         onCheckout={() => setIsPaymentOpen(true)}
+        onViewStatus={() => setIsStatusOpen(true)}
         tableId={tableId}
         customerId={customerId}
+      />
+
+      <OrderStatusSidebar
+        isOpen={isStatusOpen}
+        onClose={() => setIsStatusOpen(false)}
+        items={orderDetails}
       />
 
       {orderId && tableId && customerId && (

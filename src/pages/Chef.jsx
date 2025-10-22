@@ -2,20 +2,27 @@ import { useState, useEffect } from "react";
 import ChefSidebar from "../components/Chef/ChefSidebar";
 import OrdersManagement from "../components/Chef/OrdersManagement";
 import DishQuantityManagement from "../components/Chef/DishQuantityManagement";
-import { mockChefOrders, mockChefDishes } from "../lib/chefData";
+import { mockChefDishes } from "../lib/chefData";
 import { getCurrentUser } from "../lib/auth";
 import ChefDailyPlan from "../components/Chef/ChefDailyPlan";
 import ChefDailyDishes from "../components/Chef/ChefDailyDishes";
-import ChefRejectedDishes from "../components/Chef/ChefRejectedDishes"; // 🆕 import thêm
+import ChefRejectedDishes from "../components/Chef/ChefRejectedDishes";
+import {
+  getOrderDetailsByStatus,
+  updateOrderDetailStatus,
+} from "../lib/apiOrderDetail";
 
 export default function Chef() {
   const [chefName, setChefName] = useState("");
   const [activeSection, setActiveSection] = useState("overview");
-  const [orders, setOrders] = useState(mockChefOrders);
   const [dishes, setDishes] = useState(mockChefDishes);
-  const [dishRequests, setDishRequests] = useState([]); // Requests sent to Manager
+  const [dishRequests, setDishRequests] = useState([]);
+  const [pending, setPending] = useState([]);
+  const [preparing, setPreparing] = useState([]);
+  const [ready, setReady] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // 🧩 Lấy tên user để hiển thị welcome
   useEffect(() => {
     const u = getCurrentUser();
     const name =
@@ -28,16 +35,59 @@ export default function Chef() {
     setChefName(name || "Chef");
   }, []);
 
-  // 🧩 Cập nhật trạng thái order
-  const updateOrderStatus = (orderId, newStatus) => {
-    setOrders((prevOrders) =>
-      prevOrders.map((order) =>
-        order.id === orderId ? { ...order, status: newStatus } : order,
-      ),
-    );
+  const fetchAllOrders = async () => {
+    setError(null);
+    try {
+      const [pendingData, preparingData, servedData] = await Promise.all([
+        getOrderDetailsByStatus("PENDING"),
+        getOrderDetailsByStatus("PREPARING"),
+        getOrderDetailsByStatus("SERVED"),
+      ]);
+
+      setPending(pendingData);
+      setPreparing(preparingData);
+      setReady(servedData);
+    } catch (err) {
+      console.error("Lỗi fetch đơn hàng:", err);
+      setError(err.message || "Không thể tải danh sách đơn hàng.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // 🧩 Gửi request món ăn (hiện tại mock)
+  useEffect(() => {
+    fetchAllOrders();
+    const intervalId = setInterval(fetchAllOrders, 10000);
+    return () => clearInterval(intervalId);
+  }, []);
+
+  const handleUpdateStatus = async (orderDetailId, newStatus) => {
+    try {
+      const itemToMove =
+        pending.find((o) => o.orderDetailId === orderDetailId) ||
+        preparing.find((o) => o.orderDetailId === orderDetailId);
+      if (!itemToMove) return;
+      setPending((prev) =>
+        prev.filter((o) => o.orderDetailId !== orderDetailId)
+      );
+      setPreparing((prev) =>
+        prev.filter((o) => o.orderDetailId !== orderDetailId)
+      );
+      const updatedItem = { ...itemToMove, status: newStatus };
+      if (newStatus === "PREPARING") {
+        setPreparing((prev) => [updatedItem, ...prev]);
+      } else if (newStatus === "SERVED") {
+        setReady((prev) => [updatedItem, ...prev]);
+      }
+      await updateOrderDetailStatus(orderDetailId, itemToMove, newStatus);
+    } catch (err) {
+      console.error(`Lỗi cập nhật món ${orderDetailId}:`, err);
+      alert(`Cập nhật thất bại: ${err.message}. Đang tải lại danh sách...`);
+      setIsLoading(true);
+      fetchAllOrders();
+    }
+  };
+
   const submitDishRequest = (request) => {
     const newRequest = {
       ...request,
@@ -49,22 +99,18 @@ export default function Chef() {
     console.log("Dish request submitted:", newRequest);
   };
 
-  // 🧩 Điều hướng giữa các mục
   const renderContent = () => {
     switch (activeSection) {
       case "overview":
-        return (
-          <OrdersManagement
-            orders={orders}
-            updateOrderStatus={updateOrderStatus}
-          />
-        );
-
       case "orders":
         return (
           <OrdersManagement
-            orders={orders}
-            updateOrderStatus={updateOrderStatus}
+            pendingOrders={pending}
+            preparingOrders={preparing}
+            readyOrders={ready}
+            onUpdateStatus={handleUpdateStatus}
+            isLoading={isLoading}
+            error={error}
           />
         );
 
@@ -82,7 +128,7 @@ export default function Chef() {
       case "dailyDishes":
         return <ChefDailyDishes />;
 
-      case "rejectedDishes": // 🆕 Tab mới cho món bị từ chối
+      case "rejectedDishes":
         return <ChefRejectedDishes />;
 
       case "invoices":
@@ -112,17 +158,14 @@ export default function Chef() {
     }
   };
 
-  // 🧩 Giao diện chính
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
       <div className="flex">
-        {/* Sidebar */}
         <ChefSidebar
           activeSection={activeSection}
           setActiveSection={setActiveSection}
         />
 
-        {/* Nội dung chính */}
         <main className="flex-1 p-6">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-neutral-900 mb-2">
@@ -133,7 +176,6 @@ export default function Chef() {
             </p>
           </div>
 
-          {/* Render nội dung tương ứng */}
           {renderContent()}
         </main>
       </div>

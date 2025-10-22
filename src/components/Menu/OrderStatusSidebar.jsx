@@ -1,10 +1,25 @@
 import { X } from "lucide-react";
-import { STATUS_LABEL, STATUS_COLOR } from "../../lib/apiOrderDetail";
 
-const ORDER_FLOW = ["pending", "preparing", "served", "cancelled"];
+const STATUS_LABEL = {
+  pending: "Chờ nấu",
+  preparing: "Đang nấu",
+  served: "Đã phục vụ",
+  cancelled: "Đã hủy",
+};
+const STATUS_COLOR = {
+  pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  preparing: "bg-blue-100 text-blue-700 border-blue-200",
+  served: "bg-green-100 text-green-700 border-green-200",
+  cancelled: "bg-red-100 text-red-700 border-red-200",
+};
 
-export default function OrderStatusSidebar({ isOpen, onClose, groups = {} }) {
+const fmtVND = (n) =>
+  typeof n === "number" && isFinite(n) ? n.toLocaleString("vi-VN") + "₫" : "-";
+
+export default function OrderStatusSidebar({ isOpen, onClose, items = [] }) {
   if (!isOpen) return null;
+
+  const list = Array.isArray(items) ? [...items].reverse() : [];
 
   return (
     <>
@@ -30,89 +45,55 @@ export default function OrderStatusSidebar({ isOpen, onClose, groups = {} }) {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {ORDER_FLOW.map((st) => {
-              const items = Array.isArray(groups[st]) ? groups[st] : [];
-              const badgeClass =
-                STATUS_COLOR[st] ||
-                "bg-neutral-100 text-neutral-700 border-neutral-200";
+          <div className="flex-1 overflow-y-auto p-6 space-y-3">
+            {list.length === 0 ? (
+              <div className="text-sm text-neutral-500 border rounded-xl p-4">
+                Chưa có món nào được gọi.
+              </div>
+            ) : (
+              list.map((it) => {
+                const st = String(it.status || "").toLowerCase();
+                const badge =
+                  STATUS_COLOR[st] ||
+                  "bg-neutral-100 text-neutral-700 border-neutral-200";
+                return (
+                  <div
+                    key={it.orderDetailId}
+                    className="border rounded-xl p-3 hover:bg-neutral-50"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="font-semibold text-neutral-900">
+                        {it.dishName}
+                      </div>
+                      <div className="text-sm font-bold text-emerald-600">
+                        {fmtVND(it.totalPrice)}
+                      </div>
+                    </div>
 
-              return (
-                <div key={st} className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-base font-bold text-neutral-800">
-                      {STATUS_LABEL[st] || st}
-                    </h3>
-                    <span
-                      className={`text-xs px-2 py-1 rounded-lg border ${badgeClass}`}
-                    >
-                      {items.length} món
-                    </span>
+                    {Array.isArray(it.toppings) && it.toppings.length > 0 && (
+                      <div className="text-xs text-neutral-500 mt-1">
+                        Topping:{" "}
+                        {it.toppings.map((t) => t.toppingName).join(", ")}
+                      </div>
+                    )}
+
+                    {it.note && (
+                      <div className="text-xs text-neutral-500 mt-1">
+                        Ghi chú: {it.note}
+                      </div>
+                    )}
+
+                    <div className="mt-2">
+                      <span
+                        className={`inline-block text-xs px-2 py-0.5 rounded-lg border ${badge}`}
+                      >
+                        {STATUS_LABEL[st] || st || "unknown"}
+                      </span>
+                    </div>
                   </div>
-
-                  {items.length === 0 ? (
-                    <div className="text-sm text-neutral-500 border rounded-xl p-3">
-                      Chưa có món
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {items.map((it) => {
-                        const itemStatus = String(
-                          it.status || ""
-                        ).toLowerCase();
-                        const itemBadgeClass =
-                          STATUS_COLOR[itemStatus] ||
-                          "bg-neutral-100 text-neutral-700 border-neutral-200";
-                        const price =
-                          typeof it.totalPrice === "number" &&
-                          isFinite(it.totalPrice)
-                            ? it.totalPrice.toLocaleString("vi-VN") + "₫"
-                            : "-";
-
-                        return (
-                          <div
-                            key={it.orderDetailId}
-                            className="border rounded-xl p-3 flex items-start justify-between hover:bg-neutral-50"
-                          >
-                            <div className="pr-3">
-                              <div className="font-semibold text-neutral-900">
-                                {it.dishName}
-                              </div>
-                              {it.note && (
-                                <div className="text-xs text-neutral-500 mt-1">
-                                  Ghi chú: {it.note}
-                                </div>
-                              )}
-                              {Array.isArray(it.toppings) &&
-                                it.toppings.length > 0 && (
-                                  <div className="text-xs text-neutral-500 mt-1">
-                                    Topping:{" "}
-                                    {it.toppings
-                                      .map((t) => t.toppingName)
-                                      .join(", ")}
-                                  </div>
-                                )}
-                            </div>
-                            <div className="text-right">
-                              <div className="text-sm font-bold text-emerald-600">
-                                {price}
-                              </div>
-                              <div
-                                className={`mt-1 inline-block text-xs px-2 py-0.5 rounded-lg border ${itemBadgeClass}`}
-                              >
-                                {STATUS_LABEL[itemStatus] ||
-                                  itemStatus ||
-                                  "unknown"}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       </div>
