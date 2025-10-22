@@ -13,8 +13,6 @@ export default function MenuContent({
   isPersonalized,
   currentGoal,
 }) {
-  const categories = CATEGORY_LIST.filter((c) => c.id !== "all");
-
   const goals = [
     { id: "lose", name: "Giảm cân", icon: Target },
     { id: "maintain", name: "Giữ dáng", icon: Heart },
@@ -30,12 +28,13 @@ export default function MenuContent({
   const percent = canShowCalorie
     ? Math.min(
         100,
-        Math.max(0, Math.round((caloriesConsumed / estimatedCalories) * 100))
+        Math.max(0, Math.round((caloriesConsumed / estimatedCalories) * 100)),
       )
     : 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* =================== Theo dõi calorie =================== */}
       {canShowCalorie && (
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-8">
           <div className="flex items-center justify-between">
@@ -59,6 +58,8 @@ export default function MenuContent({
                 </div>
                 <div className="text-sm text-neutral-600">Cal đã thêm</div>
               </div>
+
+              {/* Vòng progress */}
               <div className="w-16 h-16 relative">
                 {(() => {
                   const percentage = percent;
@@ -93,6 +94,7 @@ export default function MenuContent({
                   </span>
                 </div>
               </div>
+
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
                   {estimatedCalories}
@@ -104,6 +106,7 @@ export default function MenuContent({
         </div>
       )}
 
+      {/* =================== Tab chọn menu =================== */}
       <div className="flex space-x-4 mb-6">
         <button
           onClick={() => setActiveMenuTab("all")}
@@ -127,6 +130,7 @@ export default function MenuContent({
         </button>
       </div>
 
+      {/* =================== Danh mục món ăn =================== */}
       <div className="space-y-10 mb-4">
         {CATEGORY_LIST.filter((c) => c.id !== "all").map((category) => (
           <div key={category.id}>
@@ -135,22 +139,32 @@ export default function MenuContent({
                 {category.name}
               </h3>
             </div>
+
             <div className="overflow-x-auto">
               <div className="flex gap-4 min-w-max pb-2">
                 {(activeMenuTab === "all" ? filteredDishes : personalizedMenu)
-                  .filter((d) => d.category === category.id)
+                  .filter(
+                    (d) =>
+                      d.category?.toLowerCase() === category.id?.toLowerCase(),
+                  )
                   .map((dish) => (
                     <div
                       key={dish.id}
                       className="w-72 flex-shrink-0 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20"
                     >
+                      {/* Ảnh món ăn */}
                       <div className="aspect-w-16 aspect-h-9 mb-3">
                         <img
-                          src={dish.image}
+                          src={
+                            dish.picture ||
+                            "https://via.placeholder.com/300x200?text=No+Image"
+                          }
                           alt={dish.name}
                           className="w-full h-40 object-cover rounded-xl"
                         />
                       </div>
+
+                      {/* Thông tin món */}
                       <div className="mb-3">
                         <h4 className="text-lg font-bold text-neutral-900 mb-1">
                           {dish.name}
@@ -160,13 +174,15 @@ export default function MenuContent({
                         </p>
                         <div className="flex items-center justify-between mt-2">
                           <span className="text-xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                            ${dish.price}
+                            {dish.price?.toLocaleString("vi-VN")}₫
                           </span>
                           <span className="text-xs text-neutral-500">
-                            {dish.calories} cal
+                            {dish.calories || dish.calo} cal
                           </span>
                         </div>
                       </div>
+
+                      {/* Nút chọn */}
                       <button
                         onClick={() => onDishSelect(dish)}
                         className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-2.5 px-4 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-medium"
@@ -181,6 +197,7 @@ export default function MenuContent({
         ))}
       </div>
 
+      {/* =================== Mục tiêu cá nhân hóa =================== */}
       {activeMenuTab === "personalized" && (
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-6">
           <h3 className="text-lg font-bold text-neutral-900 mb-4">
@@ -224,6 +241,7 @@ export default function MenuContent({
         </div>
       )}
 
+      {/* =================== Khi chưa có personalized menu =================== */}
       {activeMenuTab === "personalized" && personalizedMenu.length === 0 && (
         <div className="text-center py-12">
           <div className="w-24 h-24 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-6">

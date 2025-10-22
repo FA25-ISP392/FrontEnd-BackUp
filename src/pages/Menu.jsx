@@ -7,9 +7,9 @@ import PersonalizationModal from "../components/Menu/PersonalizationModal";
 import CartSidebar from "../components/Menu/CartSidebar";
 import PaymentSidebar from "../components/Menu/PaymentSidebar";
 import DishOptionsModal from "../components/Menu/DishOptionsModal";
-import { mockMenuDishes } from "../lib/menuData";
 import { createOrder } from "../lib/apiOrder";
 import { useMenuPersonalization } from "../hooks";
+import { listDish, getDish } from "../lib/apiDish";
 import {
   updateCustomerPersonalization,
   getCustomerDetail,
@@ -31,10 +31,11 @@ export default function Menu() {
   const [customerId, setCustomerId] = useState(null);
   const [customerName, setCustomerName] = useState(null);
   const [orderId, setOrderId] = useState(
-    () => sessionStorage.getItem("orderId") || null
+    () => sessionStorage.getItem("orderId") || null,
   );
   const [baseCalories, setBaseCalories] = useState(null);
   const [estimatedCalories, setEstimatedCalories] = useState(null);
+  const [menuDishes, setMenuDishes] = useState([]);
 
   const PERSONAL_KEY = (cid) => `personalization:${cid}`;
   const applyGoal = (cals, goal) => {
@@ -55,6 +56,7 @@ export default function Menu() {
   const getDisplayName = (u) =>
     String(u?.fullName || u?.name || u?.username || "").trim();
 
+  // 🔹 Load user info & table ID
   useEffect(() => {
     const storedTableId = sessionStorage.getItem("customerTableId");
     if (storedTableId) setTableId(storedTableId);
@@ -87,6 +89,7 @@ export default function Menu() {
     };
   }, []);
 
+  // 🔹 Tạo đơn hàng nếu chưa có
   useEffect(() => {
     const ready = Boolean(customerId) && Boolean(tableId);
     if (!ready) return;
@@ -115,6 +118,7 @@ export default function Menu() {
     })();
   }, [customerId, tableId]);
 
+  // 🔹 Lọc món ẩn nếu có
   const hiddenNames = (() => {
     try {
       return JSON.parse(localStorage.getItem("hidden_dishes")) || [];
@@ -122,13 +126,28 @@ export default function Menu() {
       return [];
     }
   })();
-  const filteredDishes = mockMenuDishes.filter(
-    (dish) => dish.available && !hiddenNames.includes(dish.name)
+
+  // 🔹 Load danh sách món ăn thật từ BE
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await listDish();
+        setMenuDishes(data);
+      } catch (err) {
+        console.error("❌ Lỗi khi load món ăn:", err);
+      }
+    })();
+  }, []);
+
+  const filteredDishes = menuDishes.filter(
+    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name),
   );
 
+  // 🔹 Cá nhân hóa menu
   const { personalizationForm, setPersonalizationForm, personalizedDishes } =
     useMenuPersonalization(filteredDishes);
 
+  // 🔹 Load dữ liệu cá nhân hóa khách hàng
   useEffect(() => {
     if (!customerId) return;
 
@@ -144,10 +163,7 @@ export default function Menu() {
             setBaseCalories(cached.perWorkout);
             setEstimatedCalories(applyGoal(cached.perWorkout, data.goal));
             setIsPersonalized(true);
-          } else {
-            // đã có form nhưng chưa tính perWorkout (legacy)
-            setIsPersonalized(true);
-          }
+          } else setIsPersonalized(true);
         }
       } catch {}
       return;
@@ -168,7 +184,7 @@ export default function Menu() {
         setPersonalizationForm((prev) => ({ ...prev, ...toForm }));
         localStorage.setItem(
           PERSONAL_KEY(customerId),
-          JSON.stringify({ data: toForm, updatedAt: Date.now() })
+          JSON.stringify({ data: toForm, updatedAt: Date.now() }),
         );
       } catch (e) {
         console.warn("Không lấy được personalization từ BE:", e?.message || e);
@@ -176,17 +192,18 @@ export default function Menu() {
     })();
   }, [customerId]);
 
+  // 🔹 Giỏ hàng
   const addToCart = (dish, notes = "") => {
     const existingItem = cart.find(
-      (item) => item.id === dish.id && item.notes === notes
+      (item) => item.id === dish.id && item.notes === notes,
     );
     if (existingItem) {
       setCart((prevCart) =>
         prevCart.map((item) =>
           item.id === dish.id && item.notes === notes
             ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
+            : item,
+        ),
       );
     } else {
       setCart((prevCart) => [...prevCart, { ...dish, quantity: 1, notes }]);
@@ -204,11 +221,11 @@ export default function Menu() {
       const diff = newQuantity - item.quantity;
       setCart((prev) =>
         prev.map((it) =>
-          it.id === itemId ? { ...it, quantity: newQuantity } : it
-        )
+          it.id === itemId ? { ...it, quantity: newQuantity } : it,
+        ),
       );
       setCaloriesConsumed(
-        (prev) => prev + diff * (item.totalCalories || item.calories)
+        (prev) => prev + diff * (item.totalCalories || item.calories),
       );
     }
   };
@@ -218,91 +235,15 @@ export default function Menu() {
     if (item) {
       setCart((prev) => prev.filter((it) => it.id !== itemId));
       setCaloriesConsumed(
-        (prev) => prev - (item.totalCalories || item.calories) * item.quantity
+        (prev) => prev - (item.totalCalories || item.calories) * item.quantity,
       );
-    }
-  };
-
-  const handlePersonalizationSubmit = async (form) => {
-    if (!customerId) {
-      alert("Không tìm thấy tài khoản khách hàng.");
-      return;
-    }
-    try {
-      await updateCustomerPersonalization(customerId, form);
-
-      const bmr =
-        form.gender === "male"
-          ? 10 * form.weight + 6.25 * form.height - 5 * form.age + 5
-          : 10 * form.weight + 6.25 * form.height - 5 * form.age - 161;
-
-      const multiplier =
-        {
-          sedentary: 1.2,
-          light: 1.375,
-          moderate: 1.55,
-          active: 1.725,
-          very_active: 1.9,
-        }[form.exerciseLevel] || 1.2;
-      const tdee = Math.round(bmr * multiplier);
-
-      const sessionsMap = {
-        sedentary: 0,
-        light: 2,
-        moderate: 4,
-        active: 6,
-        very_active: 7,
-      };
-      const sessions = sessionsMap[form.exerciseLevel] ?? 0;
-
-      // Base để hiển thị ngoài (chia theo buổi nếu có)
-      const perWorkout = sessions > 0 ? Math.round(tdee / sessions) : tdee;
-
-      // Áp mục tiêu hiện tại (nếu người dùng đã tick trong modal)
-      const goal = form.goal || personalizationForm.goal || "";
-      const finalCals = applyGoal(perWorkout, goal);
-
-      setBaseCalories(perWorkout);
-      setEstimatedCalories(finalCals);
-      setIsPersonalized(true);
-
-      localStorage.setItem(
-        PERSONAL_KEY(customerId),
-        JSON.stringify({
-          data: { ...form, goal },
-          updatedAt: Date.now(),
-          perWorkout,
-        })
-      );
-
-      setIsPersonalizationOpen(false);
-      alert("Đã lưu thông tin cá nhân hoá!");
-    } catch (err) {
-      console.error("Cập nhật cá nhân hoá thất bại:", err);
-      alert(`Lưu thất bại: ${err?.message || "Vui lòng thử lại"}`);
     }
   };
 
   const handleGoalChange = (goalId) => {
     setPersonalizationForm((prev) => ({ ...prev, goal: goalId }));
-    const base = baseCalories ?? estimatedCalories; // fallback
+    const base = baseCalories ?? estimatedCalories;
     setEstimatedCalories(applyGoal(base, goalId));
-
-    if (customerId) {
-      try {
-        const cachedRaw = localStorage.getItem(PERSONAL_KEY(customerId));
-        const cached = cachedRaw ? JSON.parse(cachedRaw) : {};
-        localStorage.setItem(
-          PERSONAL_KEY(customerId),
-          JSON.stringify({
-            ...cached,
-            data: { ...(cached?.data || {}), goal: goalId },
-            perWorkout: cached?.perWorkout ?? baseCalories ?? null,
-            updatedAt: Date.now(),
-          })
-        );
-      } catch {}
-    }
   };
 
   const handleOrderFood = () => setIsCartOpen(false);
@@ -315,6 +256,7 @@ export default function Menu() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
+      {/* Header */}
       <MenuHeader
         cartItemCount={cartItemCount}
         onPersonalize={() => setIsPersonalizationOpen(true)}
@@ -331,7 +273,8 @@ export default function Menu() {
         customerId={customerId}
       />
 
-      {orderId && tableId && customerId ? (
+      {/* Banner chào */}
+      {orderId && tableId && customerId && (
         <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
           <div className="max-w-7xl mx-auto flex items-center justify-center space-x-6 text-sm">
             <div className="flex items-center space-x-2">
@@ -350,16 +293,22 @@ export default function Menu() {
             </div>
           </div>
         </div>
-      ) : null}
+      )}
 
+      {/* Nội dung Menu */}
       <MenuContent
         activeMenuTab={activeMenuTab}
         setActiveMenuTab={setActiveMenuTab}
         filteredDishes={filteredDishes}
         personalizedMenu={personalizedDishes}
-        onDishSelect={(dish) => {
-          setSelectedDish(dish);
-          setIsDishOptionsOpen(true);
+        onDishSelect={async (dish) => {
+          try {
+            const fullDish = await getDish(dish.id);
+            setSelectedDish(fullDish);
+            setIsDishOptionsOpen(true);
+          } catch (err) {
+            console.error("Không lấy được chi tiết món:", err);
+          }
         }}
         caloriesConsumed={caloriesConsumed}
         estimatedCalories={estimatedCalories}
@@ -370,12 +319,12 @@ export default function Menu() {
 
       <MenuFooter />
 
+      {/* Modals */}
       <PersonalizationModal
         isOpen={isPersonalizationOpen}
         onClose={() => setIsPersonalizationOpen(false)}
         personalizationForm={personalizationForm}
         setPersonalizationForm={setPersonalizationForm}
-        onSubmit={handlePersonalizationSubmit}
       />
 
       <CartSidebar
@@ -396,6 +345,7 @@ export default function Menu() {
         setPaymentMethod={setPaymentMethod}
       />
 
+      {/* Modal chi tiết món ăn */}
       <DishOptionsModal
         isOpen={isDishOptionsOpen}
         onClose={() => setIsDishOptionsOpen(false)}
@@ -403,6 +353,7 @@ export default function Menu() {
         onAddToCart={addToCart}
       />
 
+      {/* Modal gọi nhân viên */}
       {isCallStaffOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">

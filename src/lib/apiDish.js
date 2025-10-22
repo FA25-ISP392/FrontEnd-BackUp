@@ -4,17 +4,18 @@ import apiConfig from "../api/apiConfig";
 export function normalizeDish(d = {}) {
   return {
     id: d.dishId ?? d.id,
-    name: d.dish_name ?? d.dishName ?? "",
+    name: d.dishName ?? d.name ?? "",
     price: d.price ?? 0,
     category: d.category ?? "",
     type: d.type ?? "",
-    is_available:
-      d.isAvailable ??
-      d.is_available ??
-      (d.status === "available" || d.status === 1),
+    isAvailable: d.isAvailable ?? true,
     calories: d.calo ?? d.calories ?? 0,
     description: d.description ?? "",
-    picture: d.picture ?? "",
+    picture: d.picture?.startsWith("http")
+      ? d.picture
+      : `https://api-monngon88.purintech.id.vn/isp392/uploads/${d.picture}`,
+    remainingQuantity: d.remainingQuantity ?? 0,
+    toppings: d.optionalToppings ?? [],
   };
 }
 
@@ -60,23 +61,46 @@ export async function createDish(payload) {
 }
 
 // 🟡 Lấy danh sách món ăn
+// export async function listDish(params = {}) {
+//   const token = localStorage.getItem("token");
+//   const res = await apiConfig.get("/dish", {
+//     params,
+//     headers: { Authorization: `Bearer ${token}` },
+//   });
+
+//   const arr = res?.data?.result ?? [];
+//   return Array.isArray(arr) ? arr.map(normalizeDish) : [];
+// }
+
 export async function listDish(params = {}) {
   const token = localStorage.getItem("token");
   const res = await apiConfig.get("/dish", {
     params,
     headers: { Authorization: `Bearer ${token}` },
   });
-  const arr = Array.isArray(res) ? res : [];
+
+  // ⚙️ interceptor đã unwrap -> res chính là d.result
+  const arr = Array.isArray(res) ? res : res?.result ?? [];
   return arr.map(normalizeDish);
 }
 
-// 🟢 Lấy chi tiết món
+// // 🔵 Lấy chi tiết món ăn
+// export async function getDish(id) {
+//   const token = localStorage.getItem("token");
+//   const res = await apiConfig.get(`/dish/${id}`, {
+//     headers: { Authorization: `Bearer ${token}` },
+//   });
+//   return res?.data?.result;
+// }
+
 export async function getDish(id) {
   const token = localStorage.getItem("token");
   const res = await apiConfig.get(`/dish/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  return res;
+
+  // interceptor đã unwrap -> res chính là object Dish
+  return normalizeDish(res);
 }
 
 // 🟠 Cập nhật món ăn
