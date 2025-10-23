@@ -12,17 +12,9 @@ import { listTopping } from "../../../lib/apiTopping";
 import { addDishToppingsBatch } from "../../../lib/apiDishTopping";
 
 /* ===================== Helpers ===================== */
-const CATEGORIES = [
-  "PIZZA",
-  "PASTA",
-  "Main Course",
-  "Salad",
-  "Dessert",
-  "Appetizer",
-  "Beverage",
-];
+const CATEGORIES = ["PIZZA", "PASTA", "SALAD", "DESSERT", "DRINKS"];
 
-const TYPES = ["BUILD_MUSCLE", "MAINTAIN_WEIGHT", "LOSE_WEIGHT"];
+const TYPES = ["Tăng cân", "Giữ dáng", "Giảm cân"];
 
 const fmtVND = (n) =>
   new Intl.NumberFormat("vi-VN", {
@@ -62,13 +54,13 @@ function DishForm({ initial, onSubmit, saving }) {
     category: initial?.category || CATEGORIES[0],
     type: initial?.type || TYPES[0],
     price: Number(initial?.price ?? 0),
-    calo: Number(initial?.calories ?? 0),
+    // đổi dòng này 👇
+    calo: Number(initial?.calo ?? 0),
     description: initial?.description || "",
-    isAvailable: Boolean(initial?.is_available ?? true),
+    isAvailable: Boolean(initial?.isAvailable ?? true),
     imageFile: null,
     toppings: initial?.optionalToppings?.map((t) => t.toppingId) || [],
   });
-
   const [allToppings, setAllToppings] = useState([]);
 
   useEffect(() => {

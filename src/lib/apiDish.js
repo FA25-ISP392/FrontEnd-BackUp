@@ -6,7 +6,7 @@ export function normalizeDish(d = {}) {
     name: d.dishName ?? d.name ?? "",
     description: d.description ?? "",
     price: d.price ?? 0,
-    calo: d.calo ?? d.calories ?? 0,
+    calo: Number(d.calo ?? 0),
     category: d.category ?? "",
     type: d.type ?? "",
     isAvailable: d.isAvailable ?? true,
@@ -35,8 +35,11 @@ export async function getDish(id) {
   const res = await apiConfig.get(`/dish/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  console.log("🍕 Dữ liệu món chi tiết:", res);
-  return normalizeDish(res);
+
+  const data = res?.result ?? res; // ✅ lấy phần "result" trong response
+  console.log("🍕 Dữ liệu món chi tiết:", data);
+
+  return normalizeDish(data); // ✅ truyền data (đã unwrap)
 }
 
 export async function createDish(payload) {
@@ -57,8 +60,8 @@ export async function createDish(payload) {
           type: payload.type || "BUILD_MUSCLE",
         }),
       ],
-      { type: "application/json" }
-    )
+      { type: "application/json" },
+    ),
   );
 
   if (payload.imageFile instanceof File) {
@@ -93,8 +96,8 @@ export async function updateDish(id, payload) {
           type: payload.type || "BUILD_MUSCLE",
         }),
       ],
-      { type: "application/json" }
-    )
+      { type: "application/json" },
+    ),
   );
 
   if (payload.imageFile instanceof File) {

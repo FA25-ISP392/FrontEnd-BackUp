@@ -7,6 +7,9 @@ import { getCurrentUser } from "../lib/auth";
 import ChefDailyPlan from "../components/Chef/ChefDailyPlan";
 import ChefDailyDishes from "../components/Chef/ChefDailyDishes";
 import ChefRejectedDishes from "../components/Chef/ChefRejectedDishes";
+import ChefDailyPlanTopping from "../components/Chef/ChefDailyPlanTopping";
+import ChefDailyToppings from "../components/Chef/ChefDailyToppings";
+
 import {
   getOrderDetailsByStatus,
   updateOrderDetailStatus,
@@ -22,6 +25,7 @@ export default function Chef() {
   const [ready, setReady] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [subTab, setSubTab] = useState("dish");
 
   useEffect(() => {
     const u = getCurrentUser();
@@ -68,10 +72,10 @@ export default function Chef() {
         preparing.find((o) => o.orderDetailId === orderDetailId);
       if (!itemToMove) return;
       setPending((prev) =>
-        prev.filter((o) => o.orderDetailId !== orderDetailId)
+        prev.filter((o) => o.orderDetailId !== orderDetailId),
       );
       setPreparing((prev) =>
-        prev.filter((o) => o.orderDetailId !== orderDetailId)
+        prev.filter((o) => o.orderDetailId !== orderDetailId),
       );
       const updatedItem = { ...itemToMove, status: newStatus };
       if (newStatus === "PREPARING") {
@@ -123,10 +127,60 @@ export default function Chef() {
         );
 
       case "dailyPlan":
-        return <ChefDailyPlan />;
+        return (
+          <div className="space-y-4">
+            <div className="flex gap-4 mb-4">
+              <button
+                onClick={() => setSubTab("dish")}
+                className={`px-4 py-2 rounded-lg font-semibold ${
+                  subTab === "dish" ? "bg-blue-500 text-white" : "bg-gray-100"
+                }`}
+              >
+                Món ăn
+              </button>
+              <button
+                onClick={() => setSubTab("topping")}
+                className={`px-4 py-2 rounded-lg font-semibold ${
+                  subTab === "topping"
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-100"
+                }`}
+              >
+                Topping
+              </button>
+            </div>
+
+            {subTab === "dish" ? <ChefDailyPlan /> : <ChefDailyPlanTopping />}
+          </div>
+        );
 
       case "dailyDishes":
-        return <ChefDailyDishes />;
+        return (
+          <div className="space-y-4">
+            <div className="flex gap-4 mb-4">
+              <button
+                onClick={() => setSubTab("dish")}
+                className={`px-4 py-2 rounded-lg font-semibold ${
+                  subTab === "dish" ? "bg-blue-500 text-white" : "bg-gray-100"
+                }`}
+              >
+                Món ăn
+              </button>
+              <button
+                onClick={() => setSubTab("topping")}
+                className={`px-4 py-2 rounded-lg font-semibold ${
+                  subTab === "topping"
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-100"
+                }`}
+              >
+                Topping
+              </button>
+            </div>
+
+            {subTab === "dish" ? <ChefDailyDishes /> : <ChefDailyToppings />}
+          </div>
+        );
 
       case "rejectedDishes":
         return <ChefRejectedDishes />;
