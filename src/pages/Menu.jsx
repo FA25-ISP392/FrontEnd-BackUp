@@ -49,6 +49,8 @@ export default function Menu() {
   const [menuDishes, setMenuDishes] = useState([]);
   const [orderDetails, setOrderDetails] = useState([]);
 
+  const [paymentItems, setPaymentItems] = useState([]);
+
   const PERSONAL_KEY = (cid) => `personalization:${cid}`;
   const applyGoal = (cals, goal) => {
     if (typeof cals !== "number" || !isFinite(cals)) return null;
@@ -303,6 +305,46 @@ export default function Menu() {
     setEstimatedCalories(applyGoal(base, goalId));
   };
 
+  const groupPaymentItems = (details = []) => {
+    const map = new Map();
+    details.forEach((d) => {
+      const name = d.dishName ?? d.name;
+      const unit = Number(d.totalPrice ?? d.price ?? 0);
+      const key = `${name}|${unit}`;
+      const cur = map.get(key) || {
+        id: key,
+        name,
+        price: unit,
+        quantity: 0,
+        totalPrice: 0,
+      };
+      cur.quantity += 1;
+      cur.totalPrice = cur.price * cur.quantity;
+      map.set(key, cur);
+    });
+    return [...map.values()];
+  };
+
+  const handleOpenPayment = async () => {
+    try {
+      if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
+      if (cart.length) {
+        await createOrderDetailsFromCart(orderId, cart);
+      }
+      const details = await getOrderDetailsByOrderId(orderId);
+      const items = groupPaymentItems(details);
+      setPaymentItems(items);
+      setIsPaymentOpen(true);
+      if (cart.length) {
+        setCart([]);
+        setCaloriesConsumed(0);
+      }
+    } catch (err) {
+      console.error("❌ Mở thanh toán thất bại:", err);
+      alert(err?.message || "Không mở được thanh toán. Vui lòng thử lại.");
+    }
+  };
+
   const handlePayment = () => {
     setIsPaymentOpen(false);
     setIsCallStaffOpen(true);
@@ -323,7 +365,7 @@ export default function Menu() {
             setCaloriesConsumed(0);
           }, 2000);
         }}
-        onCheckout={() => setIsPaymentOpen(true)}
+        onCheckout={handleOpenPayment}
         onViewStatus={() => setIsStatusOpen(true)}
         tableId={tableId}
         customerId={customerId}
@@ -404,6 +446,7 @@ export default function Menu() {
         isOpen={isPaymentOpen}
         onClose={() => setIsPaymentOpen(false)}
         cart={cart}
+        items={paymentItems}
         onPayment={handlePayment}
         paymentMethod={paymentMethod}
         setPaymentMethod={setPaymentMethod}

@@ -1,19 +1,27 @@
 import { X, CreditCard, Bell } from "lucide-react";
 
+const vnd = (n = 0) =>
+  Number(n || 0).toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " ₫";
+
 export default function PaymentSidebar({
   isOpen,
   onClose,
   cart,
+  items,
   onPayment,
   paymentMethod,
   setPaymentMethod,
 }) {
   if (!isOpen) return null;
 
-  const totalAmount = cart.reduce(
-    (sum, item) => sum + (item.totalPrice || item.price) * item.quantity,
-    0,
-  );
+  // Ưu tiên items (lấy từ BE), fallback về cart
+  const cartItems = Array.isArray(items) && items.length ? items : cart;
+
+  const totalAmount = cartItems.reduce((sum, item) => {
+    const qty = item.quantity ?? 1;
+    const unit = item.totalPrice ?? item.price ?? 0;
+    return sum + unit * qty;
+  }, 0);
 
   return (
     <>
@@ -53,108 +61,135 @@ export default function PaymentSidebar({
               Tóm tắt đơn hàng
             </h3>
             <div className="space-y-3">
-              {cart.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex-1">
-                    <div className="font-medium text-neutral-900">
-                      {item.name}
-                    </div>
-                    <div className="text-sm text-neutral-600">
-                      {item.quantity} × ${item.totalPrice || item.price}
-                      {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
-                        <span className="block text-xs text-neutral-500">
-                          {Object.values(item.selectedOptions).map((option, index) => (
-                            <span key={index}>
-                              {option.name}
-                              {index < Object.values(item.selectedOptions).length - 1 ? ", " : ""}
+              {cartItems.map((item) => {
+                const qty = item.quantity ?? 1;
+                const unit = item.totalPrice ?? item.price ?? 0;
+                const line = unit * qty;
+                return (
+                  <div
+                    key={item.id ?? item.orderDetailId}
+                    className="flex items-center justify-between"
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-neutral-900">
+                        {item.name ?? item.dishName}
+                      </div>
+                      <div className="text-sm text-neutral-600">
+                        {qty} × {vnd(unit)}
+                        {item.selectedOptions &&
+                          Object.keys(item.selectedOptions).length > 0 && (
+                            <span className="block text-xs text-neutral-500">
+                              {Object.values(item.selectedOptions).map(
+                                (option, index) => (
+                                  <span key={index}>
+                                    {option.name}
+                                    {index <
+                                    Object.values(item.selectedOptions).length -
+                                      1
+                                      ? ", "
+                                      : ""}
+                                  </span>
+                                )
+                              )}
                             </span>
-                          ))}
-                        </span>
-                      )}
-                      {item.notes && (
-                        <span className="block text-xs text-neutral-500">
-                          Ghi chú: {item.notes}
-                        </span>
-                      )}
+                          )}
+                        {item.notes && (
+                          <span className="block text-xs text-neutral-500">
+                            Ghi chú: {item.notes}
+                          </span>
+                        )}
+                      </div>
                     </div>
+                    <span className="font-medium text-neutral-900">
+                      {vnd(line)}
+                    </span>
                   </div>
-                  <span className="font-medium text-neutral-900">
-                    ${((item.totalPrice || item.price) * item.quantity).toFixed(2)}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
+
             <div className="border-t border-neutral-200 mt-4 pt-4">
               <div className="flex items-center justify-between">
                 <span className="text-lg font-bold text-neutral-900">
                   Tổng cộng:
                 </span>
                 <span className="text-2xl font-bold text-orange-600">
-                  ${totalAmount.toFixed(2)}
+                  {vnd(totalAmount)}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Order Details */}
+          {/* Details */}
           <div className="flex-1 overflow-y-auto p-6">
             <h3 className="text-lg font-bold text-neutral-900 mb-4">
               Chi tiết đơn hàng
             </h3>
             <div className="space-y-4">
-              {cart.length === 0 ? (
+              {cartItems.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <CreditCard className="h-8 w-8 text-neutral-400" />
                   </div>
-                  <p className="text-neutral-500">Chưa có món nào trong đơn hàng</p>
+                  <p className="text-neutral-500">
+                    Chưa có món nào trong đơn hàng
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {cart.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between p-4 bg-neutral-50 rounded-xl"
-                    >
-                      <div className="flex-1">
-                        <div className="font-medium text-neutral-900">
-                          {item.name}
-                        </div>
-                        <div className="text-sm text-neutral-600">
-                          Số lượng: {item.quantity}
-                        </div>
-                        {item.selectedOptions && Object.keys(item.selectedOptions).length > 0 && (
-                          <div className="text-xs text-neutral-500 mt-1">
-                            {Object.values(item.selectedOptions).map((option, index) => (
-                              <span key={index}>
-                                {option.name}
-                                {index < Object.values(item.selectedOptions).length - 1 ? ", " : ""}
-                              </span>
-                            ))}
+                  {cartItems.map((item) => {
+                    const qty = item.quantity ?? 1;
+                    const unit = item.totalPrice ?? item.price ?? 0;
+                    return (
+                      <div
+                        key={item.id ?? item.orderDetailId}
+                        className="flex items-center justify-between p-4 bg-neutral-50 rounded-xl"
+                      >
+                        <div className="flex-1">
+                          <div className="font-medium text-neutral-900">
+                            {item.name ?? item.dishName}
                           </div>
-                        )}
-                        {item.notes && (
-                          <div className="text-xs text-neutral-500 mt-1">
-                            Ghi chú: {item.notes}
+                          <div className="text-sm text-neutral-600">
+                            Số lượng: {qty}
                           </div>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <div className="font-medium text-neutral-900">
-                          ${((item.totalPrice || item.price) * item.quantity).toFixed(2)}
+                          {item.selectedOptions &&
+                            Object.keys(item.selectedOptions).length > 0 && (
+                              <div className="text-xs text-neutral-500 mt-1">
+                                {Object.values(item.selectedOptions).map(
+                                  (option, index) => (
+                                    <span key={index}>
+                                      {option.name}
+                                      {index <
+                                      Object.values(item.selectedOptions)
+                                        .length -
+                                        1
+                                        ? ", "
+                                        : ""}
+                                    </span>
+                                  )
+                                )}
+                              </div>
+                            )}
+                          {item.notes && (
+                            <div className="text-xs text-neutral-500 mt-1">
+                              Ghi chú: {item.notes}
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium text-neutral-900">
+                            {vnd(unit * qty)}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Call Staff Button */}
+          {/* Call staff / pay */}
           <div className="border-t border-neutral-200 p-6">
             <button
               onClick={onPayment}
