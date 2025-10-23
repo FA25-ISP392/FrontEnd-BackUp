@@ -9,21 +9,19 @@ import {
 
 export default function ChefSidebar({ activeSection, setActiveSection }) {
   const menuItems = [
-    { name: "Tổng Quan", key: "overview", icon: <LayoutDashboard /> },
+    { name: "Quản Lý Đơn Món", key: "overview", icon: <LayoutDashboard /> },
     { name: "Kế Hoạch Trong Ngày", key: "dailyPlan", icon: <CalendarDays /> },
     { name: "Món Trong Ngày", key: "dailyDishes", icon: <UtensilsCrossed /> },
-    { name: "Món Bị Từ Chối", key: "rejectedDishes", icon: <XCircle /> }, // 🆕 tab mới
+    { name: "Món Bị Từ Chối", key: "rejectedDishes", icon: <XCircle /> },
   ];
 
   return (
     <aside className="w-64 min-h-screen bg-white border-r shadow-sm flex flex-col">
-      {/* Header */}
       <div className="p-6 border-b">
         <h2 className="text-2xl font-bold text-red-600">Trang bếp</h2>
         <p className="text-sm text-gray-500 mt-1">Quản lý món ăn và đơn hàng</p>
       </div>
 
-      {/* Menu */}
       <nav className="flex-1 p-4 space-y-2">
         {menuItems.map((item) => (
           <button
@@ -41,7 +39,6 @@ export default function ChefSidebar({ activeSection, setActiveSection }) {
         ))}
       </nav>
 
-      {/* Footer */}
       <div className="p-4 border-t text-center text-sm text-gray-400">
         &copy; 2025 Món Ngon 88
       </div>
