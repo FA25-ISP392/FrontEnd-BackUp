@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import StaffSidebar from "../components/Staff/StaffSidebar";
 import StaffRestaurantTableLayout from "../components/Staff/StaffRestaurantTableLayout";
+import StaffTableInfoLayout from "../components/Staff/StaffTableInfoLayout";
 
 import { getCurrentUser } from "../lib/auth";
 
@@ -32,6 +33,7 @@ export default function StaffPage() {
       status: "occupied",
       guests: 4,
       callStaff: false,
+      callPayment: false,
       orderTime: "14:30",
       duration: "45 min",
       totalAmount: 89.5,
@@ -42,6 +44,7 @@ export default function StaffPage() {
       status: "available",
       guests: 0,
       callStaff: false,
+      callPayment: false,
       orderTime: null,
       duration: null,
       totalAmount: 0,
@@ -52,6 +55,7 @@ export default function StaffPage() {
       status: "occupied",
       guests: 2,
       callStaff: true,
+      callPayment: false,
       orderTime: "15:00",
       duration: "30 min",
       totalAmount: 45.2,
@@ -62,6 +66,7 @@ export default function StaffPage() {
       status: "reserved",
       guests: 6,
       callStaff: false,
+      callPayment: false,
       orderTime: "15:30",
       duration: "15 min",
       totalAmount: 0,
@@ -72,6 +77,7 @@ export default function StaffPage() {
       status: "occupied",
       guests: 3,
       callStaff: false,
+      callPayment: false,
       orderTime: "14:45",
       duration: "40 min",
       totalAmount: 67.8,
@@ -82,6 +88,7 @@ export default function StaffPage() {
       status: "available",
       guests: 0,
       callStaff: false,
+      callPayment: false,
       orderTime: null,
       duration: null,
       totalAmount: 0,
@@ -92,6 +99,7 @@ export default function StaffPage() {
       status: "occupied",
       guests: 5,
       callStaff: true,
+      callPayment: false,
       orderTime: "15:15",
       duration: "25 min",
       totalAmount: 125.4,
@@ -102,6 +110,7 @@ export default function StaffPage() {
       status: "occupied",
       guests: 2,
       callStaff: false,
+      callPayment: true,
       orderTime: "14:50",
       duration: "35 min",
       totalAmount: 52.3,
@@ -112,6 +121,7 @@ export default function StaffPage() {
       status: "cleaning",
       guests: 0,
       callStaff: false,
+      callPayment: false,
       orderTime: null,
       duration: "5 min",
       totalAmount: 0,
@@ -122,6 +132,7 @@ export default function StaffPage() {
       status: "available",
       guests: 0,
       callStaff: false,
+      callPayment: false,
       orderTime: null,
       duration: null,
       totalAmount: 0,
@@ -132,6 +143,7 @@ export default function StaffPage() {
       status: "occupied",
       guests: 4,
       callStaff: false,
+      callPayment: false,
       orderTime: "15:20",
       duration: "20 min",
       totalAmount: 78.9,
@@ -142,6 +154,7 @@ export default function StaffPage() {
       status: "occupied",
       guests: 2,
       callStaff: false,
+      callPayment: false,
       orderTime: "14:35",
       duration: "50 min",
       totalAmount: 34.6,
@@ -385,19 +398,12 @@ export default function StaffPage() {
               </div>
 
               {/* Table Layout with Clickable Tables */}
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h3 className="text-lg font-semibold mb-4">
-                  Sơ Đồ Bàn Nhà Hàng
-                </h3>
-                <p className="text-sm text-neutral-600 mb-4">
-                  Nhấp vào bàn để xem thông tin chi tiết
-                </p>
-                <StaffRestaurantTableLayout 
-                  tables={tables.slice(0, 8)}
-                  onTableClick={setSelectedTable}
-                  selectedTable={selectedTable}
-                />
-              </div>
+              <StaffTableInfoLayout 
+                tables={tables.slice(0, 8)}
+                onTableClick={setSelectedTable}
+                selectedTable={selectedTable}
+                orders={orders}
+              />
             </div>
           )}
 
@@ -712,11 +718,13 @@ export default function StaffPage() {
 
               {/* Actions */}
               <div className="mt-6 flex gap-3">
-                <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">
+                <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2">
+                  <Phone className="h-4 w-4" />
                   Phản Hồi Gọi
                 </button>
-                <button className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition">
-                  Thanh toán
+                <button className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  Xử Lý Thanh Toán
                 </button>
               </div>
             </div>
