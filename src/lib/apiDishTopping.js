@@ -26,26 +26,18 @@ export async function addDishToppingsBatch(dishId, toppingIds = []) {
       toppingIds: toppingIds.map((x) => Number(x)),
     };
 
-    console.log("📦 Gửi batch dish-topping:", payload);
+    console.log("📦 Gửi batch dish-topping:", JSON.stringify(payload));
 
     const res = await apiConfig.post("/dish-topping", payload, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
 
     console.log("✅ Tạo dish-topping OK:", res);
     return res?.result ?? res;
   } catch (err) {
     if (err.response) {
-      console.error(
-        "❌ Backend trả lỗi:",
-        err.response.status,
-        err.response.data
-      );
+      console.error("❌ BE trả lỗi:", err.response.status, err.response.data);
     }
-    console.error("❌ Lỗi khi tạo/ghi đè dish-toppings:", err);
     throw err;
   }
 }

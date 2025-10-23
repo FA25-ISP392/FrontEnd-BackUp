@@ -2,10 +2,8 @@ import { useEffect, useState } from "react";
 import { Plus, Pencil, Utensils, X } from "lucide-react";
 import {
   listDish,
-  getDish,
   createDish,
   updateDish,
-  deleteDish,
   normalizeDish,
 } from "../../../lib/apiDish";
 import { listTopping } from "../../../lib/apiTopping";
@@ -13,7 +11,6 @@ import { addDishToppingsBatch } from "../../../lib/apiDishTopping";
 
 /* ===================== Helpers ===================== */
 const CATEGORIES = ["PIZZA", "PASTA", "SALAD", "DESSERT", "DRINKS"];
-
 const TYPES = ["Tăng cân", "Giữ dáng", "Giảm cân"];
 
 const fmtVND = (n) =>
@@ -54,7 +51,6 @@ function DishForm({ initial, onSubmit, saving }) {
     category: initial?.category || CATEGORIES[0],
     type: initial?.type || TYPES[0],
     price: Number(initial?.price ?? 0),
-    // đổi dòng này 👇
     calo: Number(initial?.calo ?? 0),
     description: initial?.description || "",
     isAvailable: Boolean(initial?.isAvailable ?? true),
@@ -86,12 +82,11 @@ function DishForm({ initial, onSubmit, saving }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit?.(form);
+    onSubmit(form);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* tên + danh mục */}
       <div className="grid grid-cols-2 gap-4">
         <Input
           label="Tên món ăn"
@@ -107,7 +102,6 @@ function DishForm({ initial, onSubmit, saving }) {
         />
       </div>
 
-      {/* type + calo */}
       <div className="grid grid-cols-2 gap-4">
         <Select
           label="Loại (Type)"
@@ -123,7 +117,6 @@ function DishForm({ initial, onSubmit, saving }) {
         />
       </div>
 
-      {/* giá + trạng thái */}
       <div className="grid grid-cols-2 gap-4">
         <Input
           label="Giá (VND)"
@@ -156,14 +149,12 @@ function DishForm({ initial, onSubmit, saving }) {
         </div>
       </div>
 
-      {/* mô tả */}
       <Textarea
         label="Mô tả món ăn"
         value={form.description}
         onChange={(e) => handleChange("description", e.target.value)}
       />
 
-      {/* hình ảnh */}
       <div>
         <label className="text-sm text-gray-600">Ảnh món ăn</label>
         <input
@@ -181,7 +172,6 @@ function DishForm({ initial, onSubmit, saving }) {
         )}
       </div>
 
-      {/* topping */}
       <div>
         <label className="text-sm text-gray-600 mb-2 block">
           Chọn topping đi kèm
@@ -221,8 +211,6 @@ function DishForm({ initial, onSubmit, saving }) {
 export default function ManagerDishPage() {
   const [dishes, setDishes] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // modal create / edit
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -246,10 +234,24 @@ export default function ManagerDishPage() {
       setSaving(true);
       const created = await createDish(form);
       const dish = created?.result ?? created;
+      const newId = dish?.dishId || dish?.id;
+
+      const toppingIds = (form.toppings || []).map((t) =>
+        typeof t === "object" ? t.toppingId || t.id : Number(t),
+      );
+
+      console.log("🍕 Gửi toppingIds:", toppingIds);
+      console.log("🆔 dishId mới:", newId);
+
+      // 🚀 Gọi API batch dù toppingIds trống hay không để kiểm tra
+      const res = await addDishToppingsBatch(newId, toppingIds);
+      console.log("✅ Kết quả addDishToppingsBatch:", res);
+
       alert("✅ Thêm món ăn thành công!");
       setOpenCreate(false);
-      setDishes((prev) => [...prev, dish]);
-    } catch {
+      setDishes((prev) => [...prev, normalizeDish(dish)]);
+    } catch (err) {
+      console.error("❌ Lỗi khi thêm món ăn:", err);
       alert("❌ Lỗi khi thêm món ăn!");
     } finally {
       setSaving(false);
@@ -261,13 +263,17 @@ export default function ManagerDishPage() {
       setSaving(true);
       const updated = await updateDish(editingDish.id, form);
       const normalized = normalizeDish(updated?.result ?? updated);
+      await addDishToppingsBatch(editingDish.id, form.toppings || []);
+
       setDishes((prev) =>
         prev.map((d) => (d.id === normalized.id ? normalized : d)),
       );
+
       alert("✅ Cập nhật món ăn thành công!");
       setOpenEdit(false);
       setEditingDish(null);
-    } catch {
+    } catch (err) {
+      console.error("❌ Lỗi khi cập nhật món ăn:", err);
       alert("❌ Lỗi khi cập nhật món ăn!");
     } finally {
       setSaving(false);
@@ -326,7 +332,6 @@ export default function ManagerDishPage() {
         </div>
       )}
 
-      {/* Modal tạo mới */}
       <Modal
         open={openCreate}
         onClose={() => setOpenCreate(false)}
@@ -335,7 +340,6 @@ export default function ManagerDishPage() {
         <DishForm onSubmit={handleCreate} saving={saving} />
       </Modal>
 
-      {/* Modal chỉnh sửa */}
       <Modal
         open={openEdit}
         onClose={() => {

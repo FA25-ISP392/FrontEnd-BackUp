@@ -40,7 +40,7 @@ export default function Menu() {
   const [customerId, setCustomerId] = useState(null);
   const [customerName, setCustomerName] = useState(null);
   const [orderId, setOrderId] = useState(
-    () => sessionStorage.getItem("orderId") || null
+    () => sessionStorage.getItem("orderId") || null,
   );
 
   const [baseCalories, setBaseCalories] = useState(null);
@@ -148,7 +148,7 @@ export default function Menu() {
   }, []);
 
   const filteredDishes = menuDishes.filter(
-    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name)
+    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name),
   );
 
   const { personalizationForm, setPersonalizationForm, personalizedDishes } =
@@ -190,7 +190,7 @@ export default function Menu() {
         setPersonalizationForm((prev) => ({ ...prev, ...toForm }));
         localStorage.setItem(
           PERSONAL_KEY(customerId),
-          JSON.stringify({ data: toForm, updatedAt: Date.now() })
+          JSON.stringify({ data: toForm, updatedAt: Date.now() }),
         );
       } catch (e) {
         console.warn("Không lấy được personalization từ BE:", e?.message || e);
@@ -200,15 +200,15 @@ export default function Menu() {
 
   const addToCart = (dish, notes = "") => {
     const existingItem = cart.find(
-      (item) => item.id === dish.id && item.notes === notes
+      (item) => item.id === dish.id && item.notes === notes,
     );
     if (existingItem) {
       setCart((prevCart) =>
         prevCart.map((item) =>
           item.id === dish.id && item.notes === notes
             ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
+            : item,
+        ),
       );
     } else {
       setCart((prevCart) => [...prevCart, { ...dish, quantity: 1, notes }]);
@@ -226,11 +226,11 @@ export default function Menu() {
       const diff = newQuantity - item.quantity;
       setCart((prev) =>
         prev.map((it) =>
-          it.id === itemId ? { ...it, quantity: newQuantity } : it
-        )
+          it.id === itemId ? { ...it, quantity: newQuantity } : it,
+        ),
       );
       setCaloriesConsumed(
-        (prev) => prev + diff * (item.totalCalories || item.calories)
+        (prev) => prev + diff * (item.totalCalories || item.calories),
       );
     }
   };
@@ -240,7 +240,7 @@ export default function Menu() {
     if (item) {
       setCart((prev) => prev.filter((it) => it.id !== itemId));
       setCaloriesConsumed(
-        (prev) => prev - (item.totalCalories || item.calories) * item.quantity
+        (prev) => prev - (item.totalCalories || item.calories) * item.quantity,
       );
     }
   };
