@@ -4,8 +4,7 @@ import { getToken } from "../lib/auth";
 const USE_PROXY = !!import.meta.env.DEV;
 const BASE_API =
   // import.meta.env.VITE_API_BASE || "https://api-monngon88.purintech.id.vn"; //https://backend2-production-00a1.up.railway.app
-  import.meta.env.VITE_API_BASE ||
-  "https://backend2-production-00a1.up.railway.app";
+  import.meta.env.VITE_API_BASE || "https://api-monngon88.purintech.id.vn";
 const API_PREFIX = import.meta.env.VITE_API_PREFIX || "/isp392";
 const PROXY_PREFIX = import.meta.env.VITE_PROXY_PREFIX || "/api";
 
