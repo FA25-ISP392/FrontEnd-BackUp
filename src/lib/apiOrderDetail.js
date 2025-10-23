@@ -119,3 +119,29 @@ export async function updateOrderDetailStatus(
   );
   return normalizeOrderDetail(res?.result ?? res);
 }
+
+export async function updateOrderDetail(detail = {}) {
+  const id = Number(detail.orderDetailId ?? detail.id);
+  if (!id) throw new Error("Thiếu orderDetailId để cập nhật.");
+  const payload = {
+    orderdetailid: id,
+    note: String(detail.note ?? ""),
+    status: String(detail.status ?? "PENDING").toUpperCase(),
+    toppings: Array.isArray(detail.toppings)
+      ? detail.toppings.map((t) => ({
+          toppingId: Number(t.toppingId ?? t.id),
+          quantity: Number(t.quantity ?? 1),
+        }))
+      : [],
+  };
+
+  const res = await apiConfig.put(`/order-details/${id}`, payload);
+  return normalizeOrderDetail(res?.result ?? res);
+}
+
+export async function deleteOrderDetail(orderDetailId) {
+  const id = Number(orderDetailId);
+  if (!id) throw new Error("Thiếu orderDetailId để xoá.");
+  await apiConfig.delete(`/order-details/${id}`);
+  return true;
+}

@@ -18,8 +18,12 @@ import {
   getCustomerDetail,
 } from "../lib/apiCustomer";
 import { getToppingsByDishId } from "../lib/apiDishTopping";
-import { createOrderDetailsFromCart } from "../lib/apiOrderDetail";
+import {
+  createOrderDetailsFromCart,
+  deleteOrderDetail,
+} from "../lib/apiOrderDetail";
 import { getOrderDetailsByOrderId } from "../lib/apiOrder";
+import EditOrderDetailModal from "../components/Menu/EditOrderDetailModal";
 
 export default function Menu() {
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
@@ -50,6 +54,9 @@ export default function Menu() {
   const [orderDetails, setOrderDetails] = useState([]);
 
   const [paymentItems, setPaymentItems] = useState([]);
+
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingDetail, setEditingDetail] = useState(null);
 
   const PERSONAL_KEY = (cid) => `personalization:${cid}`;
   const applyGoal = (cals, goal) => {
@@ -345,6 +352,26 @@ export default function Menu() {
     }
   };
 
+  const handleOpenEdit = (detail) => {
+    setEditingDetail(detail);
+    setIsEditOpen(true);
+  };
+
+  const handleDeleteDetail = async (detail) => {
+    if (!detail?.orderDetailId) return;
+    if (!confirm("Xoá món này khỏi đơn?")) return;
+    try {
+      await deleteOrderDetail(detail.orderDetailId);
+      await fetchOrderDetailsFromOrder();
+    } catch (e) {
+      alert(e?.message || "Xoá món thất bại.");
+    }
+  };
+
+  const handleEdited = async () => {
+    await fetchOrderDetailsFromOrder();
+  };
+
   const handlePayment = () => {
     setIsPaymentOpen(false);
     setIsCallStaffOpen(true);
@@ -375,7 +402,18 @@ export default function Menu() {
         isOpen={isStatusOpen}
         onClose={() => setIsStatusOpen(false)}
         items={orderDetails}
+        onEdit={handleOpenEdit}
+        onDelete={handleDeleteDetail}
       />
+
+      {isEditOpen && editingDetail && (
+        <EditOrderDetailModal
+          isOpen={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          detail={editingDetail}
+          onUpdated={handleEdited}
+        />
+      )}
 
       {orderId && tableId && customerId && (
         <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">

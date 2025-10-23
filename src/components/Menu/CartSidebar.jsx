@@ -16,6 +16,11 @@ export default function CartSidebar({
       currency: "VND",
     });
 
+  const asNumber = (v) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  };
+
   const toppingTotal = (item) =>
     (Array.isArray(item.selectedToppings) ? item.selectedToppings : []).reduce(
       (sum, t) =>
@@ -25,8 +30,12 @@ export default function CartSidebar({
       0
     );
 
-  const unitPrice = (item) =>
-    Number(item.totalPrice ?? item.price ?? 0) + toppingTotal(item);
+  const unitPrice = (item) => {
+    const hasTotal = item.totalPrice !== undefined && item.totalPrice !== null;
+    const total = asNumber(item.totalPrice);
+    if (hasTotal && total > 0) return total;
+    return asNumber(item.price) + toppingTotal(item);
+  };
 
   const totalAmount = cart.reduce(
     (sum, item) => sum + unitPrice(item) * Number(item.quantity || 0),

@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { X, Trash2 } from "lucide-react";
 
 const STATUS_LABEL = {
   pending: "Chờ nấu",
@@ -16,7 +16,13 @@ const STATUS_COLOR = {
 const fmtVND = (n) =>
   typeof n === "number" && isFinite(n) ? n.toLocaleString("vi-VN") + "₫" : "-";
 
-export default function OrderStatusSidebar({ isOpen, onClose, items = [] }) {
+export default function OrderStatusSidebar({
+  isOpen,
+  onClose,
+  items = [],
+  onEdit,
+  onDelete,
+}) {
   if (!isOpen) return null;
 
   const list = Array.isArray(items) ? [...items].reverse() : [];
@@ -59,9 +65,24 @@ export default function OrderStatusSidebar({ isOpen, onClose, items = [] }) {
                 return (
                   <div
                     key={it.orderDetailId}
-                    className="border rounded-xl p-3 hover:bg-neutral-50"
+                    className="relative border rounded-xl p-3 hover:bg-neutral-50 cursor-pointer"
+                    onClick={() => onEdit && onEdit(it)}
+                    role="button"
                   >
-                    <div className="flex items-start justify-between">
+                    {/* nút thùng rác góc phải */}
+                    <button
+                      className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete && onDelete(it);
+                      }}
+                      aria-label="Xoá món"
+                      title="Xoá món khỏi order"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+
+                    <div className="flex items-start justify-between pr-8">
                       <div className="font-semibold text-neutral-900">
                         {it.dishName}
                       </div>
@@ -73,7 +94,13 @@ export default function OrderStatusSidebar({ isOpen, onClose, items = [] }) {
                     {Array.isArray(it.toppings) && it.toppings.length > 0 && (
                       <div className="text-xs text-neutral-500 mt-1">
                         Topping:{" "}
-                        {it.toppings.map((t) => t.toppingName).join(", ")}
+                        {it.toppings
+                          .map((t) =>
+                            t.quantity > 1
+                              ? `${t.toppingName} x${t.quantity}`
+                              : t.toppingName
+                          )
+                          .join(", ")}
                       </div>
                     )}
 
