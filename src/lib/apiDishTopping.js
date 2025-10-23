@@ -58,3 +58,31 @@ export async function getToppingsByDishId(dishId) {
     throw err;
   }
 }
+export async function deleteDishTopping(dishId, toppingId) {
+  if (!dishId || !toppingId) {
+    throw new Error("Thiếu dishId hoặc toppingId để xoá");
+  }
+
+  try {
+    const token = localStorage.getItem("token");
+    console.log(
+      `🗑️ Xoá dish-topping: dishId=${dishId}, toppingId=${toppingId}`,
+    );
+
+    const res = await apiConfig.delete(`/dish-topping/${dishId}/${toppingId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log("✅ Xoá dish-topping OK:", res);
+    return res?.result ?? res;
+  } catch (err) {
+    if (err.response) {
+      console.error(
+        "❌ BE trả lỗi khi xoá topping:",
+        err.response.status,
+        err.response.data,
+      );
+    }
+    throw err;
+  }
+}
