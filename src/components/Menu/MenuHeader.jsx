@@ -4,7 +4,7 @@ import {
   Bell,
   CreditCard,
   ChefHat,
-  Table,
+  ListChecks,
 } from "lucide-react";
 
 export default function MenuHeader({
@@ -13,9 +13,12 @@ export default function MenuHeader({
   onViewOrders,
   onCallStaff,
   onCheckout,
-  tableId,
-  customerId,
+  onViewStatus,
+  pendingCount = 0,
+  preparingCount = 0,
 }) {
+  const activeCount = (pendingCount || 0) + (preparingCount || 0);
+
   return (
     <header className="bg-white/90 backdrop-blur-md shadow-lg border-b border-white/20 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -42,7 +45,20 @@ export default function MenuHeader({
               className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               <User className="h-4 w-4" />
-              <span className="font-medium">Cá nhân hóa</span>
+              <span className="font-medium">Cá Nhân Hóa</span>
+            </button>
+
+            <button
+              onClick={onViewStatus}
+              className="relative flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-xl hover:from-emerald-600 hover:to-green-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              <ListChecks className="h-4 w-4" />
+              <span className="font-medium">Trạng thái đơn</span>
+              {activeCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-white text-emerald-600 text-xs rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center font-bold">
+                  {activeCount}
+                </span>
+              )}
             </button>
 
             <button
@@ -50,7 +66,7 @@ export default function MenuHeader({
               className="relative flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               <ShoppingCart className="h-4 w-4" />
-              <span className="font-medium">Xem đơn đã đặt</span>
+              <span className="font-medium">Giỏ Hàng</span>
               {cartItemCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
                   {cartItemCount}
@@ -63,7 +79,7 @@ export default function MenuHeader({
               className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               <Bell className="h-4 w-4" />
-              <span className="font-medium">Gọi nhân viên</span>
+              <span className="font-medium">Gọi Nhân Viên</span>
             </button>
 
             <button
@@ -71,7 +87,7 @@ export default function MenuHeader({
               className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               <CreditCard className="h-4 w-4" />
-              <span className="font-medium">Thanh toán</span>
+              <span className="font-medium">Thanh Toán</span>
             </button>
           </div>
         </div>

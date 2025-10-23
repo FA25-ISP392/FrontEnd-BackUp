@@ -28,13 +28,12 @@ export default function MenuContent({
   const percent = canShowCalorie
     ? Math.min(
         100,
-        Math.max(0, Math.round((caloriesConsumed / estimatedCalories) * 100)),
+        Math.max(0, Math.round((caloriesConsumed / estimatedCalories) * 100))
       )
     : 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* =================== Theo dõi calorie =================== */}
       {canShowCalorie && (
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-8">
           <div className="flex items-center justify-between">
@@ -59,7 +58,6 @@ export default function MenuContent({
                 <div className="text-sm text-neutral-600">Cal đã thêm</div>
               </div>
 
-              {/* Vòng progress */}
               <div className="w-16 h-16 relative">
                 {(() => {
                   const percentage = percent;
@@ -106,7 +104,6 @@ export default function MenuContent({
         </div>
       )}
 
-      {/* =================== Tab chọn menu =================== */}
       <div className="flex space-x-4 mb-6">
         <button
           onClick={() => setActiveMenuTab("all")}
@@ -130,7 +127,6 @@ export default function MenuContent({
         </button>
       </div>
 
-      {/* =================== Danh mục món ăn =================== */}
       <div className="space-y-10 mb-4">
         {CATEGORY_LIST.filter((c) => c.id !== "all").map((category) => (
           <div key={category.id}>
@@ -145,7 +141,7 @@ export default function MenuContent({
                 {(activeMenuTab === "all" ? filteredDishes : personalizedMenu)
                   .filter(
                     (d) =>
-                      d.category?.toLowerCase() === category.id?.toLowerCase(),
+                      d.category?.toLowerCase() === category.id?.toLowerCase()
                   )
                   .map((dish) => (
                     <div
@@ -164,7 +160,6 @@ export default function MenuContent({
                         />
                       </div>
 
-                      {/* Thông tin món */}
                       <div className="mb-3">
                         <h4 className="text-lg font-bold text-neutral-900 mb-1">
                           {dish.name}
@@ -182,7 +177,6 @@ export default function MenuContent({
                         </div>
                       </div>
 
-                      {/* Nút chọn */}
                       <button
                         onClick={() => onDishSelect(dish)}
                         className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-2.5 px-4 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-medium"

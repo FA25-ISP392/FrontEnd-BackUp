@@ -1,6 +1,5 @@
 import apiConfig from "../api/apiConfig";
 
-// 🧩 Chuẩn hoá dữ liệu topping từ backend
 export function normalizeTopping(t = {}) {
   return {
     id: t.toppingId ?? t.id ?? 0,
@@ -11,18 +10,13 @@ export function normalizeTopping(t = {}) {
   };
 }
 
-// 🟢 Lấy danh sách topping
 export async function listTopping(params = {}) {
   try {
     const token = localStorage.getItem("token");
     const res = await apiConfig.get("/topping", {
       params,
-      headers: {
-        // Authorization: `Bearer ${token}`,
-      },
+      headers: {},
     });
-
-    // API trả về { code, message, result: [...] }
     const arr = res?.result ?? res ?? [];
     return Array.isArray(arr) ? arr.map(normalizeTopping) : [];
   } catch (err) {
@@ -31,7 +25,6 @@ export async function listTopping(params = {}) {
   }
 }
 
-// 🟢 Lấy chi tiết topping theo ID
 export async function getTopping(id) {
   if (!id) throw new Error("Thiếu ID topping");
   try {
@@ -41,8 +34,6 @@ export async function getTopping(id) {
         Authorization: `Bearer ${token}`,
       },
     });
-
-    // API trả về { code, message, result: { toppingId, name, ... } }
     const data = res?.result ?? res;
     return normalizeTopping(data);
   } catch (err) {
@@ -51,7 +42,6 @@ export async function getTopping(id) {
   }
 }
 
-// 🟢 Tạo topping mới
 export async function createTopping(payload) {
   try {
     const token = localStorage.getItem("token");
@@ -65,11 +55,8 @@ export async function createTopping(payload) {
         quantity: Number(payload.quantity ?? 0),
       },
       {
-        headers: {
-          // Authorization: `Bearer ${token}`,
-          // "Content-Type": "application/json",
-        },
-      },
+        headers: {},
+      }
     );
 
     const data = res?.result ?? res;
@@ -80,7 +67,6 @@ export async function createTopping(payload) {
   }
 }
 
-// 🟢 Cập nhật topping
 export async function updateTopping(id, payload) {
   if (!id) throw new Error("Thiếu ID topping để cập nhật");
   try {
@@ -100,7 +86,6 @@ export async function updateTopping(id, payload) {
   }
 }
 
-// 🟢 Xoá topping
 export async function deleteTopping(id) {
   if (!id) throw new Error("Thiếu ID topping để xoá");
   try {
@@ -110,8 +95,6 @@ export async function deleteTopping(id) {
         Authorization: `Bearer ${token}`,
       },
     });
-
-    // API trả về { code, message, result: "string" }
     return res?.result ?? "Xóa thành công";
   } catch (err) {
     console.error("❌ Lỗi khi xoá topping:", err);

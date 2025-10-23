@@ -1,14 +1,5 @@
 import apiConfig from "../api/apiConfig";
 
-/**
- * 🧩 Gọi API quản lý Dish–Topping (món ăn – topping)
- * Tương thích backend Railway (chỉ có POST batch, không có DELETE)
- *
- * Base URL thực tế:
- * https://backend-production-0865.up.railway.app/isp392/api/dish-topping
- */
-
-// 🟢 Lấy danh sách tất cả dish–topping
 export async function listDishTopping() {
   const token = localStorage.getItem("token");
   try {
@@ -22,7 +13,6 @@ export async function listDishTopping() {
   }
 }
 
-// 🟢 Ghi đè danh sách topping của một món ăn (batch)
 export async function addDishToppingsBatch(dishId, toppingIds = []) {
   if (!dishId || !Array.isArray(toppingIds)) {
     throw new Error("Thiếu dishId hoặc toppingIds không hợp lệ");
@@ -33,7 +23,7 @@ export async function addDishToppingsBatch(dishId, toppingIds = []) {
 
     const payload = {
       dishId: Number(dishId),
-      toppingIds: toppingIds.map((x) => Number(x)), // 👈 ép kiểu int
+      toppingIds: toppingIds.map((x) => Number(x)),
     };
 
     console.log("📦 Gửi batch dish-topping:", payload);
@@ -52,14 +42,14 @@ export async function addDishToppingsBatch(dishId, toppingIds = []) {
       console.error(
         "❌ Backend trả lỗi:",
         err.response.status,
-        err.response.data,
+        err.response.data
       );
     }
     console.error("❌ Lỗi khi tạo/ghi đè dish-toppings:", err);
     throw err;
   }
 }
-// 🟣 Lấy danh sách topping của một món ăn cụ thể
+
 export async function getToppingsByDishId(dishId) {
   if (!dishId) throw new Error("Thiếu dishId khi lấy topping");
 

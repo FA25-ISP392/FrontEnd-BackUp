@@ -3,7 +3,7 @@ import { Users, ClipboardList, Home, Table, BarChart3, Utensils } from "lucide-r
 export default function StaffSidebar({ activeSection, setActiveSection }) {
   const sidebarItems = [
     { id: "tableLayout", label: "Sơ Đồ Bàn", icon: Table },
-    { id: "overview", label: "Tổng Quan", icon: BarChart3 },
+    { id: "overview", label: "Thông Tin Bàn", icon: BarChart3 },
     { id: "ordersByTable", label: "Đơn Món Theo Bàn", icon: Utensils },
   ];
 
