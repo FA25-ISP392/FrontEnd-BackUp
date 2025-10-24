@@ -7,7 +7,11 @@ import {
   normalizeDish,
 } from "../../../lib/apiDish";
 import { listTopping } from "../../../lib/apiTopping";
-import { addDishToppingsBatch } from "../../../lib/apiDishTopping";
+import {
+  addDishToppingsBatch,
+  getToppingsByDishId,
+  deleteDishTopping,
+} from "../../../lib/apiDishTopping";
 
 /* ===================== Helpers ===================== */
 const CATEGORIES = ["PIZZA", "PASTA", "SALAD", "DESSERT", "DRINKS"];
@@ -261,10 +265,36 @@ export default function ManagerDishPage() {
   const handleEdit = async (form) => {
     try {
       setSaving(true);
+
+      // 1️⃣ Cập nhật thông tin món ăn
       const updated = await updateDish(editingDish.id, form);
       const normalized = normalizeDish(updated?.result ?? updated);
-      await addDishToppingsBatch(editingDish.id, form.toppings || []);
 
+      // 2️⃣ Dùng topping có sẵn trong editingDish
+      const oldToppings = editingDish.optionalToppings || [];
+      console.log("🧾 Topping cũ (FE):", oldToppings);
+
+      // 3️⃣ Xóa tất cả topping cũ
+      if (Array.isArray(oldToppings) && oldToppings.length > 0) {
+        await Promise.all(
+          oldToppings.map((t) =>
+            deleteDishTopping(editingDish.id, t.toppingId || t.id),
+          ),
+        );
+        console.log("🗑️ Đã xoá tất cả topping cũ");
+      }
+
+      // 4️⃣ Thêm lại topping mới được chọn
+      const toppingIds = (form.toppings || []).map((t) =>
+        typeof t === "object" ? t.toppingId || t.id : Number(t),
+      );
+
+      if (toppingIds.length > 0) {
+        await addDishToppingsBatch(editingDish.id, toppingIds);
+        console.log("✅ Đã thêm topping mới:", toppingIds);
+      }
+
+      // 5️⃣ Cập nhật UI
       setDishes((prev) =>
         prev.map((d) => (d.id === normalized.id ? normalized : d)),
       );
@@ -395,6 +425,3 @@ function Select({ label, options, ...props }) {
     </div>
   );
 }
-// co len toi oi
-
-//sao van chua duoc vay ta
