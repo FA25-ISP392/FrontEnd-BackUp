@@ -21,6 +21,7 @@ import { getToppingsByDishId } from "../lib/apiDishTopping";
 import {
   createOrderDetailsFromCart,
   deleteOrderDetail,
+  createOrderDetail,
 } from "../lib/apiOrderDetail";
 import { getOrderDetailsByOrderId } from "../lib/apiOrder";
 import EditOrderDetailModal from "../components/Menu/EditOrderDetailModal";
@@ -380,6 +381,37 @@ export default function Menu() {
     setIsCallStaffOpen(true);
   };
 
+  async function fetchOrderDetailsFromOrder() {
+    if (!orderId) return;
+    try {
+      const data = await getOrderDetailsByOrderId(orderId);
+      setOrderDetails(data);
+    } catch (err) {
+      console.error("❌ Lỗi lấy orderDetails theo orderId:", err);
+    }
+  }
+
+  const handleIncGroup = async (group) => {
+    const it = group.sample;
+    await createOrderDetail({
+      orderId,
+      dishId: it.dishId,
+      note: it.note || "",
+      toppings:
+        it.toppings?.map((t) => ({
+          toppingId: t.toppingId,
+          quantity: t.quantity ?? 1,
+        })) || [],
+    });
+    await fetchOrderDetailsFromOrder();
+  };
+
+  const handleDecGroup = async (group) => {
+    const idToDelete = group.ids[group.ids.length - 1];
+    await deleteOrderDetail(idToDelete);
+    await fetchOrderDetailsFromOrder();
+  };
+
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -407,6 +439,8 @@ export default function Menu() {
         items={orderDetails}
         onEdit={handleOpenEdit}
         onDelete={handleDeleteDetail}
+        onIncGroup={handleIncGroup}
+        onDecGroup={handleDecGroup}
       />
 
       {isEditOpen && editingDetail && (
