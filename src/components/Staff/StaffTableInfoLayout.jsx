@@ -1,11 +1,11 @@
 import React from "react";
 import { Table, Phone, DollarSign } from "lucide-react";
 
-export default function StaffTableInfoLayout({ 
-  tables, 
-  onTableClick, 
+export default function StaffTableInfoLayout({
+  tables,
+  onTableClick,
   selectedTable,
-  orders = [] 
+  orders = [],
 }) {
   const getTableStatusColor = (table) => {
     // Kiểm tra nếu khách hàng gọi nhân viên
@@ -16,7 +16,7 @@ export default function StaffTableInfoLayout({
     if (table.callPayment) {
       return "border-green-500 bg-green-50";
     }
-    
+
     // Màu sắc theo trạng thái bàn
     switch (table.status) {
       case "occupied":
@@ -48,7 +48,7 @@ export default function StaffTableInfoLayout({
   };
 
   const getOrderForTable = (tableNumber) => {
-    return orders.find(order => order.table === tableNumber);
+    return orders.find((order) => order.table === tableNumber);
   };
 
   return (
@@ -66,14 +66,14 @@ export default function StaffTableInfoLayout({
         {tables.map((table) => {
           const order = getOrderForTable(table.number);
           const isSelected = selectedTable && selectedTable.id === table.id;
-          
+
           return (
             <div
               key={table.id}
-              className={`bg-gradient-to-br from-white to-orange-50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border-2 group cursor-pointer transform hover:scale-105 relative ${getTableStatusColor(table)} ${
-                isSelected
-                  ? "ring-2 ring-orange-500 shadow-orange-200"
-                  : ""
+              className={`bg-gradient-to-br from-white to-orange-50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border-2 group cursor-pointer transform hover:scale-105 relative ${getTableStatusColor(
+                table
+              )} ${
+                isSelected ? "ring-2 ring-orange-500 shadow-orange-200" : ""
               }`}
               onClick={() => onTableClick?.(table)}
             >
@@ -83,7 +83,7 @@ export default function StaffTableInfoLayout({
                   <Phone className="h-4 w-4 text-white" />
                 </div>
               )}
-              
+
               {/* Icon gọi thanh toán */}
               {table.callPayment && (
                 <div className="absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
@@ -123,9 +123,7 @@ export default function StaffTableInfoLayout({
                     <div className="text-xs font-medium text-blue-800">
                       Đơn #{order.id}
                     </div>
-                    <div className="text-xs text-blue-600">
-                      ${order.total}
-                    </div>
+                    <div className="text-xs text-blue-600">${order.total}</div>
                   </div>
                 )}
               </div>
@@ -136,7 +134,9 @@ export default function StaffTableInfoLayout({
 
       {/* Chú thích */}
       <div className="mt-6 bg-gray-50 rounded-lg p-4">
-        <div className="text-sm font-semibold text-gray-800 mb-3">Chú thích:</div>
+        <div className="text-sm font-semibold text-gray-800 mb-3">
+          Chú thích:
+        </div>
         <div className="grid grid-cols-2 gap-4 text-xs">
           <div className="space-y-2">
             <div className="flex items-center gap-2">

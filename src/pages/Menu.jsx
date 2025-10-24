@@ -25,6 +25,7 @@ import {
 } from "../lib/apiOrderDetail";
 import { getOrderDetailsByOrderId } from "../lib/apiOrder";
 import EditOrderDetailModal from "../components/Menu/EditOrderDetailModal";
+import { createPayment } from "../lib/apiPayment";
 
 export default function Menu() {
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
@@ -278,16 +279,6 @@ export default function Menu() {
     }
   };
 
-  async function fetchOrderDetailsFromOrder() {
-    if (!orderId) return;
-    try {
-      const data = await getOrderDetailsByOrderId(orderId);
-      setOrderDetails(data);
-    } catch (err) {
-      console.error("❌ Lỗi lấy orderDetails theo orderId:", err);
-    }
-  }
-
   useEffect(() => {
     if (isStatusOpen) fetchOrderDetailsFromOrder();
   }, [isStatusOpen, orderId]);
@@ -343,8 +334,6 @@ export default function Menu() {
         await createOrderDetailsFromCart(orderId, cart);
       }
       const details = await getOrderDetailsByOrderId(orderId);
-      // const items = groupPaymentItems(details);
-      // setPaymentItems(items);
       setPaymentItems(details);
       setIsPaymentOpen(true);
       if (cart.length) {
@@ -377,9 +366,31 @@ export default function Menu() {
     await fetchOrderDetailsFromOrder();
   };
 
-  const handlePayment = () => {
-    setIsPaymentOpen(false);
-    setIsCallStaffOpen(true);
+  const sumTotal = (items = []) =>
+    items.reduce((s, it) => s + Number(it.totalPrice ?? it.price ?? 0), 0);
+
+  function notifyStaff({ tableId, orderId, total, paymentId }) {
+    const payload = { tableId, orderId, total, paymentId, ts: Date.now() };
+    window.dispatchEvent(
+      new CustomEvent("table:callPayment", { detail: payload })
+    );
+    localStorage.setItem(
+      `signal:callPayment:${payload.ts}`,
+      JSON.stringify(payload)
+    );
+  }
+
+  const handleRequestPayment = async () => {
+    try {
+      if (!orderId) throw new Error("Chưa có orderId.");
+      const total = sumTotal(paymentItems);
+      const p = await createPayment({ orderId, method: "BANK_TRANSFER" });
+      notifyStaff({ tableId, orderId, total, paymentId: p.id });
+      setIsPaymentOpen(false);
+      setIsCallStaffOpen(true);
+    } catch (error) {
+      alert(error?.message || "Không gửi được yêu cầu thanh toán.");
+    }
   };
 
   async function fetchOrderDetailsFromOrder() {
@@ -523,9 +534,7 @@ export default function Menu() {
         onClose={() => setIsPaymentOpen(false)}
         cart={cart}
         items={paymentItems}
-        onPayment={handlePayment}
-        paymentMethod={paymentMethod}
-        setPaymentMethod={setPaymentMethod}
+        onRequestPayment={handleRequestPayment}
       />
 
       <DishOptionsModal

@@ -3,13 +3,10 @@ import { X, CreditCard, Bell } from "lucide-react";
 const vnd = (n = 0) =>
   Number(n || 0).toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " ₫";
 
-/** Trích xuất toppings từ cả 2 dạng dữ liệu: từ BE (orderDetails) hoặc từ cart */
 function readToppings(item) {
-  // 1) BE trả về normalizeOrderDetail: [{ toppingId, toppingName, quantity, toppingPrice }]
   if (Array.isArray(item?.toppings) && item.toppings.length)
     return item.toppings;
 
-  // 2) Từ cart: selectedToppings: [{ id/toppingId, name, price, quantity }]
   if (Array.isArray(item?.selectedToppings) && item.selectedToppings.length)
     return item.selectedToppings.map((t) => ({
       toppingId: Number(t.toppingId ?? t.id),
@@ -18,7 +15,6 @@ function readToppings(item) {
       toppingPrice: Number(t.toppingPrice ?? t.price ?? 0),
     }));
 
-  // 3) Trường hợp cũ: selectedOptions (object/map)
   if (item?.selectedOptions && Object.keys(item.selectedOptions).length) {
     return Object.values(item.selectedOptions).map((op) => ({
       toppingId: Number(op.toppingId ?? op.id ?? 0),
@@ -36,16 +32,10 @@ export default function PaymentSidebar({
   onClose,
   cart,
   items,
-  onPayment,
-  paymentMethod,
-  setPaymentMethod,
+  onRequestPayment,
 }) {
   if (!isOpen) return null;
-
-  // Ưu tiên items lấy từ BE (orderDetails), fallback về cart
   const cartItems = Array.isArray(items) && items.length ? items : cart;
-
-  // Với orderDetails từ BE: mỗi record là 1 món -> quantity mặc định = 1
   const totalAmount = cartItems.reduce((sum, item) => {
     const qty = Number(item.quantity ?? 1);
     const unit = Number(item.totalPrice ?? item.price ?? 0);
@@ -54,16 +44,12 @@ export default function PaymentSidebar({
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
         onClick={onClose}
       />
-
-      {/* Sidebar */}
       <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50">
         <div className="flex flex-col h-full">
-          {/* Header */}
           <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -84,7 +70,6 @@ export default function PaymentSidebar({
             </div>
           </div>
 
-          {/* Body: danh sách món (không group) */}
           <div className="flex-1 overflow-y-auto p-6">
             <h3 className="text-lg font-bold text-neutral-900 mb-4">
               Chi tiết đơn hàng
@@ -117,12 +102,10 @@ export default function PaymentSidebar({
                         </div>
                       </div>
 
-                      {/* Số lượng */}
                       <div className="text-sm text-neutral-600 mb-1">
                         Số lượng: {qty}
                       </div>
 
-                      {/* Topping */}
                       {toppings.length > 0 && (
                         <div className="text-xs text-neutral-500 mb-1">
                           Topping:{" "}
@@ -139,7 +122,6 @@ export default function PaymentSidebar({
                         </div>
                       )}
 
-                      {/* Ghi chú */}
                       {note && (
                         <div className="text-xs text-neutral-500 italic">
                           Ghi chú: {note}
@@ -152,7 +134,6 @@ export default function PaymentSidebar({
             )}
           </div>
 
-          {/* FOOTER: tổng cộng luôn nằm dưới cùng + nút gọi thanh toán */}
           <div className="mt-auto border-t border-neutral-200 p-6 space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-lg font-bold text-neutral-900">
@@ -164,7 +145,7 @@ export default function PaymentSidebar({
             </div>
 
             <button
-              onClick={onPayment}
+              onClick={onRequestPayment}
               className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 px-4 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium flex items-center justify-center gap-2"
             >
               <Bell className="h-5 w-5" />
