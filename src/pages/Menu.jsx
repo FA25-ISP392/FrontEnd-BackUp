@@ -343,8 +343,9 @@ export default function Menu() {
         await createOrderDetailsFromCart(orderId, cart);
       }
       const details = await getOrderDetailsByOrderId(orderId);
-      const items = groupPaymentItems(details);
-      setPaymentItems(items);
+      // const items = groupPaymentItems(details);
+      // setPaymentItems(items);
+      setPaymentItems(details);
       setIsPaymentOpen(true);
       if (cart.length) {
         setCart([]);

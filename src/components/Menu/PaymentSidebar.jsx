@@ -3,6 +3,34 @@ import { X, CreditCard, Bell } from "lucide-react";
 const vnd = (n = 0) =>
   Number(n || 0).toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " ₫";
 
+/** Trích xuất toppings từ cả 2 dạng dữ liệu: từ BE (orderDetails) hoặc từ cart */
+function readToppings(item) {
+  // 1) BE trả về normalizeOrderDetail: [{ toppingId, toppingName, quantity, toppingPrice }]
+  if (Array.isArray(item?.toppings) && item.toppings.length)
+    return item.toppings;
+
+  // 2) Từ cart: selectedToppings: [{ id/toppingId, name, price, quantity }]
+  if (Array.isArray(item?.selectedToppings) && item.selectedToppings.length)
+    return item.selectedToppings.map((t) => ({
+      toppingId: Number(t.toppingId ?? t.id),
+      toppingName: t.toppingName ?? t.name ?? "",
+      quantity: Number(t.quantity ?? 1),
+      toppingPrice: Number(t.toppingPrice ?? t.price ?? 0),
+    }));
+
+  // 3) Trường hợp cũ: selectedOptions (object/map)
+  if (item?.selectedOptions && Object.keys(item.selectedOptions).length) {
+    return Object.values(item.selectedOptions).map((op) => ({
+      toppingId: Number(op.toppingId ?? op.id ?? 0),
+      toppingName: op.toppingName ?? op.name ?? "",
+      quantity: Number(op.quantity ?? 1),
+      toppingPrice: Number(op.toppingPrice ?? op.price ?? 0),
+    }));
+  }
+
+  return [];
+}
+
 export default function PaymentSidebar({
   isOpen,
   onClose,
@@ -14,12 +42,13 @@ export default function PaymentSidebar({
 }) {
   if (!isOpen) return null;
 
-  // Ưu tiên items (lấy từ BE), fallback về cart
+  // Ưu tiên items lấy từ BE (orderDetails), fallback về cart
   const cartItems = Array.isArray(items) && items.length ? items : cart;
 
+  // Với orderDetails từ BE: mỗi record là 1 món -> quantity mặc định = 1
   const totalAmount = cartItems.reduce((sum, item) => {
-    const qty = item.quantity ?? 1;
-    const unit = item.totalPrice ?? item.price ?? 0;
+    const qty = Number(item.quantity ?? 1);
+    const unit = Number(item.totalPrice ?? item.price ?? 0);
     return sum + unit * qty;
   }, 0);
 
@@ -32,7 +61,7 @@ export default function PaymentSidebar({
       />
 
       {/* Sidebar */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out">
+      <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl z-50">
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white">
@@ -55,145 +84,88 @@ export default function PaymentSidebar({
             </div>
           </div>
 
-          {/* Order Summary */}
-          <div className="p-6 border-b border-neutral-200">
-            <h3 className="text-lg font-bold text-neutral-900 mb-4">
-              Tóm tắt đơn hàng
-            </h3>
-            <div className="space-y-3">
-              {cartItems.map((item) => {
-                const qty = item.quantity ?? 1;
-                const unit = item.totalPrice ?? item.price ?? 0;
-                const line = unit * qty;
-                return (
-                  <div
-                    key={item.id ?? item.orderDetailId}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex-1">
-                      <div className="font-medium text-neutral-900">
-                        {item.name ?? item.dishName}
-                      </div>
-                      <div className="text-sm text-neutral-600">
-                        {qty} × {vnd(unit)}
-                        {item.selectedOptions &&
-                          Object.keys(item.selectedOptions).length > 0 && (
-                            <span className="block text-xs text-neutral-500">
-                              {Object.values(item.selectedOptions).map(
-                                (option, index) => (
-                                  <span key={index}>
-                                    {option.name}
-                                    {index <
-                                    Object.values(item.selectedOptions).length -
-                                      1
-                                      ? ", "
-                                      : ""}
-                                  </span>
-                                )
-                              )}
-                            </span>
-                          )}
-                        {item.notes && (
-                          <span className="block text-xs text-neutral-500">
-                            Ghi chú: {item.notes}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <span className="font-medium text-neutral-900">
-                      {vnd(line)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="border-t border-neutral-200 mt-4 pt-4">
-              <div className="flex items-center justify-between">
-                <span className="text-lg font-bold text-neutral-900">
-                  Tổng cộng:
-                </span>
-                <span className="text-2xl font-bold text-orange-600">
-                  {vnd(totalAmount)}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Details */}
+          {/* Body: danh sách món (không group) */}
           <div className="flex-1 overflow-y-auto p-6">
             <h3 className="text-lg font-bold text-neutral-900 mb-4">
               Chi tiết đơn hàng
             </h3>
-            <div className="space-y-4">
-              {cartItems.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CreditCard className="h-8 w-8 text-neutral-400" />
-                  </div>
-                  <p className="text-neutral-500">
-                    Chưa có món nào trong đơn hàng
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {cartItems.map((item) => {
-                    const qty = item.quantity ?? 1;
-                    const unit = item.totalPrice ?? item.price ?? 0;
-                    return (
-                      <div
-                        key={item.id ?? item.orderDetailId}
-                        className="flex items-center justify-between p-4 bg-neutral-50 rounded-xl"
-                      >
-                        <div className="flex-1">
-                          <div className="font-medium text-neutral-900">
-                            {item.name ?? item.dishName}
-                          </div>
-                          <div className="text-sm text-neutral-600">
-                            Số lượng: {qty}
-                          </div>
-                          {item.selectedOptions &&
-                            Object.keys(item.selectedOptions).length > 0 && (
-                              <div className="text-xs text-neutral-500 mt-1">
-                                {Object.values(item.selectedOptions).map(
-                                  (option, index) => (
-                                    <span key={index}>
-                                      {option.name}
-                                      {index <
-                                      Object.values(item.selectedOptions)
-                                        .length -
-                                        1
-                                        ? ", "
-                                        : ""}
-                                    </span>
-                                  )
-                                )}
-                              </div>
-                            )}
-                          {item.notes && (
-                            <div className="text-xs text-neutral-500 mt-1">
-                              Ghi chú: {item.notes}
-                            </div>
-                          )}
+
+            {cartItems.length === 0 ? (
+              <p className="text-neutral-500">Chưa có món nào trong đơn hàng</p>
+            ) : (
+              <div className="space-y-4">
+                {cartItems.map((item, idx) => {
+                  const key = item.orderDetailId ?? item.id ?? idx;
+                  const name = item.name ?? item.dishName;
+                  const qty = Number(item.quantity ?? 1);
+                  const unit = Number(item.totalPrice ?? item.price ?? 0);
+                  const line = unit * qty;
+                  const note = item.note ?? item.notes ?? "";
+                  const toppings = readToppings(item);
+
+                  return (
+                    <div
+                      key={key}
+                      className="p-4 bg-neutral-50 rounded-xl shadow-sm"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="font-semibold text-neutral-900">
+                          {name}
                         </div>
-                        <div className="text-right">
-                          <div className="font-medium text-neutral-900">
-                            {vnd(unit * qty)}
-                          </div>
+                        <div className="text-sm font-medium text-orange-600">
+                          {vnd(line)}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+
+                      {/* Số lượng */}
+                      <div className="text-sm text-neutral-600 mb-1">
+                        Số lượng: {qty}
+                      </div>
+
+                      {/* Topping */}
+                      {toppings.length > 0 && (
+                        <div className="text-xs text-neutral-500 mb-1">
+                          Topping:{" "}
+                          {toppings
+                            .map((t) => {
+                              const tn = t.toppingName || t.name || "";
+                              const tq = Number(t.quantity ?? 1);
+                              const tp = Number(t.toppingPrice ?? t.price ?? 0);
+                              const qtyTxt = tq > 1 ? `(${tq}×)` : "";
+                              const priceTxt = tp > 0 ? ` ${vnd(tp)}` : "";
+                              return `${tn} ${qtyTxt}${priceTxt}`.trim();
+                            })
+                            .join(", ")}
+                        </div>
+                      )}
+
+                      {/* Ghi chú */}
+                      {note && (
+                        <div className="text-xs text-neutral-500 italic">
+                          Ghi chú: {note}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {/* Call staff / pay */}
-          <div className="border-t border-neutral-200 p-6">
+          {/* FOOTER: tổng cộng luôn nằm dưới cùng + nút gọi thanh toán */}
+          <div className="mt-auto border-t border-neutral-200 p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-lg font-bold text-neutral-900">
+                Tổng cộng:
+              </span>
+              <span className="text-2xl font-bold text-orange-600">
+                {vnd(totalAmount)}
+              </span>
+            </div>
+
             <button
               onClick={onPayment}
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 px-4 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium flex items-center justify-center space-x-2"
+              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 px-4 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium flex items-center justify-center gap-2"
             >
               <Bell className="h-5 w-5" />
               <span>Gọi thanh toán</span>
