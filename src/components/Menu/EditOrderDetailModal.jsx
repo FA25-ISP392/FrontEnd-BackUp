@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { X, Minus, Plus, Save } from "lucide-react";
-import { getToppingsByDishId } from "../../lib/apiDishTopping";
 import { updateOrderDetail } from "../../lib/apiOrderDetail";
+import { getDish } from "../../lib/apiDish";
 
 export default function EditOrderDetailModal({
   isOpen,
@@ -27,11 +27,31 @@ export default function EditOrderDetailModal({
     );
     setPicked(m);
 
+    // (async () => {
+    //   try {
+    //     const opts = await getToppingsByDishId(detail.dishId);
+    //     setAllToppings(Array.isArray(opts) ? opts : []);
+    //   } catch {
+    //     setAllToppings([]);
+    //   }
+    // })();
     (async () => {
       try {
-        const opts = await getToppingsByDishId(detail.dishId);
-        setAllToppings(Array.isArray(opts) ? opts : []);
-      } catch {
+        const dish = await getDish(detail.dishId);
+        const opts = Array.isArray(dish.optionalToppings)
+          ? dish.optionalToppings
+          : [];
+
+        const mapped = opts.map((o) => ({
+          toppingId: Number(o.toppingId ?? o.id),
+          toppingName: o.toppingName ?? o.name ?? "",
+          price: Number(o.price ?? o.toppingPrice ?? 0),
+          calories: Number(o.calories ?? o.calo ?? 0),
+        }));
+
+        setAllToppings(mapped);
+      } catch (e) {
+        console.warn("Không lấy được optionalToppings:", e?.message || e);
         setAllToppings([]);
       }
     })();

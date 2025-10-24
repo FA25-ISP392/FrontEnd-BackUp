@@ -207,22 +207,25 @@ export default function Menu() {
     })();
   }, [customerId]);
 
-  const addToCart = (dish, notes = "") => {
+  const addToCart = (item) => {
+    const noteKey = item.notes || "";
     const existingItem = cart.find(
-      (item) => item.id === dish.id && item.notes === notes
+      (it) => it.id === item.id && (it.notes || "") === noteKey
     );
     if (existingItem) {
-      setCart((prevCart) =>
-        prevCart.map((item) =>
-          item.id === dish.id && item.notes === notes
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
+      setCart((prev) =>
+        prev.map((it) =>
+          it.id === item.id && (it.notes || "") === noteKey
+            ? { ...it, quantity: it.quantity + (item.quantity ?? 1) }
+            : it
         )
       );
     } else {
-      setCart((prevCart) => [...prevCart, { ...dish, quantity: 1, notes }]);
+      setCart((prev) => [...prev, { ...item }]);
     }
-    setCaloriesConsumed((prev) => prev + (dish.totalCalories || dish.calories));
+    setCaloriesConsumed(
+      (prev) => prev + (item.totalCalories || item.calories || 0)
+    );
   };
 
   const updateCartQuantity = (itemId, newQuantity) => {

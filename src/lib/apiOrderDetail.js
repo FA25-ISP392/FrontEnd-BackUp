@@ -44,7 +44,7 @@ export const normalizeOrderDetail = (d = {}) => {
 export async function createOrderDetail({
   orderId,
   dishId,
-  notes = "",
+  note = "",
   toppings = [],
 }) {
   if (!orderId) throw new Error("Thiếu orderId.");
@@ -53,7 +53,7 @@ export async function createOrderDetail({
   const payload = {
     orderId: Number(orderId),
     dishId: Number(dishId),
-    notes: String(notes || ""),
+    note: String(note || ""),
     toppings: toppings.map((t) => ({
       toppingId: Number(t.toppingId ?? t.id),
       quantity: Number(t.quantity ?? 1),
@@ -75,10 +75,11 @@ export async function createOrderDetailsFromCart(orderId, cart = []) {
       : [];
 
     for (let i = 0; i < times; i++) {
+      console.log("push item notes =", item.notes);
       const od = await createOrderDetail({
         orderId,
         dishId: item.id ?? item.dishId,
-        notes: item.notes || "",
+        note: item.notes || "",
         toppings,
       });
       results.push(od);
@@ -124,7 +125,7 @@ export async function updateOrderDetail(detail = {}) {
   const id = Number(detail.orderDetailId ?? detail.id);
   if (!id) throw new Error("Thiếu orderDetailId để cập nhật.");
   const payload = {
-    orderdetailid: id,
+    orderDetailId: id,
     note: String(detail.note ?? ""),
     status: String(detail.status ?? "PENDING").toUpperCase(),
     toppings: Array.isArray(detail.toppings)
