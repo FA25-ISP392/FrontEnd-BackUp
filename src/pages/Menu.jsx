@@ -310,6 +310,32 @@ export default function Menu() {
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  const handlePersonalizationSubmit = async (form) => {
+    try {
+      if (!customerId) throw new Error("Thiếu customerId");
+
+      console.log("📤 Dữ liệu cá nhân hoá gửi lên:", form);
+      const res = await updateCustomerPersonalization(customerId, form);
+      console.log("✅ Cập nhật thành công:", res);
+
+      // Lưu lại localStorage để lần sau load nhanh
+      localStorage.setItem(
+        PERSONAL_KEY(customerId),
+        JSON.stringify({ data: form, updatedAt: Date.now() }),
+      );
+
+      setIsPersonalized(true);
+      setEstimatedCalories(
+        applyGoal(baseCalories ?? estimatedCalories, form.goal),
+      );
+      setIsPersonalizationOpen(false);
+      alert("Đã lưu thông tin cá nhân hoá thành công!");
+    } catch (err) {
+      console.error("❌ Lỗi khi cập nhật cá nhân hoá:", err);
+      alert("Cập nhật thất bại, vui lòng thử lại.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
       <MenuHeader
@@ -389,6 +415,7 @@ export default function Menu() {
         onClose={() => setIsPersonalizationOpen(false)}
         personalizationForm={personalizationForm}
         setPersonalizationForm={setPersonalizationForm}
+        onSubmit={handlePersonalizationSubmit}
       />
 
       <CartSidebar
