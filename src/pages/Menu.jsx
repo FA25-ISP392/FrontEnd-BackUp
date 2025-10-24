@@ -163,6 +163,7 @@ export default function Menu() {
         const cached = JSON.parse(cachedRaw);
         if (cached && typeof cached === "object") {
           const data = cached.data || {};
+          delete data.goal;
           setPersonalizationForm((prev) => ({ ...prev, ...data }));
 
           if (typeof cached.perWorkout === "number") {
@@ -365,6 +366,7 @@ export default function Menu() {
       setEstimatedCalories(Math.ceil(dailyCalories));
       setIsPersonalized(true);
       setIsPersonalizationOpen(false);
+      setActiveMenuTab("personalized");
 
       alert("✅ Đã lưu và tính toán calo thành công!");
     } catch (err) {
