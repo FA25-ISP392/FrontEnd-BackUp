@@ -2,14 +2,12 @@ import { useState, useEffect } from "react";
 import {
   Users,
   ClipboardList,
-  Home,
   User,
   LogOut,
   X,
   Phone,
   CheckCircle,
   Clock,
-  Eye,
   AlertCircle,
   Timer,
   DollarSign,
@@ -22,6 +20,8 @@ import { listTables } from "../lib/apiTable";
 import { listBookingsByTableDate } from "../lib/apiBooking";
 import { getCurrentUser } from "../lib/auth";
 import StaffPaymentModal from "../components/Staff/StaffPaymentModal";
+import { getPayments } from "../lib/apiPayment";
+import { getOrderById } from "../lib/apiOrder";
 
 const RESERVE_WINDOW_MINUTES = 240;
 const DEBUG_LOG = import.meta.env.DEV;
@@ -65,72 +65,52 @@ export default function StaffPage() {
     window.location.href = "/";
   };
 
+  // ------- Load bàn + gắn trạng thái đặt bàn (reserved) -------
   useEffect(() => {
     let timer;
     async function hydrate() {
-      const rawTables = await listTables();
+      const rawTables = await listTables(); // đã normalize: {id, number, capacity, status: 'empty'|'reserved'|'serving', ...}
       const sorted = [...rawTables].sort(
         (a, b) => (a.number || a.id) - (b.number || b.id)
       );
       const now = new Date();
+
       const hydrated = await Promise.all(
         sorted.slice(0, 8).map(async (t) => {
-          console.log("📦 check table:", t);
-          console.log(
-            "➡️ will call by_tableDate with",
-            t.id,
-            t.tableId,
-            t.tableID
-          );
-          const tableId = t.id ?? t.tableId ?? t.tableID;
-          const number = t.number ?? t.id ?? t.tableID;
-
+          const tableId = t.id;
           try {
             const bookings = await listBookingsByTableDate(tableId, now);
             if (DEBUG_LOG) {
               console.log(
-                `[by_tableDate] tableId=${tableId} #${number}`,
+                `[by_tableDate] tableId=${tableId} #${t.number}`,
                 bookings
               );
             }
-
             const active = bookings.find(
               (b) =>
                 b.status === "APPROVED" && isWithinWindow(b.bookingDate, now)
             );
-
+            // ⚠️ Giữ nguyên object normalize và chỉ cập nhật field cần
             return {
-              id: tableId,
-              number,
-              capacity: t.capacity,
-              status: active ? "reserved" : "available",
+              ...t,
+              status: active ? "reserved" : t.status ?? "empty",
               guests: active?.seat || 0,
               orderTime: active ? hhmm(active.bookingDate) : null,
-              totalAmount: 0,
-              callStaff: false,
-              callPayment: false,
             };
           } catch (e) {
             if (DEBUG_LOG)
               console.warn(`[by_tableDate] error tableId=${tableId}`, e);
             return {
-              id: tableId,
-              number,
-              capacity: t.capacity,
-              status: "available",
+              ...t,
+              status: t.status ?? "empty",
               guests: 0,
               orderTime: null,
-              totalAmount: 0,
-              callStaff: false,
-              callPayment: false,
             };
           }
         })
       );
 
-      if (DEBUG_LOG) {
-        console.log("[STAFF] tables hydrated for UI:", hydrated);
-      }
+      if (DEBUG_LOG) console.log("[STAFF] tables hydrated for UI:", hydrated);
       setTables(hydrated);
     }
 
@@ -139,6 +119,62 @@ export default function StaffPage() {
     return () => clearInterval(timer);
   }, []);
 
+  // ------- Poll payments PENDING từ BE và gắn vào đúng bàn -------
+  useEffect(() => {
+    let timer;
+    async function hydratePayments() {
+      try {
+        const pays = await getPayments();
+        const pending = pays.filter(
+          (p) => (p.status || "PENDING") === "PENDING"
+        );
+        if (!pending.length) return;
+
+        // Lấy orders theo từng payment để biết tableId
+        const orderById = new Map();
+        await Promise.all(
+          pending.map(async (p) => {
+            try {
+              const o = await getOrderById(p.orderId);
+              if (o) orderById.set(p.id, o); // key theo paymentId
+            } catch {}
+          })
+        );
+
+        setTables((prev) =>
+          prev.map((tb) => {
+            // Tìm payment có order thuộc đúng bàn này
+            const matchedPay = pending.find((p) => {
+              const o = orderById.get(p.id);
+              return o && String(o.tableId) === String(tb.id);
+            });
+            if (!matchedPay) return tb;
+
+            return {
+              ...tb,
+              callPayment: true,
+              pendingPayment: {
+                id: matchedPay.id,
+                orderId: matchedPay.orderId,
+                total: matchedPay.total,
+                checkoutUrl: matchedPay.checkoutUrl,
+                qrCode: matchedPay.qrCode,
+                at: Date.now(),
+              },
+            };
+          })
+        );
+      } catch (e) {
+        console.warn("[Staff] hydratePayments fail:", e);
+      }
+    }
+
+    hydratePayments();
+    timer = setInterval(hydratePayments, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // ------- Lắng nghe tín hiệu local (KH bấm Gọi thanh toán trên client) -------
   useEffect(() => {
     function applyCallPayment({ tableId, orderId, total, paymentId } = {}) {
       if (!tableId || !paymentId) return;
@@ -157,7 +193,6 @@ export default function StaffPage() {
     function handleCallPayment(e) {
       applyCallPayment(e.detail);
     }
-    window.addEventListener("table:callPayment", handleCallPayment);
     function onStorage(ev) {
       if (!ev.key?.startsWith("signal:callPayment:")) return;
       try {
@@ -166,6 +201,7 @@ export default function StaffPage() {
         localStorage.removeItem(ev.key);
       } catch {}
     }
+    window.addEventListener("table:callPayment", handleCallPayment);
     window.addEventListener("storage", onStorage);
     return () => {
       window.removeEventListener("table:callPayment", handleCallPayment);
@@ -173,36 +209,31 @@ export default function StaffPage() {
     };
   }, []);
 
-  const getTableStatusColor = (status) => {
+  // ------- Helpers hiển thị (đồng bộ bộ status mới) -------
+  const getTableStatusBadge = (status) => {
     switch (status) {
-      case "occupied":
+      case "serving":
         return "bg-blue-500";
-      case "available":
+      case "empty":
         return "bg-green-500";
       case "reserved":
         return "bg-yellow-500";
-      case "cleaning":
-        return "bg-purple-500";
       default:
         return "bg-gray-500";
     }
   };
-
   const getTableStatusText = (status) => {
     switch (status) {
-      case "occupied":
+      case "serving":
         return "Đang phục vụ";
-      case "available":
+      case "empty":
         return "Trống";
       case "reserved":
         return "Đã đặt";
-      case "cleaning":
-        return "Đang dọn";
       default:
-        return status;
+        return "Không rõ";
     }
   };
-
   const getOrderStatusColor = (status) => {
     switch (status) {
       case "preparing":
@@ -215,7 +246,6 @@ export default function StaffPage() {
         return "bg-gray-100 text-gray-800";
     }
   };
-
   const getOrderStatusText = (status) => {
     switch (status) {
       case "preparing":
@@ -229,16 +259,15 @@ export default function StaffPage() {
     }
   };
 
+  // ------- Counters -------
   const totalRevenue = tables.reduce(
-    (sum, table) => sum + table.totalAmount,
+    (sum, table) => sum + (table.totalAmount || 0),
     0
   );
-  const occupiedTables = tables.filter(
-    (table) => table.status === "occupied"
+  const servingTables = tables.filter(
+    (table) => table.status === "serving"
   ).length;
-  const availableTables = tables.filter(
-    (table) => table.status === "available"
-  ).length;
+  const emptyTables = tables.filter((table) => table.status === "empty").length;
   const reservedTables = tables.filter(
     (table) => table.status === "reserved"
   ).length;
@@ -291,7 +320,7 @@ export default function StaffPage() {
                     <div>
                       <p className="text-neutral-600 text-sm">Bàn Trống</p>
                       <p className="text-2xl font-bold text-green-600">
-                        {availableTables}
+                        {emptyTables}
                       </p>
                     </div>
                     <Users className="h-8 w-8 text-green-600" />
@@ -305,7 +334,7 @@ export default function StaffPage() {
                         Bàn Đang Phục Vụ
                       </p>
                       <p className="text-2xl font-bold text-orange-600">
-                        {occupiedTables}
+                        {servingTables}
                       </p>
                     </div>
                     <Clock className="h-8 w-8 text-orange-600" />
@@ -426,12 +455,13 @@ export default function StaffPage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
+
             <div className="p-4">
               {/* Table Info */}
               <div className="mb-6">
                 <div className="flex items-center gap-4 mb-4">
                   <div
-                    className={`w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl ${getTableStatusColor(
+                    className={`w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl ${getTableStatusBadge(
                       selectedTable.status
                     )}`}
                   >
@@ -452,8 +482,8 @@ export default function StaffPage() {
                   </div>
                 </div>
 
-                {/* Hiển thị thông tin theo trạng thái bàn */}
-                {selectedTable.status === "available" ? (
+                {/* Khối theo trạng thái */}
+                {selectedTable.status === "empty" ? (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Table className="h-8 w-8 text-green-600" />
@@ -462,8 +492,7 @@ export default function StaffPage() {
                       Bàn Trống
                     </h4>
                     <p className="text-green-600">
-                      Bàn này hiện đang trống và sẵn sàng phục vụ khách hàng
-                      mới.
+                      Bàn sẵn sàng phục vụ khách hàng mới.
                     </p>
                   </div>
                 ) : selectedTable.status === "reserved" ? (
@@ -498,220 +527,40 @@ export default function StaffPage() {
                           {selectedTable.orderTime || "Chưa xác định"}
                         </p>
                       </div>
-                      <div className="bg-white p-3 rounded-lg border border-orange-200">
-                        <p className="text-sm text-orange-600 font-medium">
-                          Thời gian phục vụ
-                        </p>
-                        <p className="font-bold text-orange-800">
-                          {selectedTable.duration || "Chưa bắt đầu"}
-                        </p>
-                      </div>
-                      <div className="bg-white p-3 rounded-lg border border-orange-200">
-                        <p className="text-sm text-orange-600 font-medium">
-                          Trạng thái
-                        </p>
-                        <p className="font-bold text-orange-800">Đã đặt</p>
-                      </div>
                     </div>
                   </div>
-                ) : selectedTable.status === "occupied" ? (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                ) : selectedTable.status === "serving" ? (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                        <Users className="h-6 w-6 text-red-600" />
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Users className="h-6 w-6 text-blue-600" />
                       </div>
                       <div>
-                        <h4 className="text-lg font-semibold text-red-800">
+                        <h4 className="text-lg font-semibold text-blue-800">
                           Đang Phục Vụ
                         </h4>
-                        <p className="text-red-600">
-                          Khách hàng đang sử dụng bàn này
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white p-3 rounded-lg border border-red-200">
-                        <p className="text-sm text-red-600 font-medium">
-                          Số khách
-                        </p>
-                        <p className="font-bold text-red-800 text-lg">
-                          {selectedTable.guests} người
-                        </p>
-                      </div>
-                      <div className="bg-white p-3 rounded-lg border border-red-200">
-                        <p className="text-sm text-red-600 font-medium">
-                          Thời gian bắt đầu
-                        </p>
-                        <p className="font-bold text-red-800">
-                          {selectedTable.orderTime || "Chưa xác định"}
-                        </p>
-                      </div>
-                      <div className="bg-white p-3 rounded-lg border border-red-200">
-                        <p className="text-sm text-red-600 font-medium">
-                          Thời gian phục vụ
-                        </p>
-                        <p className="font-bold text-red-800">
-                          {selectedTable.duration || "Đang phục vụ"}
-                        </p>
-                      </div>
-                      <div className="bg-white p-3 rounded-lg border border-red-200">
-                        <p className="text-sm text-red-600 font-medium">
-                          Tổng tiền
-                        </p>
-                        <p className="font-bold text-red-800">
-                          ${selectedTable.totalAmount.toFixed(2)}
+                        <p className="text-blue-600">
+                          Khách hàng đang dùng bữa
                         </p>
                       </div>
                     </div>
                     {selectedTable.callStaff && (
-                      <div className="mt-4 p-3 bg-red-100 border border-red-300 rounded-lg">
+                      <div className="mt-2 p-3 bg-red-100 border border-red-300 rounded-lg">
                         <div className="flex items-center gap-2">
                           <Phone className="h-5 w-5 text-red-600" />
                           <span className="font-semibold text-red-800">
-                            Khách hàng đang cần hỗ trợ!
+                            Khách đang cần hỗ trợ
                           </span>
                         </div>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 text-center">
-                    <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Timer className="h-8 w-8 text-purple-600" />
-                    </div>
-                    <h4 className="text-lg font-semibold text-purple-800 mb-2">
-                      Đang Dọn Dẹp
-                    </h4>
-                    <p className="text-purple-600">
-                      Bàn đang được dọn dẹp và sẽ sẵn sàng phục vụ khách hàng
-                      mới.
-                    </p>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                    <p className="text-gray-600">Không rõ trạng thái.</p>
                   </div>
                 )}
               </div>
-
-              {/* Chỉ hiển thị thông tin món ăn và thanh toán khi bàn có khách */}
-              {(selectedTable.status === "occupied" ||
-                selectedTable.status === "reserved") && (
-                <>
-                  {/* Orders for this table */}
-                  <div>
-                    <h4 className="font-semibold mb-4">Món Ăn Đã Đặt</h4>
-                    {orders.filter(
-                      (order) => order.table === selectedTable.number
-                    ).length > 0 ? (
-                      <div className="space-y-3">
-                        {orders
-                          .filter(
-                            (order) => order.table === selectedTable.number
-                          )
-                          .map((order) => (
-                            <div
-                              key={order.id}
-                              className="border rounded-lg p-4 bg-gray-50"
-                            >
-                              <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-semibold">
-                                    Đơn #{order.id}
-                                  </span>
-                                  <span
-                                    className={`px-2 py-1 rounded-full text-xs font-medium ${getOrderStatusColor(
-                                      order.status
-                                    )}`}
-                                  >
-                                    {getOrderStatusText(order.status)}
-                                  </span>
-                                </div>
-                                <span className="text-green-600 font-semibold">
-                                  ${order.total}
-                                </span>
-                              </div>
-
-                              <div className="space-y-2">
-                                <p className="text-sm text-neutral-600 font-medium">
-                                  Danh sách món:
-                                </p>
-                                <div className="space-y-1">
-                                  {order.dishes.map((dish, index) => (
-                                    <div
-                                      key={index}
-                                      className="flex items-center gap-2 text-sm bg-white p-2 rounded border"
-                                    >
-                                      <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
-                                      <span className="flex-1">{dish}</span>
-                                      <span className="text-xs text-gray-500">
-                                        x1
-                                      </span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              <div className="flex items-center justify-between mt-3 pt-3 border-t">
-                                <div className="text-sm text-neutral-600">
-                                  <p>Thời gian đặt: {order.orderTime}</p>
-                                  <p>
-                                    Thời gian ước tính: {order.estimatedTime}
-                                  </p>
-                                </div>
-                                <div className="flex gap-2">
-                                  {order.status === "ready" && (
-                                    <button className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition">
-                                      Phục vụ
-                                    </button>
-                                  )}
-                                  {order.status === "preparing" && (
-                                    <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition">
-                                      Đang chuẩn bị
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-neutral-600">
-                        <ClipboardList className="h-12 w-12 mx-auto mb-4 text-neutral-400" />
-                        <p>Chưa có đơn hàng nào</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Payment Information - chỉ hiển thị khi có đơn hàng */}
-                  {selectedTable.totalAmount > 0 && (
-                    <div className="mt-6">
-                      <h4 className="font-semibold mb-4">
-                        Thông Tin Thanh Toán
-                      </h4>
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm text-green-700">
-                            Tổng tiền:
-                          </span>
-                          <span className="font-bold text-green-800 text-lg">
-                            ${selectedTable.totalAmount.toFixed(2)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm text-green-700">
-                            Trạng thái thanh toán:
-                          </span>
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                            Chưa thanh toán
-                          </span>
-                        </div>
-                        <div className="mt-3 pt-3 border-t border-green-200">
-                          <button className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition font-medium">
-                            Xử lý thanh toán
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
 
               {/* Actions */}
               <div className="mt-6 flex gap-3">
@@ -761,23 +610,6 @@ export default function StaffPage() {
                 </p>
               </div>
 
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between text-sm">
-                  <span className="text-neutral-600">Department:</span>
-                  <span className="font-medium">Service</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-neutral-600">Access Level:</span>
-                  <span className="font-medium">Staff Access</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-neutral-600">Last Login:</span>
-                  <span className="font-medium">
-                    {new Date().toLocaleString()}
-                  </span>
-                </div>
-              </div>
-
               <button
                 onClick={handleLogout}
                 className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition font-medium flex items-center justify-center gap-2"
@@ -790,6 +622,7 @@ export default function StaffPage() {
         </div>
       )}
 
+      {/* Payment Modal */}
       {isPaymentModalOpen && selectedTable && (
         <StaffPaymentModal
           open={isPaymentModalOpen}

@@ -1,14 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import { X, Loader2, CreditCard, QrCode } from "lucide-react";
 import { getPaymentById, createPayment } from "../../lib/apiPayment";
+// ✅ dùng apiOrder của bạn
+import { getOrderById, getOrderDetailsByOrderId } from "../../lib/apiOrder";
 
 export default function StaffPaymentModal({ open, onClose, table }) {
   const [loading, setLoading] = useState(false);
   const [qr, setQr] = useState("");
   const [checkoutUrl, setCheckoutUrl] = useState("");
 
+  // dữ liệu order
+  const [order, setOrder] = useState(null);
+  const [items, setItems] = useState([]);
+
+  // lấy từ payload mà bên khách “Gọi thanh toán” đã gắn vào table
   const orderId = useMemo(() => table?.pendingPayment?.orderId, [table]);
-  const total = useMemo(() => table?.pendingPayment?.total ?? 0, [table]);
+  const fallbackTotal = useMemo(
+    () => table?.pendingPayment?.total ?? 0,
+    [table]
+  );
   const paymentId = useMemo(() => table?.pendingPayment?.id, [table]);
 
   useEffect(() => {
@@ -16,8 +26,34 @@ export default function StaffPaymentModal({ open, onClose, table }) {
       setQr("");
       setCheckoutUrl("");
       setLoading(false);
+      setOrder(null);
+      setItems([]);
+      return;
     }
-  }, [open]);
+    // ✅ Khi mở modal: tải order + details theo orderId có sẵn
+    async function fetchOrder() {
+      if (!orderId) return;
+      setLoading(true);
+      try {
+        const o = await getOrderById(orderId); // đã normalize
+        setOrder(o);
+        // nếu BE trả sẵn o.orderDetails thì dùng luôn, nếu không thì gọi getOrderDetailsByOrderId
+        const details =
+          Array.isArray(o?.orderDetails) && o.orderDetails.length
+            ? o.orderDetails
+            : await getOrderDetailsByOrderId(orderId);
+        setItems(details || []);
+      } catch (e) {
+        // vẫn để hiển thị phần tối thiểu
+        setOrder({ orderId, status: "PENDING" });
+        setItems([]);
+        console.warn("[StaffPaymentModal] load order fail:", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchOrder();
+  }, [open, orderId]);
 
   if (!open || !table) return null;
 
@@ -58,6 +94,9 @@ export default function StaffPaymentModal({ open, onClose, table }) {
     }
   }
 
+  // tổng hiển thị: ưu tiên từ order (nếu BE có), fallback về total đã gắn ở signal
+  const displayTotal = order?.total ?? order?.grandTotal ?? fallbackTotal;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
@@ -74,9 +113,59 @@ export default function StaffPaymentModal({ open, onClose, table }) {
         <div className="text-sm text-neutral-600 mb-4">
           Bàn <b>{table?.number}</b> • Order <b>#{orderId}</b>
           {" • Tổng ~ "}
-          <b>{VND(total)}</b>
+          <b>{VND(displayTotal)}</b>
         </div>
 
+        {/* Thông tin order + danh sách món */}
+        <div className="mb-4">
+          {loading ? (
+            <div className="flex items-center gap-2 text-neutral-500">
+              <Loader2 className="h-4 w-4 animate-spin" /> Đang tải đơn hàng…
+            </div>
+          ) : (
+            <>
+              {order && (
+                <div className="mb-2 text-sm">
+                  <div className="font-medium">
+                    Khách: {order.customerName || order.customer?.name || "—"}
+                  </div>
+                  <div>
+                    Trạng thái: <b>{order.status}</b>
+                  </div>
+                </div>
+              )}
+              {items?.length > 0 && (
+                <div className="border rounded-xl p-3 bg-neutral-50 max-h-56 overflow-auto">
+                  <div className="text-sm font-semibold mb-2">Món đã gọi</div>
+                  <ul className="space-y-2">
+                    {items.map((it, idx) => (
+                      <li
+                        key={it.orderDetailId || it.id || idx}
+                        className="flex justify-between text-sm"
+                      >
+                        <span>
+                          {it.dishName || it.name || `Món #${it.dishId || ""}`}
+                          {it.note ? ` — ${it.note}` : ""}
+                        </span>
+                        <span>
+                          x{it.quantity ?? 1} •{" "}
+                          {VND(it.price ?? it.unitPrice ?? 0)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {!items?.length && (
+                <div className="text-sm text-neutral-500">
+                  Chưa có chi tiết món.
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Actions */}
         <div className="grid grid-cols-2 gap-3">
           <button
             disabled={loading}

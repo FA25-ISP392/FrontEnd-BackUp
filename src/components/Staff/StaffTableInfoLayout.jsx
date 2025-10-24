@@ -8,25 +8,16 @@ export default function StaffTableInfoLayout({
   orders = [],
 }) {
   const getTableStatusColor = (table) => {
-    // Kiểm tra nếu khách hàng gọi nhân viên
-    if (table.callStaff) {
-      return "border-red-500 bg-red-50";
-    }
-    // Kiểm tra nếu khách hàng gọi thanh toán (giả sử có thuộc tính callPayment)
-    if (table.callPayment) {
-      return "border-green-500 bg-green-50";
-    }
+    if (table.callStaff) return "border-red-500 bg-red-50";
+    if (table.callPayment) return "border-green-500 bg-green-50";
 
-    // Màu sắc theo trạng thái bàn
     switch (table.status) {
-      case "occupied":
+      case "serving":
         return "border-blue-500 bg-blue-50";
-      case "available":
+      case "empty":
         return "border-green-500 bg-green-50";
       case "reserved":
         return "border-yellow-500 bg-yellow-50";
-      case "cleaning":
-        return "border-purple-500 bg-purple-50";
       default:
         return "border-gray-500 bg-gray-50";
     }
@@ -34,22 +25,19 @@ export default function StaffTableInfoLayout({
 
   const getTableStatusText = (status) => {
     switch (status) {
-      case "occupied":
+      case "serving":
         return "Đang phục vụ";
-      case "available":
+      case "empty":
         return "Trống";
       case "reserved":
         return "Đã đặt";
-      case "cleaning":
-        return "Đang dọn";
       default:
-        return status;
+        return "Không rõ";
     }
   };
 
-  const getOrderForTable = (tableNumber) => {
-    return orders.find((order) => order.table === tableNumber);
-  };
+  const getOrderForTable = (num) =>
+    orders.find((o) => Number(o.table) === Number(num));
 
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
@@ -77,14 +65,11 @@ export default function StaffTableInfoLayout({
               }`}
               onClick={() => onTableClick?.(table)}
             >
-              {/* Icon gọi nhân viên */}
               {table.callStaff && (
-                <div className="absolute top-2 right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                <div className="absolute top-2 right-10 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                   <Phone className="h-4 w-4 text-white" />
                 </div>
               )}
-
-              {/* Icon gọi thanh toán */}
               {table.callPayment && (
                 <div className="absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
                   <DollarSign className="h-4 w-4 text-white" />
@@ -110,20 +95,26 @@ export default function StaffTableInfoLayout({
                   </div>
                 </div>
 
-                {/* Hiển thị trạng thái */}
                 <div className="mt-3">
                   <span className="text-xs font-medium text-neutral-600">
                     {getTableStatusText(table.status)}
                   </span>
                 </div>
 
-                {/* Hiển thị thông tin order nếu có */}
+                {table.callPayment && (
+                  <div className="mt-2 text-xs font-semibold text-green-700">
+                    Đang yêu cầu thanh toán
+                  </div>
+                )}
+
                 {order && (
                   <div className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
                     <div className="text-xs font-medium text-blue-800">
-                      Đơn #{order.id}
+                      Đơn #{order.id ?? order.orderId}
                     </div>
-                    <div className="text-xs text-blue-600">${order.total}</div>
+                    <div className="text-xs text-blue-600">
+                      {order.total ? `$${order.total}` : ""}
+                    </div>
                   </div>
                 )}
               </div>
@@ -132,7 +123,6 @@ export default function StaffTableInfoLayout({
         })}
       </div>
 
-      {/* Chú thích */}
       <div className="mt-6 bg-gray-50 rounded-lg p-4">
         <div className="text-sm font-semibold text-gray-800 mb-3">
           Chú thích:
@@ -150,10 +140,8 @@ export default function StaffTableInfoLayout({
           </div>
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-red-100 border-2 border-red-500 rounded relative">
-                <Phone className="h-3 w-3 text-red-500 absolute top-0.5 right-0.5" />
-              </div>
-              <span className="text-red-800 font-medium">Gọi nhân viên</span>
+              <div className="w-4 h-4 bg-yellow-100 border-2 border-yellow-500 rounded"></div>
+              <span className="text-yellow-800 font-medium">Đã đặt</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-green-100 border-2 border-green-500 rounded relative">

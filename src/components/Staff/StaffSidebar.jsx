@@ -43,8 +43,6 @@ export default function StaffSidebar({ activeSection, setActiveSection }) {
             </button>
           ))}
         </nav>
-
-        {/* Removed Back to Home button as requested */}
       </div>
     </div>
   );

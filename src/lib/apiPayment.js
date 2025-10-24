@@ -24,3 +24,9 @@ export async function getPaymentById(id) {
   const res = await apiConfig.get(`/payment/${id}`);
   return normalizePayment(res?.result ?? res);
 }
+
+export async function getPayments() {
+  const res = await apiConfig.get("/payment");
+  const list = Array.isArray(res) ? res : res?.result ?? [];
+  return list.map(normalizePayment);
+}
