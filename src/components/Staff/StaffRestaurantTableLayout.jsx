@@ -5,11 +5,9 @@ export default function StaffRestaurantTableLayout({
   onTableClick,
   selectedTable,
 }) {
-  // helper để tìm bàn theo number
   const getTable = (num) =>
     tables.find((t) => Number(t.number) === Number(num)) || { status: "empty" };
 
-  // Định nghĩa màu và hiệu ứng theo status ("empty" | "reserved" | "serving")
   const getTableStyle = (table) => {
     const base =
       "w-20 h-20 border-3 rounded-xl flex items-center justify-center text-sm font-bold shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105";
@@ -46,12 +44,10 @@ export default function StaffRestaurantTableLayout({
       </h3>
 
       <div className="relative bg-gradient-to-br from-orange-50 via-orange-100 to-amber-50 rounded-2xl p-8 border-2 border-orange-200 shadow-xl h-96">
-        {/* Cửa ra vào */}
         <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-24 h-4 bg-gradient-to-b from-orange-400 to-orange-500 rounded-b-xl shadow-lg"></div>
 
         <div className="absolute inset-6 border-2 border-orange-200 rounded-xl bg-white/40 backdrop-blur-sm shadow-inner"></div>
 
-        {/* Bàn 1 & 2 (trên) */}
         <div className="absolute top-16 left-1/2 transform -translate-x-24">
           <div
             className={getTableStyle(getTable(1))}
@@ -77,7 +73,6 @@ export default function StaffRestaurantTableLayout({
           </div>
         </div>
 
-        {/* Bàn 3 & 4 (dưới) */}
         <div className="absolute bottom-16 left-1/2 transform -translate-x-24">
           <div
             className={getTableStyle(getTable(3))}
@@ -103,7 +98,6 @@ export default function StaffRestaurantTableLayout({
           </div>
         </div>
 
-        {/* Bàn 5 & 6 (bên trái) */}
         <div className="absolute top-1/2 left-12 transform -translate-y-16">
           <div
             className={getTableStyle(getTable(5))}
@@ -129,7 +123,6 @@ export default function StaffRestaurantTableLayout({
           </div>
         </div>
 
-        {/* Bàn 7 & 8 (bên phải) */}
         <div className="absolute top-1/2 right-12 transform -translate-y-16">
           <div
             className={getTableStyle(getTable(7))}
@@ -155,7 +148,6 @@ export default function StaffRestaurantTableLayout({
           </div>
         </div>
 
-        {/* Chú thích */}
         <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg border border-orange-200">
           <div className="text-xs font-semibold text-orange-800 mb-2">
             Chú thích:
