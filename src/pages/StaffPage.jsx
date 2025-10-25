@@ -615,6 +615,7 @@ export default function StaffPage() {
                     : t
                 )
               );
+              window.location.href = "/staff";
             }
           }}
         />

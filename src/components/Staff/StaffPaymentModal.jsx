@@ -15,13 +15,10 @@ export default function StaffPaymentModal({ open, onClose, table }) {
   const [loading, setLoading] = useState(false);
   const [qr, setQr] = useState("");
   const [checkoutUrl, setCheckoutUrl] = useState("");
-
   const [order, setOrder] = useState(null);
   const [items, setItems] = useState([]);
-
-  // trạng thái giao diện: "default" | "cash"
   const [view, setView] = useState("default");
-  const [cashInput, setCashInput] = useState(""); // nhập tiền nhận (string để dễ gõ)
+  const [cashInput, setCashInput] = useState("");
   const [cashError, setCashError] = useState("");
 
   const orderId = useMemo(() => table?.pendingPayment?.orderId, [table]);
@@ -34,7 +31,6 @@ export default function StaffPaymentModal({ open, onClose, table }) {
   const VND = (n = 0) =>
     Number(n || 0).toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " ₫";
 
-  // ===== Load order + details =====
   useEffect(() => {
     if (!open) {
       setQr("");
@@ -53,7 +49,6 @@ export default function StaffPaymentModal({ open, onClose, table }) {
       try {
         const o = await getOrderById(orderId);
 
-        // điền tên khách qua customerId (fallback listCustomers nếu /customer/{id} lỗi)
         if (!o.customerName && o.customerId) {
           try {
             const cus = await getCustomerDetail(o.customerId);
@@ -91,7 +86,6 @@ export default function StaffPaymentModal({ open, onClose, table }) {
     fetchOrder();
   }, [open, orderId]);
 
-  // ===== Poll 5s để đồng bộ trạng thái, không làm mất customerName =====
   useEffect(() => {
     if (!open || !orderId) return;
     const t = setInterval(async () => {
@@ -109,14 +103,45 @@ export default function StaffPaymentModal({ open, onClose, table }) {
     return () => clearInterval(t);
   }, [open, orderId]);
 
-  // tổng từ BE (total = totalPrice)
   const displayTotal = order?.total ?? fallbackTotal;
 
-  // ====== HANDLERS ======
+  useEffect(() => {
+    if (!open || !paymentId) return;
+
+    let stopped = false;
+
+    const checkOnce = async () => {
+      try {
+        const p = await getPaymentById(paymentId);
+        const st = String(p.status || "").toUpperCase();
+
+        if (["COMPLETED", "PAID", "SUCCESS"].includes(st)) {
+          if (!stopped) {
+            alert("Thanh toán QR thành công!");
+            onClose?.({ paid: true, method: "QR" });
+          }
+          return;
+        }
+        if (["FAILED", "CANCELLED"].includes(st)) {
+          if (!stopped) alert("Thanh toán bị hủy/không thành công.");
+          return;
+        }
+        if (!stopped) setTimeout(checkOnce, 3000);
+      } catch {
+        if (!stopped) setTimeout(checkOnce, 4000);
+      }
+    };
+
+    const id = setTimeout(checkOnce, 2000);
+    return () => {
+      stopped = true;
+      clearTimeout(id);
+    };
+  }, [open, paymentId, onClose]);
+
   function openCashForm() {
     setView("cash");
     setCashError("");
-    // nếu trước đó đã nhập, giữ lại; còn không thì gợi ý bằng tổng
     setCashInput((v) => (v ? v : String(displayTotal || "")));
   }
 
@@ -126,7 +151,6 @@ export default function StaffPaymentModal({ open, onClose, table }) {
   }
 
   function parseNumber(s) {
-    // cho phép gõ có dấu . , khoảng trắng
     const num = Number(String(s).replace(/[^\d.-]/g, ""));
     return isFinite(num) ? num : 0;
   }
@@ -144,7 +168,6 @@ export default function StaffPaymentModal({ open, onClose, table }) {
     setLoading(true);
     setCashError("");
     try {
-      // API của bạn không nhận amount => chỉ cần create CASH payment
       await createPayment({ orderId, method: "CASH" });
       alert("Đã hoàn tất thanh toán tiền mặt.");
       onClose?.({ paid: true });
@@ -180,7 +203,6 @@ export default function StaffPaymentModal({ open, onClose, table }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
-        {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold">Xử Lý Thanh Toán</h3>
           <button
@@ -191,14 +213,12 @@ export default function StaffPaymentModal({ open, onClose, table }) {
           </button>
         </div>
 
-        {/* Thông tin chung */}
         <div className="text-sm text-neutral-600 mb-4">
           Bàn <b>{table?.number}</b> • Order <b>#{orderId}</b>
-          {" • Tổng ~ "}
+          {" • Tổng: "}
           <b>{VND(displayTotal)}</b>
         </div>
 
-        {/* === VIEW: DEFAULT (danh sách món + nút chọn phương thức) === */}
         {view === "default" && (
           <>
             <div className="mb-4">
@@ -280,7 +300,6 @@ export default function StaffPaymentModal({ open, onClose, table }) {
               )}
             </div>
 
-            {/* Actions */}
             <div className="grid grid-cols-2 gap-3">
               <button
                 disabled={loading}
@@ -341,7 +360,6 @@ export default function StaffPaymentModal({ open, onClose, table }) {
           </>
         )}
 
-        {/* === VIEW: CASH (form nhập tiền nhận) === */}
         {view === "cash" && (
           <div className="space-y-4">
             <div className="rounded-xl border p-4 bg-neutral-50">
