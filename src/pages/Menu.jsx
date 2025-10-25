@@ -46,11 +46,12 @@ export default function Menu() {
   const [customerId, setCustomerId] = useState(null);
   const [customerName, setCustomerName] = useState(null);
   const [orderId, setOrderId] = useState(
-    () => sessionStorage.getItem("orderId") || null
+    () => sessionStorage.getItem("orderId") || null,
   );
 
   const [baseCalories, setBaseCalories] = useState(null);
   const [estimatedCalories, setEstimatedCalories] = useState(null);
+  const [dailyCalories, setDailyCalories] = useState(null);
 
   const [menuDishes, setMenuDishes] = useState([]);
   const [orderDetails, setOrderDetails] = useState([]);
@@ -159,7 +160,7 @@ export default function Menu() {
   }, []);
 
   const filteredDishes = menuDishes.filter(
-    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name)
+    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name),
   );
 
   const { personalizationForm, setPersonalizationForm, personalizedDishes } =
@@ -180,7 +181,7 @@ export default function Menu() {
           if (typeof cached.perWorkout === "number") {
             const roundedBase = Math.ceil(cached.perWorkout);
             const roundedGoal = Math.ceil(
-              applyGoal(cached.perWorkout, data.goal)
+              applyGoal(cached.perWorkout, data.goal),
             );
             setBaseCalories(roundedBase);
             setEstimatedCalories(roundedGoal);
@@ -206,7 +207,7 @@ export default function Menu() {
         setPersonalizationForm((prev) => ({ ...prev, ...toForm }));
         localStorage.setItem(
           PERSONAL_KEY(customerId),
-          JSON.stringify({ data: toForm, updatedAt: Date.now() })
+          JSON.stringify({ data: toForm, updatedAt: Date.now() }),
         );
       } catch (e) {
         console.warn("Không lấy được personalization từ BE:", e?.message || e);
@@ -217,21 +218,21 @@ export default function Menu() {
   const addToCart = (item) => {
     const noteKey = item.notes || "";
     const existingItem = cart.find(
-      (it) => it.id === item.id && (it.notes || "") === noteKey
+      (it) => it.id === item.id && (it.notes || "") === noteKey,
     );
     if (existingItem) {
       setCart((prev) =>
         prev.map((it) =>
           it.id === item.id && (it.notes || "") === noteKey
             ? { ...it, quantity: it.quantity + (item.quantity ?? 1) }
-            : it
-        )
+            : it,
+        ),
       );
     } else {
       setCart((prev) => [...prev, { ...item }]);
     }
     setCaloriesConsumed(
-      (prev) => prev + (item.totalCalories || item.calories || 0)
+      (prev) => prev + (item.totalCalories || item.calories || 0),
     );
   };
 
@@ -245,11 +246,11 @@ export default function Menu() {
       const diff = newQuantity - item.quantity;
       setCart((prev) =>
         prev.map((it) =>
-          it.id === itemId ? { ...it, quantity: newQuantity } : it
-        )
+          it.id === itemId ? { ...it, quantity: newQuantity } : it,
+        ),
       );
       setCaloriesConsumed(
-        (prev) => prev + diff * (item.totalCalories || item.calories)
+        (prev) => prev + diff * (item.totalCalories || item.calories),
       );
     }
   };
@@ -259,7 +260,7 @@ export default function Menu() {
     if (item) {
       setCart((prev) => prev.filter((it) => it.id !== itemId));
       setCaloriesConsumed(
-        (prev) => prev - (item.totalCalories || item.calories) * item.quantity
+        (prev) => prev - (item.totalCalories || item.calories) * item.quantity,
       );
     }
   };
@@ -377,11 +378,11 @@ export default function Menu() {
   function notifyStaff({ tableId, orderId, total, paymentId }) {
     const payload = { tableId, orderId, total, paymentId, ts: Date.now() };
     window.dispatchEvent(
-      new CustomEvent("table:callPayment", { detail: payload })
+      new CustomEvent("table:callPayment", { detail: payload }),
     );
     localStorage.setItem(
       `signal:callPayment:${payload.ts}`,
-      JSON.stringify(payload)
+      JSON.stringify(payload),
     );
   }
 
@@ -471,7 +472,7 @@ export default function Menu() {
           perWorkout: Math.ceil(maintenanceCalories),
           goalCalories: Math.ceil(dailyCalories),
           updatedAt: Date.now(),
-        })
+        }),
       );
 
       // 6️⃣ Gọi API cập nhật thông tin khách hàng
@@ -481,8 +482,6 @@ export default function Menu() {
       setBaseCalories(Math.ceil(maintenanceCalories));
       setEstimatedCalories(Math.ceil(dailyCalories));
       setIsPersonalized(true);
-      setIsPersonalizationOpen(false);
-      setActiveMenuTab("personalized");
 
       alert("✅ Đã lưu và tính toán calo thành công!");
     } catch (err) {
@@ -509,7 +508,6 @@ export default function Menu() {
         tableId={tableId}
         customerId={customerId}
       />
-
       <OrderStatusSidebar
         isOpen={isStatusOpen}
         onClose={() => setIsStatusOpen(false)}
@@ -519,7 +517,6 @@ export default function Menu() {
         onIncGroup={handleIncGroup}
         onDecGroup={handleDecGroup}
       />
-
       {isEditOpen && editingDetail && (
         <EditOrderDetailModal
           isOpen={isEditOpen}
@@ -528,7 +525,6 @@ export default function Menu() {
           onUpdated={handleEdited}
         />
       )}
-
       {orderId && tableId && customerId && (
         <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
           <div className="max-w-7xl mx-auto flex items-center justify-center space-x-6 text-sm">
@@ -549,7 +545,6 @@ export default function Menu() {
           </div>
         </div>
       )}
-
       <MenuContent
         activeMenuTab={activeMenuTab}
         setActiveMenuTab={setActiveMenuTab}
@@ -575,15 +570,16 @@ export default function Menu() {
         isPersonalized={isPersonalized}
         currentGoal={personalizationForm.goal}
       />
-
       <MenuFooter />
-
       <PersonalizationModal
         isOpen={isPersonalizationOpen}
         onClose={() => setIsPersonalizationOpen(false)}
         personalizationForm={personalizationForm}
         setPersonalizationForm={setPersonalizationForm}
-        onSubmit={handlePersonalizationSubmit}
+        onSubmit={handlePersonalizationSubmit} // nếu bạn muốn vẫn gửi BE
+        dailyCalories={dailyCalories}
+        setDailyCalories={setDailyCalories}
+        caloriesConsumed={caloriesConsumed}
       />
 
       <CartSidebar
@@ -594,7 +590,6 @@ export default function Menu() {
         onRemoveItem={removeFromCart}
         onOrderFood={handleOrderFood}
       />
-
       <PaymentSidebar
         isOpen={isPaymentOpen}
         onClose={() => setIsPaymentOpen(false)}
@@ -602,14 +597,12 @@ export default function Menu() {
         items={paymentItems}
         onRequestPayment={handleRequestPayment}
       />
-
       <DishOptionsModal
         isOpen={isDishOptionsOpen}
         onClose={() => setIsDishOptionsOpen(false)}
         dish={selectedDish}
         onAddToCart={addToCart}
       />
-
       {isCallStaffOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
