@@ -45,7 +45,7 @@ export default function MenuHeader({
               className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 shadow-lg hover:shadow-xl"
             >
               <User className="h-4 w-4" />
-              <span className="font-medium">Cá Nhân Hóa</span>
+              <span className="font-medium">Theo dõi caloiries</span>
             </button>
 
             <button
