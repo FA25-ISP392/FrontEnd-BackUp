@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { X, Trash2 } from "lucide-react";
 
 const STATUS_LABEL = {
   pending: "Chờ nấu",
@@ -12,14 +12,44 @@ const STATUS_COLOR = {
   served: "bg-green-100 text-green-700 border-green-200",
   cancelled: "bg-red-100 text-red-700 border-red-200",
 };
-
 const fmtVND = (n) =>
   typeof n === "number" && isFinite(n) ? n.toLocaleString("vi-VN") + "₫" : "-";
 
-export default function OrderStatusSidebar({ isOpen, onClose, items = [] }) {
+function makeGroupKey(it) {
+  const note = (it.note || "").trim();
+  const tops = Array.isArray(it.toppings)
+    ? it.toppings
+        .map((t) => `${Number(t.toppingId)}x${Number(t.quantity || 1)}`)
+        .sort()
+        .join("|")
+    : "";
+  return `${Number(it.dishId)}|${note}|${tops}`;
+}
+
+export default function OrderStatusSidebar({
+  isOpen,
+  onClose,
+  items = [],
+  onEdit,
+  onDelete,
+  onIncGroup,
+  onDecGroup,
+}) {
   if (!isOpen) return null;
 
-  const list = Array.isArray(items) ? [...items].reverse() : [];
+  const map = new Map();
+  (Array.isArray(items) ? items : []).forEach((it) => {
+    const key = makeGroupKey(it);
+    if (!map.has(key)) {
+      map.set(key, { sample: it, ids: [it.orderDetailId], count: 1 });
+    } else {
+      const g = map.get(key);
+      g.ids.push(it.orderDetailId);
+      g.count += 1;
+    }
+  });
+
+  const groups = [...map.values()].reverse();
 
   return (
     <>
@@ -46,22 +76,39 @@ export default function OrderStatusSidebar({ isOpen, onClose, items = [] }) {
           </div>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-3">
-            {list.length === 0 ? (
+            {groups.length === 0 ? (
               <div className="text-sm text-neutral-500 border rounded-xl p-4">
                 Chưa có món nào được gọi.
               </div>
             ) : (
-              list.map((it) => {
+              groups.map((g) => {
+                const it = g.sample;
                 const st = String(it.status || "").toLowerCase();
                 const badge =
                   STATUS_COLOR[st] ||
                   "bg-neutral-100 text-neutral-700 border-neutral-200";
+                const canChangeQty = st === "pending" || st === "preparing";
+
                 return (
                   <div
-                    key={it.orderDetailId}
-                    className="border rounded-xl p-3 hover:bg-neutral-50"
+                    key={`${it.orderDetailId}-group`}
+                    className="relative border rounded-xl p-3 hover:bg-neutral-50"
                   >
-                    <div className="flex items-start justify-between">
+                    <button
+                      className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600"
+                      onClick={() => onDecGroup && onDecGroup(g)}
+                      aria-label="Xoá 1"
+                      title="Xoá 1 đơn vị"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+
+                    <div
+                      className="flex items-start justify-between pr-8 cursor-pointer"
+                      onClick={() => onEdit && onEdit(it)}
+                      role="button"
+                      title="Sửa topping/ghi chú"
+                    >
                       <div className="font-semibold text-neutral-900">
                         {it.dishName}
                       </div>
@@ -73,7 +120,13 @@ export default function OrderStatusSidebar({ isOpen, onClose, items = [] }) {
                     {Array.isArray(it.toppings) && it.toppings.length > 0 && (
                       <div className="text-xs text-neutral-500 mt-1">
                         Topping:{" "}
-                        {it.toppings.map((t) => t.toppingName).join(", ")}
+                        {it.toppings
+                          .map((t) =>
+                            t.quantity > 1
+                              ? `${t.toppingName} x${t.quantity}`
+                              : t.toppingName
+                          )
+                          .join(", ")}
                       </div>
                     )}
 
@@ -83,12 +136,34 @@ export default function OrderStatusSidebar({ isOpen, onClose, items = [] }) {
                       </div>
                     )}
 
-                    <div className="mt-2">
+                    <div className="mt-2 flex items-center justify-between">
                       <span
                         className={`inline-block text-xs px-2 py-0.5 rounded-lg border ${badge}`}
                       >
                         {STATUS_LABEL[st] || st || "unknown"}
                       </span>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          disabled={!canChangeQty || g.count <= 1}
+                          className="px-2 py-1 rounded-lg bg-neutral-100 disabled:opacity-50"
+                          onClick={() => onDecGroup && onDecGroup(g)}
+                          title={canChangeQty ? "Giảm 1" : "Không thể chỉnh"}
+                        >
+                          –
+                        </button>
+                        <span className="min-w-6 text-center text-sm font-semibold">
+                          {g.count}
+                        </span>
+                        <button
+                          disabled={!canChangeQty}
+                          className="px-2 py-1 rounded-lg bg-neutral-100 disabled:opacity-50"
+                          onClick={() => onIncGroup && onIncGroup(g)}
+                          title={canChangeQty ? "Tăng 1" : "Không thể chỉnh"}
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

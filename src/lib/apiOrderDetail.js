@@ -1,50 +1,77 @@
 import apiConfig from "../api/apiConfig";
 
+// export const normalizeOrderDetail = (d = {}) => {
+//   const rawNote = d.note ?? d.notes;
+//   let finalNote = null;
+//   if (rawNote !== null && rawNote !== undefined && rawNote !== "") {
+//     finalNote = String(rawNote);
+//   }
+
+//   const finalToppings = Array.isArray(d.toppings)
+//     ? d.toppings.map((t) => {
+//         let finalQuantity = 1;
+//         if (typeof t.quantity === "number" && !isNaN(t.quantity)) {
+//           finalQuantity = t.quantity;
+//         } else if (
+//           t.quantity !== null &&
+//           t.quantity !== undefined &&
+//           t.quantity !== ""
+//         ) {
+//           finalQuantity = Number(t.quantity);
+//         }
+
+//         return {
+//           toppingId: Number(t.toppingId ?? t.id),
+//           toppingName: t.toppingName ?? t.name ?? "",
+//           quantity: finalQuantity,
+//           toppingPrice: Number(t.toppingPrice ?? t.price ?? 0),
+//         };
+//       })
+//     : [];
+
+//   return {
+//     orderDetailId: Number(d.orderDetailId ?? d.id),
+//     orderId: Number(d.orderId),
+//     dishId: Number(d.dishId),
+//     dishName: d.dishName,
+//     totalPrice: Number(d.totalPrice ?? 0),
+//     status: d.status,
+//     note: finalNote,
+//     toppings: finalToppings,
+//   };
+// };
+
+// replace nguyên hàm
 export const normalizeOrderDetail = (d = {}) => {
-  const rawNote = d.note ?? d.notes;
-  let finalNote = null;
-  if (rawNote !== null && rawNote !== undefined && rawNote !== "") {
-    finalNote = String(rawNote);
-  }
-
-  const finalToppings = Array.isArray(d.toppings)
-    ? d.toppings.map((t) => {
-        let finalQuantity = 1;
-        if (typeof t.quantity === "number" && !isNaN(t.quantity)) {
-          finalQuantity = t.quantity;
-        } else if (
-          t.quantity !== null &&
-          t.quantity !== undefined &&
-          t.quantity !== ""
-        ) {
-          finalQuantity = Number(t.quantity);
-        }
-
-        return {
-          toppingId: Number(t.toppingId ?? t.id),
-          toppingName: t.toppingName ?? t.name ?? "",
-          quantity: finalQuantity,
-          toppingPrice: Number(t.toppingPrice ?? t.price ?? 0),
-        };
-      })
+  const note = d.note != null && d.note !== "" ? String(d.note) : null;
+  const toppings = Array.isArray(d.toppings)
+    ? d.toppings.map((t) => ({
+        toppingId: Number(t.toppingId ?? t.id),
+        toppingName: t.toppingName ?? t.name ?? "",
+        quantity: Number(t.quantity ?? 1),
+        toppingPrice: Number(t.toppingPrice ?? t.price ?? 0),
+      }))
     : [];
-
+  const lineTotal = Number(d.totalPrice ?? 0);
   return {
     orderDetailId: Number(d.orderDetailId ?? d.id),
-    orderId: Number(d.orderId),
-    dishId: Number(d.dishId),
-    dishName: d.dishName,
-    totalPrice: Number(d.totalPrice ?? 0),
-    status: d.status,
-    note: finalNote,
-    toppings: finalToppings,
+    orderId: Number(d.orderId ?? 0),
+    dishId: Number(d.dishId ?? 0),
+    dishName: d.dishName ?? d.name ?? "",
+    status: String(d.status || "PENDING").toUpperCase(),
+    note,
+    toppings,
+    quantity: 1,
+    unitPrice: lineTotal,
+    totalPrice: lineTotal,
+    lineTotal,
   };
 };
 
 export async function createOrderDetail({
   orderId,
   dishId,
-  notes = "",
+  note = "",
   toppings = [],
 }) {
   if (!orderId) throw new Error("Thiếu orderId.");
@@ -53,7 +80,7 @@ export async function createOrderDetail({
   const payload = {
     orderId: Number(orderId),
     dishId: Number(dishId),
-    notes: String(notes || ""),
+    note: String(note || ""),
     toppings: toppings.map((t) => ({
       toppingId: Number(t.toppingId ?? t.id),
       quantity: Number(t.quantity ?? 1),
@@ -75,10 +102,11 @@ export async function createOrderDetailsFromCart(orderId, cart = []) {
       : [];
 
     for (let i = 0; i < times; i++) {
+      console.log("push item notes =", item.notes);
       const od = await createOrderDetail({
         orderId,
         dishId: item.id ?? item.dishId,
-        notes: item.notes || "",
+        note: item.notes || "",
         toppings,
       });
       results.push(od);
@@ -118,4 +146,30 @@ export async function updateOrderDetailStatus(
     payload
   );
   return normalizeOrderDetail(res?.result ?? res);
+}
+
+export async function updateOrderDetail(detail = {}) {
+  const id = Number(detail.orderDetailId ?? detail.id);
+  if (!id) throw new Error("Thiếu orderDetailId để cập nhật.");
+  const payload = {
+    orderDetailId: id,
+    note: String(detail.note ?? ""),
+    status: String(detail.status ?? "PENDING").toUpperCase(),
+    toppings: Array.isArray(detail.toppings)
+      ? detail.toppings.map((t) => ({
+          toppingId: Number(t.toppingId ?? t.id),
+          quantity: Number(t.quantity ?? 1),
+        }))
+      : [],
+  };
+
+  const res = await apiConfig.put(`/order-details/${id}`, payload);
+  return normalizeOrderDetail(res?.result ?? res);
+}
+
+export async function deleteOrderDetail(orderDetailId) {
+  const id = Number(orderDetailId);
+  if (!id) throw new Error("Thiếu orderDetailId để xoá.");
+  await apiConfig.delete(`/order-details/${id}`);
+  return true;
 }

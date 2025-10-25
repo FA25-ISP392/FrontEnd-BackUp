@@ -18,8 +18,14 @@ import {
   getCustomerDetail,
 } from "../lib/apiCustomer";
 import { getToppingsByDishId } from "../lib/apiDishTopping";
-import { createOrderDetailsFromCart } from "../lib/apiOrderDetail";
+import {
+  createOrderDetailsFromCart,
+  deleteOrderDetail,
+  createOrderDetail,
+} from "../lib/apiOrderDetail";
 import { getOrderDetailsByOrderId } from "../lib/apiOrder";
+import EditOrderDetailModal from "../components/Menu/EditOrderDetailModal";
+import { createPayment } from "../lib/apiPayment";
 
 export default function Menu() {
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
@@ -40,7 +46,7 @@ export default function Menu() {
   const [customerId, setCustomerId] = useState(null);
   const [customerName, setCustomerName] = useState(null);
   const [orderId, setOrderId] = useState(
-    () => sessionStorage.getItem("orderId") || null,
+    () => sessionStorage.getItem("orderId") || null
   );
 
   const [baseCalories, setBaseCalories] = useState(null);
@@ -48,6 +54,11 @@ export default function Menu() {
 
   const [menuDishes, setMenuDishes] = useState([]);
   const [orderDetails, setOrderDetails] = useState([]);
+
+  const [paymentItems, setPaymentItems] = useState([]);
+
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingDetail, setEditingDetail] = useState(null);
 
   const PERSONAL_KEY = (cid) => `personalization:${cid}`;
   const applyGoal = (cals, goal) => {
@@ -148,7 +159,7 @@ export default function Menu() {
   }, []);
 
   const filteredDishes = menuDishes.filter(
-    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name),
+    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name)
   );
 
   const { personalizationForm, setPersonalizationForm, personalizedDishes } =
@@ -169,7 +180,7 @@ export default function Menu() {
           if (typeof cached.perWorkout === "number") {
             const roundedBase = Math.ceil(cached.perWorkout);
             const roundedGoal = Math.ceil(
-              applyGoal(cached.perWorkout, data.goal),
+              applyGoal(cached.perWorkout, data.goal)
             );
             setBaseCalories(roundedBase);
             setEstimatedCalories(roundedGoal);
@@ -195,7 +206,7 @@ export default function Menu() {
         setPersonalizationForm((prev) => ({ ...prev, ...toForm }));
         localStorage.setItem(
           PERSONAL_KEY(customerId),
-          JSON.stringify({ data: toForm, updatedAt: Date.now() }),
+          JSON.stringify({ data: toForm, updatedAt: Date.now() })
         );
       } catch (e) {
         console.warn("Không lấy được personalization từ BE:", e?.message || e);
@@ -203,22 +214,25 @@ export default function Menu() {
     })();
   }, [customerId]);
 
-  const addToCart = (dish, notes = "") => {
+  const addToCart = (item) => {
+    const noteKey = item.notes || "";
     const existingItem = cart.find(
-      (item) => item.id === dish.id && item.notes === notes,
+      (it) => it.id === item.id && (it.notes || "") === noteKey
     );
     if (existingItem) {
-      setCart((prevCart) =>
-        prevCart.map((item) =>
-          item.id === dish.id && item.notes === notes
-            ? { ...item, quantity: item.quantity + 1 }
-            : item,
-        ),
+      setCart((prev) =>
+        prev.map((it) =>
+          it.id === item.id && (it.notes || "") === noteKey
+            ? { ...it, quantity: it.quantity + (item.quantity ?? 1) }
+            : it
+        )
       );
     } else {
-      setCart((prevCart) => [...prevCart, { ...dish, quantity: 1, notes }]);
+      setCart((prev) => [...prev, { ...item }]);
     }
-    setCaloriesConsumed((prev) => prev + (dish.totalCalories || dish.calories));
+    setCaloriesConsumed(
+      (prev) => prev + (item.totalCalories || item.calories || 0)
+    );
   };
 
   const updateCartQuantity = (itemId, newQuantity) => {
@@ -231,11 +245,11 @@ export default function Menu() {
       const diff = newQuantity - item.quantity;
       setCart((prev) =>
         prev.map((it) =>
-          it.id === itemId ? { ...it, quantity: newQuantity } : it,
-        ),
+          it.id === itemId ? { ...it, quantity: newQuantity } : it
+        )
       );
       setCaloriesConsumed(
-        (prev) => prev + diff * (item.totalCalories || item.calories),
+        (prev) => prev + diff * (item.totalCalories || item.calories)
       );
     }
   };
@@ -245,7 +259,7 @@ export default function Menu() {
     if (item) {
       setCart((prev) => prev.filter((it) => it.id !== itemId));
       setCaloriesConsumed(
-        (prev) => prev - (item.totalCalories || item.calories) * item.quantity,
+        (prev) => prev - (item.totalCalories || item.calories) * item.quantity
       );
     }
   };
@@ -269,16 +283,6 @@ export default function Menu() {
       alert(`Gọi món thất bại: ${err?.message || "Vui lòng thử lại."}`);
     }
   };
-
-  async function fetchOrderDetailsFromOrder() {
-    if (!orderId) return;
-    try {
-      const data = await getOrderDetailsByOrderId(orderId);
-      setOrderDetails(data);
-    } catch (err) {
-      console.error("❌ Lỗi lấy orderDetails theo orderId:", err);
-    }
-  }
 
   useEffect(() => {
     if (isStatusOpen) fetchOrderDetailsFromOrder();
@@ -308,9 +312,121 @@ export default function Menu() {
     setEstimatedCalories(applyGoal(base, goalId));
   };
 
-  const handlePayment = () => {
-    setIsPaymentOpen(false);
-    setIsCallStaffOpen(true);
+  const groupPaymentItems = (details = []) => {
+    const map = new Map();
+    details.forEach((d) => {
+      const name = d.dishName ?? d.name;
+      const unit = Number(d.totalPrice ?? d.price ?? 0);
+      const key = `${name}|${unit}`;
+      const cur = map.get(key) || {
+        id: key,
+        name,
+        price: unit,
+        quantity: 0,
+        totalPrice: 0,
+      };
+      cur.quantity += 1;
+      cur.totalPrice = cur.price * cur.quantity;
+      map.set(key, cur);
+    });
+    return [...map.values()];
+  };
+
+  const handleOpenPayment = async () => {
+    try {
+      if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
+      if (cart.length) {
+        await createOrderDetailsFromCart(orderId, cart);
+      }
+      const details = await getOrderDetailsByOrderId(orderId);
+      setPaymentItems(details);
+      setIsPaymentOpen(true);
+      if (cart.length) {
+        setCart([]);
+        setCaloriesConsumed(0);
+      }
+    } catch (err) {
+      console.error("❌ Mở thanh toán thất bại:", err);
+      alert(err?.message || "Không mở được thanh toán. Vui lòng thử lại.");
+    }
+  };
+
+  const handleOpenEdit = (detail) => {
+    setEditingDetail(detail);
+    setIsEditOpen(true);
+  };
+
+  const handleDeleteDetail = async (detail) => {
+    if (!detail?.orderDetailId) return;
+    if (!confirm("Xoá món này khỏi đơn?")) return;
+    try {
+      await deleteOrderDetail(detail.orderDetailId);
+      await fetchOrderDetailsFromOrder();
+    } catch (e) {
+      alert(e?.message || "Xoá món thất bại.");
+    }
+  };
+
+  const handleEdited = async () => {
+    await fetchOrderDetailsFromOrder();
+  };
+
+  const sumTotal = (items = []) =>
+    items.reduce((s, it) => s + Number(it.totalPrice ?? it.price ?? 0), 0);
+
+  function notifyStaff({ tableId, orderId, total, paymentId }) {
+    const payload = { tableId, orderId, total, paymentId, ts: Date.now() };
+    window.dispatchEvent(
+      new CustomEvent("table:callPayment", { detail: payload })
+    );
+    localStorage.setItem(
+      `signal:callPayment:${payload.ts}`,
+      JSON.stringify(payload)
+    );
+  }
+
+  const handleRequestPayment = async () => {
+    try {
+      if (!orderId) throw new Error("Chưa có orderId.");
+      const total = sumTotal(paymentItems);
+      const p = await createPayment({ orderId, method: "BANK_TRANSFER" });
+      notifyStaff({ tableId, orderId, total, paymentId: p.id });
+      setIsPaymentOpen(false);
+      setIsCallStaffOpen(true);
+    } catch (error) {
+      alert(error?.message || "Không gửi được yêu cầu thanh toán.");
+    }
+  };
+
+  async function fetchOrderDetailsFromOrder() {
+    if (!orderId) return;
+    try {
+      const data = await getOrderDetailsByOrderId(orderId);
+      setOrderDetails(data);
+    } catch (err) {
+      console.error("❌ Lỗi lấy orderDetails theo orderId:", err);
+    }
+  }
+
+  const handleIncGroup = async (group) => {
+    const it = group.sample;
+    await createOrderDetail({
+      orderId,
+      dishId: it.dishId,
+      note: it.note || "",
+      toppings:
+        it.toppings?.map((t) => ({
+          toppingId: t.toppingId,
+          quantity: t.quantity ?? 1,
+        })) || [],
+    });
+    await fetchOrderDetailsFromOrder();
+  };
+
+  const handleDecGroup = async (group) => {
+    const idToDelete = group.ids[group.ids.length - 1];
+    await deleteOrderDetail(idToDelete);
+    await fetchOrderDetailsFromOrder();
   };
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -355,7 +471,7 @@ export default function Menu() {
           perWorkout: Math.ceil(maintenanceCalories),
           goalCalories: Math.ceil(dailyCalories),
           updatedAt: Date.now(),
-        }),
+        })
       );
 
       // 6️⃣ Gọi API cập nhật thông tin khách hàng
@@ -388,7 +504,7 @@ export default function Menu() {
             setCaloriesConsumed(0);
           }, 2000);
         }}
-        onCheckout={() => setIsPaymentOpen(true)}
+        onCheckout={handleOpenPayment}
         onViewStatus={() => setIsStatusOpen(true)}
         tableId={tableId}
         customerId={customerId}
@@ -398,7 +514,20 @@ export default function Menu() {
         isOpen={isStatusOpen}
         onClose={() => setIsStatusOpen(false)}
         items={orderDetails}
+        onEdit={handleOpenEdit}
+        onDelete={handleDeleteDetail}
+        onIncGroup={handleIncGroup}
+        onDecGroup={handleDecGroup}
       />
+
+      {isEditOpen && editingDetail && (
+        <EditOrderDetailModal
+          isOpen={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          detail={editingDetail}
+          onUpdated={handleEdited}
+        />
+      )}
 
       {orderId && tableId && customerId && (
         <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
@@ -470,9 +599,8 @@ export default function Menu() {
         isOpen={isPaymentOpen}
         onClose={() => setIsPaymentOpen(false)}
         cart={cart}
-        onPayment={handlePayment}
-        paymentMethod={paymentMethod}
-        setPaymentMethod={setPaymentMethod}
+        items={paymentItems}
+        onRequestPayment={handleRequestPayment}
       />
 
       <DishOptionsModal

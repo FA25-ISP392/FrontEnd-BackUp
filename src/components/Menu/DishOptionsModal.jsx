@@ -7,13 +7,11 @@ export default function DishOptionsModal({
   dish,
   onAddToCart,
 }) {
-  // 🧩 State
   const [selectedToppings, setSelectedToppings] = useState([]);
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
   const [imageError, setImageError] = useState(false);
 
-  // Reset khi mở món mới
   useEffect(() => {
     if (dish) {
       setSelectedToppings([]);
@@ -25,13 +23,11 @@ export default function DishOptionsModal({
 
   if (!isOpen || !dish) return null;
 
-  // 🧩 Dữ liệu món
   const imageUrl = dish.picture;
   const basePrice = dish.price ?? 0;
   const baseCalo = dish.calo ?? dish.calories ?? 0;
   const toppings = dish.optionalToppings ?? [];
 
-  // 🧮 Tính tổng giá & calo theo topping + số lượng
   const toppingsTotalPrice = selectedToppings.reduce(
     (sum, t) => sum + (t.price || 0),
     0,
@@ -44,7 +40,6 @@ export default function DishOptionsModal({
   const totalPrice = (basePrice + toppingsTotalPrice) * quantity;
   const totalCalories = (baseCalo + toppingsTotalCalo) * quantity;
 
-  // 🟢 Xử lý thêm vào giỏ
   const handleAddToCart = () => {
     const dishWithOptions = {
       ...dish,
@@ -61,7 +56,6 @@ export default function DishOptionsModal({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
-        {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white flex justify-between items-start">
           <div>
             <h2 className="text-2xl font-bold">{dish.dishName || dish.name}</h2>
@@ -75,9 +69,7 @@ export default function DishOptionsModal({
           </button>
         </div>
 
-        {/* Nội dung */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-          {/* Thông tin món */}
           <div className="mb-6">
             {imageUrl && !imageError ? (
               <img
@@ -106,7 +98,6 @@ export default function DishOptionsModal({
             </div>
           </div>
 
-          {/* 🧀 Topping thêm */}
           {toppings.length > 0 && (
             <div className="mb-6">
               <h3 className="text-lg font-bold text-neutral-900 mb-3">
@@ -157,7 +148,6 @@ export default function DishOptionsModal({
             </div>
           )}
 
-          {/* Số lượng */}
           <div className="mb-6">
             <h3 className="text-lg font-bold text-neutral-900 mb-3">
               Số lượng
@@ -181,7 +171,6 @@ export default function DishOptionsModal({
             </div>
           </div>
 
-          {/* Ghi chú */}
           <div className="mb-6">
             <h3 className="text-lg font-bold text-neutral-900 mb-3">
               Ghi chú đặc biệt
@@ -195,7 +184,6 @@ export default function DishOptionsModal({
             />
           </div>
 
-          {/* Tổng cộng */}
           <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-4 mb-6 border border-orange-200">
             <div className="flex justify-between items-center">
               <div>
@@ -218,7 +206,6 @@ export default function DishOptionsModal({
           </div>
         </div>
 
-        {/* Footer */}
         <div className="p-6 border-t border-neutral-200">
           <div className="flex gap-3">
             <button
