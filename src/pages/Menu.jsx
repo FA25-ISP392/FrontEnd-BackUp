@@ -174,11 +174,16 @@ export default function Menu() {
         const cached = JSON.parse(cachedRaw);
         if (cached && typeof cached === "object") {
           const data = cached.data || {};
+          delete data.goal;
           setPersonalizationForm((prev) => ({ ...prev, ...data }));
 
           if (typeof cached.perWorkout === "number") {
-            setBaseCalories(cached.perWorkout);
-            setEstimatedCalories(applyGoal(cached.perWorkout, data.goal));
+            const roundedBase = Math.ceil(cached.perWorkout);
+            const roundedGoal = Math.ceil(
+              applyGoal(cached.perWorkout, data.goal)
+            );
+            setBaseCalories(roundedBase);
+            setEstimatedCalories(roundedGoal);
             setIsPersonalized(true);
           } else setIsPersonalized(true);
         }
@@ -426,6 +431,66 @@ export default function Menu() {
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  const handlePersonalizationSubmit = async (form) => {
+    try {
+      if (!customerId) throw new Error("Thiếu customerId");
+
+      console.log("📤 Dữ liệu cá nhân hoá gửi lên:", form);
+
+      // 1️⃣ Tính BMR (giống bên PersonalizationModal)
+      const bmr =
+        form.gender === "male"
+          ? 10 * form.weight + 6.25 * form.height - 5 * form.age + 5
+          : 10 * form.weight + 6.25 * form.height - 5 * form.age - 161;
+
+      // 2️⃣ Hệ số vận động
+      const activityMultipliers = {
+        sedentary: 1.2,
+        light: 1.375,
+        moderate: 1.55,
+        active: 1.725,
+        very_active: 1.9,
+      };
+      const multiplier = activityMultipliers[form.exerciseLevel] || 1.55;
+
+      // 3️⃣ Tính tổng calo cần/ngày trước khi áp dụng mục tiêu
+      const maintenanceCalories = bmr * multiplier;
+
+      // 4️⃣ Áp dụng mục tiêu (giảm, giữ, tăng)
+      const dailyCalories = applyGoal(maintenanceCalories, form.goal);
+
+      console.log("🔥 BMR:", bmr);
+      console.log("🔥 Calo duy trì:", maintenanceCalories);
+      console.log("🔥 Calo mục tiêu/ngày:", dailyCalories);
+
+      // 5️⃣ Lưu vào localStorage để load nhanh lần sau
+      localStorage.setItem(
+        PERSONAL_KEY(customerId),
+        JSON.stringify({
+          data: form,
+          perWorkout: Math.ceil(maintenanceCalories),
+          goalCalories: Math.ceil(dailyCalories),
+          updatedAt: Date.now(),
+        })
+      );
+
+      // 6️⃣ Gọi API cập nhật thông tin khách hàng
+      await updateCustomerPersonalization(customerId, form);
+
+      // 7️⃣ Cập nhật state FE để hiện ngay Calorie Tracker
+      setBaseCalories(Math.ceil(maintenanceCalories));
+      setEstimatedCalories(Math.ceil(dailyCalories));
+      setIsPersonalized(true);
+      setIsPersonalizationOpen(false);
+      setActiveMenuTab("personalized");
+
+      alert("✅ Đã lưu và tính toán calo thành công!");
+    } catch (err) {
+      console.error("❌ Lỗi khi cập nhật cá nhân hoá:", err);
+      alert("Cập nhật thất bại, vui lòng thử lại.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
       <MenuHeader
@@ -518,6 +583,7 @@ export default function Menu() {
         onClose={() => setIsPersonalizationOpen(false)}
         personalizationForm={personalizationForm}
         setPersonalizationForm={setPersonalizationForm}
+        onSubmit={handlePersonalizationSubmit}
       />
 
       <CartSidebar

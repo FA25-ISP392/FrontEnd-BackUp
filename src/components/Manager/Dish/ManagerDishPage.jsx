@@ -2,27 +2,20 @@ import { useEffect, useState } from "react";
 import { Plus, Pencil, Utensils, X } from "lucide-react";
 import {
   listDish,
-  getDish,
   createDish,
   updateDish,
-  deleteDish,
   normalizeDish,
 } from "../../../lib/apiDish";
 import { listTopping } from "../../../lib/apiTopping";
-import { addDishToppingsBatch } from "../../../lib/apiDishTopping";
+import {
+  addDishToppingsBatch,
+  getToppingsByDishId,
+  deleteDishTopping,
+} from "../../../lib/apiDishTopping";
 
 /* ===================== Helpers ===================== */
-const CATEGORIES = [
-  "PIZZA",
-  "PASTA",
-  "Main Course",
-  "Salad",
-  "Dessert",
-  "Appetizer",
-  "Beverage",
-];
-
-const TYPES = ["BUILD_MUSCLE", "MAINTAIN_WEIGHT", "LOSE_WEIGHT"];
+const CATEGORIES = ["PIZZA", "PASTA", "SALAD", "DESSERT", "DRINKS"];
+const TYPES = ["Tăng cân", "Giữ dáng", "Giảm cân"];
 
 const fmtVND = (n) =>
   new Intl.NumberFormat("vi-VN", {
@@ -62,13 +55,12 @@ function DishForm({ initial, onSubmit, saving }) {
     category: initial?.category || CATEGORIES[0],
     type: initial?.type || TYPES[0],
     price: Number(initial?.price ?? 0),
-    calo: Number(initial?.calories ?? 0),
+    calo: Number(initial?.calo ?? 0),
     description: initial?.description || "",
-    isAvailable: Boolean(initial?.is_available ?? true),
+    isAvailable: Boolean(initial?.isAvailable ?? true),
     imageFile: null,
     toppings: initial?.optionalToppings?.map((t) => t.toppingId) || [],
   });
-
   const [allToppings, setAllToppings] = useState([]);
 
   useEffect(() => {
@@ -94,12 +86,11 @@ function DishForm({ initial, onSubmit, saving }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit?.(form);
+    onSubmit(form);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* tên + danh mục */}
       <div className="grid grid-cols-2 gap-4">
         <Input
           label="Tên món ăn"
@@ -115,7 +106,6 @@ function DishForm({ initial, onSubmit, saving }) {
         />
       </div>
 
-      {/* type + calo */}
       <div className="grid grid-cols-2 gap-4">
         <Select
           label="Loại (Type)"
@@ -131,7 +121,6 @@ function DishForm({ initial, onSubmit, saving }) {
         />
       </div>
 
-      {/* giá + trạng thái */}
       <div className="grid grid-cols-2 gap-4">
         <Input
           label="Giá (VND)"
@@ -164,14 +153,12 @@ function DishForm({ initial, onSubmit, saving }) {
         </div>
       </div>
 
-      {/* mô tả */}
       <Textarea
         label="Mô tả món ăn"
         value={form.description}
         onChange={(e) => handleChange("description", e.target.value)}
       />
 
-      {/* hình ảnh */}
       <div>
         <label className="text-sm text-gray-600">Ảnh món ăn</label>
         <input
@@ -189,7 +176,6 @@ function DishForm({ initial, onSubmit, saving }) {
         )}
       </div>
 
-      {/* topping */}
       <div>
         <label className="text-sm text-gray-600 mb-2 block">
           Chọn topping đi kèm
@@ -229,8 +215,6 @@ function DishForm({ initial, onSubmit, saving }) {
 export default function ManagerDishPage() {
   const [dishes, setDishes] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // modal create / edit
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -254,10 +238,24 @@ export default function ManagerDishPage() {
       setSaving(true);
       const created = await createDish(form);
       const dish = created?.result ?? created;
+      const newId = dish?.dishId || dish?.id;
+
+      const toppingIds = (form.toppings || []).map((t) =>
+        typeof t === "object" ? t.toppingId || t.id : Number(t),
+      );
+
+      console.log("🍕 Gửi toppingIds:", toppingIds);
+      console.log("🆔 dishId mới:", newId);
+
+      // 🚀 Gọi API batch dù toppingIds trống hay không để kiểm tra
+      const res = await addDishToppingsBatch(newId, toppingIds);
+      console.log("✅ Kết quả addDishToppingsBatch:", res);
+
       alert("✅ Thêm món ăn thành công!");
       setOpenCreate(false);
-      setDishes((prev) => [...prev, dish]);
-    } catch {
+      setDishes((prev) => [...prev, normalizeDish(dish)]);
+    } catch (err) {
+      console.error("❌ Lỗi khi thêm món ăn:", err);
       alert("❌ Lỗi khi thêm món ăn!");
     } finally {
       setSaving(false);
@@ -267,15 +265,45 @@ export default function ManagerDishPage() {
   const handleEdit = async (form) => {
     try {
       setSaving(true);
+
+      // 1️⃣ Cập nhật thông tin món ăn
       const updated = await updateDish(editingDish.id, form);
       const normalized = normalizeDish(updated?.result ?? updated);
+
+      // 2️⃣ Dùng topping có sẵn trong editingDish
+      const oldToppings = editingDish.optionalToppings || [];
+      console.log("🧾 Topping cũ (FE):", oldToppings);
+
+      // 3️⃣ Xóa tất cả topping cũ
+      if (Array.isArray(oldToppings) && oldToppings.length > 0) {
+        await Promise.all(
+          oldToppings.map((t) =>
+            deleteDishTopping(editingDish.id, t.toppingId || t.id),
+          ),
+        );
+        console.log("🗑️ Đã xoá tất cả topping cũ");
+      }
+
+      // 4️⃣ Thêm lại topping mới được chọn
+      const toppingIds = (form.toppings || []).map((t) =>
+        typeof t === "object" ? t.toppingId || t.id : Number(t),
+      );
+
+      if (toppingIds.length > 0) {
+        await addDishToppingsBatch(editingDish.id, toppingIds);
+        console.log("✅ Đã thêm topping mới:", toppingIds);
+      }
+
+      // 5️⃣ Cập nhật UI
       setDishes((prev) =>
         prev.map((d) => (d.id === normalized.id ? normalized : d)),
       );
+
       alert("✅ Cập nhật món ăn thành công!");
       setOpenEdit(false);
       setEditingDish(null);
-    } catch {
+    } catch (err) {
+      console.error("❌ Lỗi khi cập nhật món ăn:", err);
       alert("❌ Lỗi khi cập nhật món ăn!");
     } finally {
       setSaving(false);
@@ -334,7 +362,6 @@ export default function ManagerDishPage() {
         </div>
       )}
 
-      {/* Modal tạo mới */}
       <Modal
         open={openCreate}
         onClose={() => setOpenCreate(false)}
@@ -343,7 +370,6 @@ export default function ManagerDishPage() {
         <DishForm onSubmit={handleCreate} saving={saving} />
       </Modal>
 
-      {/* Modal chỉnh sửa */}
       <Modal
         open={openEdit}
         onClose={() => {

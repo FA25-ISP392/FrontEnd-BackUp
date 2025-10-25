@@ -26,26 +26,18 @@ export async function addDishToppingsBatch(dishId, toppingIds = []) {
       toppingIds: toppingIds.map((x) => Number(x)),
     };
 
-    console.log("📦 Gửi batch dish-topping:", payload);
+    console.log("📦 Gửi batch dish-topping:", JSON.stringify(payload));
 
     const res = await apiConfig.post("/dish-topping", payload, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
 
     console.log("✅ Tạo dish-topping OK:", res);
     return res?.result ?? res;
   } catch (err) {
     if (err.response) {
-      console.error(
-        "❌ Backend trả lỗi:",
-        err.response.status,
-        err.response.data
-      );
+      console.error("❌ BE trả lỗi:", err.response.status, err.response.data);
     }
-    console.error("❌ Lỗi khi tạo/ghi đè dish-toppings:", err);
     throw err;
   }
 }
@@ -63,6 +55,34 @@ export async function getToppingsByDishId(dishId) {
     return Array.isArray(res) ? res : res?.result ?? [];
   } catch (err) {
     console.error("❌ Lỗi khi lấy topping của món:", err);
+    throw err;
+  }
+}
+export async function deleteDishTopping(dishId, toppingId) {
+  if (!dishId || !toppingId) {
+    throw new Error("Thiếu dishId hoặc toppingId để xoá");
+  }
+
+  try {
+    const token = localStorage.getItem("token");
+    console.log(
+      `🗑️ Xoá dish-topping: dishId=${dishId}, toppingId=${toppingId}`,
+    );
+
+    const res = await apiConfig.delete(`/dish-topping/${dishId}/${toppingId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log("✅ Xoá dish-topping OK:", res);
+    return res?.result ?? res;
+  } catch (err) {
+    if (err.response) {
+      console.error(
+        "❌ BE trả lỗi khi xoá topping:",
+        err.response.status,
+        err.response.data,
+      );
+    }
     throw err;
   }
 }
