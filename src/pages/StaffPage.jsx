@@ -65,11 +65,10 @@ export default function StaffPage() {
     window.location.href = "/";
   };
 
-  // ------- Load bàn + gắn trạng thái đặt bàn (reserved) -------
   useEffect(() => {
     let timer;
     async function hydrate() {
-      const rawTables = await listTables(); // đã normalize: {id, number, capacity, status: 'empty'|'reserved'|'serving', ...}
+      const rawTables = await listTables();
       const sorted = [...rawTables].sort(
         (a, b) => (a.number || a.id) - (b.number || b.id)
       );
@@ -90,7 +89,6 @@ export default function StaffPage() {
               (b) =>
                 b.status === "APPROVED" && isWithinWindow(b.bookingDate, now)
             );
-            // ⚠️ Giữ nguyên object normalize và chỉ cập nhật field cần
             return {
               ...t,
               status: active ? "reserved" : t.status ?? "empty",
@@ -119,7 +117,6 @@ export default function StaffPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // ------- Poll payments PENDING từ BE và gắn vào đúng bàn -------
   useEffect(() => {
     let timer;
     async function hydratePayments() {
@@ -129,27 +126,22 @@ export default function StaffPage() {
           (p) => (p.status || "PENDING") === "PENDING"
         );
         if (!pending.length) return;
-
-        // Lấy orders theo từng payment để biết tableId
         const orderById = new Map();
         await Promise.all(
           pending.map(async (p) => {
             try {
               const o = await getOrderById(p.orderId);
-              if (o) orderById.set(p.id, o); // key theo paymentId
+              if (o) orderById.set(p.id, o);
             } catch {}
           })
         );
-
         setTables((prev) =>
           prev.map((tb) => {
-            // Tìm payment có order thuộc đúng bàn này
             const matchedPay = pending.find((p) => {
               const o = orderById.get(p.id);
               return o && String(o.tableId) === String(tb.id);
             });
             if (!matchedPay) return tb;
-
             return {
               ...tb,
               callPayment: true,
@@ -174,7 +166,6 @@ export default function StaffPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // ------- Lắng nghe tín hiệu local (KH bấm Gọi thanh toán trên client) -------
   useEffect(() => {
     function applyCallPayment({ tableId, orderId, total, paymentId } = {}) {
       if (!tableId || !paymentId) return;
@@ -209,7 +200,6 @@ export default function StaffPage() {
     };
   }, []);
 
-  // ------- Helpers hiển thị (đồng bộ bộ status mới) -------
   const getTableStatusBadge = (status) => {
     switch (status) {
       case "serving":
@@ -238,7 +228,7 @@ export default function StaffPage() {
     switch (status) {
       case "preparing":
         return "bg-blue-100 text-blue-800";
-      case "ready":
+      case "done":
         return "bg-green-100 text-green-800";
       case "served":
         return "bg-gray-100 text-gray-800";
@@ -250,8 +240,8 @@ export default function StaffPage() {
     switch (status) {
       case "preparing":
         return "Đang chuẩn bị";
-      case "ready":
-        return "Sẵn sàng";
+      case "done":
+        return "Hoàn tất";
       case "served":
         return "Đã phục vụ";
       default:
@@ -259,7 +249,6 @@ export default function StaffPage() {
     }
   };
 
-  // ------- Counters -------
   const totalRevenue = tables.reduce(
     (sum, table) => sum + (table.totalAmount || 0),
     0
@@ -282,7 +271,6 @@ export default function StaffPage() {
         />
 
         <main className="flex-1 p-6">
-          {/* Sơ Đồ Bàn Section */}
           {activeSection === "tableLayout" && (
             <div className="space-y-6">
               <h1 className="text-2xl font-bold">Sơ Đồ Bàn</h1>
@@ -296,12 +284,10 @@ export default function StaffPage() {
             </div>
           )}
 
-          {/* Tổng Quan Section */}
           {activeSection === "overview" && (
             <div className="space-y-6">
               <h1 className="text-2xl font-bold">Thông Tin Bàn</h1>
 
-              {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
                   <div className="flex items-center justify-between">
@@ -354,7 +340,6 @@ export default function StaffPage() {
                 </div>
               </div>
 
-              {/* Table Layout with Clickable Tables */}
               <StaffTableInfoLayout
                 tables={tables.slice(0, 8)}
                 onTableClick={setSelectedTable}
@@ -364,7 +349,6 @@ export default function StaffPage() {
             </div>
           )}
 
-          {/* Đơn Món Theo Bàn Section */}
           {activeSection === "ordersByTable" && (
             <div className="space-y-6">
               <h1 className="text-2xl font-bold">Đơn Món Theo Bàn</h1>
@@ -440,7 +424,6 @@ export default function StaffPage() {
         </main>
       </div>
 
-      {/* Table Detail Modal */}
       {selectedTable && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -457,7 +440,6 @@ export default function StaffPage() {
             </div>
 
             <div className="p-4">
-              {/* Table Info */}
               <div className="mb-6">
                 <div className="flex items-center gap-4 mb-4">
                   <div
@@ -482,7 +464,6 @@ export default function StaffPage() {
                   </div>
                 </div>
 
-                {/* Khối theo trạng thái */}
                 {selectedTable.status === "empty" ? (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -562,7 +543,6 @@ export default function StaffPage() {
                 )}
               </div>
 
-              {/* Actions */}
               <div className="mt-6 flex gap-3">
                 <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2">
                   <Phone className="h-4 w-4" />
@@ -581,7 +561,6 @@ export default function StaffPage() {
         </div>
       )}
 
-      {/* Profile Sidebar */}
       {isProfileOpen && (
         <div className="fixed inset-0 z-50 flex">
           <div
@@ -622,7 +601,6 @@ export default function StaffPage() {
         </div>
       )}
 
-      {/* Payment Modal */}
       {isPaymentModalOpen && selectedTable && (
         <StaffPaymentModal
           open={isPaymentModalOpen}

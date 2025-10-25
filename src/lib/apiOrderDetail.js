@@ -1,43 +1,70 @@
 import apiConfig from "../api/apiConfig";
 
+// export const normalizeOrderDetail = (d = {}) => {
+//   const rawNote = d.note ?? d.notes;
+//   let finalNote = null;
+//   if (rawNote !== null && rawNote !== undefined && rawNote !== "") {
+//     finalNote = String(rawNote);
+//   }
+
+//   const finalToppings = Array.isArray(d.toppings)
+//     ? d.toppings.map((t) => {
+//         let finalQuantity = 1;
+//         if (typeof t.quantity === "number" && !isNaN(t.quantity)) {
+//           finalQuantity = t.quantity;
+//         } else if (
+//           t.quantity !== null &&
+//           t.quantity !== undefined &&
+//           t.quantity !== ""
+//         ) {
+//           finalQuantity = Number(t.quantity);
+//         }
+
+//         return {
+//           toppingId: Number(t.toppingId ?? t.id),
+//           toppingName: t.toppingName ?? t.name ?? "",
+//           quantity: finalQuantity,
+//           toppingPrice: Number(t.toppingPrice ?? t.price ?? 0),
+//         };
+//       })
+//     : [];
+
+//   return {
+//     orderDetailId: Number(d.orderDetailId ?? d.id),
+//     orderId: Number(d.orderId),
+//     dishId: Number(d.dishId),
+//     dishName: d.dishName,
+//     totalPrice: Number(d.totalPrice ?? 0),
+//     status: d.status,
+//     note: finalNote,
+//     toppings: finalToppings,
+//   };
+// };
+
+// replace nguyên hàm
 export const normalizeOrderDetail = (d = {}) => {
-  const rawNote = d.note ?? d.notes;
-  let finalNote = null;
-  if (rawNote !== null && rawNote !== undefined && rawNote !== "") {
-    finalNote = String(rawNote);
-  }
-
-  const finalToppings = Array.isArray(d.toppings)
-    ? d.toppings.map((t) => {
-        let finalQuantity = 1;
-        if (typeof t.quantity === "number" && !isNaN(t.quantity)) {
-          finalQuantity = t.quantity;
-        } else if (
-          t.quantity !== null &&
-          t.quantity !== undefined &&
-          t.quantity !== ""
-        ) {
-          finalQuantity = Number(t.quantity);
-        }
-
-        return {
-          toppingId: Number(t.toppingId ?? t.id),
-          toppingName: t.toppingName ?? t.name ?? "",
-          quantity: finalQuantity,
-          toppingPrice: Number(t.toppingPrice ?? t.price ?? 0),
-        };
-      })
+  const note = d.note != null && d.note !== "" ? String(d.note) : null;
+  const toppings = Array.isArray(d.toppings)
+    ? d.toppings.map((t) => ({
+        toppingId: Number(t.toppingId ?? t.id),
+        toppingName: t.toppingName ?? t.name ?? "",
+        quantity: Number(t.quantity ?? 1),
+        toppingPrice: Number(t.toppingPrice ?? t.price ?? 0),
+      }))
     : [];
-
+  const lineTotal = Number(d.totalPrice ?? 0);
   return {
     orderDetailId: Number(d.orderDetailId ?? d.id),
-    orderId: Number(d.orderId),
-    dishId: Number(d.dishId),
-    dishName: d.dishName,
-    totalPrice: Number(d.totalPrice ?? 0),
-    status: d.status,
-    note: finalNote,
-    toppings: finalToppings,
+    orderId: Number(d.orderId ?? 0),
+    dishId: Number(d.dishId ?? 0),
+    dishName: d.dishName ?? d.name ?? "",
+    status: String(d.status || "PENDING").toUpperCase(),
+    note,
+    toppings,
+    quantity: 1,
+    unitPrice: lineTotal,
+    totalPrice: lineTotal,
+    lineTotal,
   };
 };
 

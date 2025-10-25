@@ -7,6 +7,9 @@ export default function StaffTableInfoLayout({
   selectedTable,
   orders = [],
 }) {
+  const VND = (n = 0) =>
+    Number(n || 0).toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " ₫";
+
   const getTableStatusColor = (table) => {
     if (table.callStaff) return "border-red-500 bg-red-50";
     if (table.callPayment) return "border-green-500 bg-green-50";
@@ -113,7 +116,7 @@ export default function StaffTableInfoLayout({
                       Đơn #{order.id ?? order.orderId}
                     </div>
                     <div className="text-xs text-blue-600">
-                      {order.total ? `$${order.total}` : ""}
+                      {order.total ? VND(order.total) : ""}
                     </div>
                   </div>
                 )}

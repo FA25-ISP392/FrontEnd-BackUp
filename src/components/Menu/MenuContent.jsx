@@ -34,7 +34,7 @@ export default function MenuContent({
   const percent = canShowCalorie
     ? Math.min(
         100,
-        Math.max(0, Math.round((caloriesConsumed / estimatedCalories) * 100)),
+        Math.max(0, Math.round((caloriesConsumed / estimatedCalories) * 100))
       )
     : 0;
 
@@ -194,7 +194,7 @@ export default function MenuContent({
         <>
           {CATEGORY_LIST.map((cat) => {
             const dishes = dishesToShow.filter(
-              (d) => d.category?.toLowerCase() === cat.id?.toLowerCase(),
+              (d) => d.category?.toLowerCase() === cat.id?.toLowerCase()
             );
             return (
               <div key={cat.id} className="mb-10">
@@ -253,7 +253,7 @@ export default function MenuContent({
       {activeMenuTab === "all" &&
         CATEGORY_LIST.map((cat) => {
           const dishes = dishesToShow.filter(
-            (d) => d.category?.toLowerCase() === cat.id?.toLowerCase(),
+            (d) => d.category?.toLowerCase() === cat.id?.toLowerCase()
           );
           if (dishes.length === 0) return null;
           return (
