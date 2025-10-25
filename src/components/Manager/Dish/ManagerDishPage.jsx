@@ -14,7 +14,14 @@ import {
 } from "../../../lib/apiDishTopping";
 
 /* ===================== Helpers ===================== */
-const CATEGORIES = ["PIZZA", "PASTA", "SALAD", "DESSERT", "DRINKS"];
+const CATEGORIES = [
+  "Pizza",
+  "Mì ý",
+  "Bò bít tết",
+  "Salad",
+  "Tráng miệng",
+  "Đồ uống",
+];
 const TYPES = ["Tăng cân", "Giữ dáng", "Giảm cân"];
 
 const fmtVND = (n) =>

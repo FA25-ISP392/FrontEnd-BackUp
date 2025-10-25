@@ -190,11 +190,12 @@ export default function MenuContent({
         </div>
       )}
 
+      {/* ✅ Menu Phù Hợp */}
       {activeMenuTab === "personalized" && goalType && (
         <>
           {CATEGORY_LIST.map((cat) => {
             const dishes = dishesToShow.filter(
-              (d) => d.category?.toLowerCase() === cat.id?.toLowerCase(),
+              (d) => d.categoryEnum?.toLowerCase() === cat.id?.toLowerCase(),
             );
             return (
               <div key={cat.id} className="mb-10">
@@ -250,11 +251,12 @@ export default function MenuContent({
         </>
       )}
 
+      {/* ✅ Menu Tổng */}
       {activeMenuTab === "all" &&
         CATEGORY_LIST.map((cat) => {
           const dishes = dishesToShow.filter(
-            (d) => d.category?.toLowerCase() === cat.id?.toLowerCase(),
-          );
+            (d) => d.categoryEnum?.toLowerCase() === cat.id?.toLowerCase(),
+          ); // 👈 chỉ sửa dòng này
           if (dishes.length === 0) return null;
           return (
             <div key={cat.id} className="mb-10">

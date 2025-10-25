@@ -1,6 +1,23 @@
 import apiConfig from "../api/apiConfig";
 
 // 💡 Map giữa FE (tiếng Việt) và BE (enum)
+const categoryMap = {
+  Pizza: "PIZZA",
+  "Mì ý": "PASTA",
+  "Bò bít tết": "STEAK",
+  Salad: "SALAD",
+  "Tráng miệng": "DESSERT",
+  "Đồ uống": "DRINKS",
+};
+const categoryReverseMap = {
+  PIZZA: "Pizza",
+  PASTA: "Mì ý",
+  STEAK: "Bò bít tết",
+  SALAD: "Salad",
+  DESSERT: "Tráng miệng",
+  DRINKS: "Đồ uống",
+};
+
 const typeMap = {
   "Tăng cân": "BUILD_MUSCLE",
   "Giữ dáng": "STAY_FIT",
@@ -13,15 +30,19 @@ const typeReverseMap = {
   FAT_LOSS: "Giảm cân",
 };
 
+// 🧩 Chuẩn hoá dữ liệu món ăn
 export function normalizeDish(d = {}) {
+  const catKey = typeof d.category === "string" ? d.category.toUpperCase() : "";
   return {
     id: d.dishId ?? d.id,
     name: d.dishName ?? d.name ?? "",
     description: d.description ?? "",
     price: d.price ?? 0,
     calo: Number(d.calo ?? d.calories ?? 0),
-    category: d.category ?? "",
-    type: typeReverseMap[d.type] || "Giữ dáng", // ✅ Hiển thị đúng tiếng Việt
+    // 👇 2 field cho hiển thị & filter
+    categoryEnum: catKey,
+    category: categoryReverseMap[catKey] || d.category || "Khác",
+    type: typeReverseMap[d.type] || "Giữ dáng",
     isAvailable: d.isAvailable ?? true,
     picture: d.picture?.startsWith("http")
       ? d.picture
@@ -33,13 +54,21 @@ export function normalizeDish(d = {}) {
   };
 }
 
+// 🧩 Lấy danh sách món
 export async function listDish(params = {}) {
   const token = localStorage.getItem("token");
   const res = await apiConfig.get("/dish", {
     params,
     headers: { Authorization: `Bearer ${token}` },
   });
-  const arr = Array.isArray(res) ? res : res?.result ?? [];
+
+  const arr = Array.isArray(res)
+    ? res
+    : Array.isArray(res?.data)
+    ? res.data
+    : res?.data?.result ?? res?.result ?? [];
+
+  console.log("🍽️ listDish() -> dữ liệu nhận được:", arr);
   return arr.map(normalizeDish);
 }
 
@@ -50,7 +79,7 @@ export async function getDish(id) {
     headers: { Authorization: `Bearer ${token}` },
   });
 
-  const data = res?.result ?? res;
+  const data = res?.data?.result ?? res?.result ?? res?.data ?? res;
   console.log("🍕 Dữ liệu món chi tiết:", data);
   return normalizeDish(data);
 }
@@ -60,45 +89,39 @@ export async function createDish(payload) {
   const token = localStorage.getItem("token");
   const formData = new FormData();
 
+  const dishPayload = {
+    dishName: payload.dishName,
+    description: payload.description,
+    price: payload.price,
+    calo: payload.calo,
+    category: categoryMap[payload.category] || "PIZZA",
+    isAvailable: payload.isAvailable,
+    type: typeMap[payload.type] || "STAY_FIT",
+  };
+
   formData.append(
     "dish",
-    new Blob(
-      [
-        JSON.stringify({
-          dishName: payload.dishName,
-          description: payload.description,
-          price: payload.price,
-          calo: payload.calo,
-          category: payload.category,
-          isAvailable: payload.isAvailable,
-          type: typeMap[payload.type] || "STAY_FIT", // ✅ Map đúng enum BE
-        }),
-      ],
-      { type: "application/json" },
-    ),
+    new Blob([JSON.stringify(dishPayload)], { type: "application/json" }),
   );
 
+  // 🖼️ Upload hình (nếu có)
   if (payload.imageFile instanceof File) {
     formData.append("image", payload.imageFile);
   }
 
-  for (const [k, v] of formData.entries()) {
-    console.log("🔍 FormData gửi lên:", k, v);
-  }
+  console.log("🔍 FormData gửi lên (create):");
+  for (const [k, v] of formData.entries()) console.log(k, v);
 
   const res = await apiConfig.post("/dish", formData, {
     headers: { Authorization: `Bearer ${token}` },
     transformRequest: [
       (data, headers) => {
-        if (data instanceof FormData) {
-          delete headers["Content-Type"];
-        }
+        if (data instanceof FormData) delete headers["Content-Type"];
         return data;
       },
     ],
   });
 
-  // ⚡️ res đã là unwrapResponse rồi => có dishId trực tiếp
   return res;
 }
 
@@ -107,39 +130,44 @@ export async function updateDish(id, payload) {
   const token = localStorage.getItem("token");
   const formData = new FormData();
 
+  const dishPayload = {
+    dishName: payload.dishName,
+    description: payload.description,
+    price: payload.price,
+    calo: payload.calo,
+    category: categoryMap[payload.category] || "PIZZA",
+    isAvailable: payload.isAvailable,
+    type: typeMap[payload.type] || "STAY_FIT",
+  };
+
   formData.append(
     "dish",
-    new Blob(
-      [
-        JSON.stringify({
-          dishName: payload.dishName,
-          description: payload.description,
-          price: payload.price,
-          calo: payload.calo,
-          category: payload.category,
-          isAvailable: payload.isAvailable,
-          type: typeMap[payload.type] || "STAY_FIT", // ✅ Map đúng enum BE
-        }),
-      ],
-      { type: "application/json" },
-    ),
+    new Blob([JSON.stringify(dishPayload)], { type: "application/json" }),
   );
 
+  // 🖼️ Chỉ append ảnh nếu có (tránh 522 lỗi Cloudinary)
   if (payload.imageFile instanceof File) {
     formData.append("image", payload.imageFile);
   }
 
-  const res = await apiConfig.put(`/dish/${id}`, formData, {
-    headers: { Authorization: `Bearer ${token}` },
-    transformRequest: [
-      (data, headers) => {
-        if (data instanceof FormData) {
-          delete headers["Content-Type"];
-        }
-        return data;
-      },
-    ],
-  });
+  console.log("🔍 FormData gửi lên (update):");
+  for (const [k, v] of formData.entries()) console.log(k, v);
+
+  try {
+    const res = await apiConfig.put(`/dish/${id}`, formData, {
+      headers: { Authorization: `Bearer ${token}` },
+      transformRequest: [
+        (data, headers) => {
+          if (data instanceof FormData) delete headers["Content-Type"];
+          return data;
+        },
+      ],
+    });
+    return res;
+  } catch (err) {
+    console.error("❌ updateDish lỗi:", err);
+    throw err;
+  }
 }
 
 // 🧩 Xóa món ăn
