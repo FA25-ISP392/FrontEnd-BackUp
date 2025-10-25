@@ -31,7 +31,6 @@ export default function OrderStatusSidebar({
   onClose,
   items = [],
   onEdit,
-  onDelete,
   onIncGroup,
   onDecGroup,
 }) {
@@ -87,27 +86,42 @@ export default function OrderStatusSidebar({
                 const badge =
                   STATUS_COLOR[st] ||
                   "bg-neutral-100 text-neutral-700 border-neutral-200";
-                const canChangeQty = st === "pending" || st === "preparing";
+
+                // 🔒 Quy tắc: chỉ pending mới được sửa/xoá/đổi số lượng
+                const isEditable = st === "pending";
+                const canChangeQty = st === "pending";
 
                 return (
                   <div
                     key={`${it.orderDetailId}-group`}
                     className="relative border rounded-xl p-3 hover:bg-neutral-50"
                   >
-                    <button
-                      className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600"
-                      onClick={() => onDecGroup && onDecGroup(g)}
-                      aria-label="Xoá 1"
-                      title="Xoá 1 đơn vị"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {/* 🗑️ chỉ hiện khi pending */}
+                    {isEditable && (
+                      <button
+                        className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600"
+                        onClick={() => onDecGroup && onDecGroup(g)}
+                        aria-label="Xoá 1"
+                        title="Xoá 1 đơn vị"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
 
+                    {/* 📝 chỉ cho click mở modal khi pending */}
                     <div
-                      className="flex items-start justify-between pr-8 cursor-pointer"
-                      onClick={() => onEdit && onEdit(it)}
-                      role="button"
-                      title="Sửa topping/ghi chú"
+                      className={`flex items-start justify-between pr-8 ${
+                        isEditable
+                          ? "cursor-pointer"
+                          : "cursor-not-allowed opacity-80"
+                      }`}
+                      onClick={() => isEditable && onEdit && onEdit(it)}
+                      role={isEditable ? "button" : undefined}
+                      title={
+                        isEditable
+                          ? "Sửa topping/ghi chú"
+                          : "Không thể chỉnh khi không ở trạng thái Chờ nấu"
+                      }
                     >
                       <div className="font-semibold text-neutral-900">
                         {it.dishName}

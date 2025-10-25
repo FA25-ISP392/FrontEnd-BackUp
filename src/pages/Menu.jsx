@@ -351,11 +351,6 @@ export default function Menu() {
     }
   };
 
-  const handleOpenEdit = (detail) => {
-    setEditingDetail(detail);
-    setIsEditOpen(true);
-  };
-
   const handleDeleteDetail = async (detail) => {
     if (!detail?.orderDetailId) return;
     if (!confirm("Xoá món này khỏi đơn?")) return;
@@ -409,6 +404,13 @@ export default function Menu() {
   }
 
   const handleIncGroup = async (group) => {
+    const st = String(group?.sample?.status || "").toLowerCase();
+    if (st !== "pending") {
+      alert(
+        "Món không còn ở trạng thái 'Chờ nấu' nên không thể tăng số lượng / chỉnh sửa."
+      );
+      return;
+    }
     const it = group.sample;
     await createOrderDetail({
       orderId,
@@ -424,9 +426,21 @@ export default function Menu() {
   };
 
   const handleDecGroup = async (group) => {
+    const st = String(group?.sample?.status || "").toLowerCase();
+    if (st !== "pending") {
+      alert("Món không còn ở trạng thái 'Chờ nấu' nên không thể xoá.");
+      return;
+    }
     const idToDelete = group.ids[group.ids.length - 1];
     await deleteOrderDetail(idToDelete);
     await fetchOrderDetailsFromOrder();
+  };
+
+  const handleOpenEdit = (detail) => {
+    const st = String(detail?.status || "").toLowerCase();
+    if (st !== "pending") return; // khoá mở modal nếu không pending
+    setEditingDetail(detail);
+    setIsEditOpen(true);
   };
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -434,16 +448,10 @@ export default function Menu() {
   const handlePersonalizationSubmit = async (form) => {
     try {
       if (!customerId) throw new Error("Thiếu customerId");
-
-      console.log("📤 Dữ liệu cá nhân hoá gửi lên:", form);
-
-      // 1️⃣ Tính BMR (giống bên PersonalizationModal)
       const bmr =
         form.gender === "male"
           ? 10 * form.weight + 6.25 * form.height - 5 * form.age + 5
           : 10 * form.weight + 6.25 * form.height - 5 * form.age - 161;
-
-      // 2️⃣ Hệ số vận động
       const activityMultipliers = {
         sedentary: 1.2,
         light: 1.375,
@@ -452,18 +460,8 @@ export default function Menu() {
         very_active: 1.9,
       };
       const multiplier = activityMultipliers[form.exerciseLevel] || 1.55;
-
-      // 3️⃣ Tính tổng calo cần/ngày trước khi áp dụng mục tiêu
       const maintenanceCalories = bmr * multiplier;
-
-      // 4️⃣ Áp dụng mục tiêu (giảm, giữ, tăng)
       const dailyCalories = applyGoal(maintenanceCalories, form.goal);
-
-      console.log("🔥 BMR:", bmr);
-      console.log("🔥 Calo duy trì:", maintenanceCalories);
-      console.log("🔥 Calo mục tiêu/ngày:", dailyCalories);
-
-      // 5️⃣ Lưu vào localStorage để load nhanh lần sau
       localStorage.setItem(
         PERSONAL_KEY(customerId),
         JSON.stringify({
@@ -473,11 +471,7 @@ export default function Menu() {
           updatedAt: Date.now(),
         })
       );
-
-      // 6️⃣ Gọi API cập nhật thông tin khách hàng
       await updateCustomerPersonalization(customerId, form);
-
-      // 7️⃣ Cập nhật state FE để hiện ngay Calorie Tracker
       setBaseCalories(Math.ceil(maintenanceCalories));
       setEstimatedCalories(Math.ceil(dailyCalories));
       setIsPersonalized(true);
