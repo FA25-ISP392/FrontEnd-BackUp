@@ -6,7 +6,10 @@ export default function PersonalizationModal({
   onClose,
   personalizationForm,
   setPersonalizationForm,
-  onSubmit,
+  onSubmit, // vẫn giữ để BE xử lý
+  dailyCalories, // 🆕 nhận từ cha
+  setDailyCalories,
+  caloriesConsumed, // 🆕 setter từ cha
 }) {
   if (!isOpen) return null;
 
@@ -19,7 +22,7 @@ export default function PersonalizationModal({
   const exerciseLevels = [
     {
       id: "sedentary",
-      name: "Rất ít hoặc không vận động",
+      name: "Rất ít vận động",
       description: "Hầu như không tập thể dục",
     },
     { id: "light", name: "Vận động nhẹ", description: "Tập nhẹ 1–3 buổi/tuần" },
@@ -40,8 +43,18 @@ export default function PersonalizationModal({
     },
   ];
 
+  const activityMultipliers = {
+    sedentary: 1.2,
+    light: 1.375,
+    moderate: 1.55,
+    active: 1.725,
+    very_active: 1.9,
+  };
+
+  // ✅ Tính BMR
   const bmr = useMemo(() => {
     const { height, weight, age, gender } = personalizationForm || {};
+    if (!height || !weight || !age || !gender) return 0;
     const base =
       gender === "male"
         ? 10 * weight + 6.25 * height - 5 * age + 5
@@ -54,14 +67,28 @@ export default function PersonalizationModal({
     personalizationForm.gender,
   ]);
 
+  // ✅ Khi nhấn "Tra cứu"
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(personalizationForm);
+    const { exerciseLevel, goal } = personalizationForm;
+
+    const multiplier = activityMultipliers[exerciseLevel] || 1.55;
+    const maintenance = bmr * multiplier;
+    let result = maintenance;
+    if (goal === "lose") result -= 500;
+    if (goal === "gain") result += 500;
+
+    const rounded = Math.round(result);
+    setDailyCalories(rounded); // 🧠 lưu state ở cha → giữ nguyên khi mở lại
+
+    // vẫn gọi BE nếu cần
+    onSubmit?.({ ...personalizationForm, dailyCalories: rounded });
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+        {/* ===== Header ===== */}
         <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -69,9 +96,11 @@ export default function PersonalizationModal({
                 <User className="h-6 w-6" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Cá nhân hoá thực đơn</h2>
+                <h2 className="text-2xl font-bold">
+                  Theo dõi calories cho bạn
+                </h2>
                 <p className="text-purple-100">
-                  Tạo menu phù hợp với cơ thể và mục tiêu của bạn
+                  Tính toán nhu cầu calo hàng ngày của bạn
                 </p>
               </div>
             </div>
@@ -84,18 +113,18 @@ export default function PersonalizationModal({
           </div>
         </div>
 
+        {/* ===== Form ===== */}
         <form
           onSubmit={handleSubmit}
           className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]"
         >
+          {/* ===== Thông tin cơ bản ===== */}
           <div className="mb-8">
-            <h3 className="text-lg font-bold text-neutral-900 mb-6">
-              Thông tin cơ bản
-            </h3>
-
+            <h3 className="text-lg font-bold mb-6">Thông tin cơ bản</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              {/* Chiều cao */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                <label className="block text-sm mb-2">
                   Chiều cao: {personalizationForm.height} cm
                 </label>
                 <input
@@ -112,8 +141,9 @@ export default function PersonalizationModal({
                   className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer"
                 />
               </div>
+              {/* Cân nặng */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                <label className="block text-sm mb-2">
                   Cân nặng: {personalizationForm.weight} kg
                 </label>
                 <input
@@ -132,9 +162,10 @@ export default function PersonalizationModal({
               </div>
             </div>
 
+            {/* Tuổi + Số bữa ăn */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                <label className="block text-sm mb-2">
                   Tuổi: {personalizationForm.age} tuổi
                 </label>
                 <input
@@ -152,8 +183,8 @@ export default function PersonalizationModal({
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Cữ ăn theo ngày: {personalizationForm.mealsPerDay || 3} bữa
+                <label className="block text-sm mb-2">
+                  Cữ ăn/ngày: {personalizationForm.mealsPerDay || 3} bữa
                 </label>
                 <input
                   type="range"
@@ -171,56 +202,46 @@ export default function PersonalizationModal({
               </div>
             </div>
 
+            {/* Giới tính */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-neutral-700 mb-3">
+              <label className="block text-sm font-medium mb-3">
                 Giới tính
               </label>
               <div className="flex gap-4">
-                <label className="flex items-center space-x-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="male"
-                    checked={personalizationForm.gender === "male"}
-                    onChange={(e) =>
-                      setPersonalizationForm((p) => ({
-                        ...p,
-                        gender: e.target.value,
-                      }))
-                    }
-                    className="w-5 h-5 text-purple-500 border-neutral-300 focus:ring-purple-500"
-                  />
-                  <span className="font-medium text-neutral-900">Nam</span>
-                </label>
-                <label className="flex items-center space-x-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="female"
-                    checked={personalizationForm.gender === "female"}
-                    onChange={(e) =>
-                      setPersonalizationForm((p) => ({
-                        ...p,
-                        gender: e.target.value,
-                      }))
-                    }
-                    className="w-5 h-5 text-purple-500 border-neutral-300 focus:ring-purple-500"
-                  />
-                  <span className="font-medium text-neutral-900">Nữ</span>
-                </label>
+                {["male", "female"].map((g) => (
+                  <label
+                    key={g}
+                    className="flex items-center space-x-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 cursor-pointer transition"
+                  >
+                    <input
+                      type="radio"
+                      name="gender"
+                      value={g}
+                      checked={personalizationForm.gender === g}
+                      onChange={(e) =>
+                        setPersonalizationForm((p) => ({
+                          ...p,
+                          gender: e.target.value,
+                        }))
+                      }
+                    />
+                    <span className="font-medium">
+                      {g === "male" ? "Nam" : "Nữ"}
+                    </span>
+                  </label>
+                ))}
               </div>
             </div>
           </div>
 
+          {/* ===== Mức vận động ===== */}
           <div className="mb-8">
-            <h3 className="text-lg font-bold text-neutral-900 mb-4">
-              Lượng tập thể dục trong tuần
-            </h3>
+            <h3 className="text-lg font-bold mb-4">Mức độ vận động</h3>
             <div className="space-y-3">
               {exerciseLevels.map((level) => (
                 <label
                   key={level.id}
-                  className="flex items-center space-x-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 cursor-pointer transition-colors"
+                  className="flex items-center space-x-3 p-3 border border-neutral-200 rounded-xl hover:bg-neutral-50 cursor-pointer transition"
                 >
                   <input
                     type="radio"
@@ -233,12 +254,9 @@ export default function PersonalizationModal({
                         exerciseLevel: e.target.value,
                       }))
                     }
-                    className="w-5 h-5 text-purple-500 border-neutral-300 focus:ring-purple-500"
                   />
                   <div>
-                    <div className="font-medium text-neutral-900">
-                      {level.name}
-                    </div>
+                    <div className="font-medium">{level.name}</div>
                     <div className="text-sm text-neutral-600">
                       {level.description}
                     </div>
@@ -248,29 +266,14 @@ export default function PersonalizationModal({
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 mb-6 border border-green-200">
-            <div className="text-center">
-              <h3 className="text-lg font-bold text-neutral-900 mb-2">
-                Chỉ số BMR
-              </h3>
-              <div className="text-3xl font-bold text-green-600 mb-1">
-                {bmr}
-              </div>
-              <div className="text-xs text-neutral-500 mt-1">
-                Được tính dựa trên công thức Mifflin–St Jeor
-              </div>
-            </div>
-          </div>
-
+          {/* ===== Mục tiêu cá nhân ===== */}
           <div className="mb-8">
-            <h3 className="text-lg font-bold text-neutral-900 mb-4">
-              Mục tiêu cá nhân
-            </h3>
+            <h3 className="text-lg font-bold mb-4">Mục tiêu cá nhân</h3>
             <div className="space-y-2">
               {goals.map((goal) => (
                 <label
                   key={goal.id}
-                  className="flex items-center space-x-3 p-3 border border-neutral-200 rounded-lg hover:bg-neutral-50 cursor-pointer transition-colors"
+                  className="flex items-center space-x-3 p-3 border border-neutral-200 rounded-lg hover:bg-neutral-50 cursor-pointer transition"
                 >
                   <input
                     type="radio"
@@ -283,12 +286,9 @@ export default function PersonalizationModal({
                         goal: e.target.value,
                       }))
                     }
-                    className="w-4 h-4 text-purple-500 border-neutral-300 focus:ring-purple-500"
                   />
                   <div>
-                    <div className="font-medium text-neutral-900 text-sm">
-                      {goal.name}
-                    </div>
+                    <div className="font-medium text-sm">{goal.name}</div>
                     <div className="text-xs text-neutral-600">
                       {goal.description}
                     </div>
@@ -298,20 +298,51 @@ export default function PersonalizationModal({
             </div>
           </div>
 
+          {/* ===== BMR & Kết quả ===== */}
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 mb-6 border border-green-200 text-center">
+            <h3 className="text-lg font-bold mb-1">Chỉ số BMR</h3>
+            <div className="text-3xl font-bold text-green-600">{bmr}</div>
+            <div className="text-xs text-neutral-500">
+              Tính theo công thức Mifflin–St Jeor
+            </div>
+
+            {dailyCalories && (
+              <div className="mt-6">
+                <h4 className="text-base font-semibold text-neutral-900 mb-1">
+                  Calories cần nạp mỗi ngày
+                </h4>
+                <div className="text-3xl font-bold text-orange-600 mb-3">
+                  {dailyCalories} cal
+                </div>
+
+                {/* 🆕 Thêm dòng hiển thị calories đã thêm */}
+                <div>
+                  <h4 className="text-base font-semibold text-neutral-900 mb-1">
+                    Calories đã thêm
+                  </h4>
+                  <div className="text-2xl font-bold text-emerald-600">
+                    {Math.round(caloriesConsumed || 0)} cal
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ===== Nút hành động ===== */}
           <div className="flex gap-3 pt-6 border-t border-neutral-200">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 border border-neutral-300 text-neutral-700 rounded-xl hover:bg-neutral-50 transition-all font-medium"
+              className="flex-1 px-6 py-3 border border-neutral-300 text-neutral-700 rounded-xl hover:bg-neutral-50 font-medium"
             >
               Hủy
             </button>
             <button
               type="submit"
-              className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all font-medium flex items-center justify-center gap-2"
+              className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl hover:from-purple-600 hover:to-pink-600 font-medium flex items-center justify-center gap-2"
             >
               <Save className="h-4 w-4" />
-              Tạo Menu Cá Nhân
+              Tra cứu
             </button>
           </div>
         </form>

@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Utensils, X } from "lucide-react";
+import { Plus, Pencil, Utensils, X, Eye, Trash2 } from "lucide-react";
 import {
   listDish,
   createDish,
   updateDish,
   normalizeDish,
+  getDish,
+  deleteDish,
 } from "../../../lib/apiDish";
 import { listTopping } from "../../../lib/apiTopping";
 import {
@@ -14,7 +16,14 @@ import {
 } from "../../../lib/apiDishTopping";
 
 /* ===================== Helpers ===================== */
-const CATEGORIES = ["PIZZA", "PASTA", "SALAD", "DESSERT", "DRINKS"];
+const CATEGORIES = [
+  "Pizza",
+  "Mì ý",
+  "Bò bít tết",
+  "Salad",
+  "Tráng miệng",
+  "Đồ uống",
+];
 const TYPES = ["Tăng cân", "Giữ dáng", "Giảm cân"];
 
 const fmtVND = (n) =>
@@ -220,6 +229,10 @@ export default function ManagerDishPage() {
   const [saving, setSaving] = useState(false);
   const [editingDish, setEditingDish] = useState(null);
 
+  // 🆕 Thêm state mới
+  const [openDetail, setOpenDetail] = useState(false);
+  const [detailDish, setDetailDish] = useState(null);
+
   useEffect(() => {
     (async () => {
       try {
@@ -247,7 +260,6 @@ export default function ManagerDishPage() {
       console.log("🍕 Gửi toppingIds:", toppingIds);
       console.log("🆔 dishId mới:", newId);
 
-      // 🚀 Gọi API batch dù toppingIds trống hay không để kiểm tra
       const res = await addDishToppingsBatch(newId, toppingIds);
       console.log("✅ Kết quả addDishToppingsBatch:", res);
 
@@ -266,35 +278,25 @@ export default function ManagerDishPage() {
     try {
       setSaving(true);
 
-      // 1️⃣ Cập nhật thông tin món ăn
       const updated = await updateDish(editingDish.id, form);
       const normalized = normalizeDish(updated?.result ?? updated);
 
-      // 2️⃣ Dùng topping có sẵn trong editingDish
       const oldToppings = editingDish.optionalToppings || [];
-      console.log("🧾 Topping cũ (FE):", oldToppings);
-
-      // 3️⃣ Xóa tất cả topping cũ
       if (Array.isArray(oldToppings) && oldToppings.length > 0) {
         await Promise.all(
           oldToppings.map((t) =>
             deleteDishTopping(editingDish.id, t.toppingId || t.id),
           ),
         );
-        console.log("🗑️ Đã xoá tất cả topping cũ");
       }
 
-      // 4️⃣ Thêm lại topping mới được chọn
       const toppingIds = (form.toppings || []).map((t) =>
         typeof t === "object" ? t.toppingId || t.id : Number(t),
       );
-
       if (toppingIds.length > 0) {
         await addDishToppingsBatch(editingDish.id, toppingIds);
-        console.log("✅ Đã thêm topping mới:", toppingIds);
       }
 
-      // 5️⃣ Cập nhật UI
       setDishes((prev) =>
         prev.map((d) => (d.id === normalized.id ? normalized : d)),
       );
@@ -307,6 +309,31 @@ export default function ManagerDishPage() {
       alert("❌ Lỗi khi cập nhật món ăn!");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // 🆕 Xem chi tiết món
+  const handleViewDetail = async (id) => {
+    try {
+      const res = await getDish(id);
+      setDetailDish(res);
+      setOpenDetail(true);
+    } catch (err) {
+      console.error("❌ Lỗi khi xem chi tiết món:", err);
+      alert("❌ Không tải được chi tiết món ăn!");
+    }
+  };
+
+  // 🆕 Xoá món ăn
+  const handleDeleteDish = async (id) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xoá món ăn này không?")) return;
+    try {
+      await deleteDish(id);
+      setDishes((prev) => prev.filter((d) => d.id !== id));
+      alert("✅ Đã xoá món ăn thành công!");
+    } catch (err) {
+      console.error("❌ Lỗi khi xoá món:", err);
+      alert("❌ Không thể xoá món ăn!");
     }
   };
 
@@ -341,15 +368,32 @@ export default function ManagerDishPage() {
                     <p className="text-sm text-gray-500">{d.category}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setEditingDish(d);
-                    setOpenEdit(true);
-                  }}
-                  className="text-gray-500 hover:text-orange-600"
-                >
-                  <Pencil className="h-5 w-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleViewDetail(d.id)}
+                    className="text-gray-500 hover:text-blue-600"
+                    title="Xem chi tiết"
+                  >
+                    <Eye className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingDish(d);
+                      setOpenEdit(true);
+                    }}
+                    className="text-gray-500 hover:text-orange-600"
+                    title="Chỉnh sửa"
+                  >
+                    <Pencil className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteDish(d.id)}
+                    className="text-gray-500 hover:text-red-600"
+                    title="Xoá món ăn"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
               <p className="mt-2 text-gray-600 text-sm line-clamp-2">
                 {d.description}
@@ -362,6 +406,7 @@ export default function ManagerDishPage() {
         </div>
       )}
 
+      {/* Modal tạo món */}
       <Modal
         open={openCreate}
         onClose={() => setOpenCreate(false)}
@@ -370,6 +415,7 @@ export default function ManagerDishPage() {
         <DishForm onSubmit={handleCreate} saving={saving} />
       </Modal>
 
+      {/* Modal chỉnh sửa món */}
       <Modal
         open={openEdit}
         onClose={() => {
@@ -379,6 +425,67 @@ export default function ManagerDishPage() {
         title="Chỉnh sửa món ăn"
       >
         <DishForm initial={editingDish} onSubmit={handleEdit} saving={saving} />
+      </Modal>
+
+      {/* 🆕 Modal xem chi tiết */}
+      <Modal
+        open={openDetail}
+        onClose={() => {
+          setOpenDetail(false);
+          setDetailDish(null);
+        }}
+        title="Chi tiết món ăn"
+      >
+        {detailDish ? (
+          <div className="space-y-3">
+            <img
+              src={detailDish.picture}
+              alt={detailDish.name}
+              className="w-full h-64 object-cover rounded-xl border"
+            />
+            <p>
+              <strong>Tên món:</strong> {detailDish.name}
+            </p>
+            <p>
+              <strong>Mô tả:</strong> {detailDish.description}
+            </p>
+            <p>
+              <strong>Danh mục:</strong> {detailDish.category}
+            </p>
+            <p>
+              <strong>Loại:</strong> {detailDish.type}
+            </p>
+            <p>
+              <strong>Giá:</strong> {fmtVND(detailDish.price)}
+            </p>
+            <p>
+              <strong>Calories:</strong> {detailDish.calo} kcal
+            </p>
+            <p>
+              <strong>Trạng thái:</strong>{" "}
+              {detailDish.isAvailable ? "Được bán" : "Không được bán"}
+            </p>
+            <p>
+              <strong>Số lượng còn lại:</strong> {detailDish.remainingQuantity}
+            </p>
+            <div>
+              <strong>Toppings đi kèm:</strong>
+              <ul className="list-disc pl-6">
+                {detailDish.optionalToppings?.length > 0 ? (
+                  detailDish.optionalToppings.map((t) => (
+                    <li key={t.toppingId}>
+                      {t.name} - {fmtVND(t.price)} ({t.calories} kcal)
+                    </li>
+                  ))
+                ) : (
+                  <li>Không có topping nào.</li>
+                )}
+              </ul>
+            </div>
+          </div>
+        ) : (
+          <div>Đang tải chi tiết...</div>
+        )}
       </Modal>
     </div>
   );
