@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/Handle/ProtectedRoute.jsx";
 import "./App.css";
 import VerifyEmail from "./pages/VerifyEmail.jsx";
 import PaymentSuccess from "./pages/PaymentSuccess.jsx";
+import PaymentFail from "./pages/PaymentFail.jsx";
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
       <Route path="/home/*" element={<Home />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/payment/success" element={<PaymentSuccess />} />
+      <Route path="/payment/cancel" element={<PaymentFail />} />
       <Route path="*" element={<Home />} />
 
       <Route

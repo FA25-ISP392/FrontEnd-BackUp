@@ -30,3 +30,10 @@ export async function getPayments() {
   const list = Array.isArray(res) ? res : res?.result ?? [];
   return list.map(normalizePayment);
 }
+
+export async function cancelPayment({ id, orderCode, status = "CANCELLED" }) {
+  const res = await apiConfig.get("/payment/cancel", {
+    params: { id, orderCode, status },
+  });
+  return res;
+}
