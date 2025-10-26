@@ -123,7 +123,10 @@ export default function StaffPaymentModal({ open, onClose, table }) {
           return;
         }
         if (["FAILED", "CANCELLED"].includes(st)) {
-          if (!stopped) alert("Thanh toán bị hủy/không thành công.");
+          if (!stopped) {
+            alert("Thanh toán bị hủy/không thành công.");
+            onClose?.({ paid: false });
+          }
           return;
         }
         if (!stopped) setTimeout(checkOnce, 3000);

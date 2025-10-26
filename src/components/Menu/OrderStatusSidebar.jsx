@@ -5,12 +5,14 @@ const STATUS_LABEL = {
   preparing: "Đang nấu",
   served: "Đã phục vụ",
   cancelled: "Đã hủy",
+  done: "Đã nấu xong",
 };
 const STATUS_COLOR = {
   pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
   preparing: "bg-blue-100 text-blue-700 border-blue-200",
   served: "bg-green-100 text-green-700 border-green-200",
   cancelled: "bg-red-100 text-red-700 border-red-200",
+  done: "bg-emerald-100 text-emerald-700 border-emerald-200",
 };
 const fmtVND = (n) =>
   typeof n === "number" && isFinite(n) ? n.toLocaleString("vi-VN") + "₫" : "-";
@@ -86,8 +88,6 @@ export default function OrderStatusSidebar({
                 const badge =
                   STATUS_COLOR[st] ||
                   "bg-neutral-100 text-neutral-700 border-neutral-200";
-
-                // 🔒 Quy tắc: chỉ pending mới được sửa/xoá/đổi số lượng
                 const isEditable = st === "pending";
                 const canChangeQty = st === "pending";
 
@@ -96,7 +96,6 @@ export default function OrderStatusSidebar({
                     key={`${it.orderDetailId}-group`}
                     className="relative border rounded-xl p-3 hover:bg-neutral-50"
                   >
-                    {/* 🗑️ chỉ hiện khi pending */}
                     {isEditable && (
                       <button
                         className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600"
@@ -108,7 +107,6 @@ export default function OrderStatusSidebar({
                       </button>
                     )}
 
-                    {/* 📝 chỉ cho click mở modal khi pending */}
                     <div
                       className={`flex items-start justify-between pr-8 ${
                         isEditable

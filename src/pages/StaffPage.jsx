@@ -22,6 +22,11 @@ import { getCurrentUser } from "../lib/auth";
 import StaffPaymentModal from "../components/Staff/StaffPaymentModal";
 import { getPayments } from "../lib/apiPayment";
 import { getOrderById } from "../lib/apiOrder";
+import ServeBoard from "../components/Staff/ServeBoard";
+import {
+  getOrderDetailsByStatus,
+  updateOrderDetailStatus,
+} from "../lib/apiOrderDetail";
 
 const RESERVE_WINDOW_MINUTES = 240;
 const DEBUG_LOG = import.meta.env.DEV;
@@ -48,6 +53,12 @@ export default function StaffPage() {
   const [tables, setTables] = useState([]);
   const [orders] = useState([]);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+
+  // ServeBoard state
+  const [readyOrders, setReadyOrders] = useState([]);
+  const [servedOrders, setServedOrders] = useState([]);
+  const [serveLoading, setServeLoading] = useState(false);
+  const [serveError, setServeError] = useState("");
 
   useEffect(() => {
     const u = getCurrentUser();
@@ -177,7 +188,6 @@ export default function StaffPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Nhận tín hiệu gọi thanh toán
   useEffect(() => {
     function applyCallPayment({ tableId, orderId, total, paymentId } = {}) {
       if (!tableId || !paymentId) return;
@@ -310,6 +320,40 @@ export default function StaffPage() {
       window.removeEventListener("storage", onStorage);
     };
   }, []);
+
+  async function fetchServeBoard() {
+    try {
+      setServeError("");
+      setServeLoading(true);
+      const [done, served] = await Promise.all([
+        getOrderDetailsByStatus("DONE"),
+        getOrderDetailsByStatus("SERVED"),
+      ]);
+      setReadyOrders(Array.isArray(done) ? done : []);
+      setServedOrders(Array.isArray(served) ? served : []);
+    } catch (e) {
+      setServeError(e?.message || "Không tải được danh sách món.");
+    } finally {
+      setServeLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (activeSection !== "serveBoard") return;
+    fetchServeBoard();
+  }, [activeSection]);
+
+  const handleServe = async (od) => {
+    try {
+      await updateOrderDetailStatus(od.orderDetailId, od, "SERVED");
+      setReadyOrders((prev) =>
+        prev.filter((x) => x.orderDetailId !== od.orderDetailId)
+      );
+      setServedOrders((prev) => [{ ...od, status: "SERVED" }, ...prev]);
+    } catch (e) {
+      alert(e?.message || "Cập nhật trạng thái thất bại.");
+    }
+  };
 
   const getTableStatusBadge = (status) => {
     switch (status) {
@@ -531,6 +575,16 @@ export default function StaffPage() {
                   ))}
               </div>
             </div>
+          )}
+
+          {activeSection === "serveBoard" && (
+            <ServeBoard
+              readyOrders={readyOrders}
+              servedOrders={servedOrders}
+              onServe={handleServe}
+              isLoading={serveLoading}
+              error={serveError}
+            />
           )}
         </main>
       </div>

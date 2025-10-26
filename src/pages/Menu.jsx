@@ -299,7 +299,13 @@ export default function Menu() {
   }, [isStatusOpen, orderId]);
 
   const groups = (() => {
-    const g = { pending: [], preparing: [], served: [], cancelled: [] };
+    const g = {
+      pending: [],
+      preparing: [],
+      served: [],
+      cancelled: [],
+      done: [],
+    };
     for (const od of orderDetails) {
       const key = String(od.status || "").toLowerCase();
       if (g[key]) g[key].push(od);
