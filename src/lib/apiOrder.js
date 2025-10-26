@@ -1,15 +1,6 @@
 import apiConfig from "../api/apiConfig";
 import { normalizeOrderDetail } from "./apiOrderDetail";
 
-// export const normalizeOrder = (o = {}) => ({
-//   orderId: o.orderId ?? o.id,
-//   customerId: o.customerId ?? o.customer?.id ?? null,
-//   tableId: o.tableId ?? o.table?.tableId ?? null,
-//   orderDate: o.orderDate ?? o.createdAt ?? null,
-//   status: (o.status || "PENDING").toUpperCase(),
-//   orderDetails: Array.isArray(o.orderDetails) ? o.orderDetails : [],
-// });
-
 export const normalizeOrder = (o = {}) => ({
   orderId: Number(o.orderId ?? o.id),
   customerId: Number(o.customerId ?? o.customer?.id ?? 0) || null,

@@ -31,8 +31,7 @@ export async function findStaffByUsername(username) {
     : [];
   const exact = list.find(
     (x) =>
-      String(x?.username || "").toLowerCase() ===
-      String(username).toLowerCase(),
+      String(x?.username || "").toLowerCase() === String(username).toLowerCase()
   );
   return exact ? normalizeStaff(exact) : null;
 }
@@ -62,7 +61,7 @@ export async function listStaffPaging({
 
   const blacklist = new Set(excludeRoles.map((r) => String(r).toUpperCase()));
   const filtered = data.filter(
-    (x) => !blacklist.has(String(x.role || "").toUpperCase()),
+    (x) => !blacklist.has(String(x.role || "").toUpperCase())
   );
 
   const totalElements = filtered.length;
@@ -128,7 +127,7 @@ export async function getMyStaffProfile() {
   const exact = list.find(
     (x) =>
       String(x?.username || "").toLowerCase() ===
-      String(user.username || "").toLowerCase(),
+      String(user.username || "").toLowerCase()
   );
 
   if (!exact)

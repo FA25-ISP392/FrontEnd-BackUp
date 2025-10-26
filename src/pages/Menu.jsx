@@ -46,7 +46,7 @@ export default function Menu() {
   const [customerId, setCustomerId] = useState(null);
   const [customerName, setCustomerName] = useState(null);
   const [orderId, setOrderId] = useState(
-    () => sessionStorage.getItem("orderId") || null,
+    () => sessionStorage.getItem("orderId") || null
   );
 
   const [baseCalories, setBaseCalories] = useState(null);
@@ -160,7 +160,7 @@ export default function Menu() {
   }, []);
 
   const filteredDishes = menuDishes.filter(
-    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name),
+    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name)
   );
 
   const { personalizationForm, setPersonalizationForm, personalizedDishes } =
@@ -181,7 +181,7 @@ export default function Menu() {
           if (typeof cached.perWorkout === "number") {
             const roundedBase = Math.ceil(cached.perWorkout);
             const roundedGoal = Math.ceil(
-              applyGoal(cached.perWorkout, data.goal),
+              applyGoal(cached.perWorkout, data.goal)
             );
             setBaseCalories(roundedBase);
             setEstimatedCalories(roundedGoal);
@@ -207,7 +207,7 @@ export default function Menu() {
         setPersonalizationForm((prev) => ({ ...prev, ...toForm }));
         localStorage.setItem(
           PERSONAL_KEY(customerId),
-          JSON.stringify({ data: toForm, updatedAt: Date.now() }),
+          JSON.stringify({ data: toForm, updatedAt: Date.now() })
         );
       } catch (e) {
         console.warn("Không lấy được personalization từ BE:", e?.message || e);
@@ -218,21 +218,21 @@ export default function Menu() {
   const addToCart = (item) => {
     const noteKey = item.notes || "";
     const existingItem = cart.find(
-      (it) => it.id === item.id && (it.notes || "") === noteKey,
+      (it) => it.id === item.id && (it.notes || "") === noteKey
     );
     if (existingItem) {
       setCart((prev) =>
         prev.map((it) =>
           it.id === item.id && (it.notes || "") === noteKey
             ? { ...it, quantity: it.quantity + (item.quantity ?? 1) }
-            : it,
-        ),
+            : it
+        )
       );
     } else {
       setCart((prev) => [...prev, { ...item }]);
     }
     setCaloriesConsumed(
-      (prev) => prev + (item.totalCalories || item.calories || 0),
+      (prev) => prev + (item.totalCalories || item.calories || 0)
     );
   };
 
@@ -246,11 +246,11 @@ export default function Menu() {
       const diff = newQuantity - item.quantity;
       setCart((prev) =>
         prev.map((it) =>
-          it.id === itemId ? { ...it, quantity: newQuantity } : it,
-        ),
+          it.id === itemId ? { ...it, quantity: newQuantity } : it
+        )
       );
       setCaloriesConsumed(
-        (prev) => prev + diff * (item.totalCalories || item.calories),
+        (prev) => prev + diff * (item.totalCalories || item.calories)
       );
     }
   };
@@ -260,7 +260,7 @@ export default function Menu() {
     if (item) {
       setCart((prev) => prev.filter((it) => it.id !== itemId));
       setCaloriesConsumed(
-        (prev) => prev - (item.totalCalories || item.calories) * item.quantity,
+        (prev) => prev - (item.totalCalories || item.calories) * item.quantity
       );
     }
   };
@@ -370,14 +370,44 @@ export default function Menu() {
   const sumTotal = (items = []) =>
     items.reduce((s, it) => s + Number(it.totalPrice ?? it.price ?? 0), 0);
 
-  function notifyStaff({ tableId, orderId, total, paymentId }) {
+  function notifyPaymentStaff({ tableId, orderId, total, paymentId }) {
     const payload = { tableId, orderId, total, paymentId, ts: Date.now() };
     window.dispatchEvent(
-      new CustomEvent("table:callPayment", { detail: payload }),
+      new CustomEvent("table:callPayment", { detail: payload })
     );
     localStorage.setItem(
       `signal:callPayment:${payload.ts}`,
-      JSON.stringify(payload),
+      JSON.stringify(payload)
+    );
+  }
+
+  function notifyCallStaff({ tableId, orderId }) {
+    const payload = {
+      type: "callStaff",
+      tableId,
+      tableNumber: tableId,
+      orderId,
+      ts: Date.now(),
+    };
+
+    console.log("[CALL STAFF] Sending payload:", payload);
+
+    try {
+      const bc = new BroadcastChannel("monngon-signals");
+      bc.postMessage(payload);
+      console.log("[CALL STAFF] Sent via BroadcastChannel");
+      bc.close?.();
+    } catch (e) {
+      console.warn("[CALL STAFF] BroadcastChannel failed:", e);
+    }
+
+    localStorage.setItem(
+      `signal:callStaff:${payload.ts}`,
+      JSON.stringify(payload)
+    );
+    console.log(
+      "[CALL STAFF] Saved to localStorage key:",
+      `signal:callStaff:${payload.ts}`
     );
   }
 
@@ -386,7 +416,7 @@ export default function Menu() {
       if (!orderId) throw new Error("Chưa có orderId.");
       const total = sumTotal(paymentItems);
       const p = await createPayment({ orderId, method: "BANK_TRANSFER" });
-      notifyStaff({ tableId, orderId, total, paymentId: p.id });
+      notifyPaymentStaff({ tableId, orderId, total, paymentId: p.id });
       setIsPaymentOpen(false);
       setIsCallStaffOpen(true);
     } catch (error) {
@@ -439,7 +469,7 @@ export default function Menu() {
 
   const handleOpenEdit = (detail) => {
     const st = String(detail?.status || "").toLowerCase();
-    if (st !== "pending") return; // khoá mở modal nếu không pending
+    if (st !== "pending") return;
     setEditingDetail(detail);
     setIsEditOpen(true);
   };
@@ -470,7 +500,7 @@ export default function Menu() {
           perWorkout: Math.ceil(maintenanceCalories),
           goalCalories: Math.ceil(dailyCalories),
           updatedAt: Date.now(),
-        }),
+        })
       );
       await updateCustomerPersonalization(customerId, form);
       setBaseCalories(Math.ceil(maintenanceCalories));
@@ -492,10 +522,9 @@ export default function Menu() {
         onViewOrders={() => setIsCartOpen(true)}
         onCallStaff={() => {
           setIsCallStaffOpen(true);
-          setTimeout(() => {
-            setCart([]);
-            setCaloriesConsumed(0);
-          }, 2000);
+          if (tableId) {
+            notifyCallStaff({ tableId, orderId });
+          }
         }}
         onCheckout={handleOpenPayment}
         onViewStatus={() => setIsStatusOpen(true)}
@@ -570,7 +599,7 @@ export default function Menu() {
         onClose={() => setIsPersonalizationOpen(false)}
         personalizationForm={personalizationForm}
         setPersonalizationForm={setPersonalizationForm}
-        onSubmit={handlePersonalizationSubmit} // nếu bạn muốn vẫn gửi BE
+        onSubmit={handlePersonalizationSubmit}
         dailyCalories={dailyCalories}
         setDailyCalories={setDailyCalories}
         caloriesConsumed={caloriesConsumed}

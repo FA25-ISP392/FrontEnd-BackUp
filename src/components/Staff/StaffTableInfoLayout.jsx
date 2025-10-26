@@ -1,5 +1,5 @@
 import React from "react";
-import { Table, Phone, DollarSign } from "lucide-react";
+import { Table, Phone } from "lucide-react";
 
 export default function StaffTableInfoLayout({
   tables,
@@ -69,13 +69,15 @@ export default function StaffTableInfoLayout({
               onClick={() => onTableClick?.(table)}
             >
               {table.callStaff && (
-                <div className="absolute top-2 right-10 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                <div className="absolute top-2 left-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                   <Phone className="h-4 w-4 text-white" />
                 </div>
               )}
               {table.callPayment && (
                 <div className="absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                  <DollarSign className="h-4 w-4 text-white" />
+                  <span className="text-white text-[11px] leading-none font-bold">
+                    VND
+                  </span>
                 </div>
               )}
 
@@ -147,8 +149,10 @@ export default function StaffTableInfoLayout({
               <span className="text-yellow-800 font-medium">Đã đặt</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-100 border-2 border-green-500 rounded relative">
-                <DollarSign className="h-3 w-3 text-green-500 absolute top-0.5 right-0.5" />
+              <div className="w-4 h-4 bg-green-100 border-2 border-green-500 rounded relative flex items-center justify-center">
+                <span className="text-[10px] text-green-700 font-bold">
+                  VND
+                </span>
               </div>
               <span className="text-green-800 font-medium">Gọi thanh toán</span>
             </div>

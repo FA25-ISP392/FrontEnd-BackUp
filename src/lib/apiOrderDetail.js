@@ -92,13 +92,21 @@ export async function updateOrderDetailStatus(
   newStatus
 ) {
   if (!orderDetailId) throw new Error("Cần cung cấp orderDetailId");
-  if (!newStatus) throw new Error("Cần cung cấp trạng thái mới (newStatus)");
   if (!itemToUpdate) throw new Error("Cần cung cấp item object để cập nhật");
+  if (!newStatus) throw new Error("Cần cung cấp trạng thái mới (newStatus)");
   const formattedStatus = String(newStatus).toUpperCase();
   const payload = {
-    orderDetailId: Number(itemToUpdate.orderDetailId),
+    orderDetailId: Number(orderDetailId),
     status: formattedStatus,
   };
+  if (import.meta.env?.DEV) {
+    console.log(
+      "[PUT] /order-details/",
+      Number(orderDetailId),
+      "payload=",
+      payload
+    );
+  }
   const res = await apiConfig.put(
     `/order-details/${Number(orderDetailId)}`,
     payload

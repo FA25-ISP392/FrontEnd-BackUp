@@ -73,7 +73,6 @@ export default function StaffPage() {
         (a, b) => (a.number || a.id) - (b.number || b.id)
       );
       const now = new Date();
-
       const hydrated = await Promise.all(
         sorted.slice(0, 8).map(async (t) => {
           const tableId = t.id;
@@ -107,9 +106,21 @@ export default function StaffPage() {
           }
         })
       );
-
       if (DEBUG_LOG) console.log("[STAFF] tables hydrated for UI:", hydrated);
-      setTables(hydrated);
+      setTables((prev) => {
+        const mapPrev = new Map(prev.map((t) => [String(t.id), t]));
+        return hydrated.map((t) => {
+          const old = mapPrev.get(String(t.id));
+          if (!old) return t;
+          const merged = { ...t };
+          if (old.callStaff === true) merged.callStaff = true;
+          if (old.callPayment === true) {
+            merged.callPayment = true;
+            if (old.pendingPayment) merged.pendingPayment = old.pendingPayment;
+          }
+          return merged;
+        });
+      });
     }
 
     hydrate();
@@ -166,6 +177,7 @@ export default function StaffPage() {
     return () => clearInterval(timer);
   }, []);
 
+  // Nhận tín hiệu gọi thanh toán
   useEffect(() => {
     function applyCallPayment({ tableId, orderId, total, paymentId } = {}) {
       if (!tableId || !paymentId) return;
@@ -196,6 +208,105 @@ export default function StaffPage() {
     window.addEventListener("storage", onStorage);
     return () => {
       window.removeEventListener("table:callPayment", handleCallPayment);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
+
+  useEffect(() => {
+    function applyCallStaff({ tableId, tableNumber } = {}) {
+      console.log("[STAFF] applyCallStaff called with:", {
+        tableId,
+        tableNumber,
+      });
+      if (!tableId && !tableNumber) return;
+      setTables((prev) =>
+        prev.map((t) => {
+          const match = [t.id, t.number]
+            .map((v) => String(v))
+            .some((v) => v === String(tableId) || v === String(tableNumber));
+          if (match) console.log(`[STAFF] ✅ matched table`, t.number);
+          return match ? { ...t, callStaff: true } : t;
+        })
+      );
+    }
+
+    let bc = null;
+    try {
+      bc = new BroadcastChannel("monngon-signals");
+      bc.onmessage = (ev) => {
+        console.log("[STAFF] BroadcastChannel message:", ev.data);
+        const data = ev?.data || {};
+        if (data?.type === "callStaff") applyCallStaff(data);
+      };
+      console.log("[STAFF] BroadcastChannel listener ready");
+    } catch (e) {
+      console.warn("[STAFF] BroadcastChannel failed:", e);
+    }
+
+    function onStorage(ev) {
+      if (!ev.key?.startsWith("signal:callStaff:")) return;
+      console.log("[STAFF] onStorage triggered:", ev.key);
+      try {
+        const payload = JSON.parse(ev.newValue || "{}");
+        applyCallStaff(payload);
+        localStorage.removeItem(ev.key);
+      } catch (e) {
+        console.warn("[STAFF] parse error:", e);
+      }
+    }
+
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      try {
+        bc?.close?.();
+      } catch {}
+    };
+  }, []);
+
+  useEffect(() => {
+    function applyCallStaff({ tableId, tableNumber } = {}) {
+      if (!tableId && !tableNumber) return;
+      setTables((prev) =>
+        prev.map((t) => {
+          const match = [t.id, t.number]
+            .map((v) => String(v))
+            .some((v) => v === String(tableId) || v === String(tableNumber));
+          return match ? { ...t, callStaff: true } : t;
+        })
+      );
+    }
+    function scanLocalSignals() {
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (!key) continue;
+          if (key.startsWith("signal:callStaff:")) {
+            const raw = localStorage.getItem(key);
+            if (raw) {
+              const payload = JSON.parse(raw);
+              console.log(
+                "[STAFF] picked signal from localStorage:",
+                key,
+                payload
+              );
+              applyCallStaff(payload);
+            }
+            localStorage.removeItem(key);
+          }
+        }
+      } catch (e) {
+        console.warn("[STAFF] scanLocalSignals error:", e);
+      }
+    }
+    scanLocalSignals();
+    const timer = setInterval(scanLocalSignals, 1000);
+    function onStorage(e) {
+      if (e.key?.startsWith("signal:callStaff:")) scanLocalSignals();
+    }
+    window.addEventListener("storage", onStorage);
+    return () => {
+      clearInterval(timer);
       window.removeEventListener("storage", onStorage);
     };
   }, []);
@@ -544,7 +655,19 @@ export default function StaffPage() {
               </div>
 
               <div className="mt-6 flex gap-3">
-                <button className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2">
+                <button
+                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
+                  onClick={() => {
+                    if (!selectedTable) return;
+                    setTables((prev) =>
+                      prev.map((t) =>
+                        t.id === selectedTable.id
+                          ? { ...t, callStaff: false }
+                          : t
+                      )
+                    );
+                  }}
+                >
                   <Phone className="h-4 w-4" />
                   Phản Hồi Gọi
                 </button>
