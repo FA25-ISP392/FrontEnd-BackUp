@@ -152,7 +152,20 @@ export default function Menu() {
     (async () => {
       try {
         const data = await listDish();
+        console.log("📦 Dữ liệu BE trả về:", data);
         setMenuDishes(data);
+
+        // ✅ Chuẩn hóa dữ liệu từ BE
+        const normalized = data.map((d) => ({
+          ...d,
+          // Dùng isInDailyPlan do BE trả về, nếu không có thì default false
+          isInDailyPlan: Boolean(d.isInDailyPlan),
+          // Một số BE có thể trả về tên field khác như isInPlan hoặc inDailyPlan
+          name: d.name ?? d.dishName,
+          calo: d.calo ?? d.calories ?? 0,
+        }));
+
+        setMenuDishes(normalized);
       } catch (err) {
         console.error("❌ Lỗi khi load món ăn:", err);
       }
@@ -551,6 +564,12 @@ export default function Menu() {
         filteredDishes={filteredDishes}
         personalizedMenu={personalizedDishes}
         onDishSelect={async (dish) => {
+          // 🚫 Chặn món có remainingQuantity = 0
+          if (dish.remainingQuantity <= 0) {
+            alert("❌ Món này hiện đã hết số lượng trong kế hoạch hôm nay.");
+            return;
+          }
+
           try {
             let fullDish = await getDish(dish.id);
             if (!fullDish.optionalToppings?.length) {

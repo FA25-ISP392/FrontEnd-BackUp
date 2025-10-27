@@ -4,10 +4,9 @@ import { getMyStaffProfile } from "../../lib/apiStaff";
 import {
   listDailyPlans,
   createDailyPlansBatch,
-  updateDailyPlan,
   ITEM_TYPES,
 } from "../../lib/apiDailyPlan";
-import { Plus, Minus, Send, Clock, CheckCircle } from "lucide-react";
+import { Plus, Minus, Clock, CheckCircle } from "lucide-react";
 
 export default function ChefDailyPlanTopping() {
   const [toppings, setToppings] = useState([]);
@@ -16,6 +15,8 @@ export default function ChefDailyPlanTopping() {
   const [staffId, setStaffId] = useState(null);
   const [loading, setLoading] = useState(false);
   const today = new Date().toISOString().split("T")[0];
+
+  const makeKey = (itemId, itemType) => `${itemType}_${itemId}`;
 
   useEffect(() => {
     (async () => {
@@ -45,7 +46,9 @@ export default function ChefDailyPlanTopping() {
         );
 
         const mapped = {};
-        todayPlans.forEach((p) => (mapped[p.itemId] = p.plannedQuantity));
+        todayPlans.forEach((p) => {
+          mapped[makeKey(p.itemId, p.itemType)] = p.plannedQuantity ?? 0;
+        });
 
         setToppings(toppingList || []);
         setPlans(todayPlans);
@@ -57,68 +60,75 @@ export default function ChefDailyPlanTopping() {
   }, [staffId, today]);
 
   const handleQuantityChange = (id, delta) => {
+    const key = makeKey(id, ITEM_TYPES.TOPPING);
     setQuantities((prev) => ({
       ...prev,
-      [id]: Math.max(0, (prev[id] || 0) + delta),
+      [key]: Math.max(0, (prev[key] || 0) + delta),
     }));
   };
 
   const handleQuantityInput = (id, value) => {
+    const key = makeKey(id, ITEM_TYPES.TOPPING);
     const parsed = parseInt(value, 10);
     if (isNaN(parsed) || parsed < 0) return;
-    setQuantities((prev) => ({ ...prev, [id]: parsed }));
+    setQuantities((prev) => ({ ...prev, [key]: parsed }));
   };
 
+  // ✅ PHIÊN BẢN CHỈ DÙNG POST /daily-plans/batch
   const handleSubmitAll = async () => {
     if (!staffId) {
       alert("⚠️ Không xác định được Staff ID. Vui lòng đăng nhập lại!");
       return;
     }
 
+    // 🔍 Chỉ lấy những topping có thay đổi hoặc chưa có plan
     const selected = Object.entries(quantities)
       .filter(([_, qty]) => qty > 0)
-      .map(([id, qty]) => ({
-        itemId: Number(id),
-        itemType: ITEM_TYPES.TOPPING,
-        plannedQuantity: Number(qty),
-        planDate: today,
-        staffId,
-      }));
+      .map(([key, qty]) => {
+        const [type, id] = key.split("_");
+        const existingPlan = plans.find(
+          (p) => p.itemId === Number(id) && p.itemType === type,
+        );
+
+        // Nếu chưa có plan -> gửi tạo mới
+        if (!existingPlan) {
+          return {
+            itemId: Number(id),
+            itemType: type,
+            plannedQuantity: Number(qty),
+            planDate: today,
+            staffId,
+          };
+        }
+
+        // Nếu có plan nhưng số lượng thay đổi thì gửi cập nhật
+        if (existingPlan.plannedQuantity !== Number(qty)) {
+          return {
+            itemId: Number(id),
+            itemType: type,
+            plannedQuantity: Number(qty),
+            planDate: today,
+            staffId,
+          };
+        }
+
+        // Nếu không đổi thì bỏ qua
+        return null;
+      })
+      .filter(Boolean); // Bỏ null ra
 
     if (selected.length === 0) {
-      alert("⚠️ Vui lòng chọn ít nhất 1 topping!");
+      alert("⚠️ Không có thay đổi nào cần gửi!");
       return;
     }
 
     setLoading(true);
     try {
-      const existing = [...plans];
-      const toUpdate = [];
-      const toCreate = [];
-
-      for (const item of selected) {
-        const exist = existing.find(
-          (p) => p.itemId === item.itemId && p.itemType === ITEM_TYPES.TOPPING,
-        );
-
-        if (exist) {
-          toUpdate.push({ planId: exist.planId, newQty: item.plannedQuantity });
-        } else {
-          toCreate.push(item);
-        }
-      }
-
-      for (const upd of toUpdate) {
-        await updateDailyPlan(upd.planId, {
-          plannedQuantity: upd.newQty,
-          remainingQuantity: upd.newQty,
-          status: false,
-        });
-      }
-
-      if (toCreate.length > 0) await createDailyPlansBatch(toCreate);
+      console.log("📦 [POST] Gửi batch daily plan (chỉ thay đổi):", selected);
+      await createDailyPlansBatch(selected);
 
       alert("✅ Cập nhật kế hoạch topping thành công!");
+
       const refreshed = await listDailyPlans();
       const todayPlans = (refreshed || []).filter(
         (p) => p.planDate === today && p.staffId === staffId,
@@ -126,14 +136,16 @@ export default function ChefDailyPlanTopping() {
       setPlans(todayPlans);
     } catch (err) {
       console.error("❌ Lỗi gửi kế hoạch topping:", err);
-      alert("❌ Gửi kế hoạch topping thất bại!");
+      if (err?.response?.data?.code === 4005)
+        alert("⚠️ Một số topping đã được duyệt, không thể cập nhật lại.");
+      else alert("❌ Gửi kế hoạch topping thất bại!");
     } finally {
       setLoading(false);
     }
   };
 
-  const getPlanStatus = (id) => {
-    const plan = plans.find((p) => p.itemId === id);
+  const getPlanStatus = (id, type = ITEM_TYPES.TOPPING) => {
+    const plan = plans.find((p) => p.itemId === id && p.itemType === type);
     if (!plan) return null;
     if (plan.status === false) return "pending";
     if (plan.status === true) return "approved";
@@ -148,16 +160,21 @@ export default function ChefDailyPlanTopping() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         {toppings.map((t) => {
-          const qty = quantities[t.id] || 0;
-          const status = getPlanStatus(t.id);
+          const key = makeKey(t.id, ITEM_TYPES.TOPPING);
+          const qty = quantities[key] || 0;
+          const status = getPlanStatus(t.id, ITEM_TYPES.TOPPING);
+          const plan = plans.find(
+            (p) => p.itemId === t.id && p.itemType === ITEM_TYPES.TOPPING,
+          );
+
           return (
             <div
-              key={t.id}
+              key={key}
               className={`rounded-xl p-4 border shadow-sm ${
-                status === "approved"
-                  ? "bg-green-50 border-green-200"
-                  : status === "pending"
+                status === "pending"
                   ? "bg-blue-50 border-blue-200"
+                  : status === "approved"
+                  ? "bg-green-50 border-green-200"
                   : "bg-white border-gray-100"
               }`}
             >
@@ -171,10 +188,11 @@ export default function ChefDailyPlanTopping() {
                   <button
                     onClick={() => handleQuantityChange(t.id, -1)}
                     disabled={loading}
-                    className="w-8 h-8 bg-red-100 text-red-600 rounded-lg"
+                    className="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
+
                   <input
                     type="number"
                     value={qty}
@@ -183,17 +201,18 @@ export default function ChefDailyPlanTopping() {
                     disabled={loading}
                     className="w-14 text-center font-semibold border rounded-lg border-gray-300"
                   />
+
                   <button
                     onClick={() => handleQuantityChange(t.id, 1)}
                     disabled={loading}
-                    className="w-8 h-8 bg-green-100 text-green-600 rounded-lg"
+                    className="w-8 h-8 rounded-lg bg-green-100 text-green-600 hover:bg-green-200"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
                 </div>
               </div>
 
-              {status === "approved" && (
+              {status === "approved" && plan?.remainingQuantity > 0 && (
                 <div className="text-green-600 text-sm flex items-center gap-2">
                   <CheckCircle className="h-4 w-4" /> <span>Đã duyệt</span>
                 </div>

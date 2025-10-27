@@ -8,8 +8,10 @@ import TableDetailsModal from "../components/Manager/TableDetailsModal";
 import EditToppingModal from "../components/Manager/Topping/EditToppingModal";
 import ToppingsManagement from "../components/Manager/Topping/ToppingManagement";
 import ManagerDishPage from "../components/Manager/Dish/ManagerDishPage";
-import ManagerDailyPlan from "../components/Manager/ManagerDailyPlan";
-import ManagerDailyApprovedDishes from "../components/Manager/ManagerDailyApprovedDishes";
+
+// ✅ Sử dụng 2 file mới, gộp món + topping
+import ManagerDailyPlanPage from "../components/Manager/ManagerDailyPlanPage";
+import ManagerDailyMenuPage from "../components/Manager/ManagerDailyMenuPage";
 
 import {
   mockTables,
@@ -126,13 +128,13 @@ export default function Manager() {
     };
   }, [activeSection, page, size, statusFilter]);
 
+  // 🧩 Load danh sách bàn ăn
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const data = await listTables(); // gọi API /tables
+        const data = await listTables();
         if (!cancelled) {
-          // nếu API trả rỗng thì dùng mock làm dự phòng
           setTables(Array.isArray(data) && data.length ? data : mockTables);
         }
       } catch (e) {
@@ -257,6 +259,7 @@ export default function Manager() {
             />
           </>
         );
+
       case "tables":
         return (
           <>
@@ -276,6 +279,7 @@ export default function Manager() {
             />
           </>
         );
+
       case "accounts":
         return (
           <BookingManagement
@@ -298,16 +302,20 @@ export default function Manager() {
             }}
           />
         );
+
       case "dishes":
         return (
           <div className="space-y-6">
             <ManagerDishPage />
           </div>
         );
+
+      // ✅ Chỉ giữ 2 case mới này thôi
       case "dailyPlan":
-        return <ManagerDailyPlan />;
+        return <ManagerDailyPlanPage />;
+
       case "dailyDishes":
-        return <ManagerDailyApprovedDishes />;
+        return <ManagerDailyMenuPage />;
 
       case "invoices":
         return (
@@ -322,6 +330,7 @@ export default function Manager() {
             }))}
           />
         );
+
       case "toppings":
         return (
           <ToppingsManagement
@@ -332,6 +341,7 @@ export default function Manager() {
             loading={false}
           />
         );
+
       case "settings":
         return (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
@@ -341,6 +351,7 @@ export default function Manager() {
             </p>
           </div>
         );
+
       default:
         return null;
     }

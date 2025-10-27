@@ -10,7 +10,10 @@ export default function ChefDailyDishes() {
       const res = await listDailyPlans();
       const today = new Date().toISOString().split("T")[0];
       setApprovedPlans(
-        res.filter((p) => p.status === true && p.planDate === today),
+        res.filter(
+          (p) =>
+            p.status === true && p.planDate === today && p.itemType === "DISH", // ✅ Chỉ lấy món ăn
+        ),
       );
     })();
   }, []);
@@ -23,13 +26,14 @@ export default function ChefDailyDishes() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {approvedPlans.map((p) => (
           <div
-            key={p.id}
+            key={p.planId || p.id}
             className="bg-green-50 border border-green-200 rounded-xl p-4"
           >
             <h4 className="font-semibold text-green-700">{p.itemName}</h4>
             <p className="text-sm text-neutral-600">
-              Số lượng: {p.plannedQuantity}
+              Số lượng còn lại: {p.remainingQuantity}
             </p>
+
             <div className="flex items-center gap-2 mt-2 text-green-700 text-sm">
               <CheckCircle className="h-4 w-4" />
               Đã được {p.approverName || "Manager"} duyệt

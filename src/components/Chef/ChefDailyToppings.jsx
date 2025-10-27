@@ -33,8 +33,9 @@ export default function ChefDailyToppings() {
           >
             <h4 className="font-semibold text-green-700">{p.itemName}</h4>
             <p className="text-sm text-neutral-600">
-              Số lượng: {p.plannedQuantity}
+              Số lượng: {p.remainingQuantity}
             </p>
+
             <div className="flex items-center gap-2 mt-2 text-green-700 text-sm">
               <CheckCircle className="h-4 w-4" />
               Đã được {p.approverName || "Manager"} duyệt
