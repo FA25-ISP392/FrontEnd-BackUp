@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import ManagerSidebar from "../components/Manager/ManagerSidebar";
-import StatsCards from "../components/Manager/StatsCards";
-import Charts from "../components/Manager/Charts";
 import TablesManagement from "../components/Manager/TablesManagement";
-import ManagerInvoicesToday from "../components/Manager/InvoicesToday";
 import TableDetailsModal from "../components/Manager/TableDetailsModal";
 import EditToppingModal from "../components/Manager/Topping/EditToppingModal";
 import ToppingsManagement from "../components/Manager/Topping/ToppingManagement";
@@ -11,11 +8,6 @@ import ManagerDishPage from "../components/Manager/Dish/ManagerDishPage";
 import ManagerDailyPlan from "../components/Manager/ManagerDailyPlan";
 import ManagerDailyApprovedDishes from "../components/Manager/ManagerDailyApprovedDishes";
 
-import {
-  mockTables,
-  mockRevenueData,
-  mockPopularDishes,
-} from "../lib/managerData";
 import {
   listBookingsPaging,
   rejectBooking,
@@ -31,9 +23,8 @@ import { listTables } from "../lib/apiTable";
 
 export default function Manager() {
   const [managerName, setManagerName] = useState("");
-  const [activeSection, setActiveSection] = useState("overview");
-  const [revenuePeriod, setRevenuePeriod] = useState("day");
-  const [deletingIds, setDeletingIds] = useState(new Set());
+  const [activeSection, setActiveSection] = useState("accounts");
+  const [deletingIds] = useState(new Set());
   const [selectedTable, setSelectedTable] = useState(null);
   const [tables, setTables] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -68,15 +59,13 @@ export default function Manager() {
         }
         const profile = await findStaffByUsername(username);
         setManagerName(profile?.name || "Manager");
-      } catch (err) {
-        console.error(err);
+      } catch {
         setManagerName("Manager");
       }
     };
     loadName();
   }, []);
 
-  // 🧩 Load danh sách booking (phân trang)
   const [page, setPage] = useState(1);
   const [size] = useState(6);
   const [pageInfo, setPageInfo] = useState({
@@ -105,7 +94,7 @@ export default function Manager() {
         }
       } catch (err) {
         if (!cancelled)
-          setBookingsError(err.message || "Không tải được danh sách đặt bàn.");
+          setBookingsError(err?.message || "Không tải được danh sách đặt bàn.");
       } finally {
         if (!cancelled) setLoadingBookings(false);
       }
@@ -120,14 +109,12 @@ export default function Manager() {
     let cancelled = false;
     (async () => {
       try {
-        const data = await listTables(); // gọi API /tables
-        if (!cancelled) {
-          // nếu API trả rỗng thì dùng mock làm dự phòng
-          setTables(Array.isArray(data) && data.length ? data : mockTables);
-        }
+        const data = await listTables();
+        if (!cancelled) setTables(Array.isArray(data) ? data : []);
       } catch (e) {
+        if (!cancelled) setTables([]);
+        // eslint-disable-next-line no-console
         console.error("Load tables failed:", e);
-        if (!cancelled) setTables(mockTables);
       }
     })();
     return () => {
@@ -160,7 +147,7 @@ export default function Manager() {
       setBookings((prev) =>
         prev.map((x) => (x.id === id ? { ...x, status: "PENDING" } : x))
       );
-      alert(err.message || "Từ chối thất bại");
+      alert(err?.message || "Từ chối thất bại");
     }
   };
 
@@ -184,7 +171,7 @@ export default function Manager() {
     } catch (error) {
       alert(
         error?.response?.data?.message ||
-          error.message ||
+          error?.message ||
           "Không thể gán bàn cho đơn đặt."
       );
     }
@@ -202,18 +189,11 @@ export default function Manager() {
       setEditingItem(null);
     } catch (e) {
       console.error(e);
-      alert(e.message || "Cập nhật thất bại");
+      alert(e?.message || "Cập nhật thất bại");
     } finally {
       setSavingBooking(false);
     }
   };
-
-  const totalRevenue = mockRevenueData.reduce(
-    (sum, item) => sum + item.revenue,
-    0
-  );
-  const totalBookings = bookings.length;
-  const totalTables = tables.length;
 
   const updateOrderStatus = (tableId, updatedOrder) => {
     setTables((prevTables) =>
@@ -225,23 +205,6 @@ export default function Manager() {
 
   const renderContent = () => {
     switch (activeSection) {
-      case "overview":
-        return (
-          <>
-            <StatsCards
-              totalRevenue={totalRevenue}
-              totalAccounts={totalBookings}
-              totalDishes={0}
-              totalTables={totalTables}
-            />
-            <Charts
-              revenueData={mockRevenueData}
-              popularDishes={mockPopularDishes}
-              revenuePeriod={revenuePeriod}
-              setRevenuePeriod={setRevenuePeriod}
-            />
-          </>
-        );
       case "tables":
         return (
           <>
@@ -283,6 +246,7 @@ export default function Manager() {
             }}
           />
         );
+
       case "dishes":
         return (
           <div className="space-y-6">
@@ -293,20 +257,6 @@ export default function Manager() {
         return <ManagerDailyPlan />;
       case "dailyDishes":
         return <ManagerDailyApprovedDishes />;
-
-      case "invoices":
-        return (
-          <ManagerInvoicesToday
-            invoices={mockRevenueData.map((r, i) => ({
-              id: i + 1,
-              table: (i % 10) + 1,
-              amount: Math.round(r.revenue * 1.1),
-              time: "--:--",
-              date: new Date().toISOString().slice(0, 10),
-              paymentMethod: i % 2 ? "Card" : "Cash",
-            }))}
-          />
-        );
       case "toppings":
         return (
           <ToppingsManagement
@@ -331,7 +281,6 @@ export default function Manager() {
     }
   };
 
-  // 🧩 JSX chính
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
       <div className="flex">
@@ -347,19 +296,20 @@ export default function Manager() {
             <p className="text-neutral-600 text-lg">
               Quản lý nhà hàng hiệu quả với dashboard thông minh
             </p>
+            {bookingsError && (
+              <p className="text-red-600 mt-2">{bookingsError}</p>
+            )}
           </div>
           {renderContent()}
         </main>
       </div>
 
-      {/* Modal chi tiết bàn */}
       <TableDetailsModal
         selectedTable={selectedTable}
         setSelectedTable={setSelectedTable}
         updateOrderStatus={updateOrderStatus}
       />
 
-      {/* Modal chỉnh sửa booking */}
       <BookingEditModal
         open={isEditingBooking}
         booking={editingItem}
@@ -371,7 +321,6 @@ export default function Manager() {
         saving={savingBooking}
       />
 
-      {/* Modal chỉnh sửa topping */}
       <EditToppingModal
         isEditingTopping={isEditingTopping}
         setIsEditingTopping={setIsEditingTopping}

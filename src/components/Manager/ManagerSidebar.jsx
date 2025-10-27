@@ -2,16 +2,12 @@ import {
   BarChart3,
   Users,
   Package,
-  FileText,
-  Table,
   Salad,
   ClipboardList,
   CheckCircle,
 } from "lucide-react";
 
 const sidebarItems = [
-  { id: "overview", label: "Tổng Quan", icon: BarChart3 },
-  { id: "tables", label: "Quản Lý Bàn", icon: Table },
   { id: "accounts", label: "Quản Lý Đặt Bàn", icon: Users },
   { id: "dishes", label: "Món Ăn", icon: Package },
   { id: "toppings", label: "Topping", icon: Salad },
