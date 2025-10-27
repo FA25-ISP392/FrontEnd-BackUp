@@ -5,17 +5,15 @@ import AdminCharts from "../components/Admin/AdminCharts";
 import AdminInvoices from "../components/Admin/Invoices";
 import AdminAccountManagement from "../components/Admin/AccountManagement";
 import AdminEditAccountModal from "../components/Admin/EditAccountModal";
-
+import { updateStaff, deleteStaff, listStaffPaging } from "../lib/apiStaff";
+import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
+import { findStaffByUsername, normalizeStaff } from "../lib/apiStaff";
 import {
   mockAdminInvoices,
   mockAdminRevenueData,
   mockAdminDishSalesData,
 } from "../lib/adminData";
 
-import { updateStaff, deleteStaff, listStaffPaging } from "../lib/apiStaff";
-import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
-import { findStaffByUsername, normalizeStaff } from "../lib/apiStaff";
-//h
 export default function Admin() {
   const [adminName, setAdminName] = useState("");
   const [activeSection, setActiveSection] = useState("overview");
@@ -27,7 +25,6 @@ export default function Admin() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [dishes, setDishes] = useState([]);
   const [loadingDishes, setLoadingDishes] = useState(false);
-
   const [settings, setSettings] = useState({
     theme: "light ",
     language: "vi",
@@ -36,6 +33,18 @@ export default function Admin() {
     pushNotif: false,
     compactSidebar: false,
     autoSave: true,
+  });
+  const [invoices, setInvoices] = useState(mockAdminInvoices);
+  const [accounts, setAccounts] = useState([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [accountsError, setAccountsError] = useState("");
+  const [page, setPage] = useState(1);
+  const [size] = useState(6);
+  const [pageInfo, setPageInfo] = useState({
+    page: 1,
+    size: 6,
+    totalPages: 1,
+    totalElements: 0,
   });
 
   useEffect(() => {
@@ -66,24 +75,6 @@ export default function Admin() {
     };
     loadName();
   }, []);
-
-  // Mock data
-  // const [accounts, setAccounts] = useState(mockAdminAccounts);
-  const [invoices, setInvoices] = useState(mockAdminInvoices);
-
-  //Call API data real
-  const [accounts, setAccounts] = useState([]);
-  const [loadingAccounts, setLoadingAccounts] = useState(false);
-  const [accountsError, setAccountsError] = useState("");
-
-  const [page, setPage] = useState(1);
-  const [size] = useState(6);
-  const [pageInfo, setPageInfo] = useState({
-    page: 1,
-    size: 6,
-    totalPages: 1,
-    totalElements: 0,
-  });
 
   useEffect(() => {
     if (activeSection === "accounts") setPage(1);
@@ -222,7 +213,6 @@ export default function Admin() {
     }
   };
 
-  // Calculate totals
   const totalRevenue = mockAdminRevenueData.reduce(
     (sum, item) => sum + item.revenue,
     0
@@ -266,16 +256,6 @@ export default function Admin() {
             currentUser={getCurrentUser()}
           />
         );
-      // case "dishes":
-      //   return (
-      //     <AdminDishesManagement
-      //       dishes={dishes}
-      //       setDishes={setDishes}
-      //       setIsEditingDish={setIsEditingDish}
-      //       setEditingItem={setEditingItem}
-      //       loading={loadingDishes}
-      //     />
-      //   );
       case "invoices":
         return <AdminInvoices invoices={invoices} />;
       default:
@@ -293,7 +273,6 @@ export default function Admin() {
         />
 
         <main className="flex-1 p-6">
-          {/* Main Content Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-neutral-900 mb-2">
               Chào mừng trở lại, {adminName}!
@@ -303,7 +282,6 @@ export default function Admin() {
             </p>
           </div>
 
-          {/* Dynamic Content */}
           {renderContent()}
         </main>
       </div>
@@ -317,21 +295,6 @@ export default function Admin() {
         setDeletingIds={deletingIds}
         accounts={accounts}
       />
-      {/* <AdminEditDishModal
-        isEditingDish={isEditingDish}
-        setIsEditingDish={setIsEditingDish}
-        editingItem={editingItem}
-        setEditingItem={setEditingItem}
-        saveDish={(updatedDish) => {
-          if (updatedDish) {
-            setDishes((prev) =>
-              prev.map((dish) =>
-                dish.id === updatedDish.id ? updatedDish : dish
-              )
-            );
-          }
-        }}
-      /> */}
     </div>
   );
 }

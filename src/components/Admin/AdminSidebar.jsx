@@ -2,8 +2,8 @@ import { BarChart3, Users, Package, FileText, LogOut } from "lucide-react";
 
 const sidebarItems = [
   { id: "overview", label: "Tổng Quan", icon: BarChart3 },
-  { id: "accounts", label: "Tài Khoản", icon: Users },
   { id: "invoices", label: "Hóa Đơn", icon: FileText },
+  { id: "accounts", label: "Tài Khoản", icon: Users },
 ];
 
 export default function AdminSidebar({ activeSection, setActiveSection }) {
