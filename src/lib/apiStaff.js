@@ -98,11 +98,6 @@ export async function deleteStaff(staffId) {
 }
 import { getCurrentUser } from "./auth";
 
-/**
- * 🔍 Lấy thông tin Staff tương ứng với tài khoản đang đăng nhập
- * Dựa vào username trong token => map sang staffId thực tế
- */
-
 export async function getMyStaffProfile() {
   const user = getCurrentUser();
   if (!user?.username)

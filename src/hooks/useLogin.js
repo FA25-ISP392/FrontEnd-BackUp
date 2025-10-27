@@ -1,9 +1,4 @@
 import { apiLogin, resolveRouteByRole, saveSession } from "../lib/auth";
-import {
-  REAL_BACKEND_BASE,
-  PROXY_PREFIX,
-  getOriginalBackendUrl,
-} from "../api/apiConfig";
 import { useState } from "react";
 
 export function useLogin() {
@@ -21,12 +16,8 @@ export function useLogin() {
     }
 
     try {
-      // Log backend info and the exact request URL used by the browser for debugging
-
       const { token, role, user } = await apiLogin({ username, password });
       saveSession({ token, user });
-
-      //Điều hướng theo role
       const path = resolveRouteByRole(role);
       typeof onSuccess === "function"
         ? onSuccess(path)
@@ -36,7 +27,7 @@ export function useLogin() {
       setError(
         /Network|connect|Failed to fetch/i.test(e.message)
           ? "Không thể kết nối đến server. Vui lòng thử lại sau."
-          : e.message || "Tên đăng nhập hoặc Mật khẩu sai. Vui lòng thử lại.",
+          : e.message || "Tên đăng nhập hoặc Mật khẩu sai. Vui lòng thử lại."
       );
     } finally {
       setIsLoading(false);

@@ -57,8 +57,7 @@ export default function ServeBoard({
         {od.toppings?.length > 0 && (
           <div className="mt-1 pt-2 border-t border-neutral-200">
             <h5 className="text-xs font-bold text-neutral-700 mb-1 flex items-center gap-1">
-              <Package className="h-3 w-3" />
-              Toppings
+              <Package className="h-3 w-3" /> Toppings
             </h5>
             <ul className="list-disc list-inside space-y-0.5 pl-1">
               {od.toppings.map((t) => (
@@ -87,6 +86,33 @@ export default function ServeBoard({
     );
   };
 
+  const Column = ({ title, headerColor, children, emptyText }) => (
+    <div className="bg-white/80 rounded-2xl shadow-lg border border-white/20 flex flex-col">
+      {/* sticky header */}
+      <div
+        className={`p-6 border-b border-neutral-100 sticky top-0 bg-white/90 backdrop-blur z-10`}
+      >
+        <h3 className={`text-xl font-bold ${headerColor}`}>{title}</h3>
+      </div>
+
+      {/* scrollable list: cao ~5 card */}
+      <div
+        className="
+          p-6 space-y-4 overflow-y-auto
+          h-[72vh] lg:h-[68vh] 2xl:h-[60vh]
+          scrollbar-thin scrollbar-thumb-neutral-300 scrollbar-track-transparent
+          pr-2
+        "
+      >
+        {Array.isArray(children) && children.length === 0 ? (
+          <div className="text-center py-8 text-neutral-500">{emptyText}</div>
+        ) : (
+          children
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
       <div className="flex items-center gap-3 mb-6">
@@ -102,37 +128,25 @@ export default function ServeBoard({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white/80 rounded-2xl shadow-lg border border-white/20">
-          <div className="p-6 border-b border-neutral-100">
-            <h3 className="text-xl font-bold text-emerald-700">Sẵn Sàng</h3>
-          </div>
-          <div className="p-6 space-y-4">
-            {readyOrders.length === 0 && (
-              <div className="text-center py-8 text-neutral-500">
-                Chưa có món sẵn sàng.
-              </div>
-            )}
-            {readyOrders.map((od) => (
-              <Card key={od.orderDetailId} od={od} column="ready" />
-            ))}
-          </div>
-        </div>
+        <Column
+          title="Sẵn Sàng"
+          headerColor="text-emerald-700"
+          emptyText="Chưa có món sẵn sàng."
+        >
+          {readyOrders.map((od) => (
+            <Card key={od.orderDetailId} od={od} column="ready" />
+          ))}
+        </Column>
 
-        <div className="bg-white/80 rounded-2xl shadow-lg border border-white/20">
-          <div className="p-6 border-b border-neutral-100">
-            <h3 className="text-xl font-bold text-slate-700">Phục Vụ</h3>
-          </div>
-          <div className="p-6 space-y-4">
-            {servedOrders.length === 0 && (
-              <div className="text-center py-8 text-neutral-500">
-                Chưa có món đã phục vụ.
-              </div>
-            )}
-            {servedOrders.map((od) => (
-              <Card key={od.orderDetailId} od={od} column="served" />
-            ))}
-          </div>
-        </div>
+        <Column
+          title="Phục Vụ"
+          headerColor="text-slate-700"
+          emptyText="Chưa có món đã phục vụ."
+        >
+          {servedOrders.map((od) => (
+            <Card key={od.orderDetailId} od={od} column="served" />
+          ))}
+        </Column>
       </div>
     </div>
   );

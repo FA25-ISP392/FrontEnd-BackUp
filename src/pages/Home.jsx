@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { MapPin, Phone, Mail, X, Star } from "lucide-react";
-
 import HeroSection from "../components/Home/HeroSection";
 import VisionSection from "../components/Home/VisionSection";
 import MenuSection from "../components/Home/MenuSection";
@@ -12,7 +11,6 @@ import ResetPasswordSidebar from "../components/Home/ResetPasswordSidebar";
 import BookingForm from "../components/Home/BookingForm";
 import UserAccountDropdown from "../components/Home/UserAccountDropdown";
 import BookingHistoryModal from "../components/Home/BookingHistoryModal";
-
 import { logoutCustomer } from "../lib/auth";
 import { createBooking } from "../lib/apiBooking";
 import { useBooking } from "../hooks/useBooking";

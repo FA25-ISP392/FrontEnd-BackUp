@@ -1,3 +1,4 @@
+// pages/Admin.jsx
 import { useState, useEffect } from "react";
 import AdminSidebar from "../components/Admin/AdminSidebar";
 import AdminStatsCards from "../components/Admin/AdminStatsCards";
@@ -5,26 +6,30 @@ import AdminCharts from "../components/Admin/AdminCharts";
 import AdminInvoices from "../components/Admin/Invoices";
 import AdminAccountManagement from "../components/Admin/AccountManagement";
 import AdminEditAccountModal from "../components/Admin/EditAccountModal";
+
 import { updateStaff, deleteStaff, listStaffPaging } from "../lib/apiStaff";
 import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
 import { findStaffByUsername, normalizeStaff } from "../lib/apiStaff";
-import {
-  mockAdminInvoices,
-  mockAdminRevenueData,
-  mockAdminDishSalesData,
-} from "../lib/adminData";
+import { getPayments } from "../lib/apiPayment"; // <-- THÊM: gọi danh sách hóa đơn
+
+// dữ liệu chart demo vẫn giữ mock
+import { mockAdminRevenueData, mockAdminDishSalesData } from "../lib/adminData";
 
 export default function Admin() {
   const [adminName, setAdminName] = useState("");
+
   const [activeSection, setActiveSection] = useState("overview");
   const [revenuePeriod, setRevenuePeriod] = useState("day");
+
   const [isEditingAccount, setIsEditingAccount] = useState(false);
   const [isEditingDish, setIsEditingDish] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [deletingIds, setDeletingIds] = useState(new Set());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
   const [dishes, setDishes] = useState([]);
   const [loadingDishes, setLoadingDishes] = useState(false);
+
   const [settings, setSettings] = useState({
     theme: "light ",
     language: "vi",
@@ -34,7 +39,8 @@ export default function Admin() {
     compactSidebar: false,
     autoSave: true,
   });
-  const [invoices, setInvoices] = useState(mockAdminInvoices);
+
+  // ======== ACCOUNTS ========
   const [accounts, setAccounts] = useState([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [accountsError, setAccountsError] = useState("");
@@ -47,6 +53,11 @@ export default function Admin() {
     totalElements: 0,
   });
 
+  const [invoices, setInvoices] = useState([]);
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
+  const [invoiceError, setInvoiceError] = useState("");
+
+  // tên admin
   useEffect(() => {
     const loadName = async () => {
       try {
@@ -67,19 +78,20 @@ export default function Admin() {
           return;
         }
         const profile = await findStaffByUsername(username);
-        setAdminName(profile?.name);
-      } catch (err) {
-        console.error(err);
+        setAdminName(profile?.name || "Admin");
+      } catch {
         setAdminName("Admin");
       }
     };
     loadName();
   }, []);
 
+  // reset page khi đổi tab
   useEffect(() => {
     if (activeSection === "accounts") setPage(1);
   }, [activeSection]);
 
+  // tải account phân trang
   useEffect(() => {
     if (activeSection !== "accounts") return;
     let cancelled = false;
@@ -96,7 +108,7 @@ export default function Admin() {
       } catch (err) {
         if (!cancelled)
           setAccountsError(
-            err.message || "Không tải được danh sách nhân viên."
+            err?.message || "Không tải được danh sách nhân viên."
           );
       } finally {
         if (!cancelled) setLoadingAccounts(false);
@@ -107,6 +119,28 @@ export default function Admin() {
       cancelled = true;
     };
   }, [activeSection, page, size]);
+
+  // tải danh sách hóa đơn khi mở tab "invoices"
+  useEffect(() => {
+    if (activeSection !== "invoices") return;
+    let cancelled = false;
+    (async () => {
+      setLoadingInvoices(true);
+      setInvoiceError("");
+      try {
+        const list = await getPayments(); // trả về list đã normalize
+        if (!cancelled) setInvoices(list);
+      } catch (e) {
+        if (!cancelled)
+          setInvoiceError(e?.message || "Không tải được hóa đơn.");
+      } finally {
+        if (!cancelled) setLoadingInvoices(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSection]);
 
   const refetchAccounts = async (toPage = page) => {
     setLoadingAccounts(true);
@@ -213,13 +247,14 @@ export default function Admin() {
     }
   };
 
+  // KPI quick stats
   const totalRevenue = mockAdminRevenueData.reduce(
     (sum, item) => sum + item.revenue,
     0
   );
   const totalAccounts = accounts.length;
   const totalDishes = dishes.length;
-  const totalInvoices = invoices.length;
+  const totalInvoices = invoices.length; // <-- đếm theo dữ liệu thật
 
   const renderContent = () => {
     switch (activeSection) {
@@ -240,6 +275,7 @@ export default function Admin() {
             />
           </>
         );
+
       case "accounts":
         return (
           <AdminAccountManagement
@@ -256,8 +292,14 @@ export default function Admin() {
             currentUser={getCurrentUser()}
           />
         );
+
       case "invoices":
+        if (loadingInvoices)
+          return <div className="p-6">Đang tải hóa đơn…</div>;
+        if (invoiceError)
+          return <div className="p-6 text-red-600">{invoiceError}</div>;
         return <AdminInvoices invoices={invoices} />;
+
       default:
         return null;
     }

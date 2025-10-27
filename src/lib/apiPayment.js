@@ -1,14 +1,75 @@
 import apiConfig from "../api/apiConfig";
 
-export const normalizePayment = (p = {}) => ({
-  id: Number(p.id ?? p.paymentId ?? 0),
-  orderId: Number(p.orderId ?? 0),
-  method: String(p.method || "BANK_TRANSFER").toUpperCase(),
-  status: String(p.status || "PENDING").toUpperCase(),
-  total: Number(p.total ?? 0),
-  checkoutUrl: p.checkoutUrl ?? "",
-  qrCode: p.qrCode ?? "",
-});
+function toDatetimeText(raw) {
+  if (!raw) return "-";
+  const s = String(raw).trim();
+  const m = s.match(
+    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::\d{2})?(?:\.\d+)?/
+  );
+  if (m) return `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}`;
+  return s;
+}
+function addHoursText(raw, offsetHours = 7) {
+  if (!raw) return "-";
+  const s = String(raw).trim();
+  const m = s.match(
+    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::\d{2})?(?:\.\d+)?/
+  );
+  if (!m) return toDatetimeText(s);
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  const hh = Number(m[4]);
+  const mm = Number(m[5]);
+  const baseMs = Date.UTC(y, mo - 1, d, hh, mm);
+  const shifted = new Date(baseMs + offsetHours * 60 * 60 * 1000);
+  const pad = (n) => String(n).padStart(2, "0");
+  const out = `${shifted.getUTCFullYear()}-${pad(
+    shifted.getUTCMonth() + 1
+  )}-${pad(shifted.getUTCDate())} ${pad(shifted.getUTCHours())}:${pad(
+    shifted.getUTCMinutes()
+  )}`;
+  return out;
+}
+
+export const normalizePayment = (p = {}) => {
+  const rawPaid = p.paidAt ?? p.paid_at ?? null;
+  const rawCreated = p.createdAt ?? p.created_at ?? null;
+  const rawUpdated = p.updatedAt ?? p.updated_at ?? null;
+  const rawTs = rawPaid ?? rawUpdated ?? rawCreated;
+  const method = String(p.method || "BANK_TRANSFER").toUpperCase();
+  const status = String(p.status || "PENDING").toUpperCase();
+
+  const methodVi =
+    method === "CASH"
+      ? "Tiền mặt"
+      : method === "BANK_TRANSFER"
+      ? "Thanh toán QR"
+      : method;
+  const statusVi =
+    status === "COMPLETED"
+      ? "Thành công"
+      : status === "CANCELLED"
+      ? "Thất bại"
+      : "Đang xử lý";
+
+  return {
+    id: Number(p.id ?? p.paymentId ?? 0),
+    orderId: Number(p.orderId ?? 0),
+    method,
+    methodVi,
+    status,
+    statusVi,
+    total: Number(p.total ?? 0),
+    checkoutUrl: p.checkoutUrl ?? "",
+    qrCode: p.qrCode ?? "",
+    paidAt: rawPaid,
+    createdAt: rawCreated,
+    updatedAt: rawUpdated,
+    datetimeText: toDatetimeText(rawTs),
+    datetimeTextPlus7: addHoursText(rawTs, 7),
+  };
+};
 
 export async function createPayment({ orderId, method = "BANK_TRANSFER" }) {
   if (!orderId) throw new Error("Thiếu orderId.");
