@@ -16,7 +16,7 @@ export default function StaffTableInfoLayout({
 
     switch (table.status) {
       case "serving":
-        return "border-blue-500 bg-blue-50";
+        return "border-red-500 bg-red-50";
       case "empty":
         return "border-green-500 bg-green-50";
       case "reserved":
@@ -37,6 +37,30 @@ export default function StaffTableInfoLayout({
       default:
         return "Không rõ";
     }
+  };
+
+  const getTableTopClasses = (table) => {
+    const pulse = table.status === "serving" ? "animate-pulse" : "";
+    switch (table.status) {
+      case "serving":
+        return `from-red-50 to-red-100 border-red-400 text-red-700 ${pulse}`;
+      case "reserved":
+        return `from-yellow-50 to-yellow-100 border-yellow-400 text-yellow-700`;
+      default:
+        return `from-green-50 to-green-100 border-green-400 text-green-700`;
+    }
+  };
+
+  const getTableTopLabel = (table) => {
+    if (table.status === "serving") return "Có khách";
+    if (table.status === "reserved") return "Đã đặt";
+    return "Trống";
+  };
+
+  const getTableTopLabelText = (table) => {
+    if (table.status === "serving") return "text-red-700";
+    if (table.status === "reserved") return "text-yellow-700";
+    return "text-green-700";
   };
 
   const getOrderForTable = (num) =>
@@ -91,13 +115,22 @@ export default function StaffTableInfoLayout({
                   </span>
                 </div>
 
-                <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl p-4 border border-orange-300">
-                  <div className="text-3xl font-bold text-orange-800 mb-1">
-                    {table.guests || 0}
-                  </div>
-                  <div className="text-sm text-orange-700 font-medium">
-                    khách
-                  </div>
+                <div
+                  className={`relative rounded-2xl border-2 bg-gradient-to-br shadow-inner
+              ${getTableTopClasses(table)} min-h-28`}
+                  title={`Bàn ${table.number} - ${getTableStatusText(
+                    table.status
+                  )}`}
+                >
+                  <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-white/40" />
+                  <span
+                    className={`absolute inset-0 flex items-center justify-center 
+                    font-extrabold tracking-wide uppercase text-sm md:text-base
+                    ${getTableTopLabelText(table)}`}
+                  >
+                    {getTableTopLabel(table)}
+                  </span>
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 h-1.5 w-16 rounded-full bg-black/10" />
                 </div>
 
                 <div className="mt-3">
@@ -129,33 +162,41 @@ export default function StaffTableInfoLayout({
       </div>
 
       <div className="mt-6 bg-gray-50 rounded-lg p-4">
-        <div className="text-sm font-semibold text-gray-800 mb-3">
+        <h3 className="text-center text-sm font-semibold text-gray-800 mb-3">
           Chú thích:
-        </div>
-        <div className="grid grid-cols-2 gap-4 text-xs">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-100 border-2 border-green-500 rounded"></div>
-              <span className="text-green-800 font-medium">Trống</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-100 border-2 border-blue-500 rounded"></div>
-              <span className="text-blue-800 font-medium">Đang phục vụ</span>
-            </div>
+        </h3>
+
+        <div className="flex justify-center items-center gap-8 flex-wrap">
+          {/* Trống */}
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 border-2 border-green-500 rounded-md"></div>
+            <span className="text-green-700 text-sm font-medium">Trống</span>
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-yellow-100 border-2 border-yellow-500 rounded"></div>
-              <span className="text-yellow-800 font-medium">Đã đặt</span>
+
+          {/* Đang phục vụ */}
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 border-2 border-red-500 rounded-md"></div>
+            <span className="text-red-700 text-sm font-medium">
+              Đang phục vụ
+            </span>
+          </div>
+
+          {/* Đã đặt */}
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 border-2 border-yellow-500 rounded-md"></div>
+            <span className="text-yellow-700 text-sm font-medium">Đã đặt</span>
+          </div>
+
+          {/* Gọi thanh toán */}
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 border-2 border-green-500 rounded-md relative flex items-center justify-center">
+              <span className="text-[10px] text-green-700 font-bold leading-none">
+                VND
+              </span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-100 border-2 border-green-500 rounded relative flex items-center justify-center">
-                <span className="text-[10px] text-green-700 font-bold">
-                  VND
-                </span>
-              </div>
-              <span className="text-green-800 font-medium">Gọi thanh toán</span>
-            </div>
+            <span className="text-green-700 text-sm font-medium">
+              Gọi thanh toán
+            </span>
           </div>
         </div>
       </div>

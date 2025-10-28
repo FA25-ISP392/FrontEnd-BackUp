@@ -75,14 +75,6 @@ export default function MenuHeader({
             </button>
 
             <button
-              onClick={onCallStaff}
-              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-lg hover:shadow-xl"
-            >
-              <Bell className="h-4 w-4" />
-              <span className="font-medium">Gọi Nhân Viên</span>
-            </button>
-
-            <button
               onClick={onCheckout}
               className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-xl"
             >

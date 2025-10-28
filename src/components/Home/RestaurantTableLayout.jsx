@@ -77,8 +77,16 @@ export default function RestaurantTableLayout({
             next[tb.id] = list.some((b) => {
               const st = String(b?.status || "").toUpperCase();
               if (st === "CANCELLED" || st === "REJECTED") return false;
-              const bStart = new Date(b.bookingDate);
-              return isOverlap2Hours(when, bStart);
+              const bid = Number(b.tableId || b.wantTable || 0);
+              if (bid && bid !== tb.id) return false;
+              const raw = String(b.bookingDate || "").replace(" ", "T");
+              const parsed = new Date(raw);
+              if (isNaN(parsed.getTime())) return false;
+              if (!/Z$|[+-]\d{2}:\d{2}$/.test(raw)) {
+                parsed.setHours(parsed.getHours() + 7);
+              }
+
+              return isOverlap2Hours(when, parsed);
             });
           } catch (e) {
             next[tb.id] = false;

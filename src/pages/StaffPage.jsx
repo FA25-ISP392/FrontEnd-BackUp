@@ -89,34 +89,31 @@ export default function StaffPage() {
           const tableId = t.id;
           try {
             const bookings = await listBookingsByTableDate(tableId, now);
-            if (DEBUG_LOG) {
-              console.log(
-                `[by_tableDate] tableId=${tableId} #${t.number}`,
-                bookings
-              );
-            }
             const active = bookings.find(
               (b) =>
                 b.status === "APPROVED" && isWithinWindow(b.bookingDate, now)
             );
+
+            // NEW: nếu đã serving thì giữ nguyên; nếu chưa serving mà có booking active -> reserved
+            let nextStatus = t.status ?? "empty";
+            if (nextStatus !== "serving" && active) nextStatus = "reserved";
+
             return {
               ...t,
-              status: active ? "reserved" : t.status ?? "empty",
-              guests: active?.seat || 0,
-              orderTime: active ? hhmm(active.bookingDate) : null,
+              status: nextStatus,
+              guests: active?.seat || t.guests || 0,
+              orderTime: active
+                ? hhmm(active.bookingDate)
+                : t.orderTime ?? null,
             };
           } catch (e) {
             if (DEBUG_LOG)
               console.warn(`[by_tableDate] error tableId=${tableId}`, e);
-            return {
-              ...t,
-              status: t.status ?? "empty",
-              guests: 0,
-              orderTime: null,
-            };
+            return { ...t };
           }
         })
       );
+
       if (DEBUG_LOG) console.log("[STAFF] tables hydrated for UI:", hydrated);
       setTables((prev) => {
         const mapPrev = new Map(prev.map((t) => [String(t.id), t]));
@@ -358,7 +355,7 @@ export default function StaffPage() {
   const getTableStatusBadge = (status) => {
     switch (status) {
       case "serving":
-        return "bg-blue-500";
+        return "bg-red-500";
       case "empty":
         return "bg-green-500";
       case "reserved":
@@ -676,18 +673,16 @@ export default function StaffPage() {
                     </div>
                   </div>
                 ) : selectedTable.status === "serving" ? (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-6">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Users className="h-6 w-6 text-blue-600" />
+                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                        <Users className="h-6 w-6 text-red-600" />
                       </div>
                       <div>
-                        <h4 className="text-lg font-semibold text-blue-800">
+                        <h4 className="text-lg font-semibold text-red-800">
                           Đang Phục Vụ
                         </h4>
-                        <p className="text-blue-600">
-                          Khách hàng đang dùng bữa
-                        </p>
+                        <p className="text-red-600">Khách hàng đang dùng bữa</p>
                       </div>
                     </div>
                     {selectedTable.callStaff && (

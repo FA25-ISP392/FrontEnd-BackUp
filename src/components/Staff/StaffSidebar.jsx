@@ -1,11 +1,4 @@
-import {
-  Users,
-  ClipboardList,
-  Home,
-  Table,
-  BarChart3,
-  Utensils,
-} from "lucide-react";
+import { Users, Table, BarChart3, Utensils } from "lucide-react";
 
 export default function StaffSidebar({ activeSection, setActiveSection }) {
   const sidebarItems = [
