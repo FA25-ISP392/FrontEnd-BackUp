@@ -178,6 +178,10 @@ export async function apiLoginCustomer({ username, password }) {
     role: "CUSTOMER",
   };
 
+  // 👉 LƯU TOKEN NGAY LÚC NÀY để các request tiếp theo có Authorization
+  saveSession({ token, user: baseProfile });
+
+  // Sau khi có Authorization, gọi ensureCustomerForUser sẽ không bị 401
   const cus = await ensureCustomerForUser({
     username: baseProfile.username,
     fullName: baseProfile.fullName,
@@ -193,6 +197,8 @@ export async function apiLoginCustomer({ username, password }) {
     phone: cus?.phone || baseProfile.phone,
     customerId,
   };
+
+  // Cập nhật lại user hoàn chỉnh
   saveSession({ token, user: profile });
   try {
     window.dispatchEvent(new Event("auth:changed"));
