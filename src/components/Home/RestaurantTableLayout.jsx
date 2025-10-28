@@ -1,22 +1,42 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listBookingsByTableDate } from "../../lib/apiBooking";
 
 function buildDateTime(dateStr, timeStr) {
   if (!dateStr || !timeStr) return null;
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const [hh, mm] = timeStr.split(":").map(Number);
-  return new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0, 0, 0);
+
+  let h = 0,
+    m = 0;
+  const t = String(timeStr).trim().toUpperCase();
+
+  if (/AM|PM/.test(t)) {
+    const parts = t.replace(/\s*(AM|PM)\s*$/, "").split(":");
+    h = Number(parts[0] || 0);
+    m = Number(parts[1] || 0);
+    const isPM = /PM$/.test(t);
+    const isAM = /AM$/.test(t);
+    if (isPM && h < 12) h += 12;
+    if (isAM && h === 12) h = 0;
+  } else {
+    const [hh, mm] = t.split(":").map((x) => Number(x || 0));
+    h = hh;
+    m = mm;
+  }
+
+  const [y, mo, d] = dateStr.split("-").map(Number);
+  const dt = new Date(y, (mo || 1) - 1, d || 1, h || 0, m || 0, 0, 0);
+  return isNaN(dt.getTime()) ? null : dt;
 }
 
 function isOverlap2Hours(startA, startB) {
   if (!startA || !startB) return false;
+  const a = startA.getTime();
+  const b = startB.getTime();
+  if (!isFinite(a) || !isFinite(b)) return false;
+
   const TWO_HOURS = 2 * 60 * 60 * 1000;
-  const endA = new Date(startA.getTime() + TWO_HOURS);
-  const endB = new Date(startB.getTime() + TWO_HOURS);
-  return (
-    Math.max(startA.getTime(), startB.getTime()) <
-    Math.min(endA.getTime(), endB.getTime())
-  );
+  const endA = a + TWO_HOURS;
+  const endB = b + TWO_HOURS;
+  return Math.max(a, b) < Math.min(endA, endB);
 }
 
 export default function RestaurantTableLayout({
@@ -56,7 +76,7 @@ export default function RestaurantTableLayout({
               : bookings?.result || [];
             next[tb.id] = list.some((b) => {
               const st = String(b?.status || "").toUpperCase();
-              if (st === "CANCELLED") return false;
+              if (st === "CANCELLED" || st === "REJECTED") return false;
               const bStart = new Date(b.bookingDate);
               return isOverlap2Hours(when, bStart);
             });
