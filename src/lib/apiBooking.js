@@ -1,29 +1,6 @@
 import apiConfig from "../api/apiConfig";
 import { buildISOFromVN, normalizeISOFromAPI } from "../lib/datetimeBooking";
 
-// export async function createBooking({ date, time, guests, preferredTable }) {
-//   if (!localStorage.getItem("token")) {
-//     throw new Error("Bạn cần đăng nhập trước khi đặt bàn.");
-//   }
-
-//   const pad = (n) => String(n).padStart(2, "0");
-//   const bookingDate =
-//     date && time
-//       ? `${date}T${pad(time.split(":")[0])}:${pad(time.split(":")[1])}:00`
-//       : null;
-//   if (!bookingDate) throw new Error("Thiếu ngày/giờ đặt bàn.");
-//   const payload = {
-//     seat: Number(guests) || 1,
-//     bookingDate,
-//     ...(preferredTable ? { wantTable: String(preferredTable) } : {}),
-//   };
-
-//   if (import.meta.env.DEV) {
-//     console.log("POST /booking payload:", payload);
-//   }
-//   return apiConfig.post("/booking", payload);
-// }
-
 export async function createBooking({ date, time, guests, preferredTable }) {
   if (!localStorage.getItem("token")) {
     throw new Error("Bạn cần đăng nhập trước khi đặt bàn.");
@@ -200,51 +177,55 @@ export async function approveBookingWithTable(bookingId, tableId) {
 export async function listBookingsByTableDate(tableId, date) {
   if (!tableId) throw new Error("Thiếu tableId.");
 
-  // Chuẩn hóa date -> yyyy-MM-dd
+  // yyyy-MM-dd
   const d = new Date(date || Date.now());
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const dayStr = `${yyyy}-${mm}-${dd}`;
+  const dayStr = d.toISOString().slice(0, 10);
 
-  // Thử lần lượt các biến thể tên param mà backend có thể dùng
-  const candidates = [
-    { tableId: Number(tableId), date: dayStr }, // ✅ như Swagger
-    { tableId: Number(tableId), bookingDate: dayStr }, // 1 số API đặt vậy
-    { tableId: Number(tableId), day: dayStr }, // cũng hay gặp
-    { tableID: Number(tableId), date: dayStr }, // tableID viết khác
-  ];
+  // Helper để chuẩn hóa mảng kết quả
+  const mapList = (list) =>
+    (Array.isArray(list) ? list : []).map((b) => ({
+      bookingDate: b.bookingDate ?? b.time ?? b.startTime ?? null,
+      status: String(b.status ?? "").toUpperCase(),
+      tableId: b.tableId ?? b.tableID ?? null,
+      wantTable: b.wantTable ?? null,
+    }));
 
-  let res, lastErr;
-  for (const params of candidates) {
-    try {
-      if (import.meta.env.DEV)
-        console.info("[by_tableDate] thử params:", params);
-      res = await apiConfig.get("/booking/by_tableDate", { params });
-      lastErr = null;
-      break; // thành công thì dừng
-    } catch (e) {
-      // nếu không phải lỗi 400 (bad request) thì ném ra luôn
-      if (e?.status && e.status !== 400) throw e;
-      lastErr = e;
+  try {
+    // Thử chuẩn Swagger
+    const res1 = await apiConfig.get("/booking/by_tableDate", {
+      params: { tableId: Number(tableId), date: dayStr },
+    });
+    const list1 = Array.isArray(res1) ? res1 : res1?.result || [];
+    return mapList(list1);
+  } catch (e1) {
+    // Nếu 400 → thử biến thể tên tham số
+    if (e1?.status === 400) {
+      try {
+        const res2 = await apiConfig.get("/booking/by_tableDate", {
+          params: { tableID: Number(tableId), date: dayStr },
+        });
+        const list2 = Array.isArray(res2) ? res2 : res2?.result || [];
+        return mapList(list2);
+      } catch (e2) {
+        // Fallback cuối: lấy toàn bộ booking rồi lọc theo ngày + bàn
+        try {
+          const all = await apiConfig.get("/booking"); // unwrap -> có thể là mảng hoặc {result:[]}
+          const list = Array.isArray(all) ? all : all?.result || [];
+          const filtered = list.filter((b) => {
+            const s = String(b.bookingDate || "").replace(" ", "T");
+            const onlyDate = s.slice(0, 10);
+            const tid = Number(b.tableId ?? b.tableID ?? b.wantTable ?? 0);
+            return onlyDate === dayStr && tid === Number(tableId);
+          });
+          return mapList(filtered);
+        } catch {
+          return []; // không vì 1 lỗi mà “đỏ cả bãi”
+        }
+      }
     }
+    // lỗi khác 400 → không làm phiền UI
+    return [];
   }
-  if (!res && lastErr) throw lastErr;
-
-  const list = Array.isArray(res)
-    ? res
-    : Array.isArray(res?.result)
-    ? res.result
-    : Array.isArray(res?.content)
-    ? res.content
-    : [];
-
-  return list.map((b) => ({
-    bookingDate: b.bookingDate ?? b.booking_date ?? b.time ?? b.startTime,
-    status: String(b.status ?? "").toUpperCase(),
-    tableId: b.tableId ?? b.tableID ?? b.table_id ?? null,
-    wantTable: b.wantTable ?? b.want_table ?? null,
-  }));
 }
 
 export async function cancelBooking(id) {

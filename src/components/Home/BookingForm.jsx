@@ -104,6 +104,7 @@ export default function BookingForm({
             console.error(err);
           }
         }}
+        isLoggedIn={isLoggedIn}
       />
 
       {!isLoggedIn && (
