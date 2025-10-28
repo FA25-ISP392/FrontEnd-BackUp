@@ -12,7 +12,6 @@ import BookingForm from "../components/Home/BookingForm";
 import UserAccountDropdown from "../components/Home/UserAccountDropdown";
 import BookingHistoryModal from "../components/Home/BookingHistoryModal";
 import { logoutCustomer } from "../lib/auth";
-import { createBooking } from "../lib/apiBooking";
 import { useBooking } from "../hooks/useBooking";
 import ToastHost, { showToast } from "../common/ToastHost";
 import { HOME, HOME_ROUTES, NEED_AUTH } from "../constant/routes";
@@ -106,18 +105,15 @@ export default function Home() {
   const open = (path) => navigate(path);
   const closeToHome = () => navigate(HOME, { replace: true });
 
-  const handleBookingSubmit = async (formData) => {
-    try {
-      await createBooking(formData);
-      clearBookingDraft();
-      showToast(
-        "Đặt bàn thành công! Chúng tôi sẽ liên hệ lại với bạn.",
-        "success"
-      );
-      closeToHome();
-    } catch (err) {
-      showToast(err?.message || "Đặt bàn thất bại.", "error");
-    }
+  const handleBookingSubmit = ({ bookingId, tableId }) => {
+    clearBookingDraft();
+    showToast(
+      tableId
+        ? `Đặt bàn thành công! Đã gán bàn số ${tableId}.`
+        : "Đặt bàn thành công!",
+      "success"
+    );
+    closeToHome();
   };
 
   const handleLoginFromBooking = (currentForm) => {

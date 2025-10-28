@@ -145,85 +145,63 @@ export async function approveBookingWithTable(bookingId, tableId) {
   }
 }
 
-// export async function listBookingsByTableDate(tableId, date) {
-//   if (!tableId) throw new Error("Thiếu tableId.");
-
-//   const toDateOnly = (date) => {
-//     if (!date) return new Date();
-//     const newDate = new Date(date);
-//     return isNaN(newDate) ? new Date() : newDate;
-//   };
-//   const d = toDateOnly(date);
-//   const year = d.getFullYear();
-//   const month = String(d.getMonth() + 1).padStart(2, "0");
-//   const day = String(d.getDate()).padStart(2, "0");
-//   const dayStr = `${year}-${month}-${day}`;
-
-//   const res = await apiConfig.get("/booking/by_tableDate", {
-//     params: { tableId: Number(tableId), date: dayStr },
-//   });
-
-//   const list = Array.isArray(res)
-//     ? res
-//     : Array.isArray(res?.result)
-//     ? res.result
-//     : Array.isArray(res?.content)
-//     ? res.content
-//     : [];
-
-//   return list.map(normalizeBooking);
-// }
-
 export async function listBookingsByTableDate(tableId, date) {
   if (!tableId) throw new Error("Thiếu tableId.");
-
-  // yyyy-MM-dd
-  const d = new Date(date || Date.now());
-  const dayStr = d.toISOString().slice(0, 10);
-
-  // Helper để chuẩn hóa mảng kết quả
-  const mapList = (list) =>
-    (Array.isArray(list) ? list : []).map((b) => ({
-      bookingDate: b.bookingDate ?? b.time ?? b.startTime ?? null,
-      status: String(b.status ?? "").toUpperCase(),
+  const dayStr = new Date(date || Date.now()).toISOString().slice(0, 10);
+  const mapBooking = (b = {}) => {
+    const id = b.bookingId ?? b.id ?? null;
+    const name =
+      b.customerName ??
+      b.name ??
+      b.customer?.name ??
+      b.customer?.fullName ??
+      "";
+    const phone =
+      b.customerPhone ?? b.phone ?? b.customer?.phone ?? b.phoneNumber ?? "";
+    const email = b.customerEmail ?? b.email ?? b.customer?.email ?? "";
+    return {
+      bookingId: id,
+      customerName: name,
+      customerPhone: phone,
+      customerEmail: email,
       tableId: b.tableId ?? b.tableID ?? null,
-      wantTable: b.wantTable ?? null,
-    }));
-
+      seat: b.seat ?? 1,
+      createdAt: normalizeISOFromAPI(b.createdAt),
+      bookingDate: normalizeISOFromAPI(b.bookingDate),
+      wantTable: b.wantTable ?? "",
+      status: String(b.status || "PENDING").toUpperCase(),
+      id,
+      name,
+      phone,
+      email,
+    };
+  };
   try {
-    // Thử chuẩn Swagger
-    const res1 = await apiConfig.get("/booking/by_tableDate", {
+    const res = await apiConfig.get("/booking/by_tableDate", {
       params: { tableId: Number(tableId), date: dayStr },
     });
-    const list1 = Array.isArray(res1) ? res1 : res1?.result || [];
-    return mapList(list1);
-  } catch (e1) {
-    // Nếu 400 → thử biến thể tên tham số
-    if (e1?.status === 400) {
+    const list = Array.isArray(res)
+      ? res
+      : Array.isArray(res?.result)
+      ? res.result
+      : [];
+    return list.map(mapBooking);
+  } catch (e) {
+    if (e?.status === 400) {
       try {
         const res2 = await apiConfig.get("/booking/by_tableDate", {
           params: { tableID: Number(tableId), date: dayStr },
         });
-        const list2 = Array.isArray(res2) ? res2 : res2?.result || [];
-        return mapList(list2);
-      } catch (e2) {
-        // Fallback cuối: lấy toàn bộ booking rồi lọc theo ngày + bàn
-        try {
-          const all = await apiConfig.get("/booking"); // unwrap -> có thể là mảng hoặc {result:[]}
-          const list = Array.isArray(all) ? all : all?.result || [];
-          const filtered = list.filter((b) => {
-            const s = String(b.bookingDate || "").replace(" ", "T");
-            const onlyDate = s.slice(0, 10);
-            const tid = Number(b.tableId ?? b.tableID ?? b.wantTable ?? 0);
-            return onlyDate === dayStr && tid === Number(tableId);
-          });
-          return mapList(filtered);
-        } catch {
-          return []; // không vì 1 lỗi mà “đỏ cả bãi”
-        }
+        const list2 = Array.isArray(res2)
+          ? res2
+          : Array.isArray(res2?.result)
+          ? res2.result
+          : [];
+        return list2.map(mapBooking);
+      } catch {
+        return [];
       }
     }
-    // lỗi khác 400 → không làm phiền UI
     return [];
   }
 }
