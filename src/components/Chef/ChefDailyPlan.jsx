@@ -4,10 +4,9 @@ import { getMyStaffProfile } from "../../lib/apiStaff";
 import {
   listDailyPlans,
   createDailyPlansBatch,
-  updateDailyPlan,
   ITEM_TYPES,
 } from "../../lib/apiDailyPlan";
-import { Plus, Minus, Send, Clock, CheckCircle } from "lucide-react";
+import { Plus, Minus, Clock, CheckCircle, Send } from "lucide-react";
 
 export default function ChefDailyPlan() {
   const [dishes, setDishes] = useState([]);
@@ -17,22 +16,17 @@ export default function ChefDailyPlan() {
   const [loading, setLoading] = useState(false);
   const today = new Date().toISOString().split("T")[0];
 
-  // 🧩 Lấy staffId
   useEffect(() => {
     (async () => {
       try {
         const profile = await getMyStaffProfile();
-        if (profile?.staffId) {
-          setStaffId(profile.staffId);
-          console.log("👤 Đã map staffId:", profile.staffId);
-        }
+        if (profile?.staffId) setStaffId(profile.staffId);
       } catch (err) {
         console.error("❌ Không lấy được staffId:", err);
       }
     })();
   }, []);
 
-  // 🧩 Load danh sách món + kế hoạch hôm nay
   useEffect(() => {
     if (!staffId) return;
     (async () => {
@@ -43,11 +37,16 @@ export default function ChefDailyPlan() {
         ]);
 
         const todayPlans = (planList || []).filter(
-          (p) => p.planDate === today && p.staffId === staffId,
+          (p) =>
+            p.planDate === today &&
+            p.staffId === staffId &&
+            p.itemType === ITEM_TYPES.DISH,
         );
 
         const mapped = {};
-        todayPlans.forEach((p) => (mapped[p.itemId] = p.plannedQuantity));
+        todayPlans.forEach((p) => {
+          mapped[p.itemId] = p.plannedQuantity ?? 0;
+        });
 
         setDishes(dishList || []);
         setPlans(todayPlans);
@@ -71,74 +70,65 @@ export default function ChefDailyPlan() {
     setQuantities((prev) => ({ ...prev, [dishId]: parsed }));
   };
 
-  // 🧩 Gửi toàn bộ món 1 lần
+  // ✅ Gửi batch POST /daily-plans/batch
   const handleSubmitAll = async () => {
     if (!staffId) {
       alert("⚠️ Không xác định được Staff ID. Vui lòng đăng nhập lại!");
       return;
     }
 
+    // 🔍 Chỉ lấy những món có thay đổi hoặc chưa có plan
     const selected = Object.entries(quantities)
       .filter(([_, qty]) => qty > 0)
-      .map(([dishId, qty]) => ({
-        itemId: Number(dishId),
-        itemType: ITEM_TYPES.DISH,
-        plannedQuantity: Number(qty),
-        planDate: today,
-        staffId,
-      }));
+      .map(([id, qty]) => {
+        const existingPlan = plans.find(
+          (p) => p.itemId === Number(id) && p.itemType === ITEM_TYPES.DISH,
+        );
+
+        if (!existingPlan) {
+          // ✅ Món mới
+          return {
+            itemId: Number(id),
+            itemType: ITEM_TYPES.DISH,
+            plannedQuantity: Number(qty),
+            planDate: today,
+            staffId,
+          };
+        }
+
+        if (existingPlan.plannedQuantity !== Number(qty)) {
+          // ✅ Món cũ thay đổi plannedQuantity
+          return {
+            itemId: Number(id),
+            itemType: ITEM_TYPES.DISH,
+            plannedQuantity: Number(qty),
+            planDate: today,
+            staffId,
+          };
+        }
+
+        return null;
+      })
+      .filter(Boolean);
 
     if (selected.length === 0) {
-      alert("⚠️ Vui lòng chọn ít nhất 1 món có số lượng > 0!");
+      alert("⚠️ Không có thay đổi nào cần gửi!");
       return;
     }
 
     setLoading(true);
     try {
-      // ✅ Chia ra: món mới & món đã có
-      const existing = [...plans]; // kế hoạch hôm nay đã có
-      const toUpdate = [];
-      const toCreate = [];
+      console.log("📦 [POST] Gửi batch daily plan (DISH):", selected);
+      await createDailyPlansBatch(selected);
+      alert("✅ Cập nhật kế hoạch món ăn thành công!");
 
-      for (const item of selected) {
-        const exist = existing.find((p) => p.itemId === item.itemId);
-        if (exist) {
-          toUpdate.push({ planId: exist.planId, newQty: item.plannedQuantity });
-        } else {
-          toCreate.push(item);
-        }
-      }
-
-      // 🟡 1️⃣ Update những món đã tồn tại
-      for (const upd of toUpdate) {
-        try {
-          await updateDailyPlan(upd.planId, {
-            plannedQuantity: upd.newQty,
-            remainingQuantity: upd.newQty,
-            status: false, // reset về chờ duyệt
-          });
-        } catch (err) {
-          console.warn("⚠️ Lỗi updateDailyPlan:", upd, err);
-        }
-      }
-
-      // 🟢 2️⃣ Tạo mới những món chưa có
-      if (toCreate.length > 0) {
-        try {
-          await createDailyPlansBatch(toCreate);
-        } catch (err) {
-          console.warn("⚠️ BE trả lỗi mapper nhưng vẫn lưu:", err);
-        }
-      }
-
-      alert("✅ Cập nhật kế hoạch thành công!");
       const refreshed = await listDailyPlans();
       const todayPlans = (refreshed || []).filter(
         (p) => p.planDate === today && p.staffId === staffId,
       );
       setPlans(todayPlans);
     } catch (err) {
-      console.error("❌ Lỗi gửi kế hoạch tổng:", err);
+      console.error("❌ Lỗi gửi kế hoạch món ăn:", err);
       alert("❌ Gửi kế hoạch thất bại!");
     } finally {
       setLoading(false);
@@ -146,7 +136,9 @@ export default function ChefDailyPlan() {
   };
 
   const getPlanStatus = (dishId) => {
-    const plan = plans.find((p) => p.itemId === dishId);
+    const plan = plans.find(
+      (p) => p.itemId === dishId && p.itemType === ITEM_TYPES.DISH,
+    );
     if (!plan) return null;
     if (plan.status === false) return "pending";
     if (plan.status === true) return "approved";
@@ -154,9 +146,9 @@ export default function ChefDailyPlan() {
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+    <div className="bg-white/80 rounded-2xl p-6 shadow-lg border border-white/20">
       <h3 className="text-xl font-bold mb-6 text-neutral-900">
-        Lên Kế Hoạch Trong Ngày
+        Lên Kế Hoạch Món Ăn Trong Ngày
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
@@ -166,17 +158,16 @@ export default function ChefDailyPlan() {
           return (
             <div
               key={dish.id}
-              className={`rounded-xl p-4 border shadow-sm transition-all ${
-                status === "approved"
-                  ? "bg-green-50 border-green-200"
-                  : status === "pending"
+              className={`rounded-xl p-4 border shadow-sm ${
+                status === "pending"
                   ? "bg-blue-50 border-blue-200"
+                  : status === "approved"
+                  ? "bg-green-50 border-green-200"
                   : "bg-white border-gray-100"
               }`}
             >
               <div className="flex justify-between mb-2">
                 <h4 className="font-semibold">{dish.name}</h4>
-                <span className="text-xs text-gray-500">{dish.category}</span>
               </div>
 
               <div className="flex justify-between items-center mb-3">
@@ -185,10 +176,11 @@ export default function ChefDailyPlan() {
                   <button
                     onClick={() => handleQuantityChange(dish.id, -1)}
                     disabled={loading}
-                    className="w-8 h-8 bg-red-100 text-red-600 rounded-lg"
+                    className="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
+
                   <input
                     type="number"
                     value={qty}
@@ -199,10 +191,11 @@ export default function ChefDailyPlan() {
                     disabled={loading}
                     className="w-14 text-center font-semibold border rounded-lg border-gray-300"
                   />
+
                   <button
                     onClick={() => handleQuantityChange(dish.id, 1)}
                     disabled={loading}
-                    className="w-8 h-8 bg-green-100 text-green-600 rounded-lg"
+                    className="w-8 h-8 rounded-lg bg-green-100 text-green-600 hover:bg-green-200"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
@@ -231,11 +224,11 @@ export default function ChefDailyPlan() {
         className="w-full py-3 rounded-xl text-white font-semibold text-lg bg-gradient-to-r from-blue-500 to-cyan-500 hover:opacity-90 transition-all"
       >
         {loading ? (
-          "Đang gửi kế hoạch..."
+          "Đang gửi kế hoạch món ăn..."
         ) : (
           <>
             <Send className="inline w-5 h-5 mr-2" />
-            Gửi kế hoạch tổng
+            Gửi kế hoạch món ăn
           </>
         )}
       </button>

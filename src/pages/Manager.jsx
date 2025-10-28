@@ -5,8 +5,8 @@ import TableDetailsModal from "../components/Manager/TableDetailsModal";
 import EditToppingModal from "../components/Manager/Topping/EditToppingModal";
 import ToppingsManagement from "../components/Manager/Topping/ToppingManagement";
 import ManagerDishPage from "../components/Manager/Dish/ManagerDishPage";
-import ManagerDailyPlan from "../components/Manager/ManagerDailyPlan";
-import ManagerDailyApprovedDishes from "../components/Manager/ManagerDailyApprovedDishes";
+import ManagerDailyPlanPage from "../components/Manager/ManagerDailyPlanPage";
+import ManagerDailyMenuPage from "../components/Manager/ManagerDailyMenuPage";
 
 import {
   listBookingsPaging,
@@ -105,6 +105,7 @@ export default function Manager() {
     };
   }, [activeSection, page, size, statusFilter]);
 
+  // 🧩 Load danh sách bàn ăn
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -139,13 +140,13 @@ export default function Manager() {
 
   const handleReject = async (id) => {
     setBookings((prev) =>
-      prev.map((x) => (x.id === id ? { ...x, status: "REJECT" } : x))
+      prev.map((x) => (x.id === id ? { ...x, status: "REJECT" } : x)),
     );
     try {
       await rejectBooking(id);
     } catch (err) {
       setBookings((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, status: "PENDING" } : x))
+        prev.map((x) => (x.id === id ? { ...x, status: "PENDING" } : x)),
       );
       alert(err?.message || "Từ chối thất bại");
     }
@@ -158,21 +159,21 @@ export default function Manager() {
         prev.map((b) =>
           b.id === bookingId
             ? { ...b, status: "APPROVED", assignedTableId: tableId }
-            : b
-        )
+            : b,
+        ),
       );
       setTables((prev) =>
         prev.map((t) =>
           t.id === tableId
             ? { ...t, status: "reserved", isAvailable: false }
-            : t
-        )
+            : t,
+        ),
       );
     } catch (error) {
       alert(
         error?.response?.data?.message ||
           error?.message ||
-          "Không thể gán bàn cho đơn đặt."
+          "Không thể gán bàn cho đơn đặt.",
       );
     }
   };
@@ -181,7 +182,7 @@ export default function Manager() {
     try {
       setSavingBooking(true);
       setBookings((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, seat, bookingDate } : x))
+        prev.map((x) => (x.id === id ? { ...x, seat, bookingDate } : x)),
       );
       await updateBooking(id, { seat, bookingDate });
       await refetchBookings();
@@ -198,8 +199,8 @@ export default function Manager() {
   const updateOrderStatus = (tableId, updatedOrder) => {
     setTables((prevTables) =>
       prevTables.map((table) =>
-        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table
-      )
+        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table,
+      ),
     );
   };
 
@@ -224,6 +225,7 @@ export default function Manager() {
             />
           </>
         );
+
       case "accounts":
         return (
           <BookingManagement
@@ -253,10 +255,28 @@ export default function Manager() {
             <ManagerDishPage />
           </div>
         );
+
+      // ✅ Chỉ giữ 2 case mới này thôi
       case "dailyPlan":
-        return <ManagerDailyPlan />;
+        return <ManagerDailyPlanPage />;
+
       case "dailyDishes":
-        return <ManagerDailyApprovedDishes />;
+        return <ManagerDailyMenuPage />;
+
+      case "invoices":
+        return (
+          <ManagerInvoicesToday
+            invoices={mockRevenueData.map((r, i) => ({
+              id: i + 1,
+              table: (i % 10) + 1,
+              amount: Math.round(r.revenue * 1.1),
+              time: "--:--",
+              date: new Date().toISOString().slice(0, 10),
+              paymentMethod: i % 2 ? "Card" : "Cash",
+            }))}
+          />
+        );
+
       case "toppings":
         return (
           <ToppingsManagement
@@ -267,6 +287,7 @@ export default function Manager() {
             loading={false}
           />
         );
+
       case "settings":
         return (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
@@ -276,6 +297,7 @@ export default function Manager() {
             </p>
           </div>
         );
+
       default:
         return null;
     }

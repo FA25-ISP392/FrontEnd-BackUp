@@ -26,11 +26,23 @@ export default function MenuContent({
   const percent = canShowCalorie
     ? Math.min(
         100,
-        Math.max(0, Math.round((caloriesConsumed / estimatedCalories) * 100))
+        Math.max(0, Math.round((caloriesConsumed / estimatedCalories) * 100)),
       )
     : 0;
 
-  const dishesToShow = filteredDishes;
+  // ✅ Lọc món theo type mục tiêu (nếu có)
+  // const goalType = mapGoalToType[currentGoal];
+  // const dishesToShow =
+  //   goalType && isPersonalized
+  //     ? filteredDishes.filter((d) => d.type === goalType)
+  //     : filteredDishes;
+
+  // ✅ Ưu tiên món có trong daily plan trước, món chưa có thì xuống cuối
+  const dishesToShow = [...filteredDishes].sort((a, b) => {
+    const remainA = a.remainingQuantity > 0 ? 1 : 0;
+    const remainB = b.remainingQuantity > 0 ? 1 : 0;
+    return remainB - remainA; // món còn hàng lên đầu
+  });
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -94,7 +106,7 @@ export default function MenuContent({
       {activeMenuTab === "all" &&
         CATEGORY_LIST.map((cat) => {
           const dishes = dishesToShow.filter(
-            (d) => d.categoryEnum?.toLowerCase() === cat.id?.toLowerCase()
+            (d) => d.categoryEnum?.toLowerCase() === cat.id?.toLowerCase(),
           );
 
           return (
@@ -131,12 +143,18 @@ export default function MenuContent({
                           {dish.calories || dish.calo} cal
                         </span>
                       </div>
-                      <button
-                        onClick={() => onDishSelect(dish)}
-                        className="mt-3 w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-2.5 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-medium"
-                      >
-                        Chọn món
-                      </button>
+                      {dish.remainingQuantity > 0 ? (
+                        <button
+                          onClick={() => onDishSelect(dish)}
+                          className="mt-3 w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-2.5 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-medium"
+                        >
+                          Chọn món
+                        </button>
+                      ) : (
+                        <div className="mt-3 w-full text-center py-2.5 rounded-xl bg-neutral-200 text-neutral-500 font-medium cursor-not-allowed">
+                          Tạm hết món
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -1,5 +1,4 @@
 // src/lib/menuData.js
-// 🧭 Dữ liệu danh mục món ăn đồng bộ với enum Category trong backend
 
 // 🧭 Dữ liệu danh mục món ăn đồng bộ với enum Category trong backend
 export const categories = [
