@@ -2,22 +2,25 @@ import React from "react";
 
 const slides = [
   {
-    src: "https://surl.li/lmaaao",
-    alt: "Ảnh 1",
+    src: "https://lvtgroup.vn/public/elfinder/upload/elfinder/lvt-group/blog/mon-an-chau-au/nhung-mon-an-ngon-nhat-o-chau-au.jpg",
+    alt: "Bữa tiệc Âu thịnh soạn",
   },
   {
-    src: "https://surl.li/jmyzqo",
-    alt: "Ảnh 2",
+    src: "https://lh7-rt.googleusercontent.com/docsz/AD_4nXfAWgQCqO4Gr8H_gEJg9C-LrOo_AmcwAF7kj2DidCfsepyibLDDlata9SnCcFYIBIm_w-w-Y_aehQfqMefgpILPQEpupNBf76g1wKCaCmfWrTSaptjUQvyFevokoQgBZ1ZAekyZ72Gp5mie6TM_Rq8xhBbD?key=vdGO4w2VZXpcZj6Z80drZg",
+    alt: "Bò bít tết nướng thơm ngon",
   },
   {
-    src: "https://surl.li/bgvdsv",
-    alt: "Ảnh 3",
+    src: "https://media.istockphoto.com/id/2116422246/fr/photo/roman-pinsa-with-mozzarella-cheese-capers-arugula-and-garlic-on-wooden-table.jpg?s=612x612&w=0&k=20&c=_htOXWUR9l2IIaHEMx-v6vYT5NdXL6Nok4Z5ZFBgq7U=",
+    alt: "Pizza Ý tươi ngon",
   },
   {
-    src: "https://surl.li/uelvyx",
-    alt: "Ảnh 4",
+    src: "https://monngon-danang.com/content/images/2025/03/nhung-dieu-ban-can-biet-ve-mon-mi-y-thom-ngon.png",
+    alt: "Mì Ý truyền thống",
   },
-  { src: "https://surl.li/vizpzd", alt: "Ảnh 5" },
+  {
+    src: "https://media.istockphoto.com/id/637214478/photo/pasta-plate.jpg?s=612x612&w=0&k=20&c=oebCQG_Zfv2zJpobSzpF6JFNdsBQUjG6MdQh-En5l3c=",
+    alt: "Mì Ý sốt cà chua và phô mai",
+  },
 ];
 
 export default function HeroSection() {
