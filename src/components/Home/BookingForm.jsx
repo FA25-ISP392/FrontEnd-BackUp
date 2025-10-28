@@ -1,8 +1,24 @@
-import { useState, useEffect, useMemo } from "react";
+// BookingForm.jsx
+import { useEffect, useMemo, useState } from "react";
 import RestaurantTableLayout from "./RestaurantTableLayout";
-import { createBooking, approveBookingWithTable } from "../../lib/apiBooking";
+import {
+  createBooking,
+  approveBookingWithTable,
+  listBookingsByTableDate,
+} from "../../lib/apiBooking";
 
 const LEAD_MINUTES = 30;
+
+const ALL_TABLES = [
+  { id: 1, seats: 2 },
+  { id: 2, seats: 2 },
+  { id: 3, seats: 4 },
+  { id: 4, seats: 4 },
+  { id: 5, seats: 6 },
+  { id: 6, seats: 6 },
+  { id: 7, seats: 8 },
+  { id: 8, seats: 8 },
+];
 
 export default function BookingForm({
   onSubmit,
@@ -10,63 +26,99 @@ export default function BookingForm({
   onLoginClick,
   initialData,
 }) {
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     date: "",
     time: "",
     guests: 1,
-    preferredTable: "",
+    tableId: "",
   });
-  const [showLoginMessage, setShowLoginMessage] = useState(false);
   const [fieldErrs, setFieldErrs] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [availableTables, setAvailableTables] = useState([]); // [{id,seats}]
 
   useEffect(() => {
-    setFormData((set) => ({
-      date: initialData?.date ?? set?.date,
-      time: initialData?.time ?? set?.time,
-      guests: Number(initialData?.guests ?? set.guests) || 1,
-      preferredTable: initialData?.preferredTable ?? set?.preferredTable ?? "",
+    setForm((s) => ({
+      date: initialData?.date ?? s.date,
+      time: initialData?.time ?? s.time,
+      guests: Number(initialData?.guests ?? s.guests) || 1,
+      tableId: "",
     }));
   }, [initialData]);
 
   const minDate = useMemo(() => {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}-${String(now.getDate()).padStart(2, "0")}`;
   }, []);
 
   const validate = () => {
-    const errs = {};
-    if (!formData.date) errs.date = "Vui lòng chọn ngày.";
-    if (!formData.time) errs.time = "Vui lòng chọn giờ.";
-    if (!errs.date && !errs.time) {
-      const [year, month, day] = formData.date.split("-").map(Number);
-      const [hours, minutes] = formData.time.split(":").map(Number);
-      const when = new Date(year, month - 1, day, hours, minutes, 0, 0);
+    const e = {};
+    if (!form.date) e.date = "Vui lòng chọn ngày.";
+    if (!form.time) e.time = "Vui lòng chọn giờ.";
+    if (!e.date && !e.time) {
+      const [y, m, d] = form.date.split("-").map(Number);
+      const [hh, mm] = form.time.split(":").map(Number);
+      const when = new Date(y, m - 1, d, hh, mm);
       const lead = new Date(Date.now() + LEAD_MINUTES * 60 * 1000);
       if (when < lead)
-        errs.time = `Giờ đặt phải cách hiện tại ít nhất ${LEAD_MINUTES} phút.`;
+        e.time = `Giờ đặt phải cách hiện tại ít nhất ${LEAD_MINUTES} phút.`;
     }
-    const n = Number(formData.guests) || 1;
-    if (n < 1 || n > 8) errs.guests = "Số khách từ 1 đến 8.";
-    return errs;
+    const n = Number(form.guests) || 1;
+    if (n < 1 || n > 8) e.guests = "Số khách từ 1 đến 8.";
+    return e;
   };
 
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((set) => ({
-      ...set,
+  const recomputeAvailable = async (date, time, guests) => {
+    if (!date || !time) {
+      setAvailableTables([]);
+      return;
+    }
+    setScanning(true);
+    try {
+      const when = new Date(`${date}T${time}`);
+      const results = [];
+      for (const tb of ALL_TABLES) {
+        if (tb.seats < guests) continue; // không đủ chỗ
+        const list = await listBookingsByTableDate(tb.id, date);
+        const overlap = list.some((b) => {
+          const st = String(b.status || "").toUpperCase();
+          if (["CANCELLED", "REJECTED"].includes(st)) return false;
+          const booked = new Date(String(b.bookingDate).replace(" ", "T"));
+          return Math.abs(booked - when) < 2 * 60 * 60 * 1000; // ±2h
+        });
+        if (!overlap) results.push({ id: tb.id, seats: tb.seats });
+      }
+      setAvailableTables(results);
+      // nếu table đã chọn không còn hợp lệ → reset
+      if (!results.find((x) => String(x.id) === String(form.tableId))) {
+        setForm((s) => ({ ...s, tableId: "" }));
+      }
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  useEffect(() => {
+    recomputeAvailable(form.date, form.time, form.guests);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.date, form.time, form.guests]);
+
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setForm((s) => ({
+      ...s,
       [name]: name === "guests" ? Number(value) : value,
     }));
-    setFieldErrs((set) => ({ ...set, [name]: "" }));
+    setFieldErrs((s) => ({ ...s, [name]: "" }));
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-
+  const submit = async (e) => {
+    e.preventDefault();
     if (!isLoggedIn) {
-      setShowLoginMessage(true);
+      onLoginClick?.(form);
       return;
     }
 
@@ -75,81 +127,45 @@ export default function BookingForm({
       setFieldErrs(errs);
       return;
     }
-    onSubmit?.(formData);
+
+    // Nếu chỉ còn 1 bàn → auto chọn
+    let pickedId = form.tableId;
+    if (!pickedId && availableTables.length === 1)
+      pickedId = availableTables[0].id;
+    if (!pickedId) {
+      alert("Vui lòng chọn bàn trong danh sách bàn trống.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await createBooking({
+        date: form.date,
+        time: form.time,
+        guests: form.guests,
+        preferredTable: pickedId,
+      });
+      const bookingId = res?.result?.bookingId ?? res?.bookingId ?? res?.id;
+      await approveBookingWithTable(bookingId, pickedId);
+      alert(`Đặt bàn thành công! Bàn số ${pickedId} đã được gán cho bạn.`);
+      onSubmit?.({ ...form, tableId: pickedId, bookingId });
+    } catch (err) {
+      alert(err?.message || "Đặt bàn thất bại.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div>
       <RestaurantTableLayout
-        date={formData.date}
-        time={formData.time}
-        guests={formData.guests}
-        onPick={async (tableId) => {
-          if (!isLoggedIn) {
-            onLoginClick?.(formData);
-            return;
-          }
-          try {
-            const res = await createBooking({
-              date: formData.date,
-              time: formData.time,
-              guests: formData.guests,
-              preferredTable: tableId,
-            });
-            const bookingId =
-              res?.result?.bookingId ?? res?.bookingId ?? res?.id;
-            await approveBookingWithTable(bookingId, tableId);
-            onSubmit?.({ ...formData, preferredTable: tableId, bookingId });
-          } catch (err) {
-            console.error(err);
-          }
-        }}
-        isLoggedIn={isLoggedIn}
+        date={form.date}
+        time={form.time}
+        guests={form.guests}
       />
 
-      {!isLoggedIn && (
-        <div className="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-xl shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <svg
-                className="h-5 w-5 text-orange-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-semibold text-orange-800 mb-1">
-                Cần đăng nhập để đặt bàn
-              </h3>
-              <p className="text-xs text-orange-700">
-                Vui lòng đăng nhập để tiếp tục quá trình đặt bàn
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => onLoginClick?.(formData)}
-              className="px-4 py-2 text-sm rounded-lg bg-orange-500 hover:bg-orange-600 text-white transition-colors font-medium"
-            >
-              Đăng nhập
-            </button>
-          </div>
-        </div>
-      )}
-
-      <form
-        onSubmit={handleSubmit}
-        className={`space-y-4 ${
-          !isLoggedIn ? "opacity-50 pointer-events-none" : ""
-        }`}
-      >
+      <form onSubmit={submit} className="space-y-4">
+        {/* Ngày */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Ngày đặt bàn
@@ -157,9 +173,9 @@ export default function BookingForm({
           <input
             type="date"
             name="date"
-            value={formData.date}
+            value={form.date}
             min={minDate}
-            onChange={handleInputChange}
+            onChange={onChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           />
           {fieldErrs.date && (
@@ -167,6 +183,7 @@ export default function BookingForm({
           )}
         </div>
 
+        {/* Giờ */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Giờ đặt bàn
@@ -174,8 +191,8 @@ export default function BookingForm({
           <input
             type="time"
             name="time"
-            value={formData.time}
-            onChange={handleInputChange}
+            value={form.time}
+            onChange={onChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
           />
           {fieldErrs.time && (
@@ -183,60 +200,66 @@ export default function BookingForm({
           )}
         </div>
 
+        {/* Số khách */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Số lượng khách: {formData.guests}
+            Số lượng khách: {form.guests}
           </label>
           <input
             type="range"
             name="guests"
             min="1"
             max="8"
-            value={formData.guests}
-            onChange={handleInputChange}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+            value={form.guests}
+            onChange={onChange}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
           />
           {fieldErrs.guests && (
             <p className="text-xs text-red-600 mt-1">{fieldErrs.guests}</p>
           )}
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
-            <span>1</span>
-            <span>8</span>
-          </div>
         </div>
 
+        {/* Chọn bàn (mới) */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Bàn mong muốn (tùy chọn)
+            Chọn bàn {scanning ? "(đang quét...)" : ""}
           </label>
           <select
-            name="preferredTable"
-            value={formData.preferredTable}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            name="tableId"
+            value={form.tableId}
+            onChange={onChange}
+            disabled={
+              !form.date ||
+              !form.time ||
+              scanning ||
+              availableTables.length === 0
+            }
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100"
           >
-            <option value="">Không có yêu cầu đặc biệt</option>
-            <option value="1">Bàn 1 (2 người)</option>
-            <option value="2">Bàn 2 (2 người)</option>
-            <option value="3">Bàn 3 (4 người)</option>
-            <option value="4">Bàn 4 (4 người)</option>
-            <option value="5">Bàn 5 (6 người)</option>
-            <option value="6">Bàn 6 (6 người)</option>
-            <option value="7">Bàn 7 (8 người)</option>
-            <option value="8">Bàn 8 (8 người)</option>
+            <option value="">
+              {!form.date || !form.time
+                ? "Chọn ngày & giờ trước"
+                : scanning
+                ? "Đang quét bàn trống..."
+                : availableTables.length === 0
+                ? "Không còn bàn phù hợp"
+                : "— Chọn 1 bàn —"}
+            </option>
+            {availableTables.map((t) => (
+              <option
+                key={t.id}
+                value={t.id}
+              >{`Bàn ${t.id} (${t.seats} người)`}</option>
+            ))}
           </select>
-          {fieldErrs.preferredTable && (
-            <p className="text-xs text-red-600 mt-1">
-              {fieldErrs.preferredTable}
-            </p>
-          )}
         </div>
 
         <button
           type="submit"
-          className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-medium transition-colors duration-300"
+          disabled={loading}
+          className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-medium transition-colors"
         >
-          Đặt Bàn
+          {loading ? "Đang xử lý..." : "Đặt Bàn"}
         </button>
       </form>
     </div>
