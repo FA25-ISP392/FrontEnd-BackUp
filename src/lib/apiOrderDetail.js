@@ -1,47 +1,5 @@
 import apiConfig from "../api/apiConfig";
 
-// export const normalizeOrderDetail = (d = {}) => {
-//   const rawNote = d.note ?? d.notes;
-//   let finalNote = null;
-//   if (rawNote !== null && rawNote !== undefined && rawNote !== "") {
-//     finalNote = String(rawNote);
-//   }
-
-//   const finalToppings = Array.isArray(d.toppings)
-//     ? d.toppings.map((t) => {
-//         let finalQuantity = 1;
-//         if (typeof t.quantity === "number" && !isNaN(t.quantity)) {
-//           finalQuantity = t.quantity;
-//         } else if (
-//           t.quantity !== null &&
-//           t.quantity !== undefined &&
-//           t.quantity !== ""
-//         ) {
-//           finalQuantity = Number(t.quantity);
-//         }
-
-//         return {
-//           toppingId: Number(t.toppingId ?? t.id),
-//           toppingName: t.toppingName ?? t.name ?? "",
-//           quantity: finalQuantity,
-//           toppingPrice: Number(t.toppingPrice ?? t.price ?? 0),
-//         };
-//       })
-//     : [];
-
-//   return {
-//     orderDetailId: Number(d.orderDetailId ?? d.id),
-//     orderId: Number(d.orderId),
-//     dishId: Number(d.dishId),
-//     dishName: d.dishName,
-//     totalPrice: Number(d.totalPrice ?? 0),
-//     status: d.status,
-//     note: finalNote,
-//     toppings: finalToppings,
-//   };
-// };
-
-// replace nguyên hàm
 export const normalizeOrderDetail = (d = {}) => {
   const note = d.note != null && d.note !== "" ? String(d.note) : null;
   const toppings = Array.isArray(d.toppings)
@@ -134,13 +92,21 @@ export async function updateOrderDetailStatus(
   newStatus
 ) {
   if (!orderDetailId) throw new Error("Cần cung cấp orderDetailId");
-  if (!newStatus) throw new Error("Cần cung cấp trạng thái mới (newStatus)");
   if (!itemToUpdate) throw new Error("Cần cung cấp item object để cập nhật");
+  if (!newStatus) throw new Error("Cần cung cấp trạng thái mới (newStatus)");
   const formattedStatus = String(newStatus).toUpperCase();
   const payload = {
-    orderDetailId: Number(itemToUpdate.orderDetailId),
+    orderDetailId: Number(orderDetailId),
     status: formattedStatus,
   };
+  if (import.meta.env?.DEV) {
+    console.log(
+      "[PUT] /order-details/",
+      Number(orderDetailId),
+      "payload=",
+      payload
+    );
+  }
   const res = await apiConfig.put(
     `/order-details/${Number(orderDetailId)}`,
     payload

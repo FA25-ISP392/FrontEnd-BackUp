@@ -4,7 +4,7 @@ import {
   CheckCircle,
   Loader,
   AlertTriangle,
-  Package, // Icon cho Topping
+  Package,
 } from "lucide-react";
 
 export default function OrdersManagement({
@@ -42,7 +42,6 @@ export default function OrdersManagement({
     );
   }
 
-  // Một component con để render card, tránh lặp code
   const OrderCard = ({ order, statusType }) => {
     const colors = {
       pending: {
@@ -72,7 +71,6 @@ export default function OrdersManagement({
         className={`bg-gradient-to-r ${c.bg} rounded-xl p-4 border ${c.border} hover:shadow-md transition-all duration-300 flex flex-col justify-between`}
       >
         <div>
-          {/* HÀNG 1: TÊN MÓN + ID */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               {c.icon}
@@ -85,14 +83,12 @@ export default function OrdersManagement({
             </span>
           </div>
 
-          {/* HÀNG 2: GHI CHÚ */}
           <div className="mb-3">
             <h4 className="font-semibold text-neutral-900 text-sm truncate">
               Ghi chú: {order.note || "Không có"}
             </h4>
           </div>
 
-          {/* HÀNG 3: TOPPINGS */}
           {order.toppings && order.toppings.length > 0 && (
             <div className={`mt-2 pt-2 border-t ${c.toppingBorder} mb-4`}>
               <h5 className="text-xs font-bold text-neutral-700 mb-1 flex items-center gap-1">
@@ -113,7 +109,6 @@ export default function OrdersManagement({
           )}
         </div>
 
-        {/* HÀNG 4: NÚT BẤM */}
         <div className="mt-auto">
           {statusType === "pending" && (
             <button
@@ -126,7 +121,7 @@ export default function OrdersManagement({
           )}
           {statusType === "preparing" && (
             <button
-              onClick={() => onUpdateStatus(order.orderDetailId, "SERVED")}
+              onClick={() => onUpdateStatus(order.orderDetailId, "DONE")}
               className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 px-4 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium flex items-center justify-center gap-2"
             >
               <CheckCircle className="h-4 w-4" />
@@ -145,9 +140,48 @@ export default function OrdersManagement({
     );
   };
 
+  const Column = ({ title, colorBox, emptyIcon, emptyText, children }) => (
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 flex flex-col">
+      {/* sticky header */}
+      <div className="p-6 border-b border-neutral-100 sticky top-0 bg-white/90 backdrop-blur z-10">
+        <div className="flex items-center gap-3">
+          <div
+            className={`w-8 h-8 ${colorBox} rounded-lg flex items-center justify-center`}
+          >
+            {emptyIcon}
+          </div>
+          <h3 className="text-xl font-bold">{title}</h3>
+        </div>
+      </div>
+
+      {/* scrollable list – khoảng cao ~5 thẻ */}
+      <div
+        className="
+          p-6 space-y-4 overflow-y-auto
+          h-[72vh] lg:h-[68vh] 2xl:h-[60vh]
+          scrollbar-thin scrollbar-thumb-neutral-300 scrollbar-track-transparent
+          pr-2
+        "
+      >
+        {children}
+      </div>
+
+      {/* empty filler (hiện ở cuối nếu children rỗng) */}
+      {Array.isArray(children) && children.length === 0 && (
+        <div className="p-6">
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              {emptyIcon}
+            </div>
+            <p className="text-neutral-500 font-medium">{emptyText}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-      {/* Header "Quản Lý Đơn Hàng" */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
           <ChefHat className="h-4 w-4 text-white" />
@@ -163,104 +197,53 @@ export default function OrdersManagement({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* =================== CỘT ĐƠN CHỜ =================== */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20">
-          <div className="p-6 border-b border-neutral-100">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-lg flex items-center justify-center">
-                <Clock className="h-4 w-4 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-yellow-700">Đơn Chờ</h3>
-            </div>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              {pendingOrders.map((order) => (
-                <OrderCard
-                  key={order.orderDetailId}
-                  order={order}
-                  statusType="pending"
-                />
-              ))}
-              {pendingOrders.length === 0 && (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Clock className="h-8 w-8 text-yellow-600" />
-                  </div>
-                  <p className="text-neutral-500 font-medium">
-                    Không có đơn chờ
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        {/* Đơn Chờ */}
+        <Column
+          title={<span className="text-yellow-700">Đơn Chờ</span>}
+          colorBox="bg-gradient-to-br from-yellow-500 to-orange-500"
+          emptyIcon={<Clock className="h-8 w-8 text-yellow-600" />}
+          emptyText="Không có đơn chờ"
+        >
+          {pendingOrders.map((order) => (
+            <OrderCard
+              key={order.orderDetailId}
+              order={order}
+              statusType="pending"
+            />
+          ))}
+        </Column>
 
-        {/* =================== CỘT ĐANG CHUẨN BỊ =================== */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20">
-          <div className="p-6 border-b border-neutral-100">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                <ChefHat className="h-4 w-4 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-blue-700">Đang Chuẩn Bị</h3>
-            </div>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              {preparingOrders.map((order) => (
-                <OrderCard
-                  key={order.orderDetailId}
-                  order={order}
-                  statusType="preparing"
-                />
-              ))}
-              {preparingOrders.length === 0 && (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <ChefHat className="h-8 w-8 text-blue-600" />
-                  </div>
-                  <p className="text-neutral-500 font-medium">
-                    Không có đơn đang chuẩn bị
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        {/* Đang Chuẩn Bị */}
+        <Column
+          title={<span className="text-blue-700">Đang Chuẩn Bị</span>}
+          colorBox="bg-gradient-to-br from-blue-500 to-cyan-500"
+          emptyIcon={<ChefHat className="h-8 w-8 text-blue-600" />}
+          emptyText="Không có đơn đang chuẩn bị"
+        >
+          {preparingOrders.map((order) => (
+            <OrderCard
+              key={order.orderDetailId}
+              order={order}
+              statusType="preparing"
+            />
+          ))}
+        </Column>
 
-        {/* =================== CỘT SẴN SÀNG =================== */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20">
-          <div className="p-6 border-b border-neutral-100">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-                <CheckCircle className="h-4 w-4 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-green-700">Sẵn Sàng</h3>
-            </div>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              {readyOrders.map((order) => (
-                <OrderCard
-                  key={order.orderDetailId}
-                  order={order}
-                  statusType="ready"
-                />
-              ))}
-              {readyOrders.length === 0 && (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle className="h-8 w-8 text-green-600" />
-                  </div>
-                  <p className="text-neutral-500 font-medium">
-                    Không có đơn sẵn sàng
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        {/* Sẵn Sàng */}
+        <Column
+          title={<span className="text-green-700">Sẵn Sàng</span>}
+          colorBox="bg-gradient-to-br from-green-500 to-emerald-500"
+          emptyIcon={<CheckCircle className="h-8 w-8 text-green-600" />}
+          emptyText="Không có đơn sẵn sàng"
+        >
+          {readyOrders.map((order) => (
+            <OrderCard
+              key={order.orderDetailId}
+              order={order}
+              statusType="ready"
+            />
+          ))}
+        </Column>
       </div>
     </div>
   );

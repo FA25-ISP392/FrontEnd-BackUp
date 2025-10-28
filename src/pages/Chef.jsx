@@ -42,15 +42,21 @@ export default function Chef() {
   const fetchAllOrders = async () => {
     setError(null);
     try {
-      const [pendingData, preparingData, servedData] = await Promise.all([
-        getOrderDetailsByStatus("PENDING"),
-        getOrderDetailsByStatus("PREPARING"),
-        getOrderDetailsByStatus("SERVED"),
-      ]);
+      const [pendingData, preparingData, doneData, servedData] =
+        await Promise.all([
+          getOrderDetailsByStatus("PENDING"),
+          getOrderDetailsByStatus("PREPARING"),
+          getOrderDetailsByStatus("DONE"),
+          getOrderDetailsByStatus("SERVED"),
+        ]);
 
+      const byId = new Map();
+      [...(doneData || []), ...(servedData || [])].forEach((it) =>
+        byId.set(it.orderDetailId, it)
+      );
       setPending(pendingData);
       setPreparing(preparingData);
-      setReady(servedData);
+      setReady(Array.from(byId.values()));
     } catch (err) {
       console.error("Lỗi fetch đơn hàng:", err);
       setError(err.message || "Không thể tải danh sách đơn hàng.");
@@ -72,15 +78,15 @@ export default function Chef() {
         preparing.find((o) => o.orderDetailId === orderDetailId);
       if (!itemToMove) return;
       setPending((prev) =>
-        prev.filter((o) => o.orderDetailId !== orderDetailId),
+        prev.filter((o) => o.orderDetailId !== orderDetailId)
       );
       setPreparing((prev) =>
-        prev.filter((o) => o.orderDetailId !== orderDetailId),
+        prev.filter((o) => o.orderDetailId !== orderDetailId)
       );
       const updatedItem = { ...itemToMove, status: newStatus };
       if (newStatus === "PREPARING") {
         setPreparing((prev) => [updatedItem, ...prev]);
-      } else if (newStatus === "SERVED") {
+      } else if (newStatus === "DONE" || newStatus === "SERVED") {
         setReady((prev) => [updatedItem, ...prev]);
       }
       await updateOrderDetailStatus(orderDetailId, itemToMove, newStatus);

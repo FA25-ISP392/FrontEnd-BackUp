@@ -30,11 +30,11 @@ export default function DishOptionsModal({
 
   const toppingsTotalPrice = selectedToppings.reduce(
     (sum, t) => sum + (t.price || 0),
-    0,
+    0
   );
   const toppingsTotalCalo = selectedToppings.reduce(
     (sum, t) => sum + (t.calories || t.calo || 0),
-    0,
+    0
   );
 
   const totalPrice = (basePrice + toppingsTotalPrice) * quantity;
@@ -106,7 +106,7 @@ export default function DishOptionsModal({
               <div className="space-y-2">
                 {toppings.map((t) => {
                   const checked = selectedToppings.some(
-                    (x) => x.toppingId === t.toppingId,
+                    (x) => x.toppingId === t.toppingId
                   );
                   return (
                     <label
@@ -120,7 +120,7 @@ export default function DishOptionsModal({
                         setSelectedToppings((prev) => {
                           if (!Array.isArray(prev)) prev = [];
                           const exists = prev.some(
-                            (x) => x.toppingId === t.toppingId,
+                            (x) => x.toppingId === t.toppingId
                           );
                           return exists
                             ? prev.filter((x) => x.toppingId !== t.toppingId)

@@ -19,23 +19,30 @@ export const normalizeCustomer = (cus = {}) => ({
 
 export async function findCustomerByUsername(username) {
   if (!username) return null;
-  const res = await apiConfig.get("/customer", {
-    params: { page: 0, size: 1000 },
-  });
-
-  const list = Array.isArray(res)
-    ? res
-    : Array.isArray(res?.result)
-    ? res.result
-    : Array.isArray(res?.content)
-    ? res.content
-    : [];
-
-  const found = list.find(
-    (x) =>
-      String(x?.username || "").toLowerCase() === String(username).toLowerCase()
-  );
-  return found ? normalizeCustomer(found) : null;
+  try {
+    const encodedUsername = encodeURIComponent(username);
+    const res = await apiConfig.get(`/customer/by-username/${encodedUsername}`);
+    const data = res?.result ?? res;
+    if (data && (data.customerId || data.id)) {
+      return normalizeCustomer(data);
+    } else {
+      console.warn(
+        "API returned success but no customer data for username:",
+        username
+      );
+      return null;
+    }
+  } catch (error) {
+    console.error(`Error finding customer by username "${username}":`, error);
+    if (
+      error?.response?.status === 404 ||
+      error?.code === "USER_NOT_EXISTED" ||
+      error?.code === "CUSTOMER_NOT_FOUND"
+    ) {
+      return null;
+    }
+    return null;
+  }
 }
 
 export async function createCustomer(form) {
@@ -83,7 +90,6 @@ export async function ensureCustomerForUser({
 }) {
   const existed = await findCustomerByUsername(username);
   if (existed?.customerId) return existed;
-
   const payload = { username, fullName, email, phone };
   const res = await apiConfig.post("/customer", payload);
   const data = res?.result ?? res;
@@ -102,7 +108,6 @@ export async function updateCustomerPersonalization(customerId, form = {}) {
         : undefined,
     portion: form.mealsPerDay != null ? Number(form.mealsPerDay) : undefined,
   });
-
   if (Object.keys(body).length === 0) {
     throw new Error("Không có trường nào để cập nhật.");
   }

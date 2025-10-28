@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CheckCircle } from "lucide-react";
 
 import MenuHeader from "../components/Menu/MenuHeader";
@@ -10,7 +10,11 @@ import PaymentSidebar from "../components/Menu/PaymentSidebar";
 import DishOptionsModal from "../components/Menu/DishOptionsModal";
 import OrderStatusSidebar from "../components/Menu/OrderStatusSidebar";
 
-import { createOrder } from "../lib/apiOrder";
+import {
+  createOrder,
+  getOrderById,
+  getOrderDetailsByOrderId,
+} from "../lib/apiOrder";
 import { useMenuPersonalization } from "../hooks";
 import { listDish, getDish } from "../lib/apiDish";
 import {
@@ -23,9 +27,8 @@ import {
   deleteOrderDetail,
   createOrderDetail,
 } from "../lib/apiOrderDetail";
-import { getOrderDetailsByOrderId } from "../lib/apiOrder";
 import EditOrderDetailModal from "../components/Menu/EditOrderDetailModal";
-import { createPayment } from "../lib/apiPayment";
+import { createPayment, getPaymentById } from "../lib/apiPayment";
 
 export default function Menu() {
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
@@ -34,32 +37,34 @@ export default function Menu() {
   const [isCallStaffOpen, setIsCallStaffOpen] = useState(false);
   const [isDishOptionsOpen, setIsDishOptionsOpen] = useState(false);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
-
   const [activeMenuTab, setActiveMenuTab] = useState("all");
   const [selectedDish, setSelectedDish] = useState(null);
   const [cart, setCart] = useState([]);
   const [caloriesConsumed, setCaloriesConsumed] = useState(0);
   const [isPersonalized, setIsPersonalized] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cash");
-
   const [tableId, setTableId] = useState(null);
   const [customerId, setCustomerId] = useState(null);
   const [customerName, setCustomerName] = useState(null);
   const [orderId, setOrderId] = useState(
-    () => sessionStorage.getItem("orderId") || null,
+    () => sessionStorage.getItem("orderId") || null
   );
-
   const [baseCalories, setBaseCalories] = useState(null);
   const [estimatedCalories, setEstimatedCalories] = useState(null);
   const [dailyCalories, setDailyCalories] = useState(null);
-
   const [menuDishes, setMenuDishes] = useState([]);
   const [orderDetails, setOrderDetails] = useState([]);
-
   const [paymentItems, setPaymentItems] = useState([]);
-
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingDetail, setEditingDetail] = useState(null);
+  const [paidSuccessOpen, setPaidSuccessOpen] = useState(false);
+  const [countdown, setCountdown] = useState(10);
+
+  // >>> NEW: refs chống reset đếm & dừng polling
+  const paidLockedRef = useRef(false); // true = đã xử lý thành công, không cho kích hoạt lại
+  const pollStopRef = useRef(false); // true = dừng vòng lặp polling
+  const pollTimerRef = useRef(null); // lưu timeout id cho polling
+  const thanksTimerRef = useRef(null); // lưu interval id cho countdown
 
   const PERSONAL_KEY = (cid) => `personalization:${cid}`;
   const applyGoal = (cals, goal) => {
@@ -80,6 +85,7 @@ export default function Menu() {
   const getDisplayName = (u) =>
     String(u?.fullName || u?.name || u?.username || "").trim();
 
+  // Load table/customer & sync
   useEffect(() => {
     const storedTableId = sessionStorage.getItem("customerTableId");
     if (storedTableId) setTableId(storedTableId);
@@ -112,6 +118,7 @@ export default function Menu() {
     };
   }, []);
 
+  // Auto create order (idempotent)
   useEffect(() => {
     const ready = Boolean(customerId) && Boolean(tableId);
     if (!ready) return;
@@ -140,6 +147,7 @@ export default function Menu() {
     })();
   }, [customerId, tableId]);
 
+  // Hide dishes by name
   const hiddenNames = (() => {
     try {
       return JSON.parse(localStorage.getItem("hidden_dishes")) || [];
@@ -148,6 +156,7 @@ export default function Menu() {
     }
   })();
 
+  // Load dishes
   useEffect(() => {
     (async () => {
       try {
@@ -173,12 +182,13 @@ export default function Menu() {
   }, []);
 
   const filteredDishes = menuDishes.filter(
-    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name),
+    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name)
   );
 
   const { personalizationForm, setPersonalizationForm, personalizedDishes } =
     useMenuPersonalization(filteredDishes);
 
+  // Load/init personalization
   useEffect(() => {
     if (!customerId) return;
 
@@ -194,7 +204,7 @@ export default function Menu() {
           if (typeof cached.perWorkout === "number") {
             const roundedBase = Math.ceil(cached.perWorkout);
             const roundedGoal = Math.ceil(
-              applyGoal(cached.perWorkout, data.goal),
+              applyGoal(cached.perWorkout, data.goal)
             );
             setBaseCalories(roundedBase);
             setEstimatedCalories(roundedGoal);
@@ -220,7 +230,7 @@ export default function Menu() {
         setPersonalizationForm((prev) => ({ ...prev, ...toForm }));
         localStorage.setItem(
           PERSONAL_KEY(customerId),
-          JSON.stringify({ data: toForm, updatedAt: Date.now() }),
+          JSON.stringify({ data: toForm, updatedAt: Date.now() })
         );
       } catch (e) {
         console.warn("Không lấy được personalization từ BE:", e?.message || e);
@@ -228,24 +238,25 @@ export default function Menu() {
     })();
   }, [customerId]);
 
+  // Cart helpers
   const addToCart = (item) => {
     const noteKey = item.notes || "";
     const existingItem = cart.find(
-      (it) => it.id === item.id && (it.notes || "") === noteKey,
+      (it) => it.id === item.id && (it.notes || "") === noteKey
     );
     if (existingItem) {
       setCart((prev) =>
         prev.map((it) =>
           it.id === item.id && (it.notes || "") === noteKey
             ? { ...it, quantity: it.quantity + (item.quantity ?? 1) }
-            : it,
-        ),
+            : it
+        )
       );
     } else {
       setCart((prev) => [...prev, { ...item }]);
     }
     setCaloriesConsumed(
-      (prev) => prev + (item.totalCalories || item.calories || 0),
+      (prev) => prev + (item.totalCalories || item.calories || 0)
     );
   };
 
@@ -259,11 +270,11 @@ export default function Menu() {
       const diff = newQuantity - item.quantity;
       setCart((prev) =>
         prev.map((it) =>
-          it.id === itemId ? { ...it, quantity: newQuantity } : it,
-        ),
+          it.id === itemId ? { ...it, quantity: newQuantity } : it
+        )
       );
       setCaloriesConsumed(
-        (prev) => prev + diff * (item.totalCalories || item.calories),
+        (prev) => prev + diff * (item.totalCalories || item.calories)
       );
     }
   };
@@ -273,11 +284,12 @@ export default function Menu() {
     if (item) {
       setCart((prev) => prev.filter((it) => it.id !== itemId));
       setCaloriesConsumed(
-        (prev) => prev - (item.totalCalories || item.calories) * item.quantity,
+        (prev) => prev - (item.totalCalories || item.calories) * item.quantity
       );
     }
   };
 
+  // Submit order details
   const handleOrderFood = async () => {
     try {
       if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
@@ -298,6 +310,7 @@ export default function Menu() {
     }
   };
 
+  // Auto refresh order details when open status sidebar
   useEffect(() => {
     if (isStatusOpen) fetchOrderDetailsFromOrder();
   }, [isStatusOpen, orderId]);
@@ -312,7 +325,13 @@ export default function Menu() {
   }, [isStatusOpen, orderId]);
 
   const groups = (() => {
-    const g = { pending: [], preparing: [], served: [], cancelled: [] };
+    const g = {
+      pending: [],
+      preparing: [],
+      served: [],
+      cancelled: [],
+      done: [],
+    };
     for (const od of orderDetails) {
       const key = String(od.status || "").toLowerCase();
       if (g[key]) g[key].push(od);
@@ -320,32 +339,14 @@ export default function Menu() {
     return g;
   })();
 
+  // Personalization handler
   const handleGoalChange = (goalId) => {
     setPersonalizationForm((prev) => ({ ...prev, goal: goalId }));
     const base = baseCalories ?? estimatedCalories;
     setEstimatedCalories(applyGoal(base, goalId));
   };
 
-  const groupPaymentItems = (details = []) => {
-    const map = new Map();
-    details.forEach((d) => {
-      const name = d.dishName ?? d.name;
-      const unit = Number(d.totalPrice ?? d.price ?? 0);
-      const key = `${name}|${unit}`;
-      const cur = map.get(key) || {
-        id: key,
-        name,
-        price: unit,
-        quantity: 0,
-        totalPrice: 0,
-      };
-      cur.quantity += 1;
-      cur.totalPrice = cur.price * cur.quantity;
-      map.set(key, cur);
-    });
-    return [...map.values()];
-  };
-
+  // Open PaymentSidebar: ensure items from BE
   const handleOpenPayment = async () => {
     try {
       if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
@@ -365,11 +366,7 @@ export default function Menu() {
     }
   };
 
-  const handleOpenEdit = (detail) => {
-    setEditingDetail(detail);
-    setIsEditOpen(true);
-  };
-
+  // CRUD on existing details
   const handleDeleteDetail = async (detail) => {
     if (!detail?.orderDetailId) return;
     if (!confirm("Xoá món này khỏi đơn?")) return;
@@ -388,23 +385,47 @@ export default function Menu() {
   const sumTotal = (items = []) =>
     items.reduce((s, it) => s + Number(it.totalPrice ?? it.price ?? 0), 0);
 
-  function notifyStaff({ tableId, orderId, total, paymentId }) {
+  // Local broadcast to staff (same-origin tabs)
+  function notifyPaymentStaff({ tableId, orderId, total, paymentId }) {
     const payload = { tableId, orderId, total, paymentId, ts: Date.now() };
     window.dispatchEvent(
-      new CustomEvent("table:callPayment", { detail: payload }),
+      new CustomEvent("table:callPayment", { detail: payload })
     );
     localStorage.setItem(
       `signal:callPayment:${payload.ts}`,
-      JSON.stringify(payload),
+      JSON.stringify(payload)
     );
   }
 
+  function notifyCallStaff({ tableId, orderId }) {
+    const payload = {
+      type: "callStaff",
+      tableId,
+      tableNumber: tableId,
+      orderId,
+      ts: Date.now(),
+    };
+
+    try {
+      const bc = new BroadcastChannel("monngon-signals");
+      bc.postMessage(payload);
+      bc.close?.();
+    } catch {}
+
+    localStorage.setItem(
+      `signal:callStaff:${payload.ts}`,
+      JSON.stringify(payload)
+    );
+  }
+
+  // Create payment (QR) and notify staff
   const handleRequestPayment = async () => {
     try {
       if (!orderId) throw new Error("Chưa có orderId.");
       const total = sumTotal(paymentItems);
       const p = await createPayment({ orderId, method: "BANK_TRANSFER" });
-      notifyStaff({ tableId, orderId, total, paymentId: p.id });
+      sessionStorage.setItem("paymentId", String(p.id || ""));
+      notifyPaymentStaff({ tableId, orderId, total, paymentId: p.id });
       setIsPaymentOpen(false);
       setIsCallStaffOpen(true);
     } catch (error) {
@@ -423,6 +444,13 @@ export default function Menu() {
   }
 
   const handleIncGroup = async (group) => {
+    const st = String(group?.sample?.status || "").toLowerCase();
+    if (st !== "pending") {
+      alert(
+        "Món không còn ở trạng thái 'Chờ nấu' nên không thể tăng số lượng / chỉnh sửa."
+      );
+      return;
+    }
     const it = group.sample;
     await createOrderDetail({
       orderId,
@@ -438,9 +466,21 @@ export default function Menu() {
   };
 
   const handleDecGroup = async (group) => {
+    const st = String(group?.sample?.status || "").toLowerCase();
+    if (st !== "pending") {
+      alert("Món không còn ở trạng thái 'Chờ nấu' nên không thể xoá.");
+      return;
+    }
     const idToDelete = group.ids[group.ids.length - 1];
     await deleteOrderDetail(idToDelete);
     await fetchOrderDetailsFromOrder();
+  };
+
+  const handleOpenEdit = (detail) => {
+    const st = String(detail?.status || "").toLowerCase();
+    if (st !== "pending") return;
+    setEditingDetail(detail);
+    setIsEditOpen(true);
   };
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -448,16 +488,10 @@ export default function Menu() {
   const handlePersonalizationSubmit = async (form) => {
     try {
       if (!customerId) throw new Error("Thiếu customerId");
-
-      console.log("📤 Dữ liệu cá nhân hoá gửi lên:", form);
-
-      // 1️⃣ Tính BMR (giống bên PersonalizationModal)
       const bmr =
         form.gender === "male"
           ? 10 * form.weight + 6.25 * form.height - 5 * form.age + 5
           : 10 * form.weight + 6.25 * form.height - 5 * form.age - 161;
-
-      // 2️⃣ Hệ số vận động
       const activityMultipliers = {
         sedentary: 1.2,
         light: 1.375,
@@ -466,18 +500,8 @@ export default function Menu() {
         very_active: 1.9,
       };
       const multiplier = activityMultipliers[form.exerciseLevel] || 1.55;
-
-      // 3️⃣ Tính tổng calo cần/ngày trước khi áp dụng mục tiêu
       const maintenanceCalories = bmr * multiplier;
-
-      // 4️⃣ Áp dụng mục tiêu (giảm, giữ, tăng)
       const dailyCalories = applyGoal(maintenanceCalories, form.goal);
-
-      console.log("🔥 BMR:", bmr);
-      console.log("🔥 Calo duy trì:", maintenanceCalories);
-      console.log("🔥 Calo mục tiêu/ngày:", dailyCalories);
-
-      // 5️⃣ Lưu vào localStorage để load nhanh lần sau
       localStorage.setItem(
         PERSONAL_KEY(customerId),
         JSON.stringify({
@@ -485,13 +509,9 @@ export default function Menu() {
           perWorkout: Math.ceil(maintenanceCalories),
           goalCalories: Math.ceil(dailyCalories),
           updatedAt: Date.now(),
-        }),
+        })
       );
-
-      // 6️⃣ Gọi API cập nhật thông tin khách hàng
       await updateCustomerPersonalization(customerId, form);
-
-      // 7️⃣ Cập nhật state FE để hiện ngay Calorie Tracker
       setBaseCalories(Math.ceil(maintenanceCalories));
       setEstimatedCalories(Math.ceil(dailyCalories));
       setIsPersonalized(true);
@@ -503,24 +523,172 @@ export default function Menu() {
     }
   };
 
+  // ==== Logout after paid success ====
+  function cleanupAndExit() {
+    try {
+      // dừng mọi timer trước khi rời trang
+      pollStopRef.current = true;
+      if (pollTimerRef.current) {
+        clearTimeout(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+      if (thanksTimerRef.current) {
+        clearInterval(thanksTimerRef.current);
+        thanksTimerRef.current = null;
+      }
+
+      sessionStorage.clear();
+      const keysToRemove = [
+        "user",
+        "accessToken",
+        "token",
+        "hidden_dishes",
+        `personalization:${customerId}`,
+      ];
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+      Object.keys(localStorage).forEach((k) => {
+        if (
+          k.startsWith("signal:callStaff:") ||
+          k.startsWith("signal:callPayment:") ||
+          k.startsWith("signal:paymentSuccess:")
+        ) {
+          try {
+            localStorage.removeItem(k);
+          } catch {}
+        }
+      });
+    } catch {}
+    window.location.replace("/home");
+  }
+
+  function handlePaidSuccess() {
+    // >>> NEW: khóa không cho kích hoạt lại nếu đã mở
+    if (paidLockedRef.current) return;
+    paidLockedRef.current = true;
+
+    // dừng polling ngay lập tức
+    pollStopRef.current = true;
+    if (pollTimerRef.current) {
+      clearTimeout(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+
+    setPaidSuccessOpen(true);
+    setCountdown(10);
+  }
+
+  // Countdown effect (được khóa bằng paidLockedRef + dừng poll)
+  useEffect(() => {
+    if (!paidSuccessOpen) return;
+    // clear trước khi set để tránh nhân đôi trong StrictMode
+    if (thanksTimerRef.current) {
+      clearInterval(thanksTimerRef.current);
+      thanksTimerRef.current = null;
+    }
+    thanksTimerRef.current = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          if (thanksTimerRef.current) {
+            clearInterval(thanksTimerRef.current);
+            thanksTimerRef.current = null;
+          }
+          cleanupAndExit();
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => {
+      if (thanksTimerRef.current) {
+        clearInterval(thanksTimerRef.current);
+        thanksTimerRef.current = null;
+      }
+    };
+  }, [paidSuccessOpen]);
+
+  // OPTIONAL: realtime signal (same-origin tabs)
+  useEffect(() => {
+    function onStorage(e) {
+      if (!e?.key) return;
+      if (e.key.startsWith("signal:paymentSuccess:")) {
+        try {
+          localStorage.removeItem(e.key);
+        } catch {}
+        handlePaidSuccess();
+      }
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  // Poll both payment(status) and order(status) — dừng hẳn khi success
+  useEffect(() => {
+    if (!orderId) return;
+    pollStopRef.current = false;
+
+    async function checkOnce() {
+      if (pollStopRef.current) return;
+
+      try {
+        // 1) Payment status
+        const pid = sessionStorage.getItem("paymentId");
+        if (pid) {
+          try {
+            const pay = await getPaymentById(pid);
+            const pst = String(pay?.status || "").toUpperCase();
+            if (["COMPLETED", "PAID", "SUCCESS"].includes(pst)) {
+              handlePaidSuccess();
+              return; // không schedule nữa (đã khóa)
+            }
+          } catch {}
+        }
+        // 2) Order status (cover cash)
+        try {
+          const o = await getOrderById(orderId);
+          const ost = String(o?.status || "").toUpperCase();
+          if (["PAID", "COMPLETED", "CLOSED"].includes(ost)) {
+            handlePaidSuccess();
+            return;
+          }
+        } catch {}
+      } finally {
+        // chỉ lặp khi chưa dừng
+        if (!pollStopRef.current) {
+          pollTimerRef.current = setTimeout(checkOnce, 3000);
+        }
+      }
+    }
+
+    // kick off nhẹ sau 2s
+    pollTimerRef.current = setTimeout(checkOnce, 2000);
+
+    return () => {
+      pollStopRef.current = true;
+      if (pollTimerRef.current) {
+        clearTimeout(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    };
+  }, [orderId]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
       <MenuHeader
-        cartItemCount={cartItemCount}
+        cartItemCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
         onPersonalize={() => setIsPersonalizationOpen(true)}
         onViewOrders={() => setIsCartOpen(true)}
         onCallStaff={() => {
           setIsCallStaffOpen(true);
-          setTimeout(() => {
-            setCart([]);
-            setCaloriesConsumed(0);
-          }, 2000);
+          if (tableId) {
+            notifyCallStaff({ tableId, orderId });
+          }
         }}
         onCheckout={handleOpenPayment}
         onViewStatus={() => setIsStatusOpen(true)}
         tableId={tableId}
         customerId={customerId}
       />
+
       <OrderStatusSidebar
         isOpen={isStatusOpen}
         onClose={() => setIsStatusOpen(false)}
@@ -530,6 +698,7 @@ export default function Menu() {
         onIncGroup={handleIncGroup}
         onDecGroup={handleDecGroup}
       />
+
       {isEditOpen && editingDetail && (
         <EditOrderDetailModal
           isOpen={isEditOpen}
@@ -538,6 +707,7 @@ export default function Menu() {
           onUpdated={handleEdited}
         />
       )}
+
       {orderId && tableId && customerId && (
         <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
           <div className="max-w-7xl mx-auto flex items-center justify-center space-x-6 text-sm">
@@ -558,6 +728,7 @@ export default function Menu() {
           </div>
         </div>
       )}
+
       <MenuContent
         activeMenuTab={activeMenuTab}
         setActiveMenuTab={setActiveMenuTab}
@@ -576,7 +747,6 @@ export default function Menu() {
               const toppings = await getToppingsByDishId(dish.id);
               fullDish = { ...fullDish, optionalToppings: toppings };
             }
-
             setSelectedDish(fullDish);
             setIsDishOptionsOpen(true);
           } catch (err) {
@@ -589,13 +759,15 @@ export default function Menu() {
         isPersonalized={isPersonalized}
         currentGoal={personalizationForm.goal}
       />
+
       <MenuFooter />
+
       <PersonalizationModal
         isOpen={isPersonalizationOpen}
         onClose={() => setIsPersonalizationOpen(false)}
         personalizationForm={personalizationForm}
         setPersonalizationForm={setPersonalizationForm}
-        onSubmit={handlePersonalizationSubmit} // nếu bạn muốn vẫn gửi BE
+        onSubmit={handlePersonalizationSubmit}
         dailyCalories={dailyCalories}
         setDailyCalories={setDailyCalories}
         caloriesConsumed={caloriesConsumed}
@@ -609,6 +781,7 @@ export default function Menu() {
         onRemoveItem={removeFromCart}
         onOrderFood={handleOrderFood}
       />
+
       <PaymentSidebar
         isOpen={isPaymentOpen}
         onClose={() => setIsPaymentOpen(false)}
@@ -616,12 +789,14 @@ export default function Menu() {
         items={paymentItems}
         onRequestPayment={handleRequestPayment}
       />
+
       <DishOptionsModal
         isOpen={isDishOptionsOpen}
         onClose={() => setIsDishOptionsOpen(false)}
         dish={selectedDish}
         onAddToCart={addToCart}
       />
+
       {isCallStaffOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
@@ -642,6 +817,31 @@ export default function Menu() {
                 Đóng
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {paidSuccessOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <h3 className="text-xl font-bold text-neutral-900 mb-2">
+              Thanh toán thành công!
+            </h3>
+            <p className="text-neutral-600">
+              Cảm ơn bạn đã đến dùng bữa tại nhà hàng.
+            </p>
+            <p className="text-neutral-600 mt-2">
+              Hệ thống sẽ tự thoát trong <b>{countdown}s</b>…
+            </p>
+            <button
+              onClick={cleanupAndExit}
+              className="mt-6 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
+            >
+              Thoát ngay
+            </button>
           </div>
         </div>
       )}

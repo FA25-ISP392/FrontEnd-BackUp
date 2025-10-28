@@ -107,7 +107,7 @@ apiConfig.interceptors.request.use((config) => {
 
 apiConfig.interceptors.response.use(
   (res) => unwrapResponse(res),
-  (error) => Promise.reject(wrapError(error)),
+  (error) => Promise.reject(wrapError(error))
 );
 
 export const REAL_BACKEND_BASE = `${BASE_API}${API_PREFIX}`;

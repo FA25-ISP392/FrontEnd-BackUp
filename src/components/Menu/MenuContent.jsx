@@ -3,9 +3,7 @@ import { categories as CATEGORY_LIST } from "../../lib/menuData";
 
 export default function MenuContent({
   activeMenuTab,
-  setActiveMenuTab,
   filteredDishes,
-  personalizedMenu,
   onDishSelect,
   caloriesConsumed,
   estimatedCalories,
@@ -18,12 +16,6 @@ export default function MenuContent({
     { id: "maintain", name: "Giữ dáng", icon: Heart },
     { id: "gain", name: "Tăng cân", icon: Zap },
   ];
-
-  // const mapGoalToType = {
-  //   gain: "Tăng cân",
-  //   lose: "Giảm cân",
-  //   maintain: "Giữ dáng",
-  // };
 
   const canShowCalorie =
     isPersonalized &&
@@ -54,7 +46,6 @@ export default function MenuContent({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* ================= Theo dõi Calorie ================= */}
       {canShowCalorie && (
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-8">
           <div className="flex items-center justify-between">
@@ -84,21 +75,6 @@ export default function MenuContent({
         </div>
       )}
 
-      {/* =================== Nút chuyển tab =================== */}
-      {/* <div className="flex space-x-4 mb-6">
-        <button
-          onClick={() => setActiveMenuTab("all")}
-          className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
-            activeMenuTab === "all"
-              ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg"
-              : "bg-white/80 text-neutral-700 hover:bg-white shadow-md"
-          }`}
-        >
-          Menu Tổng
-        </button>
-      </div> */}
-
-      {/* ✅ Mục tiêu của bạn (hiện thêm nút "Hiện tất cả món") */}
       {isPersonalized && activeMenuTab === "all" && (
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-8">
           <h3 className="text-lg font-bold text-neutral-900 mb-4 text-center">
@@ -111,7 +87,7 @@ export default function MenuContent({
               return (
                 <button
                   key={goal.id}
-                  onClick={() => onGoalChange(isActive ? null : goal.id)} // 👈 toggle filter
+                  onClick={() => onGoalChange(isActive ? null : goal.id)}
                   className={`flex flex-col items-center gap-2 px-4 py-2 rounded-xl transition-all ${
                     isActive
                       ? "text-white bg-gradient-to-r from-orange-500 to-red-500"
@@ -127,7 +103,6 @@ export default function MenuContent({
         </div>
       )}
 
-      {/* ✅ Menu Tổng */}
       {activeMenuTab === "all" &&
         CATEGORY_LIST.map((cat) => {
           const dishes = dishesToShow.filter(

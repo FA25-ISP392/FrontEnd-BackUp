@@ -1,3 +1,4 @@
+// pages/Admin.jsx
 import { useState, useEffect } from "react";
 import AdminSidebar from "../components/Admin/AdminSidebar";
 import AdminStatsCards from "../components/Admin/AdminStatsCards";
@@ -6,25 +7,26 @@ import AdminInvoices from "../components/Admin/Invoices";
 import AdminAccountManagement from "../components/Admin/AccountManagement";
 import AdminEditAccountModal from "../components/Admin/EditAccountModal";
 
-import {
-  mockAdminInvoices,
-  mockAdminRevenueData,
-  mockAdminDishSalesData,
-} from "../lib/adminData";
-
 import { updateStaff, deleteStaff, listStaffPaging } from "../lib/apiStaff";
 import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
 import { findStaffByUsername, normalizeStaff } from "../lib/apiStaff";
-//h
+import { getPayments } from "../lib/apiPayment"; // <-- THÊM: gọi danh sách hóa đơn
+
+// dữ liệu chart demo vẫn giữ mock
+import { mockAdminRevenueData, mockAdminDishSalesData } from "../lib/adminData";
+
 export default function Admin() {
   const [adminName, setAdminName] = useState("");
+
   const [activeSection, setActiveSection] = useState("overview");
   const [revenuePeriod, setRevenuePeriod] = useState("day");
+
   const [isEditingAccount, setIsEditingAccount] = useState(false);
   const [isEditingDish, setIsEditingDish] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [deletingIds, setDeletingIds] = useState(new Set());
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
   const [dishes, setDishes] = useState([]);
   const [loadingDishes, setLoadingDishes] = useState(false);
 
@@ -38,6 +40,24 @@ export default function Admin() {
     autoSave: true,
   });
 
+  // ======== ACCOUNTS ========
+  const [accounts, setAccounts] = useState([]);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [accountsError, setAccountsError] = useState("");
+  const [page, setPage] = useState(1);
+  const [size] = useState(6);
+  const [pageInfo, setPageInfo] = useState({
+    page: 1,
+    size: 6,
+    totalPages: 1,
+    totalElements: 0,
+  });
+
+  const [invoices, setInvoices] = useState([]);
+  const [loadingInvoices, setLoadingInvoices] = useState(false);
+  const [invoiceError, setInvoiceError] = useState("");
+
+  // tên admin
   useEffect(() => {
     const loadName = async () => {
       try {
@@ -58,37 +78,20 @@ export default function Admin() {
           return;
         }
         const profile = await findStaffByUsername(username);
-        setAdminName(profile?.name);
-      } catch (err) {
-        console.error(err);
+        setAdminName(profile?.name || "Admin");
+      } catch {
         setAdminName("Admin");
       }
     };
     loadName();
   }, []);
 
-  // Mock data
-  // const [accounts, setAccounts] = useState(mockAdminAccounts);
-  const [invoices, setInvoices] = useState(mockAdminInvoices);
-
-  //Call API data real
-  const [accounts, setAccounts] = useState([]);
-  const [loadingAccounts, setLoadingAccounts] = useState(false);
-  const [accountsError, setAccountsError] = useState("");
-
-  const [page, setPage] = useState(1);
-  const [size] = useState(6);
-  const [pageInfo, setPageInfo] = useState({
-    page: 1,
-    size: 6,
-    totalPages: 1,
-    totalElements: 0,
-  });
-
+  // reset page khi đổi tab
   useEffect(() => {
     if (activeSection === "accounts") setPage(1);
   }, [activeSection]);
 
+  // tải account phân trang
   useEffect(() => {
     if (activeSection !== "accounts") return;
     let cancelled = false;
@@ -105,7 +108,7 @@ export default function Admin() {
       } catch (err) {
         if (!cancelled)
           setAccountsError(
-            err.message || "Không tải được danh sách nhân viên."
+            err?.message || "Không tải được danh sách nhân viên."
           );
       } finally {
         if (!cancelled) setLoadingAccounts(false);
@@ -116,6 +119,28 @@ export default function Admin() {
       cancelled = true;
     };
   }, [activeSection, page, size]);
+
+  // tải danh sách hóa đơn khi mở tab "invoices"
+  useEffect(() => {
+    if (activeSection !== "invoices") return;
+    let cancelled = false;
+    (async () => {
+      setLoadingInvoices(true);
+      setInvoiceError("");
+      try {
+        const list = await getPayments(); // trả về list đã normalize
+        if (!cancelled) setInvoices(list);
+      } catch (e) {
+        if (!cancelled)
+          setInvoiceError(e?.message || "Không tải được hóa đơn.");
+      } finally {
+        if (!cancelled) setLoadingInvoices(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSection]);
 
   const refetchAccounts = async (toPage = page) => {
     setLoadingAccounts(true);
@@ -222,14 +247,14 @@ export default function Admin() {
     }
   };
 
-  // Calculate totals
+  // KPI quick stats
   const totalRevenue = mockAdminRevenueData.reduce(
     (sum, item) => sum + item.revenue,
     0
   );
   const totalAccounts = accounts.length;
   const totalDishes = dishes.length;
-  const totalInvoices = invoices.length;
+  const totalInvoices = invoices.length; // <-- đếm theo dữ liệu thật
 
   const renderContent = () => {
     switch (activeSection) {
@@ -250,6 +275,7 @@ export default function Admin() {
             />
           </>
         );
+
       case "accounts":
         return (
           <AdminAccountManagement
@@ -266,18 +292,14 @@ export default function Admin() {
             currentUser={getCurrentUser()}
           />
         );
-      // case "dishes":
-      //   return (
-      //     <AdminDishesManagement
-      //       dishes={dishes}
-      //       setDishes={setDishes}
-      //       setIsEditingDish={setIsEditingDish}
-      //       setEditingItem={setEditingItem}
-      //       loading={loadingDishes}
-      //     />
-      //   );
+
       case "invoices":
+        if (loadingInvoices)
+          return <div className="p-6">Đang tải hóa đơn…</div>;
+        if (invoiceError)
+          return <div className="p-6 text-red-600">{invoiceError}</div>;
         return <AdminInvoices invoices={invoices} />;
+
       default:
         return null;
     }
@@ -293,7 +315,6 @@ export default function Admin() {
         />
 
         <main className="flex-1 p-6">
-          {/* Main Content Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-neutral-900 mb-2">
               Chào mừng trở lại, {adminName}!
@@ -303,7 +324,6 @@ export default function Admin() {
             </p>
           </div>
 
-          {/* Dynamic Content */}
           {renderContent()}
         </main>
       </div>
@@ -317,21 +337,6 @@ export default function Admin() {
         setDeletingIds={deletingIds}
         accounts={accounts}
       />
-      {/* <AdminEditDishModal
-        isEditingDish={isEditingDish}
-        setIsEditingDish={setIsEditingDish}
-        editingItem={editingItem}
-        setEditingItem={setEditingItem}
-        saveDish={(updatedDish) => {
-          if (updatedDish) {
-            setDishes((prev) =>
-              prev.map((dish) =>
-                dish.id === updatedDish.id ? updatedDish : dish
-              )
-            );
-          }
-        }}
-      /> */}
     </div>
   );
 }

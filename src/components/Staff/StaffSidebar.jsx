@@ -11,7 +11,7 @@ export default function StaffSidebar({ activeSection, setActiveSection }) {
   const sidebarItems = [
     { id: "tableLayout", label: "Sơ Đồ Bàn", icon: Table },
     { id: "overview", label: "Thông Tin Bàn", icon: BarChart3 },
-    { id: "ordersByTable", label: "Đơn Món Theo Bàn", icon: Utensils },
+    { id: "serveBoard", label: "Phục Vụ Món", icon: Utensils },
   ];
 
   return (
@@ -22,8 +22,10 @@ export default function StaffSidebar({ activeSection, setActiveSection }) {
             <Users className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-neutral-900">Staff Panel</h2>
-            <p className="text-xs text-neutral-600">Service Management</p>
+            <h2 className="text-lg font-bold text-neutral-900">
+              Trang Nhân Viên
+            </h2>
+            <p className="text-xs text-neutral-600">Phục vụ khách hàng</p>
           </div>
         </div>
 

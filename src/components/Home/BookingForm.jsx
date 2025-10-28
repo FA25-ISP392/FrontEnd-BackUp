@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import RestaurantTableLayout from "./RestaurantTableLayout";
+import { createBooking, approveBookingWithTable } from "../../lib/apiBooking";
 
 const LEAD_MINUTES = 30;
 
@@ -79,7 +80,31 @@ export default function BookingForm({
 
   return (
     <div>
-      <RestaurantTableLayout />
+      <RestaurantTableLayout
+        date={formData.date}
+        time={formData.time}
+        guests={formData.guests}
+        onPick={async (tableId) => {
+          if (!isLoggedIn) {
+            onLoginClick?.(formData);
+            return;
+          }
+          try {
+            const res = await createBooking({
+              date: formData.date,
+              time: formData.time,
+              guests: formData.guests,
+              preferredTable: tableId,
+            });
+            const bookingId =
+              res?.result?.bookingId ?? res?.bookingId ?? res?.id;
+            await approveBookingWithTable(bookingId, tableId);
+            onSubmit?.({ ...formData, preferredTable: tableId, bookingId });
+          } catch (err) {
+            console.error(err);
+          }
+        }}
+      />
 
       {!isLoggedIn && (
         <div className="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-xl shadow-sm">
