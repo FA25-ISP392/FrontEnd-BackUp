@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import AdminSidebar from "../components/Admin/AdminSidebar";
 import AdminStatsCards from "../components/Admin/AdminStatsCards";
-import AdminCharts from "../components/Admin/AdminCharts";
 import AdminInvoices from "../components/Admin/Invoices";
 import AdminAccountManagement from "../components/Admin/AccountManagement";
 import AdminEditAccountModal from "../components/Admin/EditAccountModal";
@@ -14,6 +13,7 @@ import {
 } from "../lib/apiStaff";
 import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
 import { listPaymentsPaging } from "../lib/apiPayment";
+import AdminDishStatistics from "../components/Admin/AdminDishStatistics";
 import { mockAdminRevenueData, mockAdminDishSalesData } from "../lib/adminData";
 
 export default function Admin() {
@@ -280,18 +280,9 @@ export default function Admin() {
       case "overview":
         return (
           <>
-            <AdminStatsCards
-              totalRevenue={totalRevenue}
-              totalAccounts={totalAccounts}
-              totalDishes={0}
-              totalInvoices={totalInvoices}
-            />
-            <AdminCharts
-              revenueData={mockAdminRevenueData}
-              dishSalesData={mockAdminDishSalesData}
-              revenuePeriod={revenuePeriod}
-              setRevenuePeriod={setRevenuePeriod}
-            />
+            <AdminStatsCards totalRevenue={totalRevenue} />
+
+            <AdminDishStatistics />
           </>
         );
 

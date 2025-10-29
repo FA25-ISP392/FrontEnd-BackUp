@@ -260,8 +260,15 @@ export default function ManagerDishPage() {
       console.log("🍕 Gửi toppingIds:", toppingIds);
       console.log("🆔 dishId mới:", newId);
 
-      const res = await addDishToppingsBatch(newId, toppingIds);
-      console.log("✅ Kết quả addDishToppingsBatch:", res);
+      // ✅ Chỉ gọi API nếu có ít nhất 1 topping
+      if (toppingIds.length > 0) {
+        const res = await addDishToppingsBatch(newId, toppingIds);
+        console.log("✅ Kết quả addDishToppingsBatch:", res);
+      } else {
+        console.log(
+          "⚠️ Không có topping nào được chọn, bỏ qua addDishToppingsBatch",
+        );
+      }
 
       alert("✅ Thêm món ăn thành công!");
       setOpenCreate(false);
