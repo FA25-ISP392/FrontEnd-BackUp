@@ -1,15 +1,12 @@
 import { useState, useEffect } from "react";
 import {
   Users,
-  ClipboardList,
-  User,
   LogOut,
   X,
   Phone,
   CheckCircle,
   Clock,
   AlertCircle,
-  Timer,
   DollarSign,
   Table,
 } from "lucide-react";
@@ -28,7 +25,7 @@ import {
   updateOrderDetailStatus,
 } from "../lib/apiOrderDetail";
 
-const RESERVE_WINDOW_MINUTES = 240;
+const RESERVE_WINDOW_MINUTES = 10;
 const DEBUG_LOG = import.meta.env.DEV;
 
 function isWithinWindow(
@@ -37,7 +34,8 @@ function isWithinWindow(
   mins = RESERVE_WINDOW_MINUTES
 ) {
   const b = new Date(bookingISO);
-  return Math.abs((b.getTime() - now.getTime()) / 60000) <= mins;
+  const diffMins = (b.getTime() - now.getTime()) / 60000;
+  return diffMins >= 0 && diffMins <= mins;
 }
 
 function hhmm(d) {
@@ -53,8 +51,6 @@ export default function StaffPage() {
   const [tables, setTables] = useState([]);
   const [orders] = useState([]);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-
-  // ServeBoard state
   const [readyOrders, setReadyOrders] = useState([]);
   const [servedOrders, setServedOrders] = useState([]);
   const [serveLoading, setServeLoading] = useState(false);
@@ -93,8 +89,6 @@ export default function StaffPage() {
               (b) =>
                 b.status === "APPROVED" && isWithinWindow(b.bookingDate, now)
             );
-
-            // NEW: nếu đã serving thì giữ nguyên; nếu chưa serving mà có booking active -> reserved
             let nextStatus = t.status ?? "empty";
             if (nextStatus !== "serving" && active) nextStatus = "reserved";
 
