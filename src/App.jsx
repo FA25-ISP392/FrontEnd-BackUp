@@ -12,6 +12,7 @@ import "./App.css";
 import VerifyEmail from "./pages/VerifyEmail.jsx";
 import PaymentSuccess from "./pages/PaymentSuccess.jsx";
 import PaymentFail from "./pages/PaymentFail.jsx";
+import GoogleCallback from "./pages/GoogleCallback.jsx";
 
 export default function App() {
   return (
