@@ -1,4 +1,3 @@
-// pages/Admin.jsx
 import { useState, useEffect } from "react";
 import AdminSidebar from "../components/Admin/AdminSidebar";
 import AdminStatsCards from "../components/Admin/AdminStatsCards";
@@ -6,32 +5,26 @@ import AdminCharts from "../components/Admin/AdminCharts";
 import AdminInvoices from "../components/Admin/Invoices";
 import AdminAccountManagement from "../components/Admin/AccountManagement";
 import AdminEditAccountModal from "../components/Admin/EditAccountModal";
-
-import { updateStaff, deleteStaff, listStaffPaging } from "../lib/apiStaff";
+import {
+  updateStaff,
+  deleteStaff,
+  listStaffPaging,
+  findStaffByUsername,
+  normalizeStaff,
+} from "../lib/apiStaff";
 import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
-import { findStaffByUsername, normalizeStaff } from "../lib/apiStaff";
-import { getPayments } from "../lib/apiPayment"; // <-- THÊM: gọi danh sách hóa đơn
-
-// dữ liệu chart demo vẫn giữ mock
+import { listPaymentsPaging } from "../lib/apiPayment";
 import { mockAdminRevenueData, mockAdminDishSalesData } from "../lib/adminData";
 
 export default function Admin() {
   const [adminName, setAdminName] = useState("");
-
   const [activeSection, setActiveSection] = useState("overview");
   const [revenuePeriod, setRevenuePeriod] = useState("day");
-
   const [isEditingAccount, setIsEditingAccount] = useState(false);
-  const [isEditingDish, setIsEditingDish] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [deletingIds, setDeletingIds] = useState(new Set());
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-  const [dishes, setDishes] = useState([]);
-  const [loadingDishes, setLoadingDishes] = useState(false);
-
   const [settings, setSettings] = useState({
-    theme: "light ",
+    theme: "light",
     language: "vi",
     currency: "USD",
     emailNotif: true,
@@ -40,7 +33,7 @@ export default function Admin() {
     autoSave: true,
   });
 
-  // ======== ACCOUNTS ========
+  // ==== ACCOUNT STATES ====
   const [accounts, setAccounts] = useState([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [accountsError, setAccountsError] = useState("");
@@ -53,11 +46,20 @@ export default function Admin() {
     totalElements: 0,
   });
 
+  // ==== INVOICE STATES ====
   const [invoices, setInvoices] = useState([]);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
   const [invoiceError, setInvoiceError] = useState("");
+  const [invPage, setInvPage] = useState(1);
+  const [invSize] = useState(6);
+  const [invPageInfo, setInvPageInfo] = useState({
+    page: 1,
+    size: 6,
+    totalPages: 1,
+    totalElements: 0,
+  });
 
-  // tên admin
+  // ==== ADMIN NAME ====
   useEffect(() => {
     const loadName = async () => {
       try {
@@ -86,12 +88,13 @@ export default function Admin() {
     loadName();
   }, []);
 
-  // reset page khi đổi tab
+  // ==== RESET PAGE KHI ĐỔI TAB ====
   useEffect(() => {
     if (activeSection === "accounts") setPage(1);
+    if (activeSection === "invoices") setInvPage(1);
   }, [activeSection]);
 
-  // tải account phân trang
+  // ==== LOAD ACCOUNTS ====
   useEffect(() => {
     if (activeSection !== "accounts") return;
     let cancelled = false;
@@ -120,16 +123,30 @@ export default function Admin() {
     };
   }, [activeSection, page, size]);
 
-  // tải danh sách hóa đơn khi mở tab "invoices"
+  // ==== LOAD INVOICES (CÓ PHÂN TRANG) ====
   useEffect(() => {
     if (activeSection !== "invoices") return;
     let cancelled = false;
+
     (async () => {
       setLoadingInvoices(true);
       setInvoiceError("");
       try {
-        const list = await getPayments(); // trả về list đã normalize
-        if (!cancelled) setInvoices(list);
+        const { items, pageInfo } = await listPaymentsPaging({
+          page: invPage - 1, // backend 0-based
+          size: invSize,
+        });
+        if (!cancelled) {
+          setInvoices(items || []);
+          setInvPageInfo(
+            pageInfo || {
+              page: invPage,
+              size: invSize,
+              totalPages: 1,
+              totalElements: items?.length || 0,
+            }
+          );
+        }
       } catch (e) {
         if (!cancelled)
           setInvoiceError(e?.message || "Không tải được hóa đơn.");
@@ -137,11 +154,13 @@ export default function Admin() {
         if (!cancelled) setLoadingInvoices(false);
       }
     })();
+
     return () => {
       cancelled = true;
     };
-  }, [activeSection]);
+  }, [activeSection, invPage, invSize]);
 
+  // ==== ACCOUNT ACTIONS ====
   const refetchAccounts = async (toPage = page) => {
     setLoadingAccounts(true);
     try {
@@ -247,15 +266,15 @@ export default function Admin() {
     }
   };
 
-  // KPI quick stats
+  // ==== KPI QUICK STATS ====
   const totalRevenue = mockAdminRevenueData.reduce(
     (sum, item) => sum + item.revenue,
     0
   );
   const totalAccounts = accounts.length;
-  const totalDishes = dishes.length;
-  const totalInvoices = invoices.length; // <-- đếm theo dữ liệu thật
+  const totalInvoices = invPageInfo?.totalElements ?? invoices.length;
 
+  // ==== RENDER ====
   const renderContent = () => {
     switch (activeSection) {
       case "overview":
@@ -264,7 +283,7 @@ export default function Admin() {
             <AdminStatsCards
               totalRevenue={totalRevenue}
               totalAccounts={totalAccounts}
-              totalDishes={totalDishes}
+              totalDishes={0}
               totalInvoices={totalInvoices}
             />
             <AdminCharts
@@ -298,7 +317,13 @@ export default function Admin() {
           return <div className="p-6">Đang tải hóa đơn…</div>;
         if (invoiceError)
           return <div className="p-6 text-red-600">{invoiceError}</div>;
-        return <AdminInvoices invoices={invoices} />;
+        return (
+          <AdminInvoices
+            invoices={invoices}
+            pageInfo={invPageInfo}
+            onPageChange={setInvPage}
+          />
+        );
 
       default:
         return null;

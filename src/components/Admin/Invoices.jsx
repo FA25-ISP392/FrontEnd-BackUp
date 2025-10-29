@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
-import { FileText, Search } from "lucide-react";
+import { FileText, Search, ChevronLeft, ChevronRight } from "lucide-react";
 
-/* ===== Helpers ===== */
 function fmtVND(v = 0) {
   try {
     return new Intl.NumberFormat("vi-VN", {
@@ -14,9 +13,6 @@ function fmtVND(v = 0) {
   }
 }
 
-/** Cắt trực tiếp "YYYY-MM-DD HH:mm(:ss)(.ffffff)" hoặc ISO "YYYY-MM-DDTHH:mm(:ss)"
- *  -> trả "YYYY-MM-DD HH:mm". KHÔNG parse Date để không lệch UTC.
- */
 function toDatetimeText(raw) {
   if (!raw) return "-";
   const s = String(raw).trim();
@@ -24,7 +20,6 @@ function toDatetimeText(raw) {
     /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})(?::\d{2})?(?:\.\d+)?/
   );
   if (m) return `${m[1]} ${m[2]}`;
-  // nếu format lạ -> hiện nguyên chuỗi để còn thấy
   return s;
 }
 
@@ -58,8 +53,11 @@ function methodLabel(m, vi) {
   return M;
 }
 
-/* ===== Component ===== */
-export default function AdminInvoices({ invoices = [] }) {
+export default function AdminInvoices({
+  invoices = [],
+  pageInfo,
+  onPageChange,
+}) {
   const [q, setQ] = useState("");
 
   const filtered = useMemo(() => {
@@ -87,6 +85,8 @@ export default function AdminInvoices({ invoices = [] }) {
   }, [q, invoices]);
 
   const total = filtered.reduce((sum, p) => sum + (Number(p.total) || 0), 0);
+
+  const hasPagination = pageInfo && pageInfo.totalPages > 1;
 
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
@@ -129,30 +129,26 @@ export default function AdminInvoices({ invoices = [] }) {
         </div>
 
         <div className="divide-y divide-neutral-200">
-          {filtered.map((p) => {
-            const dt =
-              p.datetimeText ||
-              toDatetimeText(p.paidAt || p.updatedAt || p.createdAt || "");
-
-            return (
-              <div key={p.id} className="px-6 py-4">
-                <div className="grid grid-cols-6 gap-4 items-center">
-                  <div className="font-medium">{p.id}</div>
-                  <div>{p.orderId || "-"}</div>
-                  <div className="text-green-600 font-semibold">
-                    {fmtVND(p.total)}
-                  </div>
-                  <div>{p.datetimeTextPlus7 || p.datetimeText || "-"}</div>{" "}
-                  <div className="text-sm">
-                    {p.methodVi || methodLabel(p.method)}
-                  </div>
-                  <div>
-                    <StatusPill status={p.status} label={p.statusVi} />
-                  </div>
+          {filtered.map((p) => (
+            <div key={p.id} className="px-6 py-4">
+              <div className="grid grid-cols-6 gap-4 items-center">
+                <div className="font-medium">{p.id}</div>
+                <div>{p.orderId || "-"}</div>
+                <div className="text-green-600 font-semibold">
+                  {fmtVND(p.total)}
+                </div>
+                <div>
+                  {p.datetimeTextPlus7 || toDatetimeText(p.createdAt) || "-"}
+                </div>
+                <div className="text-sm">
+                  {p.methodVi || methodLabel(p.method)}
+                </div>
+                <div>
+                  <StatusPill status={p.status} label={p.statusVi} />
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
 
           {filtered.length === 0 && (
             <div className="px-6 py-10 text-center text-neutral-600">
@@ -162,9 +158,33 @@ export default function AdminInvoices({ invoices = [] }) {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-end text-sm text-neutral-700">
-        Tổng:{" "}
-        <span className="ml-2 font-bold text-green-600">{fmtVND(total)}</span>
+      <div className="mt-4 flex items-center justify-between text-sm text-neutral-700">
+        <div>
+          Tổng:{" "}
+          <span className="ml-2 font-bold text-green-600">{fmtVND(total)}</span>
+        </div>
+
+        {hasPagination && (
+          <div className="flex items-center gap-3">
+            <button
+              className="px-2 py-1 rounded-md border text-neutral-600 hover:bg-neutral-100 disabled:opacity-40"
+              disabled={pageInfo.page <= 1}
+              onClick={() => onPageChange(pageInfo.page - 1)}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span>
+              Trang <b>{pageInfo.page}</b> / {pageInfo.totalPages}
+            </span>
+            <button
+              className="px-2 py-1 rounded-md border text-neutral-600 hover:bg-neutral-100 disabled:opacity-40"
+              disabled={pageInfo.page >= pageInfo.totalPages}
+              onClick={() => onPageChange(pageInfo.page + 1)}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
