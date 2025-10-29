@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import AdminSidebar from "../components/Admin/AdminSidebar";
 import AdminStatsCards from "../components/Admin/AdminStatsCards";
-import AdminCharts from "../components/Admin/AdminCharts";
 import AdminInvoices from "../components/Admin/Invoices";
 import AdminAccountManagement from "../components/Admin/AccountManagement";
 import AdminEditAccountModal from "../components/Admin/EditAccountModal";
@@ -11,6 +10,7 @@ import { updateStaff, deleteStaff, listStaffPaging } from "../lib/apiStaff";
 import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
 import { findStaffByUsername, normalizeStaff } from "../lib/apiStaff";
 import { getPayments } from "../lib/apiPayment"; // <-- THÊM: gọi danh sách hóa đơn
+import AdminDishStatistics from "../components/Admin/AdminDishStatistics";
 
 // dữ liệu chart demo vẫn giữ mock
 import { mockAdminRevenueData, mockAdminDishSalesData } from "../lib/adminData";
@@ -108,7 +108,7 @@ export default function Admin() {
       } catch (err) {
         if (!cancelled)
           setAccountsError(
-            err?.message || "Không tải được danh sách nhân viên."
+            err?.message || "Không tải được danh sách nhân viên.",
           );
       } finally {
         if (!cancelled) setLoadingAccounts(false);
@@ -176,7 +176,7 @@ export default function Admin() {
       const response = await updateStaff(staffId, payload);
       const updated = normalizeStaff(response?.result ?? response);
       setAccounts((prev) =>
-        prev.map((arr) => (arr.id === staffId ? { ...arr, ...updated } : arr))
+        prev.map((arr) => (arr.id === staffId ? { ...arr, ...updated } : arr)),
       );
     } catch (err) {
       const data = err?.response?.data || err?.data || {};
@@ -198,7 +198,7 @@ export default function Admin() {
   const deleteAccount = async (staffId) => {
     if (!staffId) return;
     const targetDelete = accounts.find(
-      (arr) => Number(arr.staffId) === Number(staffId)
+      (arr) => Number(arr.staffId) === Number(staffId),
     );
     if (!targetDelete) return;
     const me = getCurrentUser() || {};
@@ -250,7 +250,7 @@ export default function Admin() {
   // KPI quick stats
   const totalRevenue = mockAdminRevenueData.reduce(
     (sum, item) => sum + item.revenue,
-    0
+    0,
   );
   const totalAccounts = accounts.length;
   const totalDishes = dishes.length;
@@ -261,18 +261,9 @@ export default function Admin() {
       case "overview":
         return (
           <>
-            <AdminStatsCards
-              totalRevenue={totalRevenue}
-              totalAccounts={totalAccounts}
-              totalDishes={totalDishes}
-              totalInvoices={totalInvoices}
-            />
-            <AdminCharts
-              revenueData={mockAdminRevenueData}
-              dishSalesData={mockAdminDishSalesData}
-              revenuePeriod={revenuePeriod}
-              setRevenuePeriod={setRevenuePeriod}
-            />
+            <AdminStatsCards totalRevenue={totalRevenue} />
+
+            <AdminDishStatistics />
           </>
         );
 
