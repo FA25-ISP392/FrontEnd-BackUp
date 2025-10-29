@@ -22,6 +22,7 @@ export default function App() {
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/payment/success" element={<PaymentSuccess />} />
       <Route path="/payment/cancel" element={<PaymentFail />} />
+      <Route path="/auth/callback" element={<GoogleCallback />} />
       <Route path="*" element={<Home />} />
 
       <Route
