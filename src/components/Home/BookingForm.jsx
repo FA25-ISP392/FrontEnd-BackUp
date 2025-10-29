@@ -1,4 +1,3 @@
-// BookingForm.jsx
 import { useEffect, useMemo, useState } from "react";
 import RestaurantTableLayout from "./RestaurantTableLayout";
 import {
@@ -6,6 +5,7 @@ import {
   approveBookingWithTable,
   listBookingsByTableDate,
 } from "../../lib/apiBooking";
+import { showToast } from "../../common/ToastHost";
 
 const LEAD_MINUTES = 30;
 
@@ -35,7 +35,7 @@ export default function BookingForm({
   const [fieldErrs, setFieldErrs] = useState({});
   const [loading, setLoading] = useState(false);
   const [scanning, setScanning] = useState(false);
-  const [availableTables, setAvailableTables] = useState([]); // [{id,seats}]
+  const [availableTables, setAvailableTables] = useState([]);
 
   useEffect(() => {
     setForm((s) => ({
@@ -81,18 +81,17 @@ export default function BookingForm({
       const when = new Date(`${date}T${time}`);
       const results = [];
       for (const tb of ALL_TABLES) {
-        if (tb.seats < guests) continue; // không đủ chỗ
+        if (tb.seats < guests) continue;
         const list = await listBookingsByTableDate(tb.id, date);
         const overlap = list.some((b) => {
           const st = String(b.status || "").toUpperCase();
           if (["CANCELLED", "REJECTED"].includes(st)) return false;
           const booked = new Date(String(b.bookingDate).replace(" ", "T"));
-          return Math.abs(booked - when) < 2 * 60 * 60 * 1000; // ±2h
+          return Math.abs(booked - when) < 2 * 60 * 60 * 1000;
         });
         if (!overlap) results.push({ id: tb.id, seats: tb.seats });
       }
       setAvailableTables(results);
-      // nếu table đã chọn không còn hợp lệ → reset
       if (!results.find((x) => String(x.id) === String(form.tableId))) {
         setForm((s) => ({ ...s, tableId: "" }));
       }
@@ -103,7 +102,6 @@ export default function BookingForm({
 
   useEffect(() => {
     recomputeAvailable(form.date, form.time, form.guests);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.date, form.time, form.guests]);
 
   const onChange = (e) => {
@@ -119,6 +117,7 @@ export default function BookingForm({
     e.preventDefault();
     if (!isLoggedIn) {
       onLoginClick?.(form);
+      showToast("Vui lòng đăng nhập để đặt bàn!", "warning");
       return;
     }
 
@@ -128,12 +127,11 @@ export default function BookingForm({
       return;
     }
 
-    // Nếu chỉ còn 1 bàn → auto chọn
     let pickedId = form.tableId;
     if (!pickedId && availableTables.length === 1)
       pickedId = availableTables[0].id;
     if (!pickedId) {
-      alert("Vui lòng chọn bàn trong danh sách bàn trống.");
+      showToast("Vui lòng chọn bàn trong danh sách bàn trống.", "warning");
       return;
     }
 
@@ -147,121 +145,139 @@ export default function BookingForm({
       });
       const bookingId = res?.result?.bookingId ?? res?.bookingId ?? res?.id;
       await approveBookingWithTable(bookingId, pickedId);
-      alert(`Đặt bàn thành công! Bàn số ${pickedId} đã được gán cho bạn.`);
+      showToast(
+        `Đặt bàn thành công! Bàn số ${pickedId} đã được gán.`,
+        "success"
+      );
       onSubmit?.({ ...form, tableId: pickedId, bookingId });
     } catch (err) {
-      alert(err?.message || "Đặt bàn thất bại.");
+      showToast(err?.message || "Đặt bàn thất bại.", "error");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div>
-      <RestaurantTableLayout
-        date={form.date}
-        time={form.time}
-        guests={form.guests}
-      />
-
-      <form onSubmit={submit} className="space-y-4">
-        {/* Ngày */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Ngày đặt bàn
-          </label>
-          <input
-            type="date"
-            name="date"
-            value={form.date}
-            min={minDate}
-            onChange={onChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-          />
-          {fieldErrs.date && (
-            <p className="text-xs text-red-600 mt-1">{fieldErrs.date}</p>
-          )}
-        </div>
-
-        {/* Giờ */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Giờ đặt bàn
-          </label>
-          <input
-            type="time"
-            name="time"
-            value={form.time}
-            onChange={onChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-          />
-          {fieldErrs.time && (
-            <p className="text-xs text-red-600 mt-1">{fieldErrs.time}</p>
-          )}
-        </div>
-
-        {/* Số khách */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Số lượng khách: {form.guests}
-          </label>
-          <input
-            type="range"
-            name="guests"
-            min="1"
-            max="8"
-            value={form.guests}
-            onChange={onChange}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-          />
-          {fieldErrs.guests && (
-            <p className="text-xs text-red-600 mt-1">{fieldErrs.guests}</p>
-          )}
-        </div>
-
-        {/* Chọn bàn (mới) */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Chọn bàn {scanning ? "(đang quét...)" : ""}
-          </label>
-          <select
-            name="tableId"
-            value={form.tableId}
-            onChange={onChange}
-            disabled={
-              !form.date ||
-              !form.time ||
-              scanning ||
-              availableTables.length === 0
-            }
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100"
-          >
-            <option value="">
-              {!form.date || !form.time
-                ? "Chọn ngày & giờ trước"
-                : scanning
-                ? "Đang quét bàn trống..."
-                : availableTables.length === 0
-                ? "Không còn bàn phù hợp"
-                : "— Chọn 1 bàn —"}
-            </option>
-            {availableTables.map((t) => (
-              <option
-                key={t.id}
-                value={t.id}
-              >{`Bàn ${t.id} (${t.seats} người)`}</option>
-            ))}
-          </select>
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-medium transition-colors"
+    <div className="relative">
+      {!isLoggedIn && (
+        <div
+          className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/35 backdrop-blur-0 rounded-lg"
+          onClick={() => {
+            onLoginClick?.(form);
+            showToast("Vui lòng đăng nhập để đặt bàn!", "warning");
+          }}
         >
-          {loading ? "Đang xử lý..." : "Đặt Bàn"}
-        </button>
-      </form>
+          <p className="text-gray-700 font-medium mb-3">
+            Bạn cần đăng nhập để sử dụng chức năng này
+          </p>
+          <button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg">
+            Đăng nhập ngay
+          </button>
+        </div>
+      )}
+
+      <div className={isLoggedIn ? "" : "pointer-events-none opacity-75"}>
+        <RestaurantTableLayout
+          date={form.date}
+          time={form.time}
+          guests={form.guests}
+        />
+
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Ngày đặt bàn
+            </label>
+            <input
+              type="date"
+              name="date"
+              value={form.date}
+              min={minDate}
+              onChange={onChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            />
+            {fieldErrs.date && (
+              <p className="text-xs text-red-600 mt-1">{fieldErrs.date}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Giờ đặt bàn
+            </label>
+            <input
+              type="time"
+              name="time"
+              value={form.time}
+              onChange={onChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            />
+            {fieldErrs.time && (
+              <p className="text-xs text-red-600 mt-1">{fieldErrs.time}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Số lượng khách: {form.guests}
+            </label>
+            <input
+              type="range"
+              name="guests"
+              min="1"
+              max="8"
+              value={form.guests}
+              onChange={onChange}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            />
+            {fieldErrs.guests && (
+              <p className="text-xs text-red-600 mt-1">{fieldErrs.guests}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Chọn bàn {scanning ? "(đang quét...)" : ""}
+            </label>
+            <select
+              name="tableId"
+              value={form.tableId}
+              onChange={onChange}
+              disabled={
+                !form.date ||
+                !form.time ||
+                scanning ||
+                availableTables.length === 0
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100"
+            >
+              <option value="">
+                {!form.date || !form.time
+                  ? "Chọn ngày & giờ trước"
+                  : scanning
+                  ? "Đang quét bàn trống..."
+                  : availableTables.length === 0
+                  ? "Không còn bàn phù hợp"
+                  : "— Chọn 1 bàn —"}
+              </option>
+              {availableTables.map((t) => (
+                <option
+                  key={t.id}
+                  value={t.id}
+                >{`Bàn ${t.id} (${t.seats} người)`}</option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-medium transition-colors"
+          >
+            {loading ? "Đang xử lý..." : "Đặt Bàn"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
