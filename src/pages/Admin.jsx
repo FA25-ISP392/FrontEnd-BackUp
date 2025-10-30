@@ -5,6 +5,7 @@ import AdminStatsCards from "../components/Admin/AdminStatsCards";
 import AdminInvoices from "../components/Admin/Invoices";
 import AdminAccountManagement from "../components/Admin/AccountManagement";
 import AdminEditAccountModal from "../components/Admin/EditAccountModal";
+import { getRevenueSummary } from "../lib/apiStatistics";
 
 import { updateStaff, deleteStaff, listStaffPaging } from "../lib/apiStaff";
 import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
@@ -248,13 +249,49 @@ export default function Admin() {
   };
 
   // KPI quick stats
-  const totalRevenue = mockAdminRevenueData.reduce(
-    (sum, item) => sum + item.revenue,
-    0,
-  );
+
   const totalAccounts = accounts.length;
   const totalDishes = dishes.length;
   const totalInvoices = invoices.length; // <-- đếm theo dữ liệu thật
+  const [totalRevenue, setTotalRevenue] = useState(0);
+
+  // 🧾 Lấy doanh thu hôm nay
+  useEffect(() => {
+    const fetchTodayRevenue = async () => {
+      try {
+        const now = new Date();
+        const params = {
+          day: now.getDate(),
+          month: now.getMonth() + 1,
+          year: now.getFullYear(),
+        };
+
+        const res = await getRevenueSummary(params);
+
+        const revenueValue =
+          res?.data?.result?.totalRevenue ??
+          res?.result?.totalRevenue ??
+          res?.totalRevenue ??
+          0;
+
+        setTotalRevenue(Number(revenueValue));
+      } catch (err) {
+        console.error("❌ Lỗi tải doanh thu hôm nay:", err);
+        setTotalRevenue(0);
+      }
+    };
+
+    fetchTodayRevenue();
+
+    const timer = setInterval(() => {
+      const now = new Date();
+      if (now.getHours() === 0 && now.getMinutes() < 5) {
+        fetchTodayRevenue();
+      }
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const renderContent = () => {
     switch (activeSection) {
