@@ -133,7 +133,7 @@ export async function getPaymentHistoryPaged({
   size = 6,
 }) {
   if (!customerId) throw new Error("Thiếu customerId.");
-  const res = await apiConfig.get(`/payment/${customerId}`, {
+  const res = await apiConfig.get(`/payment/customer/${customerId}`, {
     params: { page: Math.max(0, page - 1), size },
   });
   const result = res?.result ?? res;
