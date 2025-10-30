@@ -4,13 +4,9 @@ import AdminStatsCards from "../components/Admin/AdminStatsCards";
 import AdminInvoices from "../components/Admin/Invoices";
 import AdminAccountManagement from "../components/Admin/AccountManagement";
 import AdminEditAccountModal from "../components/Admin/EditAccountModal";
-import {
-  updateStaff,
-  deleteStaff,
-  listStaffPaging,
-  findStaffByUsername,
-  normalizeStaff,
-} from "../lib/apiStaff";
+import { getRevenueSummary } from "../lib/apiStatistics";
+
+import { updateStaff, deleteStaff, listStaffPaging } from "../lib/apiStaff";
 import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
 import { listPaymentsPaging } from "../lib/apiPayment";
 import AdminDishStatistics from "../components/Admin/AdminDishStatistics";
@@ -111,7 +107,7 @@ export default function Admin() {
       } catch (err) {
         if (!cancelled)
           setAccountsError(
-            err?.message || "Không tải được danh sách nhân viên."
+            err?.message || "Không tải được danh sách nhân viên.",
           );
       } finally {
         if (!cancelled) setLoadingAccounts(false);
@@ -144,7 +140,7 @@ export default function Admin() {
               size: invSize,
               totalPages: 1,
               totalElements: items?.length || 0,
-            }
+            },
           );
         }
       } catch (e) {
@@ -195,7 +191,7 @@ export default function Admin() {
       const response = await updateStaff(staffId, payload);
       const updated = normalizeStaff(response?.result ?? response);
       setAccounts((prev) =>
-        prev.map((arr) => (arr.id === staffId ? { ...arr, ...updated } : arr))
+        prev.map((arr) => (arr.id === staffId ? { ...arr, ...updated } : arr)),
       );
     } catch (err) {
       const data = err?.response?.data || err?.data || {};
@@ -217,7 +213,7 @@ export default function Admin() {
   const deleteAccount = async (staffId) => {
     if (!staffId) return;
     const targetDelete = accounts.find(
-      (arr) => Number(arr.staffId) === Number(staffId)
+      (arr) => Number(arr.staffId) === Number(staffId),
     );
     if (!targetDelete) return;
     const me = getCurrentUser() || {};
@@ -266,13 +262,50 @@ export default function Admin() {
     }
   };
 
-  // ==== KPI QUICK STATS ====
-  const totalRevenue = mockAdminRevenueData.reduce(
-    (sum, item) => sum + item.revenue,
-    0
-  );
+  // KPI quick stats
+
   const totalAccounts = accounts.length;
-  const totalInvoices = invPageInfo?.totalElements ?? invoices.length;
+  const totalDishes = dishes.length;
+  const totalInvoices = invoices.length; // <-- đếm theo dữ liệu thật
+  const [totalRevenue, setTotalRevenue] = useState(0);
+
+  // 🧾 Lấy doanh thu hôm nay
+  useEffect(() => {
+    const fetchTodayRevenue = async () => {
+      try {
+        const now = new Date();
+        const params = {
+          day: now.getDate(),
+          month: now.getMonth() + 1,
+          year: now.getFullYear(),
+        };
+
+        const res = await getRevenueSummary(params);
+
+        const revenueValue =
+          res?.data?.result?.totalRevenue ??
+          res?.result?.totalRevenue ??
+          res?.totalRevenue ??
+          0;
+
+        setTotalRevenue(Number(revenueValue));
+      } catch (err) {
+        console.error("❌ Lỗi tải doanh thu hôm nay:", err);
+        setTotalRevenue(0);
+      }
+    };
+
+    fetchTodayRevenue();
+
+    const timer = setInterval(() => {
+      const now = new Date();
+      if (now.getHours() === 0 && now.getMinutes() < 5) {
+        fetchTodayRevenue();
+      }
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   // ==== RENDER ====
   const renderContent = () => {
