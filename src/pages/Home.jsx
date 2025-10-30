@@ -10,7 +10,6 @@ import ForgotPasswordSidebar from "../components/Home/ForgotPasswordSidebar";
 import ResetPasswordSidebar from "../components/Home/ResetPasswordSidebar";
 import BookingForm from "../components/Home/BookingForm";
 import UserAccountDropdown from "../components/Home/UserAccountDropdown";
-import BookingHistoryModal from "../components/Home/BookingHistoryModal";
 import { logoutCustomer } from "../lib/auth";
 import { useBooking } from "../hooks/useBooking";
 import ToastHost, { showToast } from "../common/ToastHost";
@@ -105,12 +104,10 @@ export default function Home() {
   const open = (path) => navigate(path);
   const closeToHome = () => navigate(HOME, { replace: true });
 
-  const handleBookingSubmit = ({ bookingId, tableId }) => {
+  const handleBookingSubmit = (result) => {
     clearBookingDraft();
     showToast(
-      tableId
-        ? `Đặt bàn thành công! Đã gán bàn số ${tableId}.`
-        : "Đặt bàn thành công!",
+      "Đặt bàn thành công! Chúng tôi sẽ liên hệ lại với bạn.",
       "success"
     );
     closeToHome();

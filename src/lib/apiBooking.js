@@ -40,16 +40,6 @@ function normalizeStatus(u) {
   return s;
 }
 
-function mapFilterStatusForAPI(u) {
-  const s = String(u || "ALL").toUpperCase();
-  if (s === "ALL") return "ALL";
-  if (s === "REJECTED" || s === "REJECT") return "REJECT";
-  if (s === "APPROVED" || s === "APPROVE") return "APPROVED";
-  if (["CANCELLED", "CANCELED", "CANCEL"].includes(s)) return "CANCEL";
-  if (s === "PENDING") return "PENDING";
-  return s;
-}
-
 function normalizeStatusFilter(status) {
   if (!status) return "ALL";
   const set = String(status).toUpperCase();
@@ -239,4 +229,42 @@ export async function getBookingHistory(customerId) {
     ? res.content
     : [];
   return list.map(normalizeBooking);
+}
+
+export async function getBookingHistoryPaged({
+  customerId,
+  page = 1,
+  size = 6,
+}) {
+  if (!customerId) throw new Error("Thiếu customerId.");
+  const res = await apiConfig.get(`/booking/customer/${customerId}`, {
+    params: { page: Math.max(0, page - 1), size },
+  });
+
+  const box = res?.result ?? res;
+  const list = Array.isArray(box?.content)
+    ? box.content
+    : Array.isArray(box)
+    ? box
+    : [];
+
+  const items = list.map(normalizeBooking);
+  const totalElements = box?.totalElements ?? items.length;
+  const totalPages =
+    box?.totalPages ?? Math.max(1, Math.ceil(totalElements / size));
+  const first = box?.first ?? page === 1;
+  const last = box?.last ?? page >= totalPages;
+
+  return {
+    items,
+    pageInfo: {
+      page,
+      size,
+      totalPages,
+      totalElements,
+      numberOfElements: items.length,
+      first,
+      last,
+    },
+  };
 }

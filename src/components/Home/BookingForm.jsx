@@ -115,6 +115,7 @@ export default function BookingForm({
 
   const submit = async (e) => {
     e.preventDefault();
+    if (loading) return;
     if (!isLoggedIn) {
       onLoginClick?.(form);
       showToast("Vui lòng đăng nhập để đặt bàn!", "warning");
