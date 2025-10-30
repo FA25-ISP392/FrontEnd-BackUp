@@ -127,8 +127,8 @@ export default function PaymentHistoryModal({ isOpen, onClose, userInfo }) {
                   <table className="min-w-full text-sm">
                     <thead className="bg-orange-50 text-neutral-900">
                       <tr>
-                        <th className="px-4 py-2 text-left">Mã TT (Payment)</th>
-                        <th className="px-4 py-2 text-left">Mã Đơn (Order)</th>
+                        <th className="px-4 py-2 text-left">Mã Thanh Toán</th>
+                        <th className="px-4 py-2 text-left">Mã Đơn</th>
                         <th className="px-4 py-2 text-right">Tổng Tiền</th>
                         <th className="px-4 py-2 text-center">Thời Gian</th>
                         <th className="px-4 py-2 text-center">Phương Thức</th>

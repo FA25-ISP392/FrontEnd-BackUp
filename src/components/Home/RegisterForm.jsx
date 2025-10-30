@@ -41,7 +41,10 @@ export default function RegisterForm({ onSwitchToLogin }) {
     }
 
     setFormRegister((prev) => ({ ...prev, [name]: next }));
-    setFieldErrs((prev) => ({ ...prev, [name]: "" }));
+    // Xóa lỗi khi người dùng bắt đầu nhập
+    if (fieldErrs[name]) {
+      setFieldErrs((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   function validateCreate(value) {
@@ -121,90 +124,108 @@ export default function RegisterForm({ onSwitchToLogin }) {
     }
   }
 
-  /**
-   * Phân tích lỗi trả về từ API và gán vào đúng trường (ĐÃ SỬA)
-   */
   function parseBackendError(err) {
     const status = err?.response?.status;
     const data = err?.response?.data || {};
-    const tmp = {}; // fieldErrs
+    const tmp = {};
+
     const errorCode = data?.code;
     const message = String(data?.message || err.message || "").toLowerCase();
 
-    // 1. Kiểm tra mã lỗi cụ thể (ƯU TIÊN CAO NHẤT)
-    if (errorCode === 1100 || message.includes("user already exists")) {
+    if (errorCode === 1100) {
       tmp.username = "Tên đăng nhập đã tồn tại.";
-    } else if (errorCode === 1109 || message.includes("email already exists")) {
+    } else if (errorCode === 1109) {
       tmp.email = "Email đã tồn tại.";
-    }
-    // 2. ELSE IF: Nếu không phải mã lỗi cụ thể, kiểm tra lỗi DB (fallback)
-    // Dùng 'else if' lồng nhau để đảm bảo chỉ 1 lỗi trùng lặp được hiển thị
-    else if (status === 400 || status === 409 || status === 500) {
+    } else if (errorCode === 1110) {
+      tmp.phone = "Số điện thoại đã tồn tại.";
+    } else if (status === 400 || status === 409 || status === 500) {
       const dup = /(exist|exists|duplicate|already|unique|trùng)/i;
       if (dup.test(message)) {
-        // Ưu tiên kiểm tra username trước
-        if (
+        if (message.includes("email") || message.includes("uc_account_email")) {
+          tmp.email = "Email đã tồn tại.";
+        } else if (
+          message.includes("phone") ||
+          message.includes("uc_account_phone")
+        ) {
+          tmp.phone = "Số điện thoại đã tồn tại.";
+        } else if (
           message.includes("username") ||
           message.includes("user_exist") ||
           message.includes("uc_account_username")
         ) {
           tmp.username = "Tên đăng nhập đã tồn tại.";
         }
-        // Nếu không phải lỗi username, kiểm tra email
-        else if (
-          message.includes("email") ||
-          message.includes("uc_account_email")
-        ) {
-          tmp.email = "Email đã tồn tại.";
-        }
-        // Nếu không phải 2 lỗi trên, kiểm tra phone
-        else if (
-          message.includes("phone") ||
-          message.includes("uc_account_phone")
-        ) {
-          tmp.phone = "Số điện thoại đã tồn tại.";
+      }
+    }
+
+    if (Object.keys(tmp).length === 0) {
+      const list =
+        data?.errors ||
+        data?.result ||
+        data?.fieldErrors ||
+        data?.violations ||
+        [];
+
+      if (Array.isArray(list)) {
+        for (const it of list) {
+          const field = String(
+            it.field || it.fieldName || it.property || it.path || ""
+          ).toLowerCase();
+          const msg = it.defaultMessage || it.message || "Không hợp lệ.";
+          if (
+            (field.includes("fullname") || field === "name") &&
+            !tmp.fullName
+          ) {
+            tmp.fullName = msg;
+          }
+          if (field.includes("user") && !tmp.username) {
+            tmp.username = msg;
+          }
+
+          if (field.includes("email") && !tmp.email) {
+            tmp.email = msg;
+          }
+          if (field.includes("phone") && !tmp.phone) {
+            tmp.phone = msg;
+          }
+          if (field.startsWith("pass") && !tmp.password) {
+            tmp.password = msg;
+          }
         }
       }
     }
 
-    // 3. Xử lý lỗi validation (luôn chạy, vì có thể có nhiều lỗi 1 lúc)
-    const list =
-      data?.errors ||
-      data?.result ||
-      data?.fieldErrors ||
-      data?.violations ||
-      data?.details ||
-      data?.subErrors ||
-      [];
-
-    if (Array.isArray(list)) {
-      for (const it of list) {
-        const field = String(
-          it.field || it.fieldName || it.property || it.path || it.param || ""
-        ).toLowerCase();
-        const msg =
-          it.defaultMessage || it.message || data?.message || "Không hợp lệ.";
-
-        // Chỉ gán nếu chưa có lỗi (lỗi trùng lặp ưu tiên hơn)
-        if (field.includes("user") && !tmp.username) tmp.username = msg;
-        if (field.includes("email") && !tmp.email) tmp.email = msg;
-        if (field.includes("phone") && !tmp.phone) tmp.phone = msg;
-        if (field.includes("name") && !tmp.fullName) tmp.fullName = msg;
-        if (field.includes("pass") && !tmp.password) tmp.password = msg;
+    let formMessage = "";
+    if (Object.keys(tmp).length === 0) {
+      if (
+        message.includes("user already exists") ||
+        message.includes("user_exist") ||
+        (dup.test(message) && message.includes("username"))
+      ) {
+        tmp.username = "Tên đăng nhập đã tồn tại.";
+      } else if (
+        message.includes("email already exists") ||
+        (dup.test(message) && message.includes("email"))
+      ) {
+        tmp.email = "Email đã tồn tại.";
+      } else if (
+        message.includes("phone number already exists") ||
+        (dup.test(message) && message.includes("phone"))
+      ) {
+        tmp.phone = "Số điện thoại đã tồn tại.";
+      } else {
+        formMessage = data?.message || err.message || "Có lỗi xảy ra.";
       }
     }
 
     return {
       fieldErrors: tmp,
-      // Nếu không có lỗi field nào được gán, trả về message chung
-      message: Object.keys(tmp).length
-        ? ""
-        : data?.message || err.message || "Có lỗi xảy ra.",
+      message: formMessage,
     };
   }
 
-  const handleSubmit = async (tmp) => {
-    tmp.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setFormMsg("");
     setFieldErrs({});
 
@@ -224,11 +245,11 @@ export default function RegisterForm({ onSwitchToLogin }) {
     } catch (err) {
       console.error(err);
       const { fieldErrors, message } = parseBackendError(err);
+
       if (Object.keys(fieldErrors).length) {
         setFieldErrs(fieldErrors);
         requestAnimationFrame(() => focusFirstError(fieldErrors));
       } else {
-        // Nếu không có lỗi theo trường cụ thể, hiển thị lỗi chung
         setFormMsg(message);
       }
     } finally {
@@ -257,10 +278,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
             type="text"
             name="username"
             value={formRegister.username}
-            onChange={(event) => {
-              handleInputChange(event);
-              setFieldErrs((prev) => ({ ...prev, username: "" }));
-            }}
+            onChange={handleInputChange}
             required
             autoComplete="username"
             maxLength={30}
@@ -281,10 +299,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
               type={showPassword ? "text" : "password"}
               name="password"
               value={formRegister.password}
-              onChange={(event) => {
-                handleInputChange(event);
-                setFieldErrs((prev) => ({ ...prev, password: "" }));
-              }}
+              onChange={handleInputChange}
               required
               autoComplete="new-password"
               maxLength={30}
@@ -317,10 +332,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
               type={showConfirmPassword ? "text" : "password"}
               name="confirmPassword"
               value={formRegister.confirmPassword}
-              onChange={(event) => {
-                handleInputChange(event);
-                setFieldErrs((prev) => ({ ...prev, confirmPassword: "" }));
-              }}
+              onChange={handleInputChange}
               required
               autoComplete="new-password"
               maxLength={30}
@@ -354,10 +366,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
             type="text"
             name="fullName"
             value={formRegister.fullName}
-            onChange={(event) => {
-              handleInputChange(event);
-              setFieldErrs((prev) => ({ ...prev, fullName: "" }));
-            }}
+            onChange={handleInputChange}
             required
             maxLength={50}
             className="form-input-enhanced"
@@ -376,10 +385,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
             type="tel"
             name="phone"
             value={formRegister.phone}
-            onChange={(event) => {
-              handleInputChange(event);
-              setFieldErrs((prev) => ({ ...prev, phone: "" }));
-            }}
+            onChange={handleInputChange}
             required
             inputMode="numeric"
             pattern="\d*"
@@ -401,10 +407,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
             type="email"
             name="email"
             value={formRegister.email}
-            onChange={(event) => {
-              handleInputChange(event);
-              setFieldErrs((prev) => ({ ...prev, email: "" }));
-            }}
+            onChange={handleInputChange}
             required
             autoComplete="email"
             className="form-input-enhanced"
