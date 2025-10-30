@@ -265,7 +265,7 @@ export default function Admin() {
   // KPI quick stats
 
   const totalAccounts = accounts.length;
-  const totalDishes = dishes.length;
+  // const totalDishes = dishes.length;
   const totalInvoices = invoices.length; // <-- đếm theo dữ liệu thật
   const [totalRevenue, setTotalRevenue] = useState(0);
 
