@@ -298,7 +298,7 @@ export default function Admin() {
       case "overview":
         return (
           <>
-            <AdminStatsCards totalRevenue={totalRevenue} />
+            <AdminStatsCards />
 
             <AdminDishStatistics />
           </>
