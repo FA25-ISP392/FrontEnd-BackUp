@@ -121,48 +121,85 @@ export default function RegisterForm({ onSwitchToLogin }) {
     }
   }
 
+  /**
+   * Phân tích lỗi trả về từ API và gán vào đúng trường (ĐÃ SỬA)
+   */
   function parseBackendError(err) {
     const status = err?.response?.status;
     const data = err?.response?.data || {};
-    const tmp = {};
+    const tmp = {}; // fieldErrs
+    const errorCode = data?.code;
+    const message = String(data?.message || err.message || "").toLowerCase();
 
-    if (status === 400 || status === 409) {
-      const list =
-        data?.errors ||
-        data?.result ||
-        data?.fieldErrors ||
-        data?.violations ||
-        data?.details ||
-        data?.subErrors ||
-        [];
-      if (Array.isArray(list)) {
-        for (const it of list) {
-          const field = String(
-            it.field || it.fieldName || it.property || it.path || it.param || ""
-          ).toLowerCase();
-          const msg =
-            it.defaultMessage || it.message || data?.message || "Không hợp lệ.";
-          if (field.includes("user")) tmp.username = msg;
-          if (field.includes("email")) tmp.email = msg;
-          if (field.includes("phone")) tmp.phone = msg;
-          if (field.includes("name")) tmp.fullName = msg;
-          if (field.includes("pass")) tmp.password = msg;
+    // 1. Kiểm tra mã lỗi cụ thể (ƯU TIÊN CAO NHẤT)
+    if (errorCode === 1100 || message.includes("user already exists")) {
+      tmp.username = "Tên đăng nhập đã tồn tại.";
+    } else if (errorCode === 1109 || message.includes("email already exists")) {
+      tmp.email = "Email đã tồn tại.";
+    }
+    // 2. ELSE IF: Nếu không phải mã lỗi cụ thể, kiểm tra lỗi DB (fallback)
+    // Dùng 'else if' lồng nhau để đảm bảo chỉ 1 lỗi trùng lặp được hiển thị
+    else if (status === 400 || status === 409 || status === 500) {
+      const dup = /(exist|exists|duplicate|already|unique|trùng)/i;
+      if (dup.test(message)) {
+        // Ưu tiên kiểm tra username trước
+        if (
+          message.includes("username") ||
+          message.includes("user_exist") ||
+          message.includes("uc_account_username")
+        ) {
+          tmp.username = "Tên đăng nhập đã tồn tại.";
+        }
+        // Nếu không phải lỗi username, kiểm tra email
+        else if (
+          message.includes("email") ||
+          message.includes("uc_account_email")
+        ) {
+          tmp.email = "Email đã tồn tại.";
+        }
+        // Nếu không phải 2 lỗi trên, kiểm tra phone
+        else if (
+          message.includes("phone") ||
+          message.includes("uc_account_phone")
+        ) {
+          tmp.phone = "Số điện thoại đã tồn tại.";
         }
       }
+    }
 
-      const low = String(data?.message || err.message || "").toLowerCase();
-      const dup = /(exist|exists|duplicate|already|unique|trùng)/i;
-      if (!tmp.username && /user(name)?/.test(low) && dup.test(low))
-        tmp.username = "Tên đăng nhập đã tồn tại.";
-      if (!tmp.email && /email/.test(low) && dup.test(low))
-        tmp.email = "Email đã tồn tại.";
-      if (!tmp.phone && /(phone|sđt)/i.test(low) && dup.test(low))
-        tmp.phone = "Số điện thoại đã tồn tại.";
+    // 3. Xử lý lỗi validation (luôn chạy, vì có thể có nhiều lỗi 1 lúc)
+    const list =
+      data?.errors ||
+      data?.result ||
+      data?.fieldErrors ||
+      data?.violations ||
+      data?.details ||
+      data?.subErrors ||
+      [];
+
+    if (Array.isArray(list)) {
+      for (const it of list) {
+        const field = String(
+          it.field || it.fieldName || it.property || it.path || it.param || ""
+        ).toLowerCase();
+        const msg =
+          it.defaultMessage || it.message || data?.message || "Không hợp lệ.";
+
+        // Chỉ gán nếu chưa có lỗi (lỗi trùng lặp ưu tiên hơn)
+        if (field.includes("user") && !tmp.username) tmp.username = msg;
+        if (field.includes("email") && !tmp.email) tmp.email = msg;
+        if (field.includes("phone") && !tmp.phone) tmp.phone = msg;
+        if (field.includes("name") && !tmp.fullName) tmp.fullName = msg;
+        if (field.includes("pass") && !tmp.password) tmp.password = msg;
+      }
     }
 
     return {
       fieldErrors: tmp,
-      message: data?.message || err.message || "Có lỗi xảy ra.",
+      // Nếu không có lỗi field nào được gán, trả về message chung
+      message: Object.keys(tmp).length
+        ? ""
+        : data?.message || err.message || "Có lỗi xảy ra.",
     };
   }
 
@@ -191,6 +228,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
         setFieldErrs(fieldErrors);
         requestAnimationFrame(() => focusFirstError(fieldErrors));
       } else {
+        // Nếu không có lỗi theo trường cụ thể, hiển thị lỗi chung
         setFormMsg(message);
       }
     } finally {

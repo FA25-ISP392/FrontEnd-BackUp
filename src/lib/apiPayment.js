@@ -126,3 +126,39 @@ export async function cancelPayment({ id, orderCode, status = "CANCELLED" }) {
   });
   return res;
 }
+
+export async function getPaymentHistoryPaged({
+  customerId,
+  page = 1,
+  size = 6,
+}) {
+  if (!customerId) throw new Error("Thiếu customerId.");
+  const res = await apiConfig.get(`/payment/${customerId}`, {
+    params: { page: Math.max(0, page - 1), size },
+  });
+  const result = res?.result ?? res;
+  const list = Array.isArray(result?.content)
+    ? result.content
+    : Array.isArray(result)
+    ? result
+    : [];
+
+  const data = list.map(normalizePayment);
+  const totalElements = result?.totalElements ?? data.length;
+  const totalPages =
+    result?.totalPages ?? Math.max(1, Math.ceil(totalElements / size));
+  const number = result?.number ?? page - 1;
+  const sizePage = result?.size ?? size;
+  return {
+    items: data,
+    pageInfo: {
+      page: number + 1,
+      size: sizePage,
+      totalPages,
+      totalElements,
+      numberOfElements: data.length,
+      first: result?.first ?? page === 1,
+      last: result?.last ?? number + 1 >= totalPages,
+    },
+  };
+}

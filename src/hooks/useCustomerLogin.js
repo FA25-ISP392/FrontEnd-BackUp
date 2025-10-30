@@ -29,13 +29,14 @@ export function useCustomerLogin() {
         return true;
       } catch (e) {
         const msg = e?.message || "";
-
+        const code = e?.data?.code;
         if (e?.code === "NOT_CUSTOMER") {
           setErr("Tài khoản không có quyền truy cập.");
           return false;
         }
-
-        if (/khách\s*hàng|customer/i.test(msg)) {
+        if (code === 1015 || /verify|verified/i.test(msg)) {
+          setErr("Tài khoản chưa được xác thực. Vui lòng kiểm tra email.");
+        } else if (/khách\s*hàng|customer/i.test(msg)) {
           setErr("Tài khoản không có quyền truy cập.");
         } else if (/401|unauth|credential|password/i.test(msg)) {
           setErr("Sai tên đăng nhập hoặc mật khẩu.");

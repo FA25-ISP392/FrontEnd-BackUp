@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { MapPin, Phone, Mail, X, Star } from "lucide-react";
+import { MapPin, Phone, Mail, X } from "lucide-react";
 import HeroSection from "../components/Home/HeroSection";
 import VisionSection from "../components/Home/VisionSection";
 import MenuSection from "../components/Home/MenuSection";
@@ -16,6 +15,7 @@ import { useBooking } from "../hooks/useBooking";
 import ToastHost, { showToast } from "../common/ToastHost";
 import { HOME, HOME_ROUTES, NEED_AUTH } from "../constant/routes";
 import CustomerBookingHistory from "../components/Home/CustomerBookingHistory";
+import PaymentHistoryModal from "../components/Home/PaymentHistoryModal";
 
 export default function Home() {
   const location = useLocation();
@@ -72,6 +72,8 @@ export default function Home() {
     if (p === HOME_ROUTES.HISTORY) return "history";
     if (p === HOME_ROUTES.EDIT) return "edit";
     if (p === HOME_ROUTES.CHANGE_PWD) return "changePwd";
+    // 👇 BẠN ĐÃ THIẾU DÒNG NÀY
+    if (p === HOME_ROUTES.PAYMENT_HISTORY) return "payment_history";
     return null;
   }, [location.pathname]);
 
@@ -154,6 +156,7 @@ export default function Home() {
   const handleBookingHistoryClick = () => open(HOME_ROUTES.HISTORY);
   const handleEditAccountClick = () => open(HOME_ROUTES.EDIT);
   const handleChangePasswordClick = () => open(HOME_ROUTES.CHANGE_PWD);
+  const handlePaymentHistoryClick = () => open(HOME_ROUTES.PAYMENT_HISTORY);
 
   const menuCategories = {
     "Best Sellers": [
@@ -169,6 +172,7 @@ export default function Home() {
   };
 
   return (
+    // 👇 Mở <div...>
     <div className="min-h-screen">
       <ToastHost />
       <header className="fixed top-0 left-0 right-0 w-full bg-white shadow-sm z-50">
@@ -223,6 +227,7 @@ export default function Home() {
               onChangePasswordClick={handleChangePasswordClick}
               onCloseEditAccount={closeToHome}
               onCloseChangePassword={closeToHome}
+              onPaymentHistoryClick={handlePaymentHistoryClick} // (Đã sửa)
             />
           </nav>
         </div>
@@ -431,6 +436,10 @@ export default function Home() {
           onClose={closeToHome}
           userInfo={userInfo}
         />
+      )}
+
+      {modal === "payment_history" && (
+        <PaymentHistoryModal isOpen onClose={closeToHome} userInfo={userInfo} />
       )}
     </div>
   );

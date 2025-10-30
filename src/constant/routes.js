@@ -18,6 +18,7 @@ export const HOME_ROUTES = {
   HISTORY: "/home/lichsudatban",
   EDIT: "/home/suathongtin",
   CHANGE_PWD: "/home/doimatkhau",
+  PAYMENT_HISTORY: "/home/lichsuthanhtoan",
 };
 
 export const VERIFY_EMAIL = "/verify-email";
@@ -27,6 +28,7 @@ export const NEED_AUTH = [
   HOME_ROUTES.HISTORY,
   HOME_ROUTES.EDIT,
   HOME_ROUTES.CHANGE_PWD,
+  HOME_ROUTES.PAYMENT_HISTORY,
 ];
 
 export const TABLE_LOGIN_ROUTES = {
