@@ -97,14 +97,13 @@ apiConfig.interceptors.request.use((config) => {
     console.debug("[API REQUEST] unable to compute full url", e);
   }
 
-  // if (token && !isPublicEndpoint(url, method)) {
-  //   config.headers = config.headers || {};
-  //   config.headers.Authorization = `Bearer ${token}`;
-  // }
-
-  if (token) {
+  if (token && !isPublicEndpoint(url, method)) {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    if (config.headers?.Authorization) {
+      delete config.headers.Authorization;
+    }
   }
 
   return config;
