@@ -241,7 +241,7 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
                   </table>
                 </div>
 
-                <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setPage(Math.max(1, page - 1))}
