@@ -53,13 +53,51 @@ function methodLabel(m, vi) {
   return M;
 }
 
+/**
+ * Phân trang giống AccountManagement:
+ * - Có dải trang kèm "..."
+ * - Nút Trước/Sau
+ * - Hiển thị "từ–đến trong tổng số"
+ *
+ * Props yêu cầu:
+ *   invoices: array item
+ *   pageInfo: { page, size, totalPages, totalElements, first?, last? }
+ *   onPageChange: (p) => void
+ *   page: số trang hiện tại (1-based) -> nên truyền vào để đồng bộ với state invPage ở Admin.jsx
+ */
 export default function AdminInvoices({
   invoices = [],
-  pageInfo,
-  onPageChange,
+  pageInfo = { page: 1, size: 6, totalPages: 1, totalElements: 0 },
+  onPageChange = () => {},
+  page, // 1-based
 }) {
   const [q, setQ] = useState("");
 
+  // Lấy current page 1-based: ưu tiên prop `page`, fallback pageInfo.page (coi như 1-based)
+  const curPage = Number(page || pageInfo.page || 1);
+  const pageSize = Number(pageInfo.size || 6);
+  const totalPages = Number(pageInfo.totalPages || 1);
+  const totalElements = Number(pageInfo.totalElements || invoices.length || 0);
+
+  const buildPages = () => {
+    const maxLength = 5;
+    if (totalPages <= maxLength) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const left = Math.max(1, curPage - 2);
+    const right = Math.min(totalPages, curPage + 2);
+    const pages = [];
+    if (left > 1) pages.push(1, "...");
+    for (let p = left; p <= right; p++) pages.push(p);
+    if (right < totalPages) pages.push("...", totalPages);
+    return pages;
+  };
+
+  // Tính khoảng hiển thị "từ–đến"
+  const from = totalElements === 0 ? 0 : (curPage - 1) * pageSize + 1;
+  const to = Math.min(curPage * pageSize, totalElements);
+
+  // Tìm kiếm cục bộ (trên trang hiện tại)
   const filtered = useMemo(() => {
     if (!q) return invoices;
     const s = q.trim().toLowerCase();
@@ -74,19 +112,27 @@ export default function AdminInvoices({
           ? "Thất bại"
           : "Đang xử lý");
       return (
-        String(p.id).includes(s) ||
-        String(p.orderId).includes(s) ||
-        String(p.method).toLowerCase().includes(s) ||
+        String(p.id).toLowerCase().includes(s) ||
+        String(p.orderId || "")
+          .toLowerCase()
+          .includes(s) ||
+        String(p.method || "")
+          .toLowerCase()
+          .includes(s) ||
         mVi.toLowerCase().includes(s) ||
-        String(p.status).toLowerCase().includes(s) ||
+        String(p.status || "")
+          .toLowerCase()
+          .includes(s) ||
         stVi.toLowerCase().includes(s)
       );
     });
   }, [q, invoices]);
 
+  // Tổng tiền của danh sách đã lọc trên trang hiện tại
   const total = filtered.reduce((sum, p) => sum + (Number(p.total) || 0), 0);
 
-  const hasPagination = pageInfo && pageInfo.totalPages > 1;
+  const isFirst = curPage <= 1;
+  const isLast = curPage >= totalPages;
 
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
@@ -130,7 +176,10 @@ export default function AdminInvoices({
 
         <div className="divide-y divide-neutral-200">
           {filtered.map((p) => (
-            <div key={p.id} className="px-6 py-4">
+            <div
+              key={p.id}
+              className="px-6 py-4 hover:bg-neutral-50 transition-colors"
+            >
               <div className="grid grid-cols-6 gap-4 items-center">
                 <div className="font-medium">{p.id}</div>
                 <div>{p.orderId || "-"}</div>
@@ -158,33 +207,68 @@ export default function AdminInvoices({
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between text-sm text-neutral-700">
-        <div>
-          Tổng:{" "}
-          <span className="ml-2 font-bold text-green-600">{fmtVND(total)}</span>
+      <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-neutral-700">
+        <div className="flex items-center gap-3">
+          <span>
+            Tổng trên trang:{" "}
+            <span className="ml-1 font-bold text-green-600">
+              {fmtVND(total)}
+            </span>
+          </span>
         </div>
 
-        {hasPagination && (
-          <div className="flex items-center gap-3">
-            <button
-              className="px-2 py-1 rounded-md border text-neutral-600 hover:bg-neutral-100 disabled:opacity-40"
-              disabled={pageInfo.page <= 1}
-              onClick={() => onPageChange(pageInfo.page - 1)}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <span>
-              Trang <b>{pageInfo.page}</b> / {pageInfo.totalPages}
-            </span>
-            <button
-              className="px-2 py-1 rounded-md border text-neutral-600 hover:bg-neutral-100 disabled:opacity-40"
-              disabled={pageInfo.page >= pageInfo.totalPages}
-              onClick={() => onPageChange(pageInfo.page + 1)}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onPageChange(Math.max(1, curPage - 1))}
+            disabled={isFirst}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              isFirst
+                ? "text-neutral-400 bg-neutral-100 cursor-not-allowed"
+                : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
+            }`}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Trước
+          </button>
+
+          <div className="flex items-center gap-1">
+            {buildPages().map((p, i) =>
+              p === "..." ? (
+                <span
+                  key={`e-${i}`}
+                  className="px-3 py-2 text-neutral-500 font-medium"
+                >
+                  …
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => onPageChange(p)}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    p === curPage
+                      ? "bg-orange-500 text-white shadow-lg transform scale-105"
+                      : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
+                  }`}
+                >
+                  {p}
+                </button>
+              )
+            )}
           </div>
-        )}
+
+          <button
+            onClick={() => onPageChange(Math.min(totalPages || 1, curPage + 1))}
+            disabled={isLast}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              isLast
+                ? "text-neutral-400 bg-neutral-100 cursor-not-allowed"
+                : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
+            }`}
+          >
+            Sau
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

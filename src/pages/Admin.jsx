@@ -107,7 +107,7 @@ export default function Admin() {
       } catch (err) {
         if (!cancelled)
           setAccountsError(
-            err?.message || "Không tải được danh sách nhân viên.",
+            err?.message || "Không tải được danh sách nhân viên."
           );
       } finally {
         if (!cancelled) setLoadingAccounts(false);
@@ -140,7 +140,7 @@ export default function Admin() {
               size: invSize,
               totalPages: 1,
               totalElements: items?.length || 0,
-            },
+            }
           );
         }
       } catch (e) {
@@ -191,7 +191,7 @@ export default function Admin() {
       const response = await updateStaff(staffId, payload);
       const updated = normalizeStaff(response?.result ?? response);
       setAccounts((prev) =>
-        prev.map((arr) => (arr.id === staffId ? { ...arr, ...updated } : arr)),
+        prev.map((arr) => (arr.id === staffId ? { ...arr, ...updated } : arr))
       );
     } catch (err) {
       const data = err?.response?.data || err?.data || {};
@@ -213,7 +213,7 @@ export default function Admin() {
   const deleteAccount = async (staffId) => {
     if (!staffId) return;
     const targetDelete = accounts.find(
-      (arr) => Number(arr.staffId) === Number(staffId),
+      (arr) => Number(arr.staffId) === Number(staffId)
     );
     if (!targetDelete) return;
     const me = getCurrentUser() || {};
@@ -346,6 +346,7 @@ export default function Admin() {
             invoices={invoices}
             pageInfo={invPageInfo}
             onPageChange={setInvPage}
+            page={invPage}
           />
         );
 

@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Plus, Edit, Trash2, Users } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Users,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import AdminAccountForm from "./AdminAccountForm";
 import { normalizeStaff } from "../../lib/apiStaff";
 
@@ -195,57 +202,59 @@ export default function AdminAccountManagement({
           )}
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t border-neutral-200 bg-neutral-50">
-          <div className="text-sm text-neutral-600">
-            {totalElements > 0
-              ? `Hiển thị ${from}–${to} / ${totalElements}`
-              : "Không có dữ liệu"}
-          </div>
-          <div className="flex items-center gap-1">
+        <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => onPageChange(Math.max(1, page - 1))}
-              disabled={page <= 1}
-              className={`px-3 py-2 rounded-lg text-sm border ${
-                page <= 1
-                  ? "text-neutral-400 border-neutral-200"
-                  : "hover:bg-neutral-100 border-neutral-300"
+              disabled={pageInfo.first}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                pageInfo.first
+                  ? "text-neutral-400 bg-neutral-100 cursor-not-allowed"
+                  : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
               }`}
             >
+              <ChevronLeft className="h-4 w-4" />
               Trước
             </button>
 
-            {buildPages().map((p, idx) =>
-              p === "..." ? (
-                <span key={`ellipsis-${idx}`} className="px-2 text-neutral-500">
-                  …
-                </span>
-              ) : (
-                <button
-                  key={`page-${p}`}
-                  onClick={() => onPageChange(p)}
-                  className={`px-3 py-2 rounded-lg text-sm border ${
-                    p === page
-                      ? "bg-neutral-900 text-white border-neutral-900"
-                      : "hover:bg-neutral-100 border-neutral-300"
-                  }`}
-                >
-                  {p}
-                </button>
-              )
-            )}
+            <div className="flex items-center gap-1">
+              {buildPages().map((p, i) =>
+                p === "…" ? (
+                  <span
+                    key={`e-${i}`}
+                    className="px-3 py-2 text-neutral-500 font-medium"
+                  >
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => onPageChange(p)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      p === page
+                        ? "bg-orange-500 text-white shadow-lg transform scale-105"
+                        : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+            </div>
 
             <button
               onClick={() =>
                 onPageChange(Math.min(pageInfo.totalPages || 1, page + 1))
               }
-              disabled={page >= (pageInfo.totalPages || 1)}
-              className={`px-3 py-2 rounded-lg text-sm border ${
-                page >= (pageInfo.totalPages || 1)
-                  ? "text-neutral-400 border-neutral-200"
-                  : "hover:bg-neutral-100 border-neutral-300"
+              disabled={pageInfo.last}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                pageInfo.last
+                  ? "text-neutral-400 bg-neutral-100 cursor-not-allowed"
+                  : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
               }`}
             >
               Sau
+              <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         </div>
