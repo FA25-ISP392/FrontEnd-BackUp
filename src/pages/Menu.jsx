@@ -29,8 +29,6 @@ import EditOrderDetailModal from "../components/Menu/EditOrderDetailModal";
 import { createPayment, getPaymentById } from "../lib/apiPayment";
 import ToastHost, { showToast } from "../common/ToastHost";
 import ConfirmDialog from "../common/ConfirmDialog";
-import ToastHost, { showToast } from "../common/ToastHost";
-import ConfirmDialog from "../common/ConfirmDialog";
 
 export default function Menu() {
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
