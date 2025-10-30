@@ -1,7 +1,12 @@
 import apiConfig from "../api/apiConfig";
 
 // 🟢 Món bán chạy
-export const getBestSellingDishes = async ({ year, month, day, limit = 5 }) => {
+export const getBestSellingDishes = async ({
+  year,
+  month,
+  day,
+  limit = 10,
+}) => {
   const data = await apiConfig.get("/statistics/dishes/best", {
     params: { year, month, day, limit },
   });

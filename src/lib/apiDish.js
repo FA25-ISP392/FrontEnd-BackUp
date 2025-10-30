@@ -74,14 +74,15 @@ export async function listDish(params = {}) {
 
 // ⚙️ Lấy chi tiết 1 món
 export async function getDish(id) {
-  const token = localStorage.getItem("token");
-  const res = await apiConfig.get(`/dish/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  const data = res?.data?.result ?? res?.result ?? res?.data ?? res;
-  console.log("🍕 Dữ liệu món chi tiết:", data);
-  return normalizeDish(data);
+  try {
+    const res = await apiConfig.get(`/dish/${id}`);
+    const data = res?.data?.result ?? res?.result ?? res?.data ?? res;
+    console.log("🍕 Dữ liệu món chi tiết:", data);
+    return normalizeDish(data);
+  } catch (err) {
+    console.error("❌ Lỗi lấy chi tiết món:", err);
+    throw err;
+  }
 }
 
 // 🧩 Tạo món ăn mới

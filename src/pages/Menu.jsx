@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { CheckCircle } from "lucide-react";
-
 import MenuHeader from "../components/Menu/MenuHeader";
 import MenuContent from "../components/Menu/MenuContent";
 import MenuFooter from "../components/Menu/MenuFooter";
@@ -9,7 +8,6 @@ import CartSidebar from "../components/Menu/CartSidebar";
 import PaymentSidebar from "../components/Menu/PaymentSidebar";
 import DishOptionsModal from "../components/Menu/DishOptionsModal";
 import OrderStatusSidebar from "../components/Menu/OrderStatusSidebar";
-
 import {
   createOrder,
   getOrderById,
@@ -29,6 +27,8 @@ import {
 } from "../lib/apiOrderDetail";
 import EditOrderDetailModal from "../components/Menu/EditOrderDetailModal";
 import { createPayment, getPaymentById } from "../lib/apiPayment";
+import ToastHost, { showToast } from "../common/ToastHost";
+import ConfirmDialog from "../common/ConfirmDialog";
 
 export default function Menu() {
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
@@ -47,7 +47,7 @@ export default function Menu() {
   const [customerId, setCustomerId] = useState(null);
   const [customerName, setCustomerName] = useState(null);
   const [orderId, setOrderId] = useState(
-    () => sessionStorage.getItem("orderId") || null
+    () => sessionStorage.getItem("orderId") || null,
   );
   const [baseCalories, setBaseCalories] = useState(null);
   const [estimatedCalories, setEstimatedCalories] = useState(null);
@@ -59,12 +59,18 @@ export default function Menu() {
   const [editingDetail, setEditingDetail] = useState(null);
   const [paidSuccessOpen, setPaidSuccessOpen] = useState(false);
   const [countdown, setCountdown] = useState(10);
-
-  // >>> NEW: refs chống reset đếm & dừng polling
-  const paidLockedRef = useRef(false); // true = đã xử lý thành công, không cho kích hoạt lại
-  const pollStopRef = useRef(false); // true = dừng vòng lặp polling
-  const pollTimerRef = useRef(null); // lưu timeout id cho polling
-  const thanksTimerRef = useRef(null); // lưu interval id cho countdown
+  const paidLockedRef = useRef(false);
+  const pollStopRef = useRef(false);
+  const pollTimerRef = useRef(null);
+  const thanksTimerRef = useRef(null);
+  const [confirmState, setConfirmState] = useState({
+    open: false,
+    title: "",
+    message: "",
+    onYes: null,
+  });
+  const askConfirm = ({ title, message, onYes }) =>
+    setConfirmState({ open: true, title, message, onYes });
 
   const PERSONAL_KEY = (cid) => `personalization:${cid}`;
   const applyGoal = (cals, goal) => {
@@ -85,7 +91,6 @@ export default function Menu() {
   const getDisplayName = (u) =>
     String(u?.fullName || u?.name || u?.username || "").trim();
 
-  // Load table/customer & sync
   useEffect(() => {
     const storedTableId = sessionStorage.getItem("customerTableId");
     if (storedTableId) setTableId(storedTableId);
@@ -118,7 +123,6 @@ export default function Menu() {
     };
   }, []);
 
-  // Auto create order (idempotent)
   useEffect(() => {
     const ready = Boolean(customerId) && Boolean(tableId);
     if (!ready) return;
@@ -147,7 +151,6 @@ export default function Menu() {
     })();
   }, [customerId, tableId]);
 
-  // Hide dishes by name
   const hiddenNames = (() => {
     try {
       return JSON.parse(localStorage.getItem("hidden_dishes")) || [];
@@ -156,7 +159,6 @@ export default function Menu() {
     }
   })();
 
-  // Load dishes
   useEffect(() => {
     (async () => {
       try {
@@ -182,13 +184,12 @@ export default function Menu() {
   }, []);
 
   const filteredDishes = menuDishes.filter(
-    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name)
+    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name),
   );
 
   const { personalizationForm, setPersonalizationForm, personalizedDishes } =
     useMenuPersonalization(filteredDishes);
 
-  // Load/init personalization
   useEffect(() => {
     if (!customerId) return;
 
@@ -204,7 +205,7 @@ export default function Menu() {
           if (typeof cached.perWorkout === "number") {
             const roundedBase = Math.ceil(cached.perWorkout);
             const roundedGoal = Math.ceil(
-              applyGoal(cached.perWorkout, data.goal)
+              applyGoal(cached.perWorkout, data.goal),
             );
             setBaseCalories(roundedBase);
             setEstimatedCalories(roundedGoal);
@@ -230,7 +231,7 @@ export default function Menu() {
         setPersonalizationForm((prev) => ({ ...prev, ...toForm }));
         localStorage.setItem(
           PERSONAL_KEY(customerId),
-          JSON.stringify({ data: toForm, updatedAt: Date.now() })
+          JSON.stringify({ data: toForm, updatedAt: Date.now() }),
         );
       } catch (e) {
         console.warn("Không lấy được personalization từ BE:", e?.message || e);
@@ -238,25 +239,24 @@ export default function Menu() {
     })();
   }, [customerId]);
 
-  // Cart helpers
   const addToCart = (item) => {
     const noteKey = item.notes || "";
     const existingItem = cart.find(
-      (it) => it.id === item.id && (it.notes || "") === noteKey
+      (it) => it.id === item.id && (it.notes || "") === noteKey,
     );
     if (existingItem) {
       setCart((prev) =>
         prev.map((it) =>
           it.id === item.id && (it.notes || "") === noteKey
             ? { ...it, quantity: it.quantity + (item.quantity ?? 1) }
-            : it
-        )
+            : it,
+        ),
       );
     } else {
       setCart((prev) => [...prev, { ...item }]);
     }
     setCaloriesConsumed(
-      (prev) => prev + (item.totalCalories || item.calories || 0)
+      (prev) => prev + (item.totalCalories || item.calories || 0),
     );
   };
 
@@ -270,11 +270,11 @@ export default function Menu() {
       const diff = newQuantity - item.quantity;
       setCart((prev) =>
         prev.map((it) =>
-          it.id === itemId ? { ...it, quantity: newQuantity } : it
-        )
+          it.id === itemId ? { ...it, quantity: newQuantity } : it,
+        ),
       );
       setCaloriesConsumed(
-        (prev) => prev + diff * (item.totalCalories || item.calories)
+        (prev) => prev + diff * (item.totalCalories || item.calories),
       );
     }
   };
@@ -284,33 +284,29 @@ export default function Menu() {
     if (item) {
       setCart((prev) => prev.filter((it) => it.id !== itemId));
       setCaloriesConsumed(
-        (prev) => prev - (item.totalCalories || item.calories) * item.quantity
+        (prev) => prev - (item.totalCalories || item.calories) * item.quantity,
       );
     }
   };
 
-  // Submit order details
   const handleOrderFood = async () => {
     try {
       if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
       if (!cart.length) throw new Error("Giỏ hàng đang trống.");
-
       const saved = await createOrderDetailsFromCart(orderId, cart);
-      console.log("✅ Đã lưu order-details:", saved);
-
       setIsCartOpen(false);
       setCart([]);
       setCaloriesConsumed(0);
-
       setIsStatusOpen(true);
-      alert("Đã gửi món thành công!");
+      showToast("Đã gửi món thành công!", "success");
     } catch (err) {
-      console.error("❌ Gửi món thất bại:", err);
-      alert(`Gọi món thất bại: ${err?.message || "Vui lòng thử lại."}`);
+      showToast(
+        `Gọi món thất bại: ${err?.message || "Vui lòng thử lại."}`,
+        "error",
+      );
     }
   };
 
-  // Auto refresh order details when open status sidebar
   useEffect(() => {
     if (isStatusOpen) fetchOrderDetailsFromOrder();
   }, [isStatusOpen, orderId]);
@@ -339,14 +335,12 @@ export default function Menu() {
     return g;
   })();
 
-  // Personalization handler
   const handleGoalChange = (goalId) => {
     setPersonalizationForm((prev) => ({ ...prev, goal: goalId }));
     const base = baseCalories ?? estimatedCalories;
     setEstimatedCalories(applyGoal(base, goalId));
   };
 
-  // Open PaymentSidebar: ensure items from BE
   const handleOpenPayment = async () => {
     try {
       if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
@@ -361,21 +355,30 @@ export default function Menu() {
         setCaloriesConsumed(0);
       }
     } catch (err) {
-      console.error("❌ Mở thanh toán thất bại:", err);
-      alert(err?.message || "Không mở được thanh toán. Vui lòng thử lại.");
+      showToast(
+        err?.message || "Không mở được thanh toán. Vui lòng thử lại.",
+        "error",
+      );
     }
   };
 
-  // CRUD on existing details
   const handleDeleteDetail = async (detail) => {
     if (!detail?.orderDetailId) return;
-    if (!confirm("Xoá món này khỏi đơn?")) return;
-    try {
-      await deleteOrderDetail(detail.orderDetailId);
-      await fetchOrderDetailsFromOrder();
-    } catch (e) {
-      alert(e?.message || "Xoá món thất bại.");
-    }
+    askConfirm({
+      title: "Xoá món khỏi đơn?",
+      message: `Bạn chắc muốn xoá “${detail.dishName || "món này"}”?`,
+      onYes: async () => {
+        try {
+          await deleteOrderDetail(detail.orderDetailId);
+          await fetchOrderDetailsFromOrder();
+          showToast("Đã xoá món.", "success");
+        } catch (e) {
+          showToast(e?.message || "Xoá món thất bại.", "error");
+        } finally {
+          setConfirmState((s) => ({ ...s, open: false }));
+        }
+      },
+    });
   };
 
   const handleEdited = async () => {
@@ -385,15 +388,14 @@ export default function Menu() {
   const sumTotal = (items = []) =>
     items.reduce((s, it) => s + Number(it.totalPrice ?? it.price ?? 0), 0);
 
-  // Local broadcast to staff (same-origin tabs)
   function notifyPaymentStaff({ tableId, orderId, total, paymentId }) {
     const payload = { tableId, orderId, total, paymentId, ts: Date.now() };
     window.dispatchEvent(
-      new CustomEvent("table:callPayment", { detail: payload })
+      new CustomEvent("table:callPayment", { detail: payload }),
     );
     localStorage.setItem(
       `signal:callPayment:${payload.ts}`,
-      JSON.stringify(payload)
+      JSON.stringify(payload),
     );
   }
 
@@ -414,11 +416,10 @@ export default function Menu() {
 
     localStorage.setItem(
       `signal:callStaff:${payload.ts}`,
-      JSON.stringify(payload)
+      JSON.stringify(payload),
     );
   }
 
-  // Create payment (QR) and notify staff
   const handleRequestPayment = async () => {
     try {
       if (!orderId) throw new Error("Chưa có orderId.");
@@ -429,7 +430,10 @@ export default function Menu() {
       setIsPaymentOpen(false);
       setIsCallStaffOpen(true);
     } catch (error) {
-      alert(error?.message || "Không gửi được yêu cầu thanh toán.");
+      showToast(
+        error?.message || "Không gửi được yêu cầu thanh toán.",
+        "error",
+      );
     }
   };
 
@@ -446,8 +450,9 @@ export default function Menu() {
   const handleIncGroup = async (group) => {
     const st = String(group?.sample?.status || "").toLowerCase();
     if (st !== "pending") {
-      alert(
-        "Món không còn ở trạng thái 'Chờ nấu' nên không thể tăng số lượng / chỉnh sửa."
+      showToast(
+        "Món đã qua 'Chờ nấu' – thao tác này không khả dụng.",
+        "warning",
       );
       return;
     }
@@ -468,7 +473,10 @@ export default function Menu() {
   const handleDecGroup = async (group) => {
     const st = String(group?.sample?.status || "").toLowerCase();
     if (st !== "pending") {
-      alert("Món không còn ở trạng thái 'Chờ nấu' nên không thể xoá.");
+      showToast(
+        "Món đã qua 'Chờ nấu' – thao tác này không khả dụng.",
+        "warning",
+      );
       return;
     }
     const idToDelete = group.ids[group.ids.length - 1];
@@ -509,17 +517,16 @@ export default function Menu() {
           perWorkout: Math.ceil(maintenanceCalories),
           goalCalories: Math.ceil(dailyCalories),
           updatedAt: Date.now(),
-        })
+        }),
       );
       await updateCustomerPersonalization(customerId, form);
       setBaseCalories(Math.ceil(maintenanceCalories));
       setEstimatedCalories(Math.ceil(dailyCalories));
       setIsPersonalized(true);
 
-      alert("✅ Đã lưu và tính toán calo thành công!");
+      showToast("Đã lưu và tính toán calo thành công!", "success");
     } catch (err) {
-      console.error("❌ Lỗi khi cập nhật cá nhân hoá:", err);
-      alert("Cập nhật thất bại, vui lòng thử lại.");
+      showToast("Cập nhật thất bại, vui lòng thử lại.", "error");
     }
   };
 
@@ -729,6 +736,16 @@ export default function Menu() {
         </div>
       )}
 
+      <ConfirmDialog
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText="Xoá"
+        cancelText="Huỷ"
+        onConfirm={confirmState.onYes}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+      />
+
       <MenuContent
         activeMenuTab={activeMenuTab}
         setActiveMenuTab={setActiveMenuTab}
@@ -743,10 +760,21 @@ export default function Menu() {
 
           try {
             let fullDish = await getDish(dish.id);
-            if (!fullDish.optionalToppings?.length) {
-              const toppings = await getToppingsByDishId(dish.id);
-              fullDish = { ...fullDish, optionalToppings: toppings };
+
+            // ⚙️ Nếu BE đã trả optionalToppings (kể cả rỗng), KHÔNG gọi lại API
+            if (!Array.isArray(fullDish.optionalToppings)) {
+              try {
+                const toppings = await getToppingsByDishId(dish.id);
+                fullDish = { ...fullDish, optionalToppings: toppings || [] };
+              } catch (e) {
+                console.warn(
+                  "⚠️ Không lấy được topping, đặt rỗng:",
+                  e?.message,
+                );
+                fullDish = { ...fullDish, optionalToppings: [] };
+              }
             }
+
             setSelectedDish(fullDish);
             setIsDishOptionsOpen(true);
           } catch (err) {
@@ -845,6 +873,8 @@ export default function Menu() {
           </div>
         </div>
       )}
+
+      <ToastHost />
     </div>
   );
 }

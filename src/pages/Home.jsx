@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
+
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { MapPin, Phone, Mail, X, Star } from "lucide-react";
 import HeroSection from "../components/Home/HeroSection";
@@ -12,7 +13,6 @@ import BookingForm from "../components/Home/BookingForm";
 import UserAccountDropdown from "../components/Home/UserAccountDropdown";
 import BookingHistoryModal from "../components/Home/BookingHistoryModal";
 import { logoutCustomer } from "../lib/auth";
-import { createBooking } from "../lib/apiBooking";
 import { useBooking } from "../hooks/useBooking";
 import ToastHost, { showToast } from "../common/ToastHost";
 import { HOME, HOME_ROUTES, NEED_AUTH } from "../constant/routes";
@@ -22,6 +22,7 @@ export default function Home() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const menuRef = useRef(null);
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
@@ -96,7 +97,7 @@ export default function Home() {
         prev.delete("token");
         return prev;
       },
-      { replace: true }
+      { replace: true },
     );
     if (location.pathname.startsWith(HOME)) {
       navigate(HOME, { replace: true });
@@ -106,18 +107,15 @@ export default function Home() {
   const open = (path) => navigate(path);
   const closeToHome = () => navigate(HOME, { replace: true });
 
-  const handleBookingSubmit = async (formData) => {
-    try {
-      await createBooking(formData);
-      clearBookingDraft();
-      showToast(
-        "Đặt bàn thành công! Chúng tôi sẽ liên hệ lại với bạn.",
-        "success"
-      );
-      closeToHome();
-    } catch (err) {
-      showToast(err?.message || "Đặt bàn thất bại.", "error");
-    }
+  const handleBookingSubmit = ({ bookingId, tableId }) => {
+    clearBookingDraft();
+    showToast(
+      tableId
+        ? `Đặt bàn thành công! Đã gán bàn số ${tableId}.`
+        : "Đặt bàn thành công!",
+      "success",
+    );
+    closeToHome();
   };
 
   const handleLoginFromBooking = (currentForm) => {
@@ -211,10 +209,12 @@ export default function Home() {
             </button>
 
             <button
-              onClick={() => open(HOME_ROUTES.MENU_PREVIEW)}
+              onClick={() => {
+                menuRef.current?.scrollIntoView({ behavior: "smooth" });
+              }}
               className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg transform"
             >
-              Thực Đơn
+              Món phải thử
             </button>
 
             <UserAccountDropdown
@@ -234,7 +234,9 @@ export default function Home() {
       <div className="pt-20">
         <HeroSection />
         <VisionSection />
-        <MenuSection />
+        <div ref={menuRef}>
+          <MenuSection />
+        </div>
       </div>
 
       <section className="py-20 bg-gradient-to-br from-neutral-50 to-neutral-100">
@@ -278,7 +280,7 @@ export default function Home() {
                 src={
                   "https://www.google.com/maps?q=" +
                   encodeURIComponent(
-                    "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Việt Nam"
+                    "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Việt Nam",
                   ) +
                   "&output=embed"
                 }
@@ -313,56 +315,6 @@ export default function Home() {
                 onLoginClick={handleLoginFromBooking}
                 initialData={bookingDraft}
               />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {modal === "menu" && (
-        <div className="fixed inset-0 z-50 transition-opacity duration-300">
-          <div className="absolute inset-0 bg-black/40" onClick={closeToHome} />
-          <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transform transition-transform duration-300">
-            <div className="p-6 h-full overflow-y-auto">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Thực Đơn</h2>
-                <button
-                  onClick={closeToHome}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                {Object.entries(menuCategories).map(([category, dishes]) => (
-                  <div key={category}>
-                    <h3 className="text-xl font-bold text-orange-600 mb-3 flex items-center gap-2">
-                      <Star className="w-5 h-5" />
-                      {category}
-                    </h3>
-                    <div className="space-y-3">
-                      {dishes.map((dish, index) => (
-                        <div
-                          key={index}
-                          className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="text-2xl">{dish.image}</div>
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-gray-900 text-sm">
-                                {dish.name}
-                              </h4>
-                              <p className="text-orange-600 font-bold text-sm">
-                                {dish.price}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </div>
