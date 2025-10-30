@@ -12,8 +12,8 @@ export default function ChefDailyDishes() {
       setApprovedPlans(
         res.filter(
           (p) =>
-            p.status === true && p.planDate === today && p.itemType === "DISH", // ✅ Chỉ lấy món ăn
-        ),
+            p.status === true && p.planDate === today && p.itemType === "DISH"
+        )
       );
     })();
   }, []);
