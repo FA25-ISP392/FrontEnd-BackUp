@@ -19,9 +19,6 @@ export default function AdminStatsCards({ totalRevenue = 0 }) {
             {fmtVND(totalRevenue)}
           </p>
         </div>
-        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br from-green-500 to-emerald-500">
-          <DollarSign className="h-6 w-6 text-white" />
-        </div>
       </div>
     </div>
   );

@@ -51,13 +51,17 @@ export async function getToppingsByDishId(dishId) {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    console.log(`🍕 Topping của món ${dishId}:`, res);
-    return Array.isArray(res) ? res : res?.result ?? [];
+    // ✅ Dữ liệu thật nằm trong res.data.result
+    const data = res?.data?.result ?? res?.result ?? [];
+
+    console.log(`🍕 Topping của món ${dishId}:`, data);
+    return Array.isArray(data) ? data : [];
   } catch (err) {
     console.error("❌ Lỗi khi lấy topping của món:", err);
-    throw err;
+    return []; // 🔹 Trả [] để không crash UI
   }
 }
+
 export async function deleteDishTopping(dishId, toppingId) {
   if (!dishId || !toppingId) {
     throw new Error("Thiếu dishId hoặc toppingId để xoá");
