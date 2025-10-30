@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { X, Trash2 } from "lucide-react";
+import { X, Trash2, Users, ChevronLeft, ChevronRight } from "lucide-react"; // 👈 ĐÃ THÊM ICON
 import { getBookingHistoryPaged, cancelBooking } from "../../lib/apiBooking";
 import ConfirmCancelModal from "./ConfirmCancelModal";
 
@@ -131,6 +131,28 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
     }
   };
 
+  // 🔽 HÀM BUILD TRANG ĐẸP HƠN
+  const { totalPages, totalElements, first, last } = pageInfo;
+  const pageSize = size;
+
+  const buildPages = () => {
+    const maxLength = 5;
+    if (totalPages <= maxLength) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const left = Math.max(1, page - 2);
+    const right = Math.min(totalPages, page + 2);
+    const pages = [];
+    if (left > 1) pages.push(1, "…");
+    for (let p = left; p <= right; p++) pages.push(p);
+    if (right < totalPages) pages.push("…", totalPages);
+    return pages;
+  };
+
+  const from = totalElements === 0 ? 0 : (page - 1) * pageSize + 1;
+  const to = Math.min(page * pageSize, totalElements);
+  // 🔼 HẾT HÀM BUILD TRANG
+
   if (!isOpen) return null;
 
   return (
@@ -219,40 +241,59 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
                   </table>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="text-sm text-neutral-600">
-                    Tổng: <b>{pageInfo.totalElements}</b> đơn • Trang{" "}
-                    <b>{pageInfo.page}</b>/<b>{pageInfo.totalPages}</b>
-                  </div>
+                <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
-                    <select
-                      value={size}
-                      onChange={(e) => {
-                        setPage(1);
-                        setSize(Number(e.target.value) || 6);
-                      }}
-                      className="border rounded-lg px-2 py-1 text-sm"
-                      title="Số dòng / trang"
-                    >
-                      <option value={6}>6 / trang</option>
-                      <option value={10}>10 / trang</option>
-                      <option value={20}>20 / trang</option>
-                    </select>
                     <button
-                      className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-50"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={pageInfo.first}
+                      onClick={() => setPage(Math.max(1, page - 1))}
+                      disabled={first}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        first
+                          ? "text-neutral-400 bg-neutral-100 cursor-not-allowed"
+                          : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
+                      }`}
                     >
+                      <ChevronLeft className="h-4 w-4" />
                       Trước
                     </button>
+
+                    <div className="flex items-center gap-1">
+                      {buildPages().map((p, i) =>
+                        p === "…" ? (
+                          <span
+                            key={`e-${i}`}
+                            className="px-3 py-2 text-neutral-500 font-medium"
+                          >
+                            …
+                          </span>
+                        ) : (
+                          <button
+                            key={p}
+                            onClick={() => setPage(p)}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                              p === page
+                                ? "bg-orange-500 text-white shadow-lg transform scale-105"
+                                : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        )
+                      )}
+                    </div>
+
                     <button
-                      className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-50"
                       onClick={() =>
-                        setPage((p) => Math.min(pageInfo.totalPages, p + 1))
+                        setPage(Math.min(totalPages || 1, page + 1))
                       }
-                      disabled={pageInfo.last}
+                      disabled={last}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        last
+                          ? "text-neutral-400 bg-neutral-100 cursor-not-allowed"
+                          : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
+                      }`}
                     >
                       Sau
+                      <ChevronRight className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
