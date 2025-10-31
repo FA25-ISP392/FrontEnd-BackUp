@@ -35,6 +35,8 @@ export default function Menu() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isCallStaffOpen, setIsCallStaffOpen] = useState(false);
+  const [isOrderFoodOpen, setIsOrderFoodOpen] = useState(false);
+  const [isDeleteSuccessOpen, setIsDeleteSuccessOpen] = useState(false); // <-- ĐÃ THÊM
   const [isDishOptionsOpen, setIsDishOptionsOpen] = useState(false);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [activeMenuTab, setActiveMenuTab] = useState("all");
@@ -298,8 +300,7 @@ export default function Menu() {
       setCart([]);
       setCaloriesConsumed(0);
       setIsStatusOpen(true);
-      showToast("Đã gửi món thành công!", "success");
-      showToast("Đã gửi món thành công!", "success");
+      setIsOrderFoodOpen(true);
     } catch (err) {
       showToast(
         `Gọi món thất bại: ${err?.message || "Vui lòng thử lại."}`,
@@ -372,22 +373,7 @@ export default function Menu() {
         try {
           await deleteOrderDetail(detail.orderDetailId);
           await fetchOrderDetailsFromOrder();
-          showToast("Đã xoá món.", "success");
-        } catch (e) {
-          showToast(e?.message || "Xoá món thất bại.", "error");
-        } finally {
-          setConfirmState((s) => ({ ...s, open: false }));
-        }
-      },
-    });
-    askConfirm({
-      title: "Xoá món khỏi đơn?",
-      message: `Bạn chắc muốn xoá “${detail.dishName || "món này"}”?`,
-      onYes: async () => {
-        try {
-          await deleteOrderDetail(detail.orderDetailId);
-          await fetchOrderDetailsFromOrder();
-          showToast("Đã xoá món.", "success");
+          setIsDeleteSuccessOpen(true); // <-- SỬ DỤNG LẠI POPUP NÀY
         } catch (e) {
           showToast(e?.message || "Xoá món thất bại.", "error");
         } finally {
@@ -488,16 +474,39 @@ export default function Menu() {
 
   const handleDecGroup = async (group) => {
     const st = String(group?.sample?.status || "").toLowerCase();
-    if (st !== "pending") {
-      showToast(
-        "Món đã qua 'Chờ nấu' – thao tác này không khả dụng.",
-        "warning"
-      );
-      return;
-    }
+    const dishName = group.sample.dishName || "Món này";
     const idToDelete = group.ids[group.ids.length - 1];
-    await deleteOrderDetail(idToDelete);
-    await fetchOrderDetailsFromOrder();
+
+    if (st === "preparing") {
+      // Nếu đang nấu, hiển thị xác nhận
+      askConfirm({
+        title: "Xác nhận huỷ món?",
+        message: `Món "${dishName}" đang được nấu. Bạn có chắc chắn muốn yêu cầu huỷ món này không?`,
+        onYes: async () => {
+          try {
+            await deleteOrderDetail(idToDelete);
+            await fetchOrderDetailsFromOrder();
+            setIsDeleteSuccessOpen(true); // Hiển thị popup thành công
+          } catch (e) {
+            showToast(e?.message || "Huỷ món thất bại.", "error");
+          } finally {
+            setConfirmState((s) => ({ ...s, open: false }));
+          }
+        },
+      });
+    } else if (st === "pending") {
+      // Nếu đang chờ, xoá luôn và báo thành công
+      try {
+        await deleteOrderDetail(idToDelete);
+        await fetchOrderDetailsFromOrder();
+        setIsDeleteSuccessOpen(true); // Hiển thị popup thành công
+      } catch (e) {
+        showToast(e?.message || "Xoá món thất bại.", "error");
+      }
+    } else {
+      // Các trạng thái khác (done, served)
+      showToast("Không thể xoá món đã hoàn thành hoặc đã phục vụ.", "warning");
+    }
   };
 
   const handleOpenEdit = (detail) => {
@@ -541,9 +550,7 @@ export default function Menu() {
       setIsPersonalized(true);
 
       showToast("Đã lưu và tính toán calo thành công!", "success");
-      showToast("Đã lưu và tính toán calo thành công!", "success");
     } catch (err) {
-      showToast("Cập nhật thất bại, vui lòng thử lại.", "error");
       showToast("Cập nhật thất bại, vui lòng thử lại.", "error");
     }
   };
@@ -758,17 +765,7 @@ export default function Menu() {
         open={confirmState.open}
         title={confirmState.title}
         message={confirmState.message}
-        confirmText="Xoá"
-        cancelText="Huỷ"
-        onConfirm={confirmState.onYes}
-        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
-      />
-
-      <ConfirmDialog
-        open={confirmState.open}
-        title={confirmState.title}
-        message={confirmState.message}
-        confirmText="Xoá"
+        confirmText="Xác nhận"
         cancelText="Huỷ"
         onConfirm={confirmState.onYes}
         onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
@@ -868,6 +865,55 @@ export default function Menu() {
               </p>
               <button
                 onClick={() => setIsCallStaffOpen(false)}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isOrderFoodOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">
+                Đã gửi món thành công!
+              </h3>
+              <p className="text-neutral-600 mb-6">
+                Món ăn của bạn đang được chuẩn bị. Vui lòng theo dõi trong tab
+                "Trạng thái đơn".
+              </p>
+              <button
+                onClick={() => setIsOrderFoodOpen(false)}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isDeleteSuccessOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">
+                Xoá món thành công!
+              </h3>
+              <p className="text-neutral-600 mb-6">
+                Món ăn đã được xoá khỏi đơn hàng của bạn.
+              </p>
+              <button
+                onClick={() => setIsDeleteSuccessOpen(false)}
                 className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
               >
                 Đóng
