@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import {
   saveSession,
   parseJWT,
-  getUsernameFromToken, // 👈 Cần thiết
-  getFullNameFromToken, // 👈 Cần thiết
+  getUsernameFromToken,
+  getFullNameFromToken,
 } from "../lib/auth";
-import { ensureCustomerForUser } from "../lib/apiCustomer"; // 👈 Cần thiết
+import { ensureCustomerForUser } from "../lib/apiCustomer";
 
 export default function GoogleCallback() {
   const navigate = useNavigate();
@@ -20,12 +20,9 @@ export default function GoogleCallback() {
       (async () => {
         try {
           const jwtPayload = parseJWT(token) || {};
-
           const username = getUsernameFromToken(jwtPayload);
           const fullName = getFullNameFromToken(jwtPayload);
           const email = jwtPayload.email;
-
-          // 1. Tạo profile tạm từ JWT
           const tempProfile = {
             username,
             fullName,
@@ -33,30 +30,27 @@ export default function GoogleCallback() {
             role: "CUSTOMER",
             phone: jwtPayload.phone || "",
           };
-
-          // 2. LƯU TOKEN TẠM THỜI vào localStorage để các API call tiếp theo được authorize
           saveSession({ token, user: tempProfile });
-
-          // 3. GỌI API ĐỂ LẤY VÀ GHI ĐÈ THÔNG TIN CUSTOMER ĐẦY ĐỦ
           const customerData = await ensureCustomerForUser(tempProfile);
-
-          // 4. Cập nhật profile cuối cùng với thông tin từ API
           const finalProfile = {
             ...tempProfile,
-            ...customerData, // Ghi đè các trường chi tiết (height, weight, portion...)
+            ...customerData,
             fullName: customerData.fullName || tempProfile.fullName,
             customerId: customerData.customerId || customerData.id,
             role: "CUSTOMER",
           };
-
-          // 5. LƯU LẠI SESSION VỚI THÔNG TIN ĐẦY ĐỦ
           saveSession({ token, user: finalProfile });
-
           window.dispatchEvent(new Event("auth:changed"));
-          navigate("/home", { replace: true });
+          const tableId = sessionStorage.getItem("currentTableId");
+          if (tableId) {
+            sessionStorage.setItem("customerTableId", tableId);
+            sessionStorage.removeItem("currentTableId");
+            navigate("/menu", { replace: true });
+          } else {
+            navigate("/home", { replace: true });
+          }
         } catch (e) {
           console.error("Lỗi xử lý token/lấy profile:", e);
-          // Quay về trang login nếu không thể lấy profile
           alert(
             "Đăng nhập Google thành công nhưng không thể tải thông tin profile."
           );
