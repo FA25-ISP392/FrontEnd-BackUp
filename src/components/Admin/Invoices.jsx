@@ -53,27 +53,13 @@ function methodLabel(m, vi) {
   return M;
 }
 
-/**
- * Phân trang giống AccountManagement:
- * - Có dải trang kèm "..."
- * - Nút Trước/Sau
- * - Hiển thị "từ–đến trong tổng số"
- *
- * Props yêu cầu:
- *   invoices: array item
- *   pageInfo: { page, size, totalPages, totalElements, first?, last? }
- *   onPageChange: (p) => void
- *   page: số trang hiện tại (1-based) -> nên truyền vào để đồng bộ với state invPage ở Admin.jsx
- */
 export default function AdminInvoices({
   invoices = [],
   pageInfo = { page: 1, size: 6, totalPages: 1, totalElements: 0 },
   onPageChange = () => {},
-  page, // 1-based
+  page,
 }) {
   const [q, setQ] = useState("");
-
-  // Lấy current page 1-based: ưu tiên prop `page`, fallback pageInfo.page (coi như 1-based)
   const curPage = Number(page || pageInfo.page || 1);
   const pageSize = Number(pageInfo.size || 6);
   const totalPages = Number(pageInfo.totalPages || 1);
@@ -92,12 +78,9 @@ export default function AdminInvoices({
     if (right < totalPages) pages.push("...", totalPages);
     return pages;
   };
-
-  // Tính khoảng hiển thị "từ–đến"
   const from = totalElements === 0 ? 0 : (curPage - 1) * pageSize + 1;
   const to = Math.min(curPage * pageSize, totalElements);
 
-  // Tìm kiếm cục bộ (trên trang hiện tại)
   const filtered = useMemo(() => {
     if (!q) return invoices;
     const s = q.trim().toLowerCase();
@@ -127,10 +110,7 @@ export default function AdminInvoices({
       );
     });
   }, [q, invoices]);
-
-  // Tổng tiền của danh sách đã lọc trên trang hiện tại
   const total = filtered.reduce((sum, p) => sum + (Number(p.total) || 0), 0);
-
   const isFirst = curPage <= 1;
   const isLast = curPage >= totalPages;
 
@@ -187,7 +167,7 @@ export default function AdminInvoices({
                   {fmtVND(p.total)}
                 </div>
                 <div>
-                  {p.datetimeTextPlus7 || toDatetimeText(p.createdAt) || "-"}
+                  {p.datetimeText || toDatetimeText(p.createdAt) || "-"}
                 </div>
                 <div className="text-sm">
                   {p.methodVi || methodLabel(p.method)}
@@ -224,7 +204,7 @@ export default function AdminInvoices({
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
               isFirst
                 ? "text-neutral-400 bg-neutral-100 cursor-not-allowed"
-                : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
+                : "text-neutral-700 bg-white border border-neutral-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 shadow-sm"
             }`}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -246,8 +226,8 @@ export default function AdminInvoices({
                   onClick={() => onPageChange(p)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     p === curPage
-                      ? "bg-orange-500 text-white shadow-lg transform scale-105"
-                      : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
+                      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105"
+                      : "text-neutral-700 bg-white border border-neutral-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 shadow-sm"
                   }`}
                 >
                   {p}
@@ -262,7 +242,7 @@ export default function AdminInvoices({
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
               isLast
                 ? "text-neutral-400 bg-neutral-100 cursor-not-allowed"
-                : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
+                : "text-neutral-700 bg-white border border-neutral-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 shadow-sm"
             }`}
           >
             Sau

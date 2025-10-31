@@ -210,7 +210,7 @@ export default function AdminAccountManagement({
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 pageInfo.first
                   ? "text-neutral-400 bg-neutral-100 cursor-not-allowed"
-                  : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
+                  : "text-neutral-700 bg-white border border-neutral-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 shadow-sm"
               }`}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -232,8 +232,8 @@ export default function AdminAccountManagement({
                     onClick={() => onPageChange(p)}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       p === page
-                        ? "bg-orange-500 text-white shadow-lg transform scale-105"
-                        : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
+                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105"
+                        : "text-neutral-700 bg-white border border-neutral-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 shadow-sm"
                     }`}
                   >
                     {p}
@@ -250,7 +250,7 @@ export default function AdminAccountManagement({
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 pageInfo.last
                   ? "text-neutral-400 bg-neutral-100 cursor-not-allowed"
-                  : "text-neutral-700 bg-white border border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 shadow-sm"
+                  : "text-neutral-700 bg-white border border-neutral-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 shadow-sm"
               }`}
             >
               Sau

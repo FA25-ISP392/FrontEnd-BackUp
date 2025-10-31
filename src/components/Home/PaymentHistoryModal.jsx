@@ -167,7 +167,7 @@ export default function PaymentHistoryModal({ isOpen, onClose, userInfo }) {
                               {fmtVND(p.total)}
                             </td>
                             <td className="px-4 py-2 text-center">
-                              {p.datetimeTextPlus7 || p.datetimeText}
+                              {p.datetimeText}
                             </td>
                             <td className="px-4 py-2 text-center">
                               {p.methodVi}
