@@ -14,7 +14,7 @@ export default function StaffTableInfoLayout({
           <button
             key={table.id}
             onClick={() => onTableClick(table)}
-            className={`p-4 rounded-lg border-2 transition-all duration-200
+            className={`relative p-4 rounded-lg border-2 transition-all duration-200
               ${
                 selectedTable?.id === table.id
                   ? "ring-4 ring-blue-500 ring-offset-2 scale-105 shadow-xl"
@@ -36,6 +36,12 @@ export default function StaffTableInfoLayout({
               }
             `}
           >
+            {table.callPayment && (
+              <span className="absolute top-2 right-2 flex items-center justify-center h-6 w-6 bg-green-500 text-white text-xs font-bold rounded-full border-2 border-white shadow-sm">
+                VND
+              </span>
+            )}
+
             <div className="flex items-center justify-between mb-2">
               <span className="font-bold text-lg text-neutral-800">
                 Bàn {table.number}
