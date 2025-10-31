@@ -146,10 +146,6 @@ export default function BookingForm({
       });
       const bookingId = res?.result?.bookingId ?? res?.bookingId ?? res?.id;
       await approveBookingWithTable(bookingId, pickedId);
-      showToast(
-        `Đặt bàn thành công! Bàn số ${pickedId} đã được gán.`,
-        "success"
-      );
       onSubmit?.({ ...form, tableId: pickedId, bookingId });
     } catch (err) {
       showToast(err?.message || "Đặt bàn thất bại.", "error");
