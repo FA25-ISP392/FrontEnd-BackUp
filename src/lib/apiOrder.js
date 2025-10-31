@@ -28,7 +28,6 @@ export async function createOrder({ customerId, tableId }) {
     tableId: Number(tableId),
     orderDate: new Date().toISOString(),
   };
-  console.log("POST /orders payload:", payload);
   const res = await apiConfig.post("/orders", payload);
   return normalizeOrder(res?.result ?? res);
 }

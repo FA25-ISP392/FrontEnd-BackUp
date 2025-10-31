@@ -29,48 +29,77 @@ import EditOrderDetailModal from "../components/Menu/EditOrderDetailModal";
 import { createPayment, getPaymentById } from "../lib/apiPayment";
 import ConfirmDialog from "../common/ConfirmDialog";
 
+// --- Hằng số và Hàm Helper ---
+const PERSONAL_KEY = (cid) => `personalization:${cid}`;
+const applyGoal = (cals, goal) => {
+  if (typeof cals !== "number" || !isFinite(cals)) return null;
+  if (goal === "lose") return Math.max(0, cals - 500);
+  if (goal === "gain") return cals + 500;
+  return cals;
+};
+const readAuthUser = () => {
+  try {
+    const raw = localStorage.getItem("user");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+const getDisplayName = (u) =>
+  String(u?.fullName || u?.name || u?.username || "").trim();
+const sumTotal = (items = []) =>
+  items.reduce((s, it) => s + Number(it.totalPrice ?? it.price ?? 0), 0);
+
+// --- Component Chính ---
 export default function Menu() {
-  const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-  const [isCallStaffOpen, setIsCallStaffOpen] = useState(false);
-  const [isOrderFoodOpen, setIsOrderFoodOpen] = useState(false);
-  const [isDeleteSuccessOpen, setIsDeleteSuccessOpen] = useState(false);
-  const [isNotServedErrorOpen, setIsNotServedErrorOpen] = useState(false);
-  const [isOrderFoodErrorOpen, setIsOrderFoodErrorOpen] = useState(false);
-  const [orderFoodErrorMessage, setOrderFoodErrorMessage] = useState("");
-  const [isDishOptionsOpen, setIsDishOptionsOpen] = useState(false);
-  const [isStatusOpen, setIsStatusOpen] = useState(false);
-  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
-  const [isErrorOpen, setIsErrorOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [activeMenuTab, setActiveMenuTab] = useState("all");
-  const [selectedDish, setSelectedDish] = useState(null);
-  const [cart, setCart] = useState([]);
-  const [caloriesConsumed, setCaloriesConsumed] = useState(0);
-  const [isPersonalized, setIsPersonalized] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("cash");
+  // --- State Cơ sở (Auth, Bàn, Đơn hàng) ---
   const [tableId, setTableId] = useState(null);
   const [customerId, setCustomerId] = useState(null);
   const [customerName, setCustomerName] = useState(null);
   const [orderId, setOrderId] = useState(
     () => sessionStorage.getItem("orderId") || null
   );
+
+  // --- State Menu & Món ăn ---
+  const [menuDishes, setMenuDishes] = useState([]);
+  const [activeMenuTab, setActiveMenuTab] = useState("all");
+  const [selectedDish, setSelectedDish] = useState(null);
+  const [isDishOptionsOpen, setIsDishOptionsOpen] = useState(false);
+
+  // --- State Cá nhân hóa (Personalization) ---
+  const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
+  const [isPersonalized, setIsPersonalized] = useState(false);
   const [baseCalories, setBaseCalories] = useState(null);
   const [estimatedCalories, setEstimatedCalories] = useState(null);
   const [dailyCalories, setDailyCalories] = useState(null);
-  const [menuDishes, setMenuDishes] = useState([]);
+
+  // --- State Giỏ hàng (Cart) ---
+  const [cart, setCart] = useState([]);
+  const [caloriesConsumed, setCaloriesConsumed] = useState(0);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // --- State Trạng thái Đơn hàng (Order Status) ---
   const [orderDetails, setOrderDetails] = useState([]);
-  const [paymentItems, setPaymentItems] = useState([]);
+  const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingDetail, setEditingDetail] = useState(null);
-  const [paidSuccessOpen, setPaidSuccessOpen] = useState(false);
-  const [countdown, setCountdown] = useState(10);
-  const paidLockedRef = useRef(false);
-  const pollStopRef = useRef(false);
-  const pollTimerRef = useRef(null);
-  const thanksTimerRef = useRef(null);
+
+  // --- State Thanh toán (Payment) ---
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [paymentItems, setPaymentItems] = useState([]);
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+
+  // --- State Thông báo & Modal ---
+  const [isCallStaffOpen, setIsCallStaffOpen] = useState(false);
+  const [isOrderFoodOpen, setIsOrderFoodOpen] = useState(false);
+  const [isDeleteSuccessOpen, setIsDeleteSuccessOpen] = useState(false);
+  const [isNotServedErrorOpen, setIsNotServedErrorOpen] = useState(false);
+  const [isOrderFoodErrorOpen, setIsOrderFoodErrorOpen] = useState(false);
+  const [orderFoodErrorMessage, setOrderFoodErrorMessage] = useState("");
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isErrorOpen, setIsErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [confirmState, setConfirmState] = useState({
     open: false,
     title: "",
@@ -80,25 +109,15 @@ export default function Menu() {
   const askConfirm = ({ title, message, onYes }) =>
     setConfirmState({ open: true, title, message, onYes });
 
-  const PERSONAL_KEY = (cid) => `personalization:${cid}`;
-  const applyGoal = (cals, goal) => {
-    if (typeof cals !== "number" || !isFinite(cals)) return null;
-    if (goal === "lose") return Math.max(0, cals - 500);
-    if (goal === "gain") return cals + 500;
-    return cals;
-  };
+  // --- State Thoát sau thanh toán ---
+  const [paidSuccessOpen, setPaidSuccessOpen] = useState(false);
+  const [countdown, setCountdown] = useState(10);
+  const paidLockedRef = useRef(false);
+  const pollStopRef = useRef(false);
+  const pollTimerRef = useRef(null);
+  const thanksTimerRef = useRef(null);
 
-  const readAuthUser = () => {
-    try {
-      const raw = localStorage.getItem("user");
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  };
-  const getDisplayName = (u) =>
-    String(u?.fullName || u?.name || u?.username || "").trim();
-
+  // === LOGIC CƠ SỞ (AUTH, BÀN, ĐƠN HÀNG) ===
   useEffect(() => {
     const storedTableId = sessionStorage.getItem("customerTableId");
     if (storedTableId) setTableId(storedTableId);
@@ -153,7 +172,6 @@ export default function Menu() {
           sessionStorage.setItem("orderId", String(order.orderId));
         }
       } catch (err) {
-        console.error("Create order failed:", err?.message || err);
         sessionStorage.removeItem(idemKey);
       }
     })();
@@ -171,7 +189,6 @@ export default function Menu() {
     (async () => {
       try {
         const data = await listDish();
-        console.log("📦 Dữ liệu BE trả về:", data);
         setMenuDishes(data);
         const normalized = data.map((d) => ({
           ...d,
@@ -179,10 +196,10 @@ export default function Menu() {
           name: d.name ?? d.dishName,
           calo: d.calo ?? d.calories ?? 0,
         }));
-
         setMenuDishes(normalized);
       } catch (err) {
-        console.error("❌ Lỗi khi load món ăn:", err);
+        setErrorMessage("Không thể tải thực đơn: " + err.message);
+        setIsErrorOpen(true);
       }
     })();
   }, []);
@@ -191,57 +208,34 @@ export default function Menu() {
     (dish) => dish.isAvailable && !hiddenNames.includes(dish.name)
   );
 
-  const { personalizationForm, setPersonalizationForm, personalizedDishes } =
-    useMenuPersonalization(filteredDishes);
-
-  useEffect(() => {
-    if (!customerId) return;
-
-    const cachedRaw = localStorage.getItem(PERSONAL_KEY(customerId));
-    if (cachedRaw) {
-      try {
-        const cached = JSON.parse(cachedRaw);
-        if (cached && typeof cached === "object") {
-          const data = cached.data || {};
-          delete data.goal;
-          setPersonalizationForm((prev) => ({ ...prev, ...data }));
-
-          if (typeof cached.perWorkout === "number") {
-            const roundedBase = Math.ceil(cached.perWorkout);
-            const roundedGoal = Math.ceil(
-              applyGoal(cached.perWorkout, data.goal)
-            );
-            setBaseCalories(roundedBase);
-            setEstimatedCalories(roundedGoal);
-            setIsPersonalized(true);
-          } else setIsPersonalized(true);
-        }
-      } catch {}
+  const handleDishSelect = async (dish) => {
+    if (dish.remainingQuantity <= 0) {
+      setErrorMessage("Món này hiện đã hết số lượng trong kế hoạch hôm nay.");
+      setIsErrorOpen(true);
       return;
     }
 
-    (async () => {
-      try {
-        const cus = await getCustomerDetail(customerId);
-        const toForm = {
-          height: Number(cus.height ?? 170),
-          weight: Number(cus.weight ?? 70),
-          gender: cus.sex === true ? "male" : "female",
-          age: 25,
-          mealsPerDay: Number(cus.portion ?? 3),
-          exerciseLevel: "moderate",
-          goal: "",
-        };
-        setPersonalizationForm((prev) => ({ ...prev, ...toForm }));
-        localStorage.setItem(
-          PERSONAL_KEY(customerId),
-          JSON.stringify({ data: toForm, updatedAt: Date.now() })
-        );
-      } catch (e) {
-        console.warn("Không lấy được personalization từ BE:", e?.message || e);
+    try {
+      let fullDish = await getDish(dish.id);
+      if (!Array.isArray(fullDish.optionalToppings)) {
+        try {
+          const toppings = await getToppingsByDishId(dish.id);
+          fullDish = { ...fullDish, optionalToppings: toppings || [] };
+        } catch (e) {
+          fullDish = { ...fullDish, optionalToppings: [] };
+        }
       }
-    })();
-  }, [customerId]);
+      setSelectedDish(fullDish);
+      setIsDishOptionsOpen(true);
+    } catch (err) {
+      setErrorMessage(err?.message || "Không thể lấy chi tiết món.");
+      setIsErrorOpen(true);
+    }
+  };
+
+  // === LOGIC GIỎ HÀNG (CartSidebar) ===
+  const { personalizationForm, setPersonalizationForm, personalizedDishes } =
+    useMenuPersonalization(filteredDishes);
 
   const addToCart = (item) => {
     const noteKey = item.notes || "";
@@ -297,7 +291,7 @@ export default function Menu() {
     try {
       if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
       if (!cart.length) throw new Error("Giỏ hàng đang trống.");
-      const saved = await createOrderDetailsFromCart(orderId, cart);
+      await createOrderDetailsFromCart(orderId, cart);
       setIsCartOpen(false);
       setCart([]);
       setCaloriesConsumed(0);
@@ -311,6 +305,17 @@ export default function Menu() {
     }
   };
 
+  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  // === LOGIC TRẠNG THÁI ĐƠN HÀNG (OrderStatusSidebar) ===
+  async function fetchOrderDetailsFromOrder() {
+    if (!orderId) return;
+    try {
+      const data = await getOrderDetailsByOrderId(orderId);
+      setOrderDetails(data);
+    } catch (err) {}
+  }
+
   useEffect(() => {
     if (isStatusOpen) fetchOrderDetailsFromOrder();
   }, [isStatusOpen, orderId]);
@@ -323,144 +328,6 @@ export default function Menu() {
     }
     return () => clearInterval(timer);
   }, [isStatusOpen, orderId]);
-
-  const groups = (() => {
-    const g = {
-      pending: [],
-      preparing: [],
-      served: [],
-      cancelled: [],
-      done: [],
-    };
-    for (const od of orderDetails) {
-      const key = String(od.status || "").toLowerCase();
-      if (g[key]) g[key].push(od);
-    }
-    return g;
-  })();
-
-  const handleGoalChange = (goalId) => {
-    setPersonalizationForm((prev) => ({ ...prev, goal: goalId }));
-    const base = baseCalories ?? estimatedCalories;
-    setEstimatedCalories(applyGoal(base, goalId));
-  };
-
-  const handleOpenPayment = async () => {
-    try {
-      if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
-
-      if (cart.length > 0) {
-        setIsNotServedErrorOpen(true);
-        return;
-      }
-
-      const details = await getOrderDetailsByOrderId(orderId);
-
-      const notServedItem = details.find((d) => d.status !== "SERVED");
-
-      if (notServedItem) {
-        setIsNotServedErrorOpen(true);
-        return;
-      }
-
-      setPaymentItems(details);
-      setIsPaymentOpen(true);
-
-      if (cart.length) {
-        setCart([]);
-        setCaloriesConsumed(0);
-      }
-    } catch (err) {
-      setErrorMessage(
-        err?.message || "Không mở được thanh toán. Vui lòng thử lại."
-      );
-      setIsErrorOpen(true);
-    }
-  };
-
-  const handleDeleteDetail = async (detail) => {
-    if (!detail?.orderDetailId) return;
-    askConfirm({
-      title: "Xoá món khỏi đơn?",
-      message: `Bạn chắc muốn xoá “${detail.dishName || "món này"}”?`,
-      onYes: async () => {
-        try {
-          await deleteOrderDetail(detail.orderDetailId);
-          await fetchOrderDetailsFromOrder();
-          setIsDeleteSuccessOpen(true);
-        } catch (e) {
-          setErrorMessage(e?.message || "Xoá món thất bại.");
-          setIsErrorOpen(true);
-        } finally {
-          setConfirmState((s) => ({ ...s, open: false }));
-        }
-      },
-    });
-  };
-
-  const handleEdited = async () => {
-    await fetchOrderDetailsFromOrder();
-  };
-
-  const sumTotal = (items = []) =>
-    items.reduce((s, it) => s + Number(it.totalPrice ?? it.price ?? 0), 0);
-
-  function notifyPaymentStaff({ tableId, orderId, total, paymentId }) {
-    const payload = { tableId, orderId, total, paymentId, ts: Date.now() };
-    window.dispatchEvent(
-      new CustomEvent("table:callPayment", { detail: payload })
-    );
-    localStorage.setItem(
-      `signal:callPayment:${payload.ts}`,
-      JSON.stringify(payload)
-    );
-  }
-
-  function notifyCallStaff({ tableId, orderId }) {
-    const payload = {
-      type: "callStaff",
-      tableId,
-      tableNumber: tableId,
-      orderId,
-      ts: Date.now(),
-    };
-
-    try {
-      const bc = new BroadcastChannel("monngon-signals");
-      bc.postMessage(payload);
-      bc.close?.();
-    } catch {}
-
-    localStorage.setItem(
-      `signal:callStaff:${payload.ts}`,
-      JSON.stringify(payload)
-    );
-  }
-
-  const handleRequestPayment = async () => {
-    try {
-      if (!orderId) throw new Error("Chưa có orderId.");
-      const total = sumTotal(paymentItems);
-      const p = await createPayment({ orderId, method: "BANK_TRANSFER" });
-      sessionStorage.setItem("paymentId", String(p.id || ""));
-      notifyPaymentStaff({ tableId, orderId, total, paymentId: p.id });
-      setIsPaymentOpen(false);
-      setIsCallStaffOpen(true);
-    } catch (error) {
-      setErrorMessage(error?.message || "Không gửi được yêu cầu thanh toán.");
-      setIsErrorOpen(true);
-    }
-  };
-
-  async function fetchOrderDetailsFromOrder() {
-    if (!orderId) return;
-    try {
-      const data = await getOrderDetailsByOrderId(orderId);
-      setOrderDetails(data);
-    } catch (err) {
-      console.error("❌ Lỗi lấy orderDetails theo orderId:", err);
-    }
-  }
 
   const handleIncGroup = async (group) => {
     const st = String(group?.sample?.status || "").toLowerCase();
@@ -520,6 +387,26 @@ export default function Menu() {
     }
   };
 
+  const handleDeleteDetail = async (detail) => {
+    if (!detail?.orderDetailId) return;
+    askConfirm({
+      title: "Xoá món khỏi đơn?",
+      message: `Bạn chắc muốn xoá “${detail.dishName || "món này"}”?`,
+      onYes: async () => {
+        try {
+          await deleteOrderDetail(detail.orderDetailId);
+          await fetchOrderDetailsFromOrder();
+          setIsDeleteSuccessOpen(true);
+        } catch (e) {
+          setErrorMessage(e?.message || "Xoá món thất bại.");
+          setIsErrorOpen(true);
+        } finally {
+          setConfirmState((s) => ({ ...s, open: false }));
+        }
+      },
+    });
+  };
+
   const handleOpenEdit = (detail) => {
     const st = String(detail?.status || "").toLowerCase();
     if (st !== "pending") return;
@@ -527,59 +414,92 @@ export default function Menu() {
     setIsEditOpen(true);
   };
 
-  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const handleEdited = async () => {
+    await fetchOrderDetailsFromOrder();
+  };
 
-  const handlePersonalizationSubmit = async (form) => {
+  // === LOGIC THANH TOÁN (PaymentSidebar) ===
+  const handleOpenPayment = async () => {
     try {
-      if (!customerId) throw new Error("Thiếu customerId");
-      const bmr =
-        form.gender === "male"
-          ? 10 * form.weight + 6.25 * form.height - 5 * form.age + 5
-          : 10 * form.weight + 6.25 * form.height - 5 * form.age - 161;
-      const activityMultipliers = {
-        sedentary: 1.2,
-        light: 1.375,
-        moderate: 1.55,
-        active: 1.725,
-        very_active: 1.9,
-      };
-      const multiplier = activityMultipliers[form.exerciseLevel] || 1.55;
-      const maintenanceCalories = bmr * multiplier;
-      const dailyCalories = applyGoal(maintenanceCalories, form.goal);
-      localStorage.setItem(
-        PERSONAL_KEY(customerId),
-        JSON.stringify({
-          data: form,
-          perWorkout: Math.ceil(maintenanceCalories),
-          goalCalories: Math.ceil(dailyCalories),
-          updatedAt: Date.now(),
-        })
-      );
-      await updateCustomerPersonalization(customerId, form);
-      setBaseCalories(Math.ceil(maintenanceCalories));
-      setEstimatedCalories(Math.ceil(dailyCalories));
-      setIsPersonalized(true);
-
-      setSuccessMessage("Đã lưu và tính toán calo thành công!");
-      setIsSuccessOpen(true);
+      if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
+      if (cart.length > 0) {
+        setIsNotServedErrorOpen(true);
+        return;
+      }
+      const details = await getOrderDetailsByOrderId(orderId);
+      const notServedItem = details.find((d) => d.status !== "SERVED");
+      if (notServedItem) {
+        setIsNotServedErrorOpen(true);
+        return;
+      }
+      setPaymentItems(details);
+      setIsPaymentOpen(true);
+      if (cart.length) {
+        setCart([]);
+        setCaloriesConsumed(0);
+      }
     } catch (err) {
-      setErrorMessage("Cập nhật thất bại, vui lòng thử lại.");
+      setErrorMessage(
+        err?.message || "Không mở được thanh toán. Vui lòng thử lại."
+      );
       setIsErrorOpen(true);
     }
   };
 
+  const handleRequestPayment = async () => {
+    try {
+      if (!orderId) throw new Error("Chưa có orderId.");
+      const total = sumTotal(paymentItems);
+      const p = await createPayment({ orderId, method: "BANK_TRANSFER" });
+      sessionStorage.setItem("paymentId", String(p.id || ""));
+      notifyPaymentStaff({ tableId, orderId, total, paymentId: p.id });
+      setIsPaymentOpen(false);
+      setIsCallStaffOpen(true);
+    } catch (error) {
+      setErrorMessage(error?.message || "Không gửi được yêu cầu thanh toán.");
+      setIsErrorOpen(true);
+    }
+  };
+
+  // === LOGIC GỌI NHÂN VIÊN & TÍN HIỆU (StaffSignal) ===
+  function notifyPaymentStaff({ tableId, orderId, total, paymentId }) {
+    const payload = { tableId, orderId, total, paymentId, ts: Date.now() };
+    window.dispatchEvent(
+      new CustomEvent("table:callPayment", { detail: payload })
+    );
+    localStorage.setItem(
+      `signal:callPayment:${payload.ts}`,
+      JSON.stringify(payload)
+    );
+  }
+
+  function notifyCallStaff({ tableId, orderId }) {
+    const payload = {
+      type: "callStaff",
+      tableId,
+      tableNumber: tableId,
+      orderId,
+      ts: Date.now(),
+    };
+    try {
+      const bc = new BroadcastChannel("monngon-signals");
+      bc.postMessage(payload);
+      bc.close?.();
+    } catch {}
+    localStorage.setItem(
+      `signal:callStaff:${payload.ts}`,
+      JSON.stringify(payload)
+    );
+  }
+
+  // === LOGIC POLLING THANH TOÁN & THOÁT ===
   function cleanupAndExit() {
     try {
       pollStopRef.current = true;
-      if (pollTimerRef.current) {
-        clearTimeout(pollTimerRef.current);
-        pollTimerRef.current = null;
-      }
-      if (thanksTimerRef.current) {
-        clearInterval(thanksTimerRef.current);
-        thanksTimerRef.current = null;
-      }
-
+      if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+      if (thanksTimerRef.current) clearInterval(thanksTimerRef.current);
+      pollTimerRef.current = null;
+      thanksTimerRef.current = null;
       sessionStorage.clear();
       const keysToRemove = [
         "user",
@@ -590,11 +510,7 @@ export default function Menu() {
       ];
       keysToRemove.forEach((k) => localStorage.removeItem(k));
       Object.keys(localStorage).forEach((k) => {
-        if (
-          k.startsWith("signal:callStaff:") ||
-          k.startsWith("signal:callPayment:") ||
-          k.startsWith("signal:paymentSuccess:")
-        ) {
+        if (k.startsWith("signal:")) {
           try {
             localStorage.removeItem(k);
           } catch {}
@@ -608,28 +524,20 @@ export default function Menu() {
     if (paidLockedRef.current) return;
     paidLockedRef.current = true;
     pollStopRef.current = true;
-    if (pollTimerRef.current) {
-      clearTimeout(pollTimerRef.current);
-      pollTimerRef.current = null;
-    }
-
+    if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+    pollTimerRef.current = null;
     setPaidSuccessOpen(true);
     setCountdown(10);
   }
 
   useEffect(() => {
     if (!paidSuccessOpen) return;
-    if (thanksTimerRef.current) {
-      clearInterval(thanksTimerRef.current);
-      thanksTimerRef.current = null;
-    }
+    if (thanksTimerRef.current) clearInterval(thanksTimerRef.current);
     thanksTimerRef.current = setInterval(() => {
       setCountdown((c) => {
         if (c <= 1) {
-          if (thanksTimerRef.current) {
-            clearInterval(thanksTimerRef.current);
-            thanksTimerRef.current = null;
-          }
+          if (thanksTimerRef.current) clearInterval(thanksTimerRef.current);
+          thanksTimerRef.current = null;
           cleanupAndExit();
           return 0;
         }
@@ -637,17 +545,14 @@ export default function Menu() {
       });
     }, 1000);
     return () => {
-      if (thanksTimerRef.current) {
-        clearInterval(thanksTimerRef.current);
-        thanksTimerRef.current = null;
-      }
+      if (thanksTimerRef.current) clearInterval(thanksTimerRef.current);
+      thanksTimerRef.current = null;
     };
   }, [paidSuccessOpen]);
 
   useEffect(() => {
     function onStorage(e) {
-      if (!e?.key) return;
-      if (e.key.startsWith("signal:paymentSuccess:")) {
+      if (e.key?.startsWith("signal:paymentSuccess:")) {
         try {
           localStorage.removeItem(e.key);
         } catch {}
@@ -690,50 +595,119 @@ export default function Menu() {
       }
     }
     pollTimerRef.current = setTimeout(checkOnce, 2000);
-
     return () => {
       pollStopRef.current = true;
-      if (pollTimerRef.current) {
-        clearTimeout(pollTimerRef.current);
-        pollTimerRef.current = null;
-      }
+      if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+      pollTimerRef.current = null;
     };
   }, [orderId]);
+
+  // === LOGIC CÁ NHÂN HÓA (PersonalizationModal) ===
+  useEffect(() => {
+    if (!customerId) return;
+    const cachedRaw = localStorage.getItem(PERSONAL_KEY(customerId));
+    if (cachedRaw) {
+      try {
+        const cached = JSON.parse(cachedRaw);
+        if (cached && typeof cached === "object") {
+          const data = cached.data || {};
+          delete data.goal;
+          setPersonalizationForm((prev) => ({ ...prev, ...data }));
+
+          if (typeof cached.perWorkout === "number") {
+            const roundedBase = Math.ceil(cached.perWorkout);
+            const roundedGoal = Math.ceil(
+              applyGoal(cached.perWorkout, data.goal)
+            );
+            setBaseCalories(roundedBase);
+            setEstimatedCalories(roundedGoal);
+            setIsPersonalized(true);
+          } else setIsPersonalized(true);
+        }
+      } catch {}
+      return;
+    }
+    (async () => {
+      try {
+        const cus = await getCustomerDetail(customerId);
+        const toForm = {
+          height: Number(cus.height ?? 170),
+          weight: Number(cus.weight ?? 70),
+          gender: cus.sex === true ? "male" : "female",
+          age: 25,
+          mealsPerDay: Number(cus.portion ?? 3),
+          exerciseLevel: "moderate",
+          goal: "",
+        };
+        setPersonalizationForm((prev) => ({ ...prev, ...toForm }));
+        localStorage.setItem(
+          PERSONAL_KEY(customerId),
+          JSON.stringify({ data: toForm, updatedAt: Date.now() })
+        );
+      } catch (e) {}
+    })();
+  }, [customerId]);
+
+  const handleGoalChange = (goalId) => {
+    setPersonalizationForm((prev) => ({ ...prev, goal: goalId }));
+    const base = baseCalories ?? estimatedCalories;
+    setEstimatedCalories(applyGoal(base, goalId));
+  };
+
+  const handlePersonalizationSubmit = async (form) => {
+    try {
+      if (!customerId) throw new Error("Thiếu customerId");
+      const bmr =
+        form.gender === "male"
+          ? 10 * form.weight + 6.25 * form.height - 5 * form.age + 5
+          : 10 * form.weight + 6.25 * form.height - 5 * form.age - 161;
+      const activityMultipliers = {
+        sedentary: 1.2,
+        light: 1.375,
+        moderate: 1.55,
+        active: 1.725,
+        very_active: 1.9,
+      };
+      const multiplier = activityMultipliers[form.exerciseLevel] || 1.55;
+      const maintenanceCalories = bmr * multiplier;
+      const dailyCalories = applyGoal(maintenanceCalories, form.goal);
+      localStorage.setItem(
+        PERSONAL_KEY(customerId),
+        JSON.stringify({
+          data: form,
+          perWorkout: Math.ceil(maintenanceCalories),
+          goalCalories: Math.ceil(dailyCalories),
+          updatedAt: Date.now(),
+        })
+      );
+      await updateCustomerPersonalization(customerId, form);
+      setBaseCalories(Math.ceil(maintenanceCalories));
+      setEstimatedCalories(Math.ceil(dailyCalories));
+      setIsPersonalized(true);
+
+      setSuccessMessage("Đã lưu và tính toán calo thành công!");
+      setIsSuccessOpen(true);
+    } catch (err) {
+      setErrorMessage("Cập nhật thất bại, vui lòng thử lại.");
+      setIsErrorOpen(true);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
       <MenuHeader
-        cartItemCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
+        cartItemCount={cartItemCount}
         onPersonalize={() => setIsPersonalizationOpen(true)}
         onViewOrders={() => setIsCartOpen(true)}
         onCallStaff={() => {
           setIsCallStaffOpen(true);
-          if (tableId) {
-            notifyCallStaff({ tableId, orderId });
-          }
+          if (tableId) notifyCallStaff({ tableId, orderId });
         }}
         onCheckout={handleOpenPayment}
         onViewStatus={() => setIsStatusOpen(true)}
         tableId={tableId}
         customerId={customerId}
       />
-      <OrderStatusSidebar
-        isOpen={isStatusOpen}
-        onClose={() => setIsStatusOpen(false)}
-        items={orderDetails}
-        onEdit={handleOpenEdit}
-        onDelete={handleDeleteDetail}
-        onIncGroup={handleIncGroup}
-        onDecGroup={handleDecGroup}
-      />
-      {isEditOpen && editingDetail && (
-        <EditOrderDetailModal
-          isOpen={isEditOpen}
-          onClose={() => setIsEditOpen(false)}
-          detail={editingDetail}
-          onUpdated={handleEdited}
-        />
-      )}
       {orderId && tableId && customerId && (
         <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
           <div className="max-w-7xl mx-auto flex items-center justify-center space-x-6 text-sm">
@@ -754,47 +728,12 @@ export default function Menu() {
           </div>
         </div>
       )}
-      <ConfirmDialog
-        open={confirmState.open}
-        title={confirmState.title}
-        message={confirmState.message}
-        confirmText="Xác nhận"
-        cancelText="Huỷ"
-        onConfirm={confirmState.onYes}
-        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
-      />
       <MenuContent
         activeMenuTab={activeMenuTab}
         setActiveMenuTab={setActiveMenuTab}
         filteredDishes={filteredDishes}
         personalizedMenu={personalizedDishes}
-        onDishSelect={async (dish) => {
-          if (dish.remainingQuantity <= 0) {
-            alert("❌ Món này hiện đã hết số lượng trong kế hoạch hôm nay.");
-            return;
-          }
-
-          try {
-            let fullDish = await getDish(dish.id);
-            if (!Array.isArray(fullDish.optionalToppings)) {
-              try {
-                const toppings = await getToppingsByDishId(dish.id);
-                fullDish = { ...fullDish, optionalToppings: toppings || [] };
-              } catch (e) {
-                console.warn(
-                  "⚠️ Không lấy được topping, đặt rỗng:",
-                  e?.message
-                );
-                fullDish = { ...fullDish, optionalToppings: [] };
-              }
-            }
-
-            setSelectedDish(fullDish);
-            setIsDishOptionsOpen(true);
-          } catch (err) {
-            console.error("Không lấy được chi tiết món:", err);
-          }
-        }}
+        onDishSelect={handleDishSelect}
         caloriesConsumed={caloriesConsumed}
         estimatedCalories={estimatedCalories}
         onGoalChange={handleGoalChange}
@@ -802,6 +741,45 @@ export default function Menu() {
         currentGoal={personalizationForm.goal}
       />
       <MenuFooter />
+
+      <CartSidebar
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        cart={cart}
+        onUpdateQuantity={updateCartQuantity}
+        onRemoveItem={removeFromCart}
+        onOrderFood={handleOrderFood}
+      />
+      <OrderStatusSidebar
+        isOpen={isStatusOpen}
+        onClose={() => setIsStatusOpen(false)}
+        items={orderDetails}
+        onEdit={handleOpenEdit}
+        onDelete={handleDeleteDetail}
+        onIncGroup={handleIncGroup}
+        onDecGroup={handleDecGroup}
+      />
+      <PaymentSidebar
+        isOpen={isPaymentOpen}
+        onClose={() => setIsPaymentOpen(false)}
+        cart={cart}
+        items={paymentItems}
+        onRequestPayment={handleRequestPayment}
+      />
+      {isEditOpen && editingDetail && (
+        <EditOrderDetailModal
+          isOpen={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          detail={editingDetail}
+          onUpdated={handleEdited}
+        />
+      )}
+      <DishOptionsModal
+        isOpen={isDishOptionsOpen}
+        onClose={() => setIsDishOptionsOpen(false)}
+        dish={selectedDish}
+        onAddToCart={addToCart}
+      />
       <PersonalizationModal
         isOpen={isPersonalizationOpen}
         onClose={() => setIsPersonalizationOpen(false)}
@@ -812,27 +790,16 @@ export default function Menu() {
         setDailyCalories={setDailyCalories}
         caloriesConsumed={caloriesConsumed}
       />
-      <CartSidebar
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        cart={cart}
-        onUpdateQuantity={updateCartQuantity}
-        onRemoveItem={removeFromCart}
-        onOrderFood={handleOrderFood}
+      <ConfirmDialog
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText="Xác nhận"
+        cancelText="Huỷ"
+        onConfirm={confirmState.onYes}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
       />
-      <PaymentSidebar
-        isOpen={isPaymentOpen}
-        onClose={() => setIsPaymentOpen(false)}
-        cart={cart}
-        items={paymentItems}
-        onRequestPayment={handleRequestPayment}
-      />
-      <DishOptionsModal
-        isOpen={isDishOptionsOpen}
-        onClose={() => setIsDishOptionsOpen(false)}
-        dish={selectedDish}
-        onAddToCart={addToCart}
-      />
+
       {isCallStaffOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
