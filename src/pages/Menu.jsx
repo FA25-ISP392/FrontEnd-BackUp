@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 import MenuHeader from "../components/Menu/MenuHeader";
 import MenuContent from "../components/Menu/MenuContent";
 import MenuFooter from "../components/Menu/MenuFooter";
@@ -36,7 +36,10 @@ export default function Menu() {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isCallStaffOpen, setIsCallStaffOpen] = useState(false);
   const [isOrderFoodOpen, setIsOrderFoodOpen] = useState(false);
-  const [isDeleteSuccessOpen, setIsDeleteSuccessOpen] = useState(false); // <-- ĐÃ THÊM
+  const [isDeleteSuccessOpen, setIsDeleteSuccessOpen] = useState(false);
+  const [isNotServedErrorOpen, setIsNotServedErrorOpen] = useState(false);
+  const [isOrderFoodErrorOpen, setIsOrderFoodErrorOpen] = useState(false); // <-- ĐÃ THÊM
+  const [orderFoodErrorMessage, setOrderFoodErrorMessage] = useState(""); // <-- ĐÃ THÊM
   const [isDishOptionsOpen, setIsDishOptionsOpen] = useState(false);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [activeMenuTab, setActiveMenuTab] = useState("all");
@@ -291,6 +294,7 @@ export default function Menu() {
     }
   };
 
+  // HÀM ĐÃ SỬA
   const handleOrderFood = async () => {
     try {
       if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
@@ -302,10 +306,14 @@ export default function Menu() {
       setIsStatusOpen(true);
       setIsOrderFoodOpen(true);
     } catch (err) {
-      showToast(
-        `Gọi món thất bại: ${err?.message || "Vui lòng thử lại."}`,
-        "error"
-      );
+      // showToast( // <-- ĐÃ XÓA
+      //   `Gọi món thất bại: ${err?.message || "Vui lòng thử lại."}`,
+      //   "error"
+      // );
+      setOrderFoodErrorMessage(
+        err?.message || "Gọi món thất bại. Vui lòng thử lại."
+      ); // <-- ĐÃ THÊM
+      setIsOrderFoodErrorOpen(true); // <-- ĐÃ THÊM
     }
   };
 
@@ -346,12 +354,28 @@ export default function Menu() {
   const handleOpenPayment = async () => {
     try {
       if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
-      if (cart.length) {
-        await createOrderDetailsFromCart(orderId, cart);
+
+      // 1. Nếu giỏ hàng còn món, chúng chắc chắn chưa được phục vụ
+      if (cart.length > 0) {
+        setIsNotServedErrorOpen(true); // <-- Hiển thị lỗi
+        return; // <-- Dừng lại
       }
+
+      // 2. Giỏ hàng trống, kiểm tra các món đã gọi
       const details = await getOrderDetailsByOrderId(orderId);
+
+      // 3. Tìm bất kỳ món nào CHƯA được phục vụ (khác 'SERVED')
+      const notServedItem = details.find((d) => d.status !== "SERVED");
+
+      if (notServedItem) {
+        setIsNotServedErrorOpen(true); // <-- Hiển thị lỗi
+        return; // <-- Dừng lại
+      }
+
+      // 4. Nếu mọi thứ OK (tất cả đã SERVED):
       setPaymentItems(details);
       setIsPaymentOpen(true);
+
       if (cart.length) {
         setCart([]);
         setCaloriesConsumed(0);
@@ -373,7 +397,7 @@ export default function Menu() {
         try {
           await deleteOrderDetail(detail.orderDetailId);
           await fetchOrderDetailsFromOrder();
-          setIsDeleteSuccessOpen(true); // <-- SỬ DỤNG LẠI POPUP NÀY
+          setIsDeleteSuccessOpen(true);
         } catch (e) {
           showToast(e?.message || "Xoá món thất bại.", "error");
         } finally {
@@ -777,7 +801,6 @@ export default function Menu() {
         filteredDishes={filteredDishes}
         personalizedMenu={personalizedDishes}
         onDishSelect={async (dish) => {
-          // 🚫 Chặn món có remainingQuantity = 0
           if (dish.remainingQuantity <= 0) {
             alert("❌ Món này hiện đã hết số lượng trong kế hoạch hôm nay.");
             return;
@@ -785,8 +808,6 @@ export default function Menu() {
 
           try {
             let fullDish = await getDish(dish.id);
-
-            // ⚙️ Nếu BE đã trả optionalToppings (kể cả rỗng), KHÔNG gọi lại API
             if (!Array.isArray(fullDish.optionalToppings)) {
               try {
                 const toppings = await getToppingsByDishId(dish.id);
@@ -910,13 +931,60 @@ export default function Menu() {
                 Xoá món thành công!
               </h3>
               <p className="text-neutral-600 mb-6">
-                Món ăn đã được xoá khỏi đơn hàng của bạn.
+                Món ăn đã được xoá (hoặc gửi yêu cầu huỷ) khỏi đơn hàng của bạn.
               </p>
               <button
                 onClick={() => setIsDeleteSuccessOpen(false)}
                 className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
               >
                 Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isOrderFoodErrorOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <XCircle className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">
+                Gọi món thất bại!
+              </h3>
+              <p className="text-neutral-600 mb-6">{orderFoodErrorMessage}</p>
+              <button
+                onClick={() => setIsOrderFoodErrorOpen(false)}
+                className="bg-gradient-to-r from-red-500 to-rose-500 text-white px-6 py-3 rounded-xl hover:from-red-600 hover:to-rose-600 transition-all duration-300 font-medium"
+              >
+                Đã hiểu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isNotServedErrorOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <XCircle className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">
+                Không thể thanh toán!
+              </h3>
+              <p className="text-neutral-600 mb-6">
+                Vẫn còn món ăn chưa được phục vụ. Vui lòng kiểm tra lại trạng
+                thái đơn hàng.
+              </p>
+              <button
+                onClick={() => setIsNotServedErrorOpen(false)}
+                className="bg-gradient-to-r from-red-500 to-rose-500 text-white px-6 py-3 rounded-xl hover:from-red-600 hover:to-rose-600 transition-all duration-300 font-medium"
+              >
+                Đã hiểu
               </button>
             </div>
           </div>
