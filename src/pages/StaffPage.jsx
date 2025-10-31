@@ -9,6 +9,7 @@ import {
   AlertCircle,
   DollarSign,
   Table,
+  AlertTriangle, // 👈 THÊM 1: Import icon lỗi
 } from "lucide-react";
 import StaffSidebar from "../components/Staff/StaffSidebar";
 import StaffRestaurantTableLayout from "../components/Staff/StaffRestaurantTableLayout";
@@ -55,6 +56,11 @@ export default function StaffPage() {
   const [servedOrders, setServedOrders] = useState([]);
   const [serveLoading, setServeLoading] = useState(false);
   const [serveError, setServeError] = useState("");
+
+  // 👈 THÊM 2: State cho thông báo (thành công và lỗi)
+  // (Sử dụng string để chứa nội dung thông báo)
+  const [showSuccessModal, setShowSuccessModal] = useState("");
+  const [showErrorModal, setShowErrorModal] = useState("");
 
   useEffect(() => {
     const u = getCurrentUser();
@@ -329,6 +335,22 @@ export default function StaffPage() {
     }
   }
 
+  // 👈 THÊM 3: useEffect để tự động ẩn thông báo (nếu muốn)
+  // (Nếu không muốn tự ẩn, có thể xóa 2 hook này)
+  useEffect(() => {
+    if (showSuccessModal) {
+      const timer = setTimeout(() => setShowSuccessModal(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessModal]);
+
+  useEffect(() => {
+    if (showErrorModal) {
+      const timer = setTimeout(() => setShowErrorModal(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorModal]);
+
   useEffect(() => {
     if (activeSection !== "serveBoard") return;
     fetchServeBoard();
@@ -342,7 +364,8 @@ export default function StaffPage() {
       );
       setServedOrders((prev) => [{ ...od, status: "SERVED" }, ...prev]);
     } catch (e) {
-      alert(e?.message || "Cập nhật trạng thái thất bại.");
+      // alert(e?.message || "Cập nhật trạng thái thất bại."); // 👈 ĐÃ XÓA
+      setShowErrorModal(e?.message || "Cập nhật trạng thái thất bại."); // 👈 THAY THẾ
     }
   };
 
@@ -771,9 +794,12 @@ export default function StaffPage() {
         <StaffPaymentModal
           open={isPaymentModalOpen}
           table={selectedTable}
+          // 👈 THÊM 4: Logic onClose phức tạp
           onClose={(res) => {
-            setIsPaymentModalOpen(false);
+            setIsPaymentModalOpen(false); // Luôn đóng modal
+
             if (res?.paid) {
+              // 1. Cập nhật UI bàn ngay lập tức
               setTables((prev) =>
                 prev.map((t) =>
                   t.id === selectedTable.id
@@ -781,10 +807,74 @@ export default function StaffPage() {
                     : t
                 )
               );
-              window.location.href = "/staff";
+
+              // 2. Hiển thị Modal thành công
+              if (res.method === "CASH") {
+                setShowSuccessModal("Thanh toán tiền mặt thành công!");
+                // Không reload, để nhân viên tự thao tác
+              } else if (res.method === "QR") {
+                setShowSuccessModal("Thanh toán QR thành công!");
+                // Reload sau 1.5s để đảm bảo staff thấy modal
+                setTimeout(() => (window.location.href = "/staff"), 1500);
+              }
+            } else if (res?.error) {
+              // 3. Hiển thị Modal lỗi
+              setShowErrorModal(res.error);
             }
           }}
         />
+      )}
+
+      {/* 👈 THÊM 5: JSX cho cả 2 loại thông báo (Kiểu Modal giống Menu.jsx) */}
+
+      {/* ==== MODAL THÀNH CÔNG (Giống hệt Menu.jsx) ==== */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">
+                {showSuccessModal} {/* Hiển thị nội dung message */}
+              </h3>
+              <p className="text-neutral-600 mb-6">
+                Hoạt động đã được ghi nhận.
+              </p>
+              <button
+                onClick={() => setShowSuccessModal("")} // Bấm để đóng
+                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==== MODAL LỖI (Kiểu tương tự) ==== */}
+      {showErrorModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">
+                Đã xảy ra lỗi
+              </h3>
+              <p className="text-neutral-600 mb-6">
+                {showErrorModal} {/* Hiển thị nội dung lỗi */}
+              </p>
+              <button
+                onClick={() => setShowErrorModal("")} // Bấm để đóng
+                className="bg-gradient-to-r from-red-500 to-rose-500 text-white px-6 py-3 rounded-xl hover:from-red-600 hover:to-rose-600 transition-all duration-300 font-medium"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
