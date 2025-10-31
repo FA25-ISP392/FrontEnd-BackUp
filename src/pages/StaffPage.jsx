@@ -6,10 +6,8 @@ import {
   Phone,
   CheckCircle,
   Clock,
-  AlertCircle,
-  DollarSign,
   Table,
-  AlertTriangle, // 👈 THÊM 1: Import icon lỗi
+  AlertTriangle,
 } from "lucide-react";
 import StaffSidebar from "../components/Staff/StaffSidebar";
 import StaffRestaurantTableLayout from "../components/Staff/StaffRestaurantTableLayout";
@@ -27,16 +25,17 @@ import {
 } from "../lib/apiOrderDetail";
 
 const RESERVE_WINDOW_MINUTES = 10;
+const RESERVE_PAST_WINDOW_MINUTES = 15;
 const DEBUG_LOG = import.meta.env.DEV;
 
 function isWithinWindow(
   bookingISO,
   now = new Date(),
-  mins = RESERVE_WINDOW_MINUTES
+  minsBefore = RESERVE_WINDOW_MINUTES
 ) {
   const b = new Date(bookingISO);
   const diffMins = (b.getTime() - now.getTime()) / 60000;
-  return diffMins >= 0 && diffMins <= mins;
+  return diffMins <= minsBefore && diffMins >= -RESERVE_PAST_WINDOW_MINUTES;
 }
 
 function hhmm(d) {
@@ -56,9 +55,6 @@ export default function StaffPage() {
   const [servedOrders, setServedOrders] = useState([]);
   const [serveLoading, setServeLoading] = useState(false);
   const [serveError, setServeError] = useState("");
-
-  // 👈 THÊM 2: State cho thông báo (thành công và lỗi)
-  // (Sử dụng string để chứa nội dung thông báo)
   const [showSuccessModal, setShowSuccessModal] = useState("");
   const [showErrorModal, setShowErrorModal] = useState("");
 
@@ -335,8 +331,6 @@ export default function StaffPage() {
     }
   }
 
-  // 👈 THÊM 3: useEffect để tự động ẩn thông báo (nếu muốn)
-  // (Nếu không muốn tự ẩn, có thể xóa 2 hook này)
   useEffect(() => {
     if (showSuccessModal) {
       const timer = setTimeout(() => setShowSuccessModal(""), 3000);
@@ -364,8 +358,7 @@ export default function StaffPage() {
       );
       setServedOrders((prev) => [{ ...od, status: "SERVED" }, ...prev]);
     } catch (e) {
-      // alert(e?.message || "Cập nhật trạng thái thất bại."); // 👈 ĐÃ XÓA
-      setShowErrorModal(e?.message || "Cập nhật trạng thái thất bại."); // 👈 THAY THẾ
+      setShowErrorModal(e?.message || "Cập nhật trạng thái thất bại.");
     }
   };
 
@@ -430,6 +423,8 @@ export default function StaffPage() {
     (table) => table.status === "reserved"
   ).length;
   const callStaffCount = tables.filter((table) => table.callStaff).length;
+
+  const callPaymentCount = tables.filter((table) => table.callPayment).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-green-50 to-emerald-50">
@@ -496,15 +491,17 @@ export default function StaffPage() {
                   </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-red-500">
+                <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-green-500">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-neutral-600 text-sm">Gọi Nhân Viên</p>
-                      <p className="text-2xl font-bold text-red-600">
-                        {callStaffCount}
+                      <p className="text-neutral-600 text-sm">Gọi Thanh Toán</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {callPaymentCount}
                       </p>
                     </div>
-                    <AlertCircle className="h-8 w-8 text-red-600" />
+                    <span className="font-bold text-2xl text-green-600">
+                      VND
+                    </span>
                   </div>
                 </div>
               </div>
@@ -722,26 +719,10 @@ export default function StaffPage() {
 
               <div className="mt-6 flex gap-3">
                 <button
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
-                  onClick={() => {
-                    if (!selectedTable) return;
-                    setTables((prev) =>
-                      prev.map((t) =>
-                        t.id === selectedTable.id
-                          ? { ...t, callStaff: false }
-                          : t
-                      )
-                    );
-                  }}
-                >
-                  <Phone className="h-4 w-4" />
-                  Phản Hồi Gọi
-                </button>
-                <button
                   onClick={() => setIsPaymentModalOpen(true)}
                   className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2"
                 >
-                  <DollarSign className="h-4 w-4" />
+                  <span className="font-bold text-sm">VND</span>
                   Xử Lý Thanh Toán
                 </button>
               </div>
@@ -794,12 +775,9 @@ export default function StaffPage() {
         <StaffPaymentModal
           open={isPaymentModalOpen}
           table={selectedTable}
-          // 👈 THÊM 4: Logic onClose phức tạp
           onClose={(res) => {
-            setIsPaymentModalOpen(false); // Luôn đóng modal
-
+            setIsPaymentModalOpen(false);
             if (res?.paid) {
-              // 1. Cập nhật UI bàn ngay lập tức
               setTables((prev) =>
                 prev.map((t) =>
                   t.id === selectedTable.id
@@ -807,27 +785,19 @@ export default function StaffPage() {
                     : t
                 )
               );
-
-              // 2. Hiển thị Modal thành công
               if (res.method === "CASH") {
                 setShowSuccessModal("Thanh toán tiền mặt thành công!");
-                // Không reload, để nhân viên tự thao tác
               } else if (res.method === "QR") {
                 setShowSuccessModal("Thanh toán QR thành công!");
-                // Reload sau 1.5s để đảm bảo staff thấy modal
                 setTimeout(() => (window.location.href = "/staff"), 1500);
               }
             } else if (res?.error) {
-              // 3. Hiển thị Modal lỗi
               setShowErrorModal(res.error);
             }
           }}
         />
       )}
 
-      {/* 👈 THÊM 5: JSX cho cả 2 loại thông báo (Kiểu Modal giống Menu.jsx) */}
-
-      {/* ==== MODAL THÀNH CÔNG (Giống hệt Menu.jsx) ==== */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
@@ -836,13 +806,13 @@ export default function StaffPage() {
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
               <h3 className="text-xl font-bold text-neutral-900 mb-2">
-                {showSuccessModal} {/* Hiển thị nội dung message */}
+                {showSuccessModal}
               </h3>
               <p className="text-neutral-600 mb-6">
                 Hoạt động đã được ghi nhận.
               </p>
               <button
-                onClick={() => setShowSuccessModal("")} // Bấm để đóng
+                onClick={() => setShowSuccessModal("")}
                 className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
               >
                 Đóng
@@ -852,7 +822,6 @@ export default function StaffPage() {
         </div>
       )}
 
-      {/* ==== MODAL LỖI (Kiểu tương tự) ==== */}
       {showErrorModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
@@ -863,11 +832,9 @@ export default function StaffPage() {
               <h3 className="text-xl font-bold text-neutral-900 mb-2">
                 Đã xảy ra lỗi
               </h3>
-              <p className="text-neutral-600 mb-6">
-                {showErrorModal} {/* Hiển thị nội dung lỗi */}
-              </p>
+              <p className="text-neutral-600 mb-6">{showErrorModal}</p>
               <button
-                onClick={() => setShowErrorModal("")} // Bấm để đóng
+                onClick={() => setShowErrorModal("")}
                 className="bg-gradient-to-r from-red-500 to-rose-500 text-white px-6 py-3 rounded-xl hover:from-red-600 hover:to-rose-600 transition-all duration-300 font-medium"
               >
                 Đóng
