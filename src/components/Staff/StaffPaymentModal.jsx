@@ -117,14 +117,12 @@ export default function StaffPaymentModal({ open, onClose, table }) {
 
         if (["COMPLETED", "PAID", "SUCCESS"].includes(st)) {
           if (!stopped) {
-            // alert("Thanh toán QR thành công!"); // 👈 ĐÃ XÓA
             onClose?.({ paid: true, method: "QR" });
           }
           return;
         }
         if (["FAILED", "CANCELLED"].includes(st)) {
           if (!stopped) {
-            // alert("Thanh toán bị hủy/không thành công."); // 👈 ĐÃ XÓA
             onClose?.({ paid: false, error: "Thanh toán QR bị hủy/thất bại." });
           }
           return;
@@ -172,10 +170,8 @@ export default function StaffPaymentModal({ open, onClose, table }) {
     setCashError("");
     try {
       await createPayment({ orderId, method: "CASH" });
-      // alert("Đã hoàn tất thanh toán tiền mặt."); // 👈 ĐÃ XÓA
-      onClose?.({ paid: true, method: "CASH" }); // 👈 SỬA (gửi tín hiệu)
+      onClose?.({ paid: true, method: "CASH" });
     } catch (e) {
-      // alert(e?.message || "Xử lý tiền mặt thất bại."); // 👈 ĐÃ XÓA
       onClose?.({
         paid: false,
         error: e?.message || "Xử lý tiền mặt thất bại.",
@@ -187,9 +183,6 @@ export default function StaffPaymentModal({ open, onClose, table }) {
 
   async function handleBankTransfer() {
     if (!paymentId) {
-      // alert( // 👈 ĐÃ XÓA
-      //   "Không tìm thấy paymentId. Vui lòng yêu cầu khách bấm Gọi thanh toán lại."
-      // );
       onClose?.({
         paid: false,
         error: "Không tìm thấy paymentId. Yêu cầu khách gọi thanh toán lại.",
@@ -203,7 +196,6 @@ export default function StaffPaymentModal({ open, onClose, table }) {
       setCheckoutUrl(p.checkoutUrl || "");
       setQr(p.qrCode || "");
     } catch (e) {
-      // alert(e?.message || "Không lấy được thông tin thanh toán."); // 👈 ĐÃ XÓA
       onClose?.({
         paid: false,
         error: e?.message || "Không lấy được thông tin thanh toán.",
@@ -369,7 +361,7 @@ export default function StaffPaymentModal({ open, onClose, table }) {
                   </a>
                 )}
                 <button
-                  onClick={() => onClose?.({ paid: true, method: "QR" })} // 👈 SỬA (gửi tín hiệu)
+                  onClick={() => onClose?.({ paid: true, method: "QR" })}
                   className="w-full py-3 rounded-xl bg-green-600 text-white hover:bg-green-700"
                 >
                   Đóng & đánh dấu đã xử lý
