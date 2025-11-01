@@ -1,15 +1,15 @@
 import {
   LayoutDashboard,
   CalendarDays,
-  ClipboardList,
   XCircle,
   UtensilsCrossed,
-  Settings,
+  History,
 } from "lucide-react";
 
 export default function ChefSidebar({ activeSection, setActiveSection }) {
   const menuItems = [
     { name: "Quản Lý Đơn Món", key: "overview", icon: <LayoutDashboard /> },
+    { name: "Lịch Sử Đơn Món", key: "orderHistory", icon: <History /> },
     { name: "Kế Hoạch Trong Ngày", key: "dailyPlan", icon: <CalendarDays /> },
     { name: "Món Trong Ngày", key: "dailyDishes", icon: <UtensilsCrossed /> },
     { name: "Món Bị Từ Chối", key: "rejectedDishes", icon: <XCircle /> },
@@ -25,7 +25,7 @@ export default function ChefSidebar({ activeSection, setActiveSection }) {
       <nav className="flex-1 p-4 space-y-2">
         {menuItems.map((item) => (
           <button
-            key={item.key} // ✅ fix key warning
+            key={item.key}
             onClick={() => setActiveSection(item.key)}
             className={`flex items-center gap-3 w-full px-4 py-2 rounded-lg transition-all ${
               activeSection === item.key
