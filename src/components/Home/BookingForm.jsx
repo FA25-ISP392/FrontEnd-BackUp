@@ -47,11 +47,11 @@ export default function BookingForm({
   }, [initialData]);
 
   const minDate = useMemo(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
-      2,
-      "0"
-    )}-${String(now.getDate()).padStart(2, "0")}`;
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return `${tomorrow.getFullYear()}-${String(
+      tomorrow.getMonth() + 1
+    ).padStart(2, "0")}-${String(tomorrow.getDate()).padStart(2, "0")}`;
   }, []);
 
   const validate = () => {
@@ -63,8 +63,15 @@ export default function BookingForm({
       const [hh, mm] = form.time.split(":").map(Number);
       const when = new Date(y, m - 1, d, hh, mm);
       const lead = new Date(Date.now() + LEAD_MINUTES * 60 * 1000);
-      if (when < lead)
+      const [minY, minM, minD] = minDate.split("-").map(Number);
+      const minDateObj = new Date(minY, minM - 1, minD);
+      minDateObj.setHours(0, 0, 0, 0);
+
+      if (when < minDateObj) {
+        e.date = "Không thể đặt bàn cho ngày trong quá khứ.";
+      } else if (when < lead) {
         e.time = `Giờ đặt phải cách hiện tại ít nhất ${LEAD_MINUTES} phút.`;
+      }
     }
     const n = Number(form.guests) || 1;
     if (n < 1 || n > 8) e.guests = "Số khách từ 1 đến 8.";
