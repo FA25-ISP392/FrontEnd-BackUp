@@ -31,6 +31,8 @@ import ToastHost, { showToast } from "../common/ToastHost";
 import ConfirmDialog from "../common/ConfirmDialog";
 
 export default function Menu() {
+  const [suggestedMenu, setSuggestedMenu] = useState(null);
+
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
@@ -122,6 +124,8 @@ export default function Menu() {
       window.removeEventListener("auth:changed", sync);
     };
   }, []);
+  const [mode, setMode] = useState(null); // 'solo' hoặc 'group'
+  const [showModeSelection, setShowModeSelection] = useState(true);
 
   useEffect(() => {
     const ready = Boolean(customerId) && Boolean(tableId);
@@ -678,11 +682,49 @@ export default function Menu() {
     };
   }, [orderId]);
 
+  if (showModeSelection) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-orange-50 to-red-100">
+        <div className="bg-white shadow-xl rounded-2xl p-8 text-center max-w-md w-full">
+          <h2 className="text-2xl font-bold mb-4 text-neutral-900">
+            Chào mừng bạn đến với nhà hàng!
+          </h2>
+          <p className="text-neutral-600 mb-6">
+            Vui lòng chọn cách bạn dùng bữa hôm nay:
+          </p>
+          <div className="flex flex-col space-y-4">
+            <button
+              onClick={() => {
+                setMode("group");
+                setShowModeSelection(false);
+              }}
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-semibold hover:from-amber-500 hover:to-orange-600 transition"
+            >
+              🍽️ Tôi đi nhóm
+            </button>
+            <button
+              onClick={() => {
+                setMode("solo");
+                setShowModeSelection(false);
+              }}
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-green-500 text-white font-semibold hover:from-emerald-500 hover:to-green-600 transition"
+            >
+              🧍‍♂️ Tôi đi một mình
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
       <MenuHeader
         cartItemCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
-        onPersonalize={() => setIsPersonalizationOpen(true)}
+        onPersonalize={() => {
+          if (mode === "group") return; // 🚫 không mở nếu đi nhóm
+          setIsPersonalizationOpen(true);
+        }}
         onViewOrders={() => setIsCartOpen(true)}
         onCallStaff={() => {
           setIsCallStaffOpen(true);
@@ -694,6 +736,7 @@ export default function Menu() {
         onViewStatus={() => setIsStatusOpen(true)}
         tableId={tableId}
         customerId={customerId}
+        showPersonalizeButton={mode === "solo"}
       />
 
       <OrderStatusSidebar
@@ -750,6 +793,7 @@ export default function Menu() {
         activeMenuTab={activeMenuTab}
         setActiveMenuTab={setActiveMenuTab}
         filteredDishes={filteredDishes}
+        dishSuggests={suggestedMenu}
         personalizedMenu={personalizedDishes}
         onDishSelect={async (dish) => {
           // 🚫 Chặn món có remainingQuantity = 0
@@ -781,26 +825,29 @@ export default function Menu() {
             console.error("Không lấy được chi tiết món:", err);
           }
         }}
-        caloriesConsumed={caloriesConsumed}
-        estimatedCalories={estimatedCalories}
+        caloriesConsumed={mode === "solo" ? caloriesConsumed : null}
+        estimatedCalories={mode === "solo" ? estimatedCalories : null}
         onGoalChange={handleGoalChange}
-        isPersonalized={isPersonalized}
-        currentGoal={personalizationForm.goal}
+        isPersonalized={mode === "solo" && isPersonalized}
+        currentGoal={mode === "solo" ? personalizationForm.goal : null}
       />
 
       <MenuFooter />
-
-      <PersonalizationModal
-        isOpen={isPersonalizationOpen}
-        onClose={() => setIsPersonalizationOpen(false)}
-        personalizationForm={personalizationForm}
-        setPersonalizationForm={setPersonalizationForm}
-        onSubmit={handlePersonalizationSubmit}
-        dailyCalories={dailyCalories}
-        setDailyCalories={setDailyCalories}
-        caloriesConsumed={caloriesConsumed}
-      />
-
+      {mode === "solo" && (
+        <PersonalizationModal
+          isOpen={isPersonalizationOpen}
+          onClose={() => setIsPersonalizationOpen(false)}
+          personalizationForm={personalizationForm}
+          setPersonalizationForm={setPersonalizationForm}
+          onApplySuggestions={(result) => {
+            const flatList = result.flatMap((r) =>
+              [r.drink, r.salad, r.mainCourse, r.dessert].filter(Boolean),
+            );
+            setSuggestedMenu(flatList);
+            setIsPersonalized(true);
+          }}
+        />
+      )}
       <CartSidebar
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}

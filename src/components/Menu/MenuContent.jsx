@@ -4,6 +4,7 @@ import { categories as CATEGORY_LIST } from "../../lib/menuData";
 export default function MenuContent({
   activeMenuTab,
   filteredDishes,
+  dishSuggests,
   onDishSelect,
   caloriesConsumed,
   estimatedCalories,
@@ -99,6 +100,52 @@ export default function MenuContent({
                 </button>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* 🧠 Nếu có món gợi ý, hiển thị riêng */}
+      {dishSuggests && dishSuggests.length > 0 && (
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-10">
+          <h3 className="text-lg font-bold text-neutral-900 mb-4 text-center">
+            🍱 Menu gợi ý cho bạn
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {dishSuggests.map((dish, idx) => (
+              <div
+                key={`${dish.dishId || idx}`}
+                className="bg-white/90 rounded-2xl shadow-md p-4 hover:shadow-xl transition-all border border-white/30"
+              >
+                <img
+                  src={
+                    dish.picture ||
+                    "https://via.placeholder.com/300x200?text=No+Image"
+                  }
+                  alt={dish.dishName}
+                  className="w-full h-40 object-cover rounded-xl mb-3"
+                />
+                <h4 className="text-lg font-bold text-neutral-900 mb-1">
+                  {dish.dishName}
+                </h4>
+                <p className="text-sm text-neutral-600 line-clamp-2 mb-2">
+                  {dish.description}
+                </p>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-semibold text-orange-600">
+                    {dish.price?.toLocaleString("vi-VN")}₫
+                  </span>
+                  <span className="text-neutral-500">
+                    {dish.calo || dish.calories} cal
+                  </span>
+                </div>
+                <button
+                  onClick={() => onDishSelect(dish)}
+                  className="mt-3 w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-2.5 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-medium"
+                >
+                  Chọn món
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       )}
