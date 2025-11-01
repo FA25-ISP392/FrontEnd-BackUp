@@ -1,10 +1,11 @@
-import { Users, Table, BarChart3, Utensils } from "lucide-react";
+import { Users, Table, BarChart3, Utensils, History } from "lucide-react";
 
 export default function StaffSidebar({ activeSection, setActiveSection }) {
   const sidebarItems = [
     { id: "tableLayout", label: "Sơ Đồ Bàn", icon: Table },
     { id: "overview", label: "Thông Tin Bàn", icon: BarChart3 },
     { id: "serveBoard", label: "Phục Vụ Món", icon: Utensils },
+    { id: "serveHistory", label: "Lịch Sử Phục Vụ", icon: History },
   ];
 
   return (

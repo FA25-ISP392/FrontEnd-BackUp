@@ -23,6 +23,7 @@ export const normalizeOrderDetail = (d = {}) => {
     unitPrice: lineTotal,
     totalPrice: lineTotal,
     lineTotal,
+    orderDate: d.orderDate ?? null,
   };
 };
 

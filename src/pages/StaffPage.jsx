@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, AlertTriangle } from "lucide-react";
+import { CheckCircle, AlertTriangle, History } from "lucide-react"; // 👈 ĐÃ THÊM History
 import StaffSidebar from "../components/Staff/StaffSidebar";
 import StaffRestaurantTableLayout from "../components/Staff/StaffRestaurantTableLayout";
 import StaffTableInfoLayout from "../components/Staff/StaffTableInfoLayout";
@@ -33,7 +33,8 @@ export default function StaffPage() {
 
   // State cho ServeBoard
   const [readyOrders, setReadyOrders] = useState([]);
-  const [servedOrders, setServedOrders] = useState([]);
+  const [servedOrders, setServedOrders] = useState([]); // 👈 Sẽ chỉ chứa món CỦA HÔM NAY
+  const [historicalServed, setHistoricalServed] = useState([]); // 👈 State MỚI cho lịch sử
   const [serveLoading, setServeLoading] = useState(false);
   const [serveError, setServeError] = useState("");
 
@@ -41,6 +42,7 @@ export default function StaffPage() {
   const [showSuccessModal, setShowSuccessModal] = useState("");
   const [showErrorModal, setShowErrorModal] = useState("");
 
+  // ... (Tất cả các useEffect ban đầu cho 'tables', 'payments', 'callStaff' giữ nguyên) ...
   useEffect(() => {
     let timer;
     async function hydrate() {
@@ -281,7 +283,8 @@ export default function StaffPage() {
     };
   }, []);
 
-  async function fetchServeBoard() {
+  // 👇 TÁCH HÀM TẢI DỮ LIỆU RA NGOÀI ĐỂ TÁI SỬ DỤNG
+  async function loadServeBoards() {
     try {
       setServeError("");
       setServeLoading(true);
@@ -289,14 +292,41 @@ export default function StaffPage() {
         getOrderDetailsByStatus("DONE"),
         getOrderDetailsByStatus("SERVED"),
       ]);
+
+      // 👇 LOGIC LỌC MỚI THEO NGÀY
+      const today = new Date().toISOString().split("T")[0]; // Lấy ngày hôm nay dạng "YYYY-MM-DD"
+      const servedToday = [];
+      const servedPast = [];
+
+      if (Array.isArray(served)) {
+        for (const od of served) {
+          // Giả định od.orderDate được gửi từ API (ví dụ: "2025-11-01T10:30:00")
+          // và đã được chuẩn hóa bởi apiOrderDetail.js
+          if (od.orderDate && od.orderDate.startsWith(today)) {
+            servedToday.push(od);
+          } else {
+            // Nếu không có ngày hoặc là ngày cũ, cho vào lịch sử
+            servedPast.push(od);
+          }
+        }
+      }
+
       setReadyOrders(Array.isArray(done) ? done : []);
-      setServedOrders(Array.isArray(served) ? served : []);
+      setServedOrders(servedToday); // 👈 Chỉ set món hôm nay
+      setHistoricalServed(servedPast); // 👈 Set món lịch sử
     } catch (e) {
       setServeError(e?.message || "Không tải được danh sách món.");
     } finally {
       setServeLoading(false);
     }
   }
+
+  // 👇 THAY ĐỔI useEffect ĐỂ SỬ DỤNG HÀM TẢI MỚI VÀ THÊM "serveHistory"
+  useEffect(() => {
+    if (activeSection === "serveBoard" || activeSection === "serveHistory") {
+      loadServeBoards();
+    }
+  }, [activeSection]); // Trigger khi đổi section
 
   useEffect(() => {
     if (showSuccessModal) {
@@ -312,18 +342,13 @@ export default function StaffPage() {
     }
   }, [showErrorModal]);
 
-  useEffect(() => {
-    if (activeSection !== "serveBoard") return;
-    fetchServeBoard();
-  }, [activeSection]);
-
+  // 👇 CẬP NHẬT handleServe ĐỂ GỌI HÀM TẢI MỚI
   const handleServe = async (od) => {
     try {
       await updateOrderDetailStatus(od.orderDetailId, od, "SERVED");
-      setReadyOrders((prev) =>
-        prev.filter((x) => x.orderDetailId !== od.orderDetailId)
-      );
-      setServedOrders((prev) => [{ ...od, status: "SERVED" }, ...prev]);
+      // Tải lại toàn bộ board để nó tự động phân loại
+      // (Vì món vừa serve CHẮC CHẮN là của hôm nay)
+      loadServeBoards();
     } catch (e) {
       setShowErrorModal(e?.message || "Cập nhật trạng thái thất bại.");
     }
@@ -339,6 +364,7 @@ export default function StaffPage() {
 
         <main className="flex-1 p-6">
           {activeSection === "tableLayout" && (
+            // ... (giữ nguyên)
             <div className="space-y-6">
               <h1 className="text-2xl font-bold">Sơ Đồ Bàn</h1>
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
@@ -352,6 +378,7 @@ export default function StaffPage() {
           )}
 
           {activeSection === "overview" && (
+            // ... (giữ nguyên)
             <div className="space-y-6">
               <h1 className="text-2xl font-bold">Thông Tin Bàn</h1>
 
@@ -368,15 +395,75 @@ export default function StaffPage() {
           {activeSection === "serveBoard" && (
             <ServeBoard
               readyOrders={readyOrders}
-              servedOrders={servedOrders}
+              servedOrders={servedOrders} // 👈 prop này giờ chỉ chứa món hôm nay
               onServe={handleServe}
               isLoading={serveLoading}
               error={serveError}
             />
           )}
+
+          {/* 👇 THÊM MỤC RENDER MỚI CHO LỊCH SỬ */}
+          {activeSection === "serveHistory" && (
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center">
+                  <History className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-neutral-900">
+                    Lịch Sử Phục Vụ
+                  </h3>
+                  <p className="text-sm text-neutral-600">
+                    Các món đã phục vụ từ những ngày trước
+                  </p>
+                </div>
+              </div>
+
+              {serveLoading ? (
+                <p>Đang tải lịch sử...</p>
+              ) : serveError ? (
+                <p className="text-red-500">{serveError}</p>
+              ) : historicalServed.length === 0 ? (
+                <p className="text-center py-8 text-neutral-500">
+                  Chưa có lịch sử phục vụ.
+                </p>
+              ) : (
+                <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-neutral-300 scrollbar-track-transparent">
+                  {historicalServed.map((od) => (
+                    <div
+                      key={od.orderDetailId}
+                      className="bg-neutral-50 rounded-lg p-4 border border-neutral-200"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="font-semibold text-neutral-800">
+                            {od.dishName}
+                          </span>
+                          <span className="text-sm text-neutral-600 ml-2">
+                            (ID: {od.orderDetailId})
+                          </span>
+                        </div>
+                        <span className="text-xs font-medium text-neutral-500">
+                          {od.orderDate
+                            ? new Date(od.orderDate).toLocaleDateString("vi-VN")
+                            : "Không rõ ngày"}
+                        </span>
+                      </div>
+                      {od.note && (
+                        <p className="text-xs italic text-neutral-500 mt-1">
+                          Ghi chú: {od.note}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </main>
       </div>
 
+      {/* ... (Phần Modal giữ nguyên) ... */}
       {selectedTable && (
         <StaffTableDetailModal
           table={selectedTable}
