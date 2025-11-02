@@ -11,11 +11,9 @@ import ManagerDailyMenuPage from "../components/Manager/ManagerDailyMenuPage";
 import {
   listBookingsPaging,
   rejectBooking,
-  updateBooking,
   approveBookingWithTable,
 } from "../lib/apiBooking";
 import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
-import BookingEditModal from "../components/Manager/BookingEditModal";
 import { findStaffByUsername } from "../lib/apiStaff";
 import BookingManagement from "../components/Manager/BookingManagement";
 import TableLayout from "../components/Manager/TableLayout";
@@ -30,9 +28,6 @@ export default function Manager() {
   const [bookings, setBookings] = useState([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [bookingsError, setBookingsError] = useState("");
-  const [isEditingBooking, setIsEditingBooking] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
-  const [savingBooking, setSavingBooking] = useState(false);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [toppings, setToppings] = useState([]);
   const [isEditingTopping, setIsEditingTopping] = useState(false);
@@ -105,7 +100,6 @@ export default function Manager() {
     };
   }, [activeSection, page, size, statusFilter]);
 
-  // 🧩 Load danh sách bàn ăn
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -114,7 +108,6 @@ export default function Manager() {
         if (!cancelled) setTables(Array.isArray(data) ? data : []);
       } catch (e) {
         if (!cancelled) setTables([]);
-        // eslint-disable-next-line no-console
         console.error("Load tables failed:", e);
       }
     })();
@@ -123,30 +116,15 @@ export default function Manager() {
     };
   }, []);
 
-  const refetchBookings = async (toPage = page) => {
-    setLoadingBookings(true);
-    try {
-      const { items, pageInfo } = await listBookingsPaging({
-        page: toPage,
-        size,
-        status: statusFilter,
-      });
-      setBookings(items);
-      setPageInfo(pageInfo);
-    } finally {
-      setLoadingBookings(false);
-    }
-  };
-
   const handleReject = async (id) => {
     setBookings((prev) =>
-      prev.map((x) => (x.id === id ? { ...x, status: "REJECT" } : x)),
+      prev.map((x) => (x.id === id ? { ...x, status: "REJECT" } : x))
     );
     try {
       await rejectBooking(id);
     } catch (err) {
       setBookings((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, status: "PENDING" } : x)),
+        prev.map((x) => (x.id === id ? { ...x, status: "PENDING" } : x))
       );
       alert(err?.message || "Từ chối thất bại");
     }
@@ -159,48 +137,30 @@ export default function Manager() {
         prev.map((b) =>
           b.id === bookingId
             ? { ...b, status: "APPROVED", assignedTableId: tableId }
-            : b,
-        ),
+            : b
+        )
       );
       setTables((prev) =>
         prev.map((t) =>
           t.id === tableId
             ? { ...t, status: "reserved", isAvailable: false }
-            : t,
-        ),
+            : t
+        )
       );
     } catch (error) {
       alert(
         error?.response?.data?.message ||
           error?.message ||
-          "Không thể gán bàn cho đơn đặt.",
+          "Không thể gán bàn cho đơn đặt."
       );
-    }
-  };
-
-  const handleSaveEdit = async ({ id, seat, bookingDate }) => {
-    try {
-      setSavingBooking(true);
-      setBookings((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, seat, bookingDate } : x)),
-      );
-      await updateBooking(id, { seat, bookingDate });
-      await refetchBookings();
-      setIsEditingBooking(false);
-      setEditingItem(null);
-    } catch (e) {
-      console.error(e);
-      alert(e?.message || "Cập nhật thất bại");
-    } finally {
-      setSavingBooking(false);
     }
   };
 
   const updateOrderStatus = (tableId, updatedOrder) => {
     setTables((prevTables) =>
       prevTables.map((table) =>
-        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table,
-      ),
+        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table
+      )
     );
   };
 
@@ -231,8 +191,6 @@ export default function Manager() {
           <BookingManagement
             bookings={bookings}
             setBookings={setBookings}
-            setIsEditingBooking={setIsEditingBooking}
-            setEditingItem={setEditingItem}
             loading={loadingBookings}
             deletingIds={deletingIds}
             page={page}
@@ -255,8 +213,6 @@ export default function Manager() {
             <ManagerDishPage />
           </div>
         );
-
-      // ✅ Chỉ giữ 2 case mới này thôi
       case "dailyPlan":
         return <ManagerDailyPlanPage />;
 
@@ -330,17 +286,6 @@ export default function Manager() {
         selectedTable={selectedTable}
         setSelectedTable={setSelectedTable}
         updateOrderStatus={updateOrderStatus}
-      />
-
-      <BookingEditModal
-        open={isEditingBooking}
-        booking={editingItem}
-        onClose={() => {
-          setIsEditingBooking(false);
-          setEditingItem(null);
-        }}
-        onSave={handleSaveEdit}
-        saving={savingBooking}
       />
 
       <EditToppingModal

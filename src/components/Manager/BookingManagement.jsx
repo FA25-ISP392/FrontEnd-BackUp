@@ -1,27 +1,35 @@
-import { Check, X, Edit, Trash2 } from "lucide-react";
+import { Check, X, Calendar, Trash2 } from "lucide-react"; // ĐÃ XÓA: Edit
 import { useState } from "react";
 import { fmtVNDateTime } from "../../lib/datetimeBooking";
 import TableLayout from "./TableLayout";
 import TableAssignmentModal from "./TableAssignmentModal";
 import TableBookingsModal from "./TableBookingsModal";
 import ConfirmCancelModal from "../Home/ConfirmCancelModal";
-import { listBookingsByTableDate, cancelBooking } from "../../lib/apiBooking";
+import {
+  approveBookingWithTable,
+  listBookingsByTableDate,
+  cancelBooking,
+} from "../../lib/apiBooking";
 
 export default function BookingManagement({
   bookings = [],
   setBookings,
-  setIsEditingBooking,
-  setEditingItem,
+  // ĐÃ XÓA: setIsEditingBooking,
+  // ĐÃ XÓA: setEditingItem,
   loading = false,
+  deletingIds = new Set(),
   page = 1,
   pageInfo = { page: 1, size: 6, totalPages: 1, totalElements: 0 },
   onPageChange = () => {},
+  onApprove,
   onReject,
+  // ĐÃ XÓA: onEdit,
   tables = [],
   onAssignTable,
   statusFilter = "ALL",
   onStatusChange = () => {},
 }) {
+  const [confirmingId, setConfirmingId] = useState(null);
   const [showTableAssignment, setShowTableAssignment] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [selectedTableId, setSelectedTableId] = useState(null);
@@ -35,6 +43,7 @@ export default function BookingManagement({
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   });
   const [loadingTableBookings, setLoadingTableBookings] = useState(false);
+
   const [bookingToCancel, setBookingToCancel] = useState(null);
   const [isCancelling, setIsCancelling] = useState(false);
 
@@ -119,10 +128,7 @@ export default function BookingManagement({
     }
   };
 
-  const handleEdit = (booking) => {
-    setEditingItem?.(booking);
-    setIsEditingBooking?.(true);
-  };
+  // ĐÃ XÓA: hàm handleEdit
 
   const handleOpenCancelModal = (booking) => {
     setBookingToCancel(booking);
@@ -137,9 +143,7 @@ export default function BookingManagement({
     if (!bookingToCancel) return;
     setIsCancelling(true);
     try {
-      // Gọi API
       await cancelBooking(bookingToCancel.id);
-      // Cập nhật UI
       setBookings((prev) =>
         prev.map((b) =>
           b.id === bookingToCancel.id ? { ...b, status: "CANCELLED" } : b
@@ -268,12 +272,8 @@ export default function BookingManagement({
           ) : (
             bookings.map((b) => {
               const status = String(b.status || "PENDING").toUpperCase();
-              const isLocked = [
-                "APPROVED",
-                "REJECT",
-                "REJECTED",
-                "CANCELLED",
-              ].includes(status);
+              // ĐÃ XÓA: biến isLocked
+
               return (
                 <div key={b.id} className="px-6 py-3 hover:bg-neutral-50">
                   <div className="grid grid-cols-12 gap-2 items-center">
@@ -347,6 +347,7 @@ export default function BookingManagement({
                       </span>
                     </div>
 
+                    {/* --- KHỐI HÀNH ĐỘNG ĐÃ SỬA --- */}
                     <div className="col-span-1 flex gap-1 items-center justify-center">
                       {status === "PENDING" && (
                         <>
@@ -366,18 +367,8 @@ export default function BookingManagement({
                           </button>
                         </>
                       )}
-                      <button
-                        onClick={() => handleEdit(b)}
-                        disabled={isLocked}
-                        className={`p-1.5 text-blue-600 rounded-lg transition ${
-                          isLocked
-                            ? "opacity-40 cursor-not-allowed"
-                            : "hover:bg-blue-50"
-                        }`}
-                        title="Sửa (số người, giờ tới)"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
+
+                      {/* --- ĐÃ XÓA: Nút Sửa (Edit) --- */}
 
                       {status === "APPROVED" && (
                         <button
@@ -389,6 +380,7 @@ export default function BookingManagement({
                         </button>
                       )}
                     </div>
+                    {/* --- HẾT KHỐI HÀNH ĐỘNG --- */}
                   </div>
                 </div>
               );
