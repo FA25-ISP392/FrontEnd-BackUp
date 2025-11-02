@@ -21,6 +21,14 @@ export const HOME_ROUTES = {
   PAYMENT_HISTORY: "/home/lichsuthanhtoan",
 };
 
+export const STAFF_BASE = "/staff";
+export const STAFF_ROUTES = {
+  TABLE_LAYOUT: "/staff/sodoban",
+  OVERVIEW: "/staff/thongtinban",
+  SERVE_BOARD: "/staff/phucvumon",
+  SERVE_HISTORY: "/staff/lichsuphucvu",
+};
+
 export const VERIFY_EMAIL = "/verify-email";
 export const VERIFY_EMAIL_URL = joinUrl(APP_ORIGIN, VERIFY_EMAIL);
 
@@ -29,6 +37,10 @@ export const NEED_AUTH = [
   HOME_ROUTES.EDIT,
   HOME_ROUTES.CHANGE_PWD,
   HOME_ROUTES.PAYMENT_HISTORY,
+  STAFF_ROUTES.TABLE_LAYOUT,
+  STAFF_ROUTES.OVERVIEW,
+  STAFF_ROUTES.SERVE_BOARD,
+  STAFF_ROUTES.SERVE_HISTORY,
 ];
 
 export const TABLE_LOGIN_ROUTES = {

@@ -1,101 +1,14 @@
-import { getTableStatusClass } from "./staffUtils";
+import {
+  getTableStatusClass,
+  getCapacityLabel,
+  buildPositions,
+} from "./staffUtils";
 
 export default function StaffRestaurantTableLayout({
   tables,
   onTableClick,
   selectedTable,
 }) {
-  const getCapacityLabel = (tableNumber) => {
-    if (tableNumber >= 1 && tableNumber <= 2) return "2 khách";
-    if (tableNumber >= 3 && tableNumber <= 4) return "4 khách";
-    if (tableNumber >= 5 && tableNumber <= 6) return "6 khách";
-    if (tableNumber >= 7 && tableNumber <= 8) return "8 khách";
-    return null;
-  };
-
-  const rand01 = (seed) => {
-    let x = Math.sin(seed) * 10000;
-    return x - Math.floor(x);
-  };
-
-  const buildPositions = (count) => {
-    const margin = 12;
-    const bottomReserved = 18;
-    const topY = margin;
-    const bottomY = 100 - bottomReserved - margin;
-    const leftX = margin;
-    const rightX = 100 - margin;
-
-    let nTop = Math.max(1, Math.floor(count * 0.3));
-    let nBottom = Math.max(1, Math.floor(count * 0.3));
-    let remaining = Math.max(0, count - (nTop + nBottom));
-    let nLeft = Math.floor(remaining / 2);
-    let nRight = remaining - nLeft;
-
-    const totalSides = nTop + nRight + nBottom + nLeft;
-    if (totalSides < count) nBottom += count - totalSides;
-
-    const spread = (n, from, to) =>
-      Array.from(
-        { length: Math.max(1, n) },
-        (_, i) => from + ((i + 1) / (n + 1)) * (to - from)
-      );
-    const edgeSpread = (n, from, to) => {
-      if (n <= 0) return [];
-      if (n === 1) return [from + (to - from) / 2];
-      return Array.from(
-        { length: n },
-        (_, i) => from + (i / (n - 1)) * (to - from)
-      );
-    };
-
-    const xSpanFrom = margin + 8;
-    const xSpanTo = 100 - margin - 8;
-    const ySpanFrom = margin + 14;
-    const ySpanTo = 100 - bottomReserved - margin - 14;
-
-    const topXs = spread(nTop, xSpanFrom, xSpanTo);
-    const botXs = spread(nBottom, xSpanFrom, xSpanTo);
-    const leftYs = edgeSpread(nLeft, ySpanFrom, ySpanTo);
-    const rightYs = edgeSpread(nRight, ySpanFrom, ySpanTo);
-
-    const pos = [];
-    let iTop = 0,
-      iRight = 0,
-      iBottom = 0,
-      iLeft = 0;
-    while (pos.length < count) {
-      if (iTop < nTop) pos.push({ left: `${topXs[iTop++]}%`, top: `${topY}%` });
-      if (pos.length >= count) break;
-      if (iRight < nRight)
-        pos.push({ left: `${rightX}%`, top: `${rightYs[iRight++]}%` });
-      if (pos.length >= count) break;
-      if (iBottom < nBottom)
-        pos.push({ left: `${botXs[iBottom++]}%`, top: `${bottomY}%` });
-      if (pos.length >= count) break;
-      if (iLeft < nLeft)
-        pos.push({ left: `${leftX}%`, top: `${leftYs[iLeft++]}%` });
-    }
-
-    return pos.map((p, idx) => {
-      const jitterX = (rand01((idx + 1) * 137) - 0.5) * 2;
-      const jitterY = (rand01((idx + 1) * 257) - 0.5) * 2;
-      const toNum = (s) => Number(String(s).replace("%", ""));
-      const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-      const x = clamp(toNum(p.left) + jitterX, margin + 3, 100 - margin - 3);
-      const y = clamp(
-        toNum(p.top) + jitterY,
-        margin + 3,
-        100 - bottomReserved - 3
-      );
-      return {
-        left: `${x}%`,
-        top: `${y}%`,
-        transform: "translate(-50%, -50%)",
-      };
-    });
-  };
-
   return (
     <div className="relative w-full h-[60vh] bg-neutral-50 rounded-2xl shadow-xl overflow-hidden border border-neutral-200">
       <div className="absolute inset-y-0 left-0 w-6 bg-green-700/85 rounded-r-md shadow-md">

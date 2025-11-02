@@ -1,11 +1,32 @@
 import { Users, Table, BarChart3, Utensils, History } from "lucide-react";
-
-export default function StaffSidebar({ activeSection, setActiveSection }) {
+import { NavLink } from "react-router-dom";
+import { STAFF_ROUTES } from "../../constant/routes";
+export default function StaffSidebar({ activeSection }) {
   const sidebarItems = [
-    { id: "tableLayout", label: "Sơ Đồ Bàn", icon: Table },
-    { id: "overview", label: "Thông Tin Bàn", icon: BarChart3 },
-    { id: "serveBoard", label: "Phục Vụ Món", icon: Utensils },
-    { id: "serveHistory", label: "Lịch Sử Phục Vụ", icon: History },
+    {
+      id: "tableLayout",
+      label: "Sơ Đồ Bàn",
+      icon: Table,
+      to: STAFF_ROUTES.TABLE_LAYOUT,
+    },
+    {
+      id: "overview",
+      label: "Thông Tin Bàn",
+      icon: BarChart3,
+      to: STAFF_ROUTES.OVERVIEW,
+    },
+    {
+      id: "serveBoard",
+      label: "Phục Vụ Món",
+      icon: Utensils,
+      to: STAFF_ROUTES.SERVE_BOARD,
+    },
+    {
+      id: "serveHistory",
+      label: "Lịch Sử Phục Vụ",
+      icon: History,
+      to: STAFF_ROUTES.SERVE_HISTORY,
+    },
   ];
 
   return (
@@ -24,19 +45,21 @@ export default function StaffSidebar({ activeSection, setActiveSection }) {
         </div>
 
         <nav className="space-y-2">
-          {sidebarItems.map(({ id, label, icon: Icon }) => (
-            <button
+          {sidebarItems.map(({ id, label, icon: Icon, to }) => (
+            <NavLink
               key={id}
-              onClick={() => setActiveSection(id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
-                activeSection === id
-                  ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg"
-                  : "text-neutral-700 hover:bg-green-50 hover:text-green-700"
-              }`}
+              to={to}
+              className={({ isActive }) =>
+                `w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+                  isActive || activeSection === id
+                    ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg"
+                    : "text-neutral-700 hover:bg-green-50 hover:text-green-700"
+                }`
+              }
             >
               <Icon className="h-5 w-5" />
               <span className="font-medium">{label}</span>
-            </button>
+            </NavLink>
           ))}
         </nav>
       </div>

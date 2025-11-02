@@ -13,28 +13,30 @@ import {
   getOrderDetailsByStatus,
   updateOrderDetailStatus,
 } from "../lib/apiOrderDetail";
-
 import {
   isWithinWindow,
   hhmm,
   DEBUG_LOG,
 } from "../components/Staff/staffUtils";
-
 import StaffOverview from "../components/Staff/StaffOverview";
 import StaffTableDetailModal from "../components/Staff/StaffTableDetailModal";
 
-export default function StaffPage() {
-  const [activeSection, setActiveSection] = useState("tableLayout");
+export default function StaffPage({ section = "tableLayout" }) {
+  const [activeSection, setActiveSection] = useState(section);
+  useEffect(() => setActiveSection(section), [section]);
+
   const [selectedTable, setSelectedTable] = useState(null);
   const [tables, setTables] = useState([]);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
+  // ServeBoard state
   const [readyOrders, setReadyOrders] = useState([]);
   const [servedOrders, setServedOrders] = useState([]);
   const [historicalServed, setHistoricalServed] = useState([]);
   const [serveLoading, setServeLoading] = useState(false);
   const [serveError, setServeError] = useState("");
 
+  // Noti modals
   const [showSuccessModal, setShowSuccessModal] = useState("");
   const [showErrorModal, setShowErrorModal] = useState("");
 
@@ -181,17 +183,12 @@ export default function StaffPage() {
 
   useEffect(() => {
     function applyCallStaff({ tableId, tableNumber } = {}) {
-      console.log("[STAFF] applyCallStaff called with:", {
-        tableId,
-        tableNumber,
-      });
       if (!tableId && !tableNumber) return;
       setTables((prev) =>
         prev.map((t) => {
           const match = [t.id, t.number]
             .map((v) => String(v))
             .some((v) => v === String(tableId) || v === String(tableNumber));
-          if (match) console.log(`[STAFF] ✅ matched table`, t.number);
           return match ? { ...t, callStaff: true } : t;
         })
       );
@@ -201,18 +198,15 @@ export default function StaffPage() {
     try {
       bc = new BroadcastChannel("monngon-signals");
       bc.onmessage = (ev) => {
-        console.log("[STAFF] BroadcastChannel message:", ev.data);
         const data = ev?.data || {};
         if (data?.type === "callStaff") applyCallStaff(data);
       };
-      console.log("[STAFF] BroadcastChannel listener ready");
     } catch (e) {
       console.warn("[STAFF] BroadcastChannel failed:", e);
     }
 
     function onStorage(ev) {
       if (!ev.key?.startsWith("signal:callStaff:")) return;
-      console.log("[STAFF] onStorage triggered:", ev.key);
       try {
         const payload = JSON.parse(ev.newValue || "{}");
         applyCallStaff(payload);
@@ -252,11 +246,6 @@ export default function StaffPage() {
             const raw = localStorage.getItem(key);
             if (raw) {
               const payload = JSON.parse(raw);
-              console.log(
-                "[STAFF] picked signal from localStorage:",
-                key,
-                payload
-              );
               applyCallStaff(payload);
             }
             localStorage.removeItem(key);
@@ -343,10 +332,7 @@ export default function StaffPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-green-50 to-emerald-50">
       <div className="flex">
-        <StaffSidebar
-          activeSection={activeSection}
-          setActiveSection={setActiveSection}
-        />
+        <StaffSidebar activeSection={activeSection} />
 
         <main className="flex-1 p-6">
           {activeSection === "tableLayout" && (
