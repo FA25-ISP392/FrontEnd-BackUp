@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, AlertTriangle } from "lucide-react";
+import { CheckCircle, AlertTriangle, History } from "lucide-react";
 import StaffSidebar from "../components/Staff/StaffSidebar";
 import StaffRestaurantTableLayout from "../components/Staff/StaffRestaurantTableLayout";
 import StaffTableInfoLayout from "../components/Staff/StaffTableInfoLayout";
@@ -13,31 +13,30 @@ import {
   getOrderDetailsByStatus,
   updateOrderDetailStatus,
 } from "../lib/apiOrderDetail";
-
-// Logic và Hằng số đã được chuyển sang file utils
 import {
   isWithinWindow,
   hhmm,
   DEBUG_LOG,
 } from "../components/Staff/staffUtils";
-
-// Các component con đã được tách
 import StaffOverview from "../components/Staff/StaffOverview";
 import StaffTableDetailModal from "../components/Staff/StaffTableDetailModal";
 
-export default function StaffPage() {
-  const [activeSection, setActiveSection] = useState("tableLayout");
+export default function StaffPage({ section = "tableLayout" }) {
+  const [activeSection, setActiveSection] = useState(section);
+  useEffect(() => setActiveSection(section), [section]);
+
   const [selectedTable, setSelectedTable] = useState(null);
   const [tables, setTables] = useState([]);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
-  // State cho ServeBoard
+  // ServeBoard state
   const [readyOrders, setReadyOrders] = useState([]);
   const [servedOrders, setServedOrders] = useState([]);
+  const [historicalServed, setHistoricalServed] = useState([]);
   const [serveLoading, setServeLoading] = useState(false);
   const [serveError, setServeError] = useState("");
 
-  // State cho Modals thông báo
+  // Noti modals
   const [showSuccessModal, setShowSuccessModal] = useState("");
   const [showErrorModal, setShowErrorModal] = useState("");
 
@@ -184,17 +183,12 @@ export default function StaffPage() {
 
   useEffect(() => {
     function applyCallStaff({ tableId, tableNumber } = {}) {
-      console.log("[STAFF] applyCallStaff called with:", {
-        tableId,
-        tableNumber,
-      });
       if (!tableId && !tableNumber) return;
       setTables((prev) =>
         prev.map((t) => {
           const match = [t.id, t.number]
             .map((v) => String(v))
             .some((v) => v === String(tableId) || v === String(tableNumber));
-          if (match) console.log(`[STAFF] ✅ matched table`, t.number);
           return match ? { ...t, callStaff: true } : t;
         })
       );
@@ -204,18 +198,15 @@ export default function StaffPage() {
     try {
       bc = new BroadcastChannel("monngon-signals");
       bc.onmessage = (ev) => {
-        console.log("[STAFF] BroadcastChannel message:", ev.data);
         const data = ev?.data || {};
         if (data?.type === "callStaff") applyCallStaff(data);
       };
-      console.log("[STAFF] BroadcastChannel listener ready");
     } catch (e) {
       console.warn("[STAFF] BroadcastChannel failed:", e);
     }
 
     function onStorage(ev) {
       if (!ev.key?.startsWith("signal:callStaff:")) return;
-      console.log("[STAFF] onStorage triggered:", ev.key);
       try {
         const payload = JSON.parse(ev.newValue || "{}");
         applyCallStaff(payload);
@@ -255,11 +246,6 @@ export default function StaffPage() {
             const raw = localStorage.getItem(key);
             if (raw) {
               const payload = JSON.parse(raw);
-              console.log(
-                "[STAFF] picked signal from localStorage:",
-                key,
-                payload
-              );
               applyCallStaff(payload);
             }
             localStorage.removeItem(key);
@@ -281,7 +267,7 @@ export default function StaffPage() {
     };
   }, []);
 
-  async function fetchServeBoard() {
+  async function loadServeBoards() {
     try {
       setServeError("");
       setServeLoading(true);
@@ -289,14 +275,36 @@ export default function StaffPage() {
         getOrderDetailsByStatus("DONE"),
         getOrderDetailsByStatus("SERVED"),
       ]);
+
+      const today = new Date().toISOString().split("T")[0];
+      const servedToday = [];
+      const servedPast = [];
+
+      if (Array.isArray(served)) {
+        for (const od of served) {
+          if (od.orderDate && od.orderDate.startsWith(today)) {
+            servedToday.push(od);
+          } else {
+            servedPast.push(od);
+          }
+        }
+      }
+
       setReadyOrders(Array.isArray(done) ? done : []);
-      setServedOrders(Array.isArray(served) ? served : []);
+      setServedOrders(servedToday);
+      setHistoricalServed(servedPast);
     } catch (e) {
       setServeError(e?.message || "Không tải được danh sách món.");
     } finally {
       setServeLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (activeSection === "serveBoard" || activeSection === "serveHistory") {
+      loadServeBoards();
+    }
+  }, [activeSection]);
 
   useEffect(() => {
     if (showSuccessModal) {
@@ -312,18 +320,10 @@ export default function StaffPage() {
     }
   }, [showErrorModal]);
 
-  useEffect(() => {
-    if (activeSection !== "serveBoard") return;
-    fetchServeBoard();
-  }, [activeSection]);
-
   const handleServe = async (od) => {
     try {
       await updateOrderDetailStatus(od.orderDetailId, od, "SERVED");
-      setReadyOrders((prev) =>
-        prev.filter((x) => x.orderDetailId !== od.orderDetailId)
-      );
-      setServedOrders((prev) => [{ ...od, status: "SERVED" }, ...prev]);
+      loadServeBoards();
     } catch (e) {
       setShowErrorModal(e?.message || "Cập nhật trạng thái thất bại.");
     }
@@ -332,10 +332,7 @@ export default function StaffPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-green-50 to-emerald-50">
       <div className="flex">
-        <StaffSidebar
-          activeSection={activeSection}
-          setActiveSection={setActiveSection}
-        />
+        <StaffSidebar activeSection={activeSection} />
 
         <main className="flex-1 p-6">
           {activeSection === "tableLayout" && (
@@ -373,6 +370,64 @@ export default function StaffPage() {
               isLoading={serveLoading}
               error={serveError}
             />
+          )}
+
+          {activeSection === "serveHistory" && (
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center">
+                  <History className="h-4 w-4 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-neutral-900">
+                    Lịch Sử Phục Vụ
+                  </h3>
+                  <p className="text-sm text-neutral-600">
+                    Các món đã phục vụ từ những ngày trước
+                  </p>
+                </div>
+              </div>
+
+              {serveLoading ? (
+                <p>Đang tải lịch sử...</p>
+              ) : serveError ? (
+                <p className="text-red-500">{serveError}</p>
+              ) : historicalServed.length === 0 ? (
+                <p className="text-center py-8 text-neutral-500">
+                  Chưa có lịch sử phục vụ.
+                </p>
+              ) : (
+                <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-neutral-300 scrollbar-track-transparent">
+                  {historicalServed.map((od) => (
+                    <div
+                      key={od.orderDetailId}
+                      className="bg-neutral-50 rounded-lg p-4 border border-neutral-200"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="font-semibold text-neutral-800">
+                            {od.dishName}
+                          </span>
+                          <span className="text-sm text-neutral-600 ml-2">
+                            (ID: {od.orderDetailId})
+                          </span>
+                        </div>
+                        <span className="text-xs font-medium text-neutral-500">
+                          {od.orderDate
+                            ? new Date(od.orderDate).toLocaleDateString("vi-VN")
+                            : "Không rõ ngày"}
+                        </span>
+                      </div>
+                      {od.note && (
+                        <p className="text-xs italic text-neutral-500 mt-1">
+                          Ghi chú: {od.note}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </main>
       </div>

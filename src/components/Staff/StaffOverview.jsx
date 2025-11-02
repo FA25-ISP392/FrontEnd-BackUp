@@ -12,13 +12,15 @@ export default function StaffOverview({ tables = [] }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-      <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
+      <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-yellow-500">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-neutral-600 text-sm">Bàn Đã Đặt</p>
-            <p className="text-2xl font-bold text-blue-600">{reservedTables}</p>
+            <p className="text-2xl font-bold text-yellow-600">
+              {reservedTables}
+            </p>
           </div>
-          <Table className="h-8 w-8 text-blue-600" />
+          <Table className="h-8 w-8 text-yellow-600" />
         </div>
       </div>
 
@@ -44,15 +46,15 @@ export default function StaffOverview({ tables = [] }) {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-green-500">
+      <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-neutral-600 text-sm">Gọi Thanh Toán</p>
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-2xl font-bold text-blue-600">
               {callPaymentCount}
             </p>
           </div>
-          <span className="font-bold text-2xl text-green-600">VND</span>
+          <span className="font-bold text-2xl text-blue-600">VND</span>
         </div>
       </div>
     </div>

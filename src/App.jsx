@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./layout/MainLayout.jsx";
 import Login from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
@@ -27,7 +27,7 @@ export default function App() {
       <Route path="*" element={<Home />} />
 
       <Route
-        path="/staff"
+        path="/staff/*"
         element={
           <ProtectedRoute allowedRoles={["STAFF"]}>
             <MainLayout
@@ -40,7 +40,26 @@ export default function App() {
               }}
               showFooter={false}
             >
-              <StaffPage />
+              <Routes>
+                <Route index element={<Navigate to="sodoban" replace />} />
+                <Route
+                  path="sodoban"
+                  element={<StaffPage section="tableLayout" />}
+                />
+                <Route
+                  path="thongtinban"
+                  element={<StaffPage section="overview" />}
+                />
+                <Route
+                  path="phucvumon"
+                  element={<StaffPage section="serveBoard" />}
+                />
+                <Route
+                  path="lichsuphucvu"
+                  element={<StaffPage section="serveHistory" />}
+                />
+                <Route path="*" element={<Navigate to="sodoban" replace />} />
+              </Routes>
             </MainLayout>
           </ProtectedRoute>
         }

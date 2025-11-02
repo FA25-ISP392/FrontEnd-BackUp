@@ -9,6 +9,7 @@ import ChefDailyDishes from "../components/Chef/ChefDailyDishes";
 import ChefRejectedDishes from "../components/Chef/ChefRejectedDishes";
 import ChefDailyPlanTopping from "../components/Chef/ChefDailyPlanTopping";
 import ChefDailyToppings from "../components/Chef/ChefDailyToppings";
+import { History } from "lucide-react";
 
 import {
   getOrderDetailsByStatus,
@@ -22,7 +23,8 @@ export default function Chef() {
   const [dishRequests, setDishRequests] = useState([]);
   const [pending, setPending] = useState([]);
   const [preparing, setPreparing] = useState([]);
-  const [ready, setReady] = useState([]);
+  const [readyToday, setReadyToday] = useState([]);
+  const [historicalReady, setHistoricalReady] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [subTab, setSubTab] = useState("dish");
@@ -50,13 +52,28 @@ export default function Chef() {
           getOrderDetailsByStatus("SERVED"),
         ]);
 
+      const today = new Date().toISOString().split("T")[0];
+      const readyForToday = [];
+      const readyForPast = [];
+
       const byId = new Map();
       [...(doneData || []), ...(servedData || [])].forEach((it) =>
         byId.set(it.orderDetailId, it)
       );
+      const allReadyAndServed = Array.from(byId.values());
+
+      for (const od of allReadyAndServed) {
+        if (od.orderDate && od.orderDate.startsWith(today)) {
+          readyForToday.push(od);
+        } else {
+          readyForPast.push(od);
+        }
+      }
+
       setPending(pendingData);
       setPreparing(preparingData);
-      setReady(Array.from(byId.values()));
+      setReadyToday(readyForToday);
+      setHistoricalReady(readyForPast);
     } catch (err) {
       console.error("Lỗi fetch đơn hàng:", err);
       setError(err.message || "Không thể tải danh sách đơn hàng.");
@@ -87,7 +104,7 @@ export default function Chef() {
       if (newStatus === "PREPARING") {
         setPreparing((prev) => [updatedItem, ...prev]);
       } else if (newStatus === "DONE" || newStatus === "SERVED") {
-        setReady((prev) => [updatedItem, ...prev]);
+        setReadyToday((prev) => [updatedItem, ...prev]);
       }
       await updateOrderDetailStatus(orderDetailId, itemToMove, newStatus);
     } catch (err) {
@@ -117,11 +134,70 @@ export default function Chef() {
           <OrdersManagement
             pendingOrders={pending}
             preparingOrders={preparing}
-            readyOrders={ready}
+            readyOrders={readyToday}
             onUpdateStatus={handleUpdateStatus}
             isLoading={isLoading}
             error={error}
           />
+        );
+
+      case "orderHistory":
+        return (
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center">
+                <History className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-neutral-900">
+                  Lịch Sử Đơn Món
+                </h3>
+                <p className="text-sm text-neutral-600">
+                  Các món đã nấu xong từ những ngày trước
+                </p>
+              </div>
+            </div>
+
+            {isLoading ? (
+              <p>Đang tải lịch sử...</p>
+            ) : error ? (
+              <p className="text-red-500">{error}</p>
+            ) : historicalReady.length === 0 ? (
+              <p className="text-center py-8 text-neutral-500">
+                Chưa có lịch sử món ăn.
+              </p>
+            ) : (
+              <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-neutral-300 scrollbar-track-transparent">
+                {historicalReady.map((od) => (
+                  <div
+                    key={od.orderDetailId}
+                    className="bg-neutral-50 rounded-lg p-4 border border-neutral-200"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="font-semibold text-neutral-800">
+                          {od.dishName}
+                        </span>
+                        <span className="text-sm text-neutral-600 ml-2">
+                          (ID: {od.orderDetailId})
+                        </span>
+                      </div>
+                      <span className="text-xs font-medium text-neutral-500">
+                        {od.orderDate
+                          ? new Date(od.orderDate).toLocaleDateString("vi-VN")
+                          : "Không rõ ngày"}
+                      </span>
+                    </div>
+                    {od.note && (
+                      <p className="text-xs italic text-neutral-500 mt-1">
+                        Ghi chú: {od.note}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         );
 
       case "dishes":

@@ -10,6 +10,7 @@ import {
 import { getPaymentById, createPayment } from "../../lib/apiPayment";
 import { getOrderById, getOrderDetailsByOrderId } from "../../lib/apiOrder";
 import { getCustomerDetail, listCustomers } from "../../lib/apiCustomer";
+import { VND, parseNumber } from "../Staff/staffUtils";
 
 export default function StaffPaymentModal({ open, onClose, table }) {
   const [loading, setLoading] = useState(false);
@@ -27,9 +28,6 @@ export default function StaffPaymentModal({ open, onClose, table }) {
     [table]
   );
   const paymentId = useMemo(() => table?.pendingPayment?.id, [table]);
-
-  const VND = (n = 0) =>
-    Number(n || 0).toLocaleString("vi-VN", { maximumFractionDigits: 0 }) + " ₫";
 
   useEffect(() => {
     if (!open) {
@@ -149,11 +147,6 @@ export default function StaffPaymentModal({ open, onClose, table }) {
   function goBack() {
     setView("default");
     setCashError("");
-  }
-
-  function parseNumber(s) {
-    const num = Number(String(s).replace(/[^\d.-]/g, ""));
-    return isFinite(num) ? num : 0;
   }
 
   const cashReceived = parseNumber(cashInput);
@@ -335,7 +328,7 @@ export default function StaffPaymentModal({ open, onClose, table }) {
                 ) : (
                   <QrCode className="h-4 w-4" />
                 )}
-                Mã QR (PayOS)
+                Mã QR
               </button>
             </div>
 
