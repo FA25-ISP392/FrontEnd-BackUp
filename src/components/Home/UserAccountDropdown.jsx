@@ -3,15 +3,12 @@ import {
   User,
   LogOut,
   Edit3,
-  Lock,
   ChevronDown,
   X,
   History,
-  CreditCard, // 👈 THÊM IMPORT
+  CreditCard,
 } from "lucide-react";
 import EditAccountModal from "./EditAccountModal";
-import ChangePasswordModal from "./ChangePasswordModal";
-// 🔽 THÊM IMPORT MODAL MỚI
 import PaymentHistoryModal from "./PaymentHistoryModal";
 
 export default function UserAccountDropdown({
@@ -20,15 +17,11 @@ export default function UserAccountDropdown({
   onLogout,
   onBookingHistoryClick,
   onEditAccountClick,
-  onChangePasswordClick,
-  onPaymentHistoryClick, // 👈 THÊM PROP MỚI
+  onPaymentHistoryClick,
   onCloseEditAccount,
-  onCloseChangePassword,
 }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isEditAccountOpen, setIsEditAccountOpen] = useState(false);
-  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
-  // 🔽 THÊM STATE MỚI
   const [isPaymentHistoryOpen, setIsPaymentHistoryOpen] = useState(false);
 
   if (!isLoggedIn) return null;
@@ -39,22 +32,15 @@ export default function UserAccountDropdown({
     onEditAccountClick();
   };
 
-  const handleChangePassword = () => {
-    setIsChangePasswordOpen(true);
-    setIsDropdownOpen(false);
-    onChangePasswordClick();
-  };
-
   const handleBookingHistory = () => {
     onBookingHistoryClick();
     setIsDropdownOpen(false);
   };
 
-  // 🔽 THÊM HANDLER MỚI
   const handlePaymentHistory = () => {
-    setIsPaymentHistoryOpen(true); // Mở modal
-    setIsDropdownOpen(false); // Đóng dropdown
-    onPaymentHistoryClick(); // Báo cho Home.jsx
+    setIsPaymentHistoryOpen(true);
+    setIsDropdownOpen(false);
+    onPaymentHistoryClick();
   };
 
   const handleLogout = () => {
@@ -118,14 +104,6 @@ export default function UserAccountDropdown({
               </button>
 
               <button
-                onClick={handleChangePassword}
-                className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors"
-              >
-                <Lock className="w-4 h-4 text-gray-500" />
-                <span className="text-gray-700 text-sm">Đổi mật khẩu</span>
-              </button>
-
-              <button
                 onClick={handleBookingHistory}
                 className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors"
               >
@@ -133,7 +111,6 @@ export default function UserAccountDropdown({
                 <span className="text-gray-700 text-sm">Lịch sử đặt bàn</span>
               </button>
 
-              {/* 👇 THÊM NÚT MỚI */}
               <button
                 onClick={handlePaymentHistory}
                 className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors"
@@ -167,21 +144,11 @@ export default function UserAccountDropdown({
         userInfo={userInfo}
       />
 
-      <ChangePasswordModal
-        isOpen={isChangePasswordOpen}
-        onClose={() => {
-          setIsChangePasswordOpen(false);
-          onCloseChangePassword();
-        }}
-        userInfo={userInfo}
-      />
-
-      {/* 👇 THÊM MODAL MỚI */}
       <PaymentHistoryModal
         isOpen={isPaymentHistoryOpen}
         onClose={() => {
           setIsPaymentHistoryOpen(false);
-          onCloseEditAccount(); // Dùng chung hàm close để điều hướng
+          onCloseEditAccount();
         }}
         userInfo={userInfo}
       />

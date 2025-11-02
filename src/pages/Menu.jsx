@@ -1,3 +1,5 @@
+// src/pages/Menu.jsx (Đã cập nhật)
+
 import { useState, useEffect, useRef } from "react";
 import { CheckCircle, XCircle } from "lucide-react";
 import MenuHeader from "../components/Menu/MenuHeader";
@@ -28,6 +30,7 @@ import {
 import EditOrderDetailModal from "../components/Menu/EditOrderDetailModal";
 import { createPayment, getPaymentById } from "../lib/apiPayment";
 import ConfirmDialog from "../common/ConfirmDialog";
+import usePersistedState from "../hooks/usePersistedState"; // <-- 1. IMPORT HOOK MỚI
 
 // --- Hằng số và Hàm Helper ---
 const PERSONAL_KEY = (cid) => `personalization:${cid}`;
@@ -56,8 +59,11 @@ export default function Menu() {
   const [tableId, setTableId] = useState(null);
   const [customerId, setCustomerId] = useState(null);
   const [customerName, setCustomerName] = useState(null);
-  const [orderId, setOrderId] = useState(
-    () => sessionStorage.getItem("orderId") || null
+
+  // --- SỬA Ở ĐÂY 1: Dùng usePersistedState cho orderId ---
+  const [orderId, setOrderId] = usePersistedState(
+    "currentOrderId", // Tên khóa trong localStorage
+    null
   );
 
   // --- State Menu & Món ăn ---
@@ -73,8 +79,11 @@ export default function Menu() {
   const [estimatedCalories, setEstimatedCalories] = useState(null);
   const [dailyCalories, setDailyCalories] = useState(null);
 
-  // --- State Giỏ hàng (Cart) ---
-  const [cart, setCart] = useState([]);
+  // --- SỬA Ở ĐÂY 2: Dùng usePersistedState cho cart ---
+  const [cart, setCart] = usePersistedState(
+    "shoppingCart", // Tên khóa trong localStorage
+    []
+  );
   const [caloriesConsumed, setCaloriesConsumed] = useState(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
@@ -150,13 +159,13 @@ export default function Menu() {
     };
   }, []);
 
+  // --- SỬA Ở ĐÂY 3: Đơn giản hóa logic tạo order ---
   useEffect(() => {
     const ready = Boolean(customerId) && Boolean(tableId);
     if (!ready) return;
 
-    const existed = sessionStorage.getItem("orderId");
-    if (existed) {
-      setOrderId(existed);
+    // Nếu đã có orderId (từ usePersistedState), không cần tạo mới
+    if (orderId) {
       return;
     }
 
@@ -168,14 +177,14 @@ export default function Menu() {
       try {
         const order = await createOrder({ customerId, tableId });
         if (order?.orderId) {
+          // Chỉ cần set state, hook sẽ tự lưu vào localStorage
           setOrderId(String(order.orderId));
-          sessionStorage.setItem("orderId", String(order.orderId));
         }
       } catch (err) {
         sessionStorage.removeItem(idemKey);
       }
     })();
-  }, [customerId, tableId]);
+  }, [customerId, tableId, orderId, setOrderId]); // Thêm orderId và setOrderId
 
   const hiddenNames = (() => {
     try {
@@ -293,7 +302,7 @@ export default function Menu() {
       if (!cart.length) throw new Error("Giỏ hàng đang trống.");
       await createOrderDetailsFromCart(orderId, cart);
       setIsCartOpen(false);
-      setCart([]);
+      setCart([]); // Hook này sẽ tự xóa "shoppingCart" khỏi localStorage
       setCaloriesConsumed(0);
       setIsStatusOpen(true);
       setIsOrderFoodOpen(true);
@@ -500,6 +509,12 @@ export default function Menu() {
       if (thanksTimerRef.current) clearInterval(thanksTimerRef.current);
       pollTimerRef.current = null;
       thanksTimerRef.current = null;
+
+      // --- SỬA Ở ĐÂY 4: Xóa cart và orderId khỏi state/localStorage ---
+      setCart([]);
+      setOrderId(null);
+      // -------------------------------------------------------------
+
       sessionStorage.clear();
       const keysToRemove = [
         "user",

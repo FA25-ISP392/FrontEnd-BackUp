@@ -78,7 +78,6 @@ export default function Home() {
     if (p === HOME_ROUTES.BOOKING) return "booking";
     if (p === HOME_ROUTES.HISTORY) return "history";
     if (p === HOME_ROUTES.EDIT) return "edit";
-    if (p === HOME_ROUTES.CHANGE_PWD) return "changePwd";
     if (p === HOME_ROUTES.PAYMENT_HISTORY) return "payment_history";
     return null;
   }, [location.pathname]);
@@ -165,7 +164,6 @@ export default function Home() {
 
   const handleBookingHistoryClick = () => open(HOME_ROUTES.HISTORY);
   const handleEditAccountClick = () => open(HOME_ROUTES.EDIT);
-  const handleChangePasswordClick = () => open(HOME_ROUTES.CHANGE_PWD);
   const handlePaymentHistoryClick = () => open(HOME_ROUTES.PAYMENT_HISTORY);
 
   return (
@@ -220,9 +218,7 @@ export default function Home() {
               onLogout={handleLogout}
               onBookingHistoryClick={handleBookingHistoryClick}
               onEditAccountClick={handleEditAccountClick}
-              onChangePasswordClick={handleChangePasswordClick}
               onCloseEditAccount={closeToHome}
-              onCloseChangePassword={closeToHome}
               onPaymentHistoryClick={handlePaymentHistoryClick}
             />
           </nav>

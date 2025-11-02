@@ -17,7 +17,6 @@ export const HOME_ROUTES = {
   BOOKING: "/home/datban",
   HISTORY: "/home/lichsudatban",
   EDIT: "/home/suathongtin",
-  CHANGE_PWD: "/home/doimatkhau",
   PAYMENT_HISTORY: "/home/lichsuthanhtoan",
 };
 
@@ -35,7 +34,6 @@ export const VERIFY_EMAIL_URL = joinUrl(APP_ORIGIN, VERIFY_EMAIL);
 export const NEED_AUTH = [
   HOME_ROUTES.HISTORY,
   HOME_ROUTES.EDIT,
-  HOME_ROUTES.CHANGE_PWD,
   HOME_ROUTES.PAYMENT_HISTORY,
   STAFF_ROUTES.TABLE_LAYOUT,
   STAFF_ROUTES.OVERVIEW,
