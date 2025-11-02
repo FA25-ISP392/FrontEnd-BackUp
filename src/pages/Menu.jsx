@@ -10,6 +10,8 @@ import CartSidebar from "../components/Menu/CartSidebar";
 import PaymentSidebar from "../components/Menu/PaymentSidebar";
 import DishOptionsModal from "../components/Menu/DishOptionsModal";
 import OrderStatusSidebar from "../components/Menu/OrderStatusSidebar";
+import { getSuggestedMenu } from "../lib/apiSuggestion";
+
 import {
   createOrder,
   getOrderById,
@@ -34,6 +36,7 @@ import usePersistedState from "../hooks/usePersistedState"; // <-- 1. IMPORT HOO
 
 // --- Hằng số và Hàm Helper ---
 const PERSONAL_KEY = (cid) => `personalization:${cid}`;
+const MODE_KEY = "menuMode";
 const applyGoal = (cals, goal) => {
   if (typeof cals !== "number" || !isFinite(cals)) return null;
   if (goal === "lose") return Math.max(0, cals - 500);
@@ -53,9 +56,89 @@ const getDisplayName = (u) =>
 const sumTotal = (items = []) =>
   items.reduce((s, it) => s + Number(it.totalPrice ?? it.price ?? 0), 0);
 
+// ====================================================================
+// ✅ HÀM GIẢ LẬP API LẤY GỢI Ý MENU (CẦN THAY THẾ BẰNG API THẬT CỦA BẠN)
+// ====================================================================
+const getMenuSuggestions = async (payload) => {
+  // Console log để kiểm tra payload gửi đi
+  console.log("[API Call Mock] POST /suggestions/menu with payload:", payload);
+
+  // Giả lập độ trễ mạng và phản hồi thành công
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  const mockGoalType = payload.goal;
+  // Giả lập cấu trúc response List<MenuSuggestion> từ BE
+  return [
+    {
+      // Giả định cấu trúc DishResponse tương thích với FE
+      drink: {
+        dishId: 101,
+        dishName: `Nước (for ${mockGoalType})`,
+        calo: 50,
+        price: 10000,
+        remainingQuantity: 10,
+        type: mockGoalType,
+        categoryEnum: "DRINKS",
+      },
+      salad: {
+        dishId: 201,
+        dishName: `Salad (for ${mockGoalType})`,
+        calo: 150,
+        price: 40000,
+        remainingQuantity: 5,
+        type: mockGoalType,
+        categoryEnum: "SALAD",
+      },
+      mainCourse: {
+        dishId: 301,
+        dishName: `Món chính (for ${mockGoalType})`,
+        calo: 450,
+        price: 100000,
+        remainingQuantity: 15,
+        type: mockGoalType,
+        categoryEnum: "PIZZA",
+      },
+      dessert: {
+        dishId: 401,
+        dishName: `Tráng miệng (for ${mockGoalType})`,
+        calo: 100,
+        price: 30000,
+        remainingQuantity: 8,
+        type: mockGoalType,
+        categoryEnum: "DESSERT",
+      },
+    },
+  ];
+};
+// ====================================================================
+
 // --- Component Chính ---
 export default function Menu() {
-  // --- State Cơ sở (Auth, Bàn, Đơn hàng) ---
+  // --- GỢI Ý MENU ---
+  const [suggestedMenu, setSuggestedMenu] = useState(() => {
+    try {
+      const saved = localStorage.getItem("suggestedMenu");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  useEffect(() => {
+    try {
+      if (
+        suggestedMenu &&
+        Array.isArray(suggestedMenu) &&
+        suggestedMenu.length > 0
+      ) {
+        localStorage.setItem("suggestedMenu", JSON.stringify(suggestedMenu));
+      } else {
+        localStorage.removeItem("suggestedMenu");
+      }
+    } catch (e) {
+      console.error("Không thể lưu suggestedMenu:", e);
+    }
+  }, [suggestedMenu]);
+
   const [tableId, setTableId] = useState(null);
   const [customerId, setCustomerId] = useState(null);
   const [customerName, setCustomerName] = useState(null);
@@ -158,6 +241,9 @@ export default function Menu() {
       window.removeEventListener("auth:changed", sync);
     };
   }, []);
+  const initialMode = sessionStorage.getItem(MODE_KEY);
+  const [mode, setMode] = useState(initialMode); // 'solo' hoặc 'group'
+  const [showModeSelection, setShowModeSelection] = useState(!initialMode);
 
   // --- SỬA Ở ĐÂY 3: Đơn giản hóa logic tạo order ---
   useEffect(() => {
@@ -455,6 +541,76 @@ export default function Menu() {
     }
   };
 
+  const handleGoalChange = (goalId) => {
+    setPersonalizationForm((prev) => ({ ...prev, goal: goalId }));
+    const base = baseCalories ?? estimatedCalories;
+    setEstimatedCalories(applyGoal(base, goalId));
+  };
+
+  // ====================================================================
+  // ✅ LOGIC XỬ LÝ SUBMIT FORM CÁ NHÂN HÓA MỚI (LƯU HỒ SƠ & LẤY GỢI Ý)
+  // ====================================================================
+  const handlePersonalizationSubmit = async ({
+    customerUpdatePayload,
+    suggestionCreationPayload,
+    dailyCalories,
+  }) => {
+    if (!customerId) {
+      setErrorMessage("Không tìm thấy ID khách hàng. Vui lòng đăng nhập.");
+      setIsErrorOpen(true);
+      return;
+    }
+
+    try {
+      // 0️⃣ Reset danh sách cũ (xóa các gợi ý cũ khỏi state)
+      setSuggestedMenu([]); // 🧹 clear danh sách cũ trước khi gọi API mới
+
+      // 1️⃣ GỌI API 1: Cập nhật hồ sơ khách hàng
+      await updateCustomerPersonalization(customerId, customerUpdatePayload);
+
+      // 2️⃣ GỌI API 2: Lấy gợi ý menu mới
+      const suggestionsResponse = await getSuggestedMenu(
+        suggestionCreationPayload
+      );
+
+      // 3️⃣ Chuẩn hoá & copy dishId -> id
+      const flatList = Array.isArray(suggestionsResponse)
+        ? suggestionsResponse.flatMap((r) =>
+            [r.drink, r.salad, r.mainCourse, r.dessert]
+              .filter(Boolean)
+              .map((dish) => ({
+                ...dish,
+                id: dish.dishId ?? dish.id,
+                name: dish.dishName ?? dish.name,
+              }))
+          )
+        : [];
+
+      // 🔢 Giới hạn 12 món (nếu BE trả nhiều hơn)
+      const limitedList = flatList.slice(0, 12);
+
+      // ✅ Cập nhật state
+      setSuggestedMenu(limitedList);
+      setEstimatedCalories(dailyCalories);
+      setIsPersonalized(true);
+
+      setIsPersonalizationOpen(false);
+      setSuccessMessage(
+        "Cá nhân hóa thành công! Thực đơn gợi ý mới đã được tạo."
+      );
+      setIsSuccessOpen(true);
+    } catch (err) {
+      console.error("❌ Lỗi cá nhân hóa:", err);
+      setErrorMessage(
+        err?.response?.data?.message ||
+          "Lỗi khi cập nhật hồ sơ hoặc lấy thực đơn gợi ý."
+      );
+      setIsErrorOpen(true);
+    }
+  };
+
+  // ====================================================================
+
   const handleRequestPayment = async () => {
     try {
       if (!orderId) throw new Error("Chưa có orderId.");
@@ -617,102 +773,59 @@ export default function Menu() {
     };
   }, [orderId]);
 
-  // === LOGIC CÁ NHÂN HÓA (PersonalizationModal) ===
+  if (showModeSelection) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-orange-50 to-red-100">
+        <div className="bg-white shadow-xl rounded-2xl p-8 text-center max-w-md w-full">
+          <h2 className="text-2xl font-bold mb-4 text-neutral-900">
+            Chào mừng bạn đến với nhà hàng!
+          </h2>
+          <p className="text-neutral-600 mb-6">
+            Vui lòng chọn cách bạn dùng bữa hôm nay:
+          </p>
+          <div className="flex flex-col space-y-4">
+            <button
+              onClick={() => {
+                sessionStorage.setItem(MODE_KEY, "group"); // <-- LƯU TRẠNG THÁI
+                setMode("group");
+                setShowModeSelection(false);
+                window.location.reload();
+              }}
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-semibold hover:from-amber-500 hover:to-orange-600 transition"
+            >
+              🍽️ Tôi đi nhóm
+            </button>
+            <button
+              onClick={() => {
+                sessionStorage.setItem(MODE_KEY, "solo"); // <-- LƯU TRẠNG THÁI
+                setMode("solo");
+                setShowModeSelection(false);
+                window.location.reload();
+              }}
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-green-500 text-white font-semibold hover:from-emerald-500 hover:to-green-600 transition"
+            >
+              🧍‍♂️ Tôi đi một mình
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   useEffect(() => {
-    if (!customerId) return;
-    const cachedRaw = localStorage.getItem(PERSONAL_KEY(customerId));
-    if (cachedRaw) {
-      try {
-        const cached = JSON.parse(cachedRaw);
-        if (cached && typeof cached === "object") {
-          const data = cached.data || {};
-          delete data.goal;
-          setPersonalizationForm((prev) => ({ ...prev, ...data }));
-
-          if (typeof cached.perWorkout === "number") {
-            const roundedBase = Math.ceil(cached.perWorkout);
-            const roundedGoal = Math.ceil(
-              applyGoal(cached.perWorkout, data.goal)
-            );
-            setBaseCalories(roundedBase);
-            setEstimatedCalories(roundedGoal);
-            setIsPersonalized(true);
-          } else setIsPersonalized(true);
-        }
-      } catch {}
-      return;
+    if (mode === "solo" && customerId && !suggestedMenu) {
+      // ⏳ Tự mở form cá nhân hóa khi chưa có gợi ý
+      setIsPersonalizationOpen(true);
     }
-    (async () => {
-      try {
-        const cus = await getCustomerDetail(customerId);
-        const toForm = {
-          height: Number(cus.height ?? 170),
-          weight: Number(cus.weight ?? 70),
-          gender: cus.sex === true ? "male" : "female",
-          age: 25,
-          mealsPerDay: Number(cus.portion ?? 3),
-          exerciseLevel: "moderate",
-          goal: "",
-        };
-        setPersonalizationForm((prev) => ({ ...prev, ...toForm }));
-        localStorage.setItem(
-          PERSONAL_KEY(customerId),
-          JSON.stringify({ data: toForm, updatedAt: Date.now() })
-        );
-      } catch (e) {}
-    })();
-  }, [customerId]);
-
-  const handleGoalChange = (goalId) => {
-    setPersonalizationForm((prev) => ({ ...prev, goal: goalId }));
-    const base = baseCalories ?? estimatedCalories;
-    setEstimatedCalories(applyGoal(base, goalId));
-  };
-
-  const handlePersonalizationSubmit = async (form) => {
-    try {
-      if (!customerId) throw new Error("Thiếu customerId");
-      const bmr =
-        form.gender === "male"
-          ? 10 * form.weight + 6.25 * form.height - 5 * form.age + 5
-          : 10 * form.weight + 6.25 * form.height - 5 * form.age - 161;
-      const activityMultipliers = {
-        sedentary: 1.2,
-        light: 1.375,
-        moderate: 1.55,
-        active: 1.725,
-        very_active: 1.9,
-      };
-      const multiplier = activityMultipliers[form.exerciseLevel] || 1.55;
-      const maintenanceCalories = bmr * multiplier;
-      const dailyCalories = applyGoal(maintenanceCalories, form.goal);
-      localStorage.setItem(
-        PERSONAL_KEY(customerId),
-        JSON.stringify({
-          data: form,
-          perWorkout: Math.ceil(maintenanceCalories),
-          goalCalories: Math.ceil(dailyCalories),
-          updatedAt: Date.now(),
-        })
-      );
-      await updateCustomerPersonalization(customerId, form);
-      setBaseCalories(Math.ceil(maintenanceCalories));
-      setEstimatedCalories(Math.ceil(dailyCalories));
-      setIsPersonalized(true);
-
-      setSuccessMessage("Đã lưu và tính toán calo thành công!");
-      setIsSuccessOpen(true);
-    } catch (err) {
-      setErrorMessage("Cập nhật thất bại, vui lòng thử lại.");
-      setIsErrorOpen(true);
-    }
-  };
+  }, [mode, customerId]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
       <MenuHeader
-        cartItemCount={cartItemCount}
-        onPersonalize={() => setIsPersonalizationOpen(true)}
+        cartItemCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
+        onPersonalize={() => {
+          if (mode === "group") return; // 🚫 không mở nếu đi nhóm
+          setIsPersonalizationOpen(true);
+        }}
         onViewOrders={() => setIsCartOpen(true)}
         onCallStaff={() => {
           setIsCallStaffOpen(true);
@@ -722,7 +835,9 @@ export default function Menu() {
         onViewStatus={() => setIsStatusOpen(true)}
         tableId={tableId}
         customerId={customerId}
+        showPersonalizeButton={mode === "solo"}
       />
+
       {orderId && tableId && customerId && (
         <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
           <div className="max-w-7xl mx-auto flex items-center justify-center space-x-6 text-sm">
@@ -747,16 +862,57 @@ export default function Menu() {
         activeMenuTab={activeMenuTab}
         setActiveMenuTab={setActiveMenuTab}
         filteredDishes={filteredDishes}
+        dishSuggests={suggestedMenu}
         personalizedMenu={personalizedDishes}
-        onDishSelect={handleDishSelect}
-        caloriesConsumed={caloriesConsumed}
-        estimatedCalories={estimatedCalories}
+        onDishSelect={async (dish) => {
+          // 🚫 Chặn món có remainingQuantity = 0
+          if (dish.remainingQuantity <= 0) {
+            alert("❌ Món này hiện đã hết số lượng trong kế hoạch hôm nay.");
+            return;
+          }
+
+          try {
+            let fullDish = await getDish(dish.id);
+
+            // ⚙️ Nếu BE đã trả optionalToppings (kể cả rỗng), KHÔNG gọi lại API
+            if (!Array.isArray(fullDish.optionalToppings)) {
+              try {
+                const toppings = await getToppingsByDishId(dish.id);
+                fullDish = { ...fullDish, optionalToppings: toppings || [] };
+              } catch (e) {
+                console.warn(
+                  "⚠️ Không lấy được topping, đặt rỗng:",
+                  e?.message
+                );
+                fullDish = { ...fullDish, optionalToppings: [] };
+              }
+            }
+
+            setSelectedDish(fullDish);
+            setIsDishOptionsOpen(true);
+          } catch (err) {
+            console.error("Không lấy được chi tiết món:", err);
+          }
+        }}
+        caloriesConsumed={mode === "solo" ? caloriesConsumed : null}
+        estimatedCalories={mode === "solo" ? estimatedCalories : null}
         onGoalChange={handleGoalChange}
-        isPersonalized={isPersonalized}
-        currentGoal={personalizationForm.goal}
+        isPersonalized={mode === "solo" && isPersonalized}
+        currentGoal={mode === "solo" ? personalizationForm.goal : null}
       />
       <MenuFooter />
-
+      {mode === "solo" && (
+        <PersonalizationModal
+          isOpen={isPersonalizationOpen}
+          onClose={() => setIsPersonalizationOpen(false)}
+          personalizationForm={personalizationForm}
+          setPersonalizationForm={setPersonalizationForm}
+          onSubmit={handlePersonalizationSubmit}
+          dailyCalories={dailyCalories}
+          setDailyCalories={setDailyCalories}
+          caloriesConsumed={caloriesConsumed}
+        />
+      )}
       <CartSidebar
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
@@ -795,16 +951,7 @@ export default function Menu() {
         dish={selectedDish}
         onAddToCart={addToCart}
       />
-      <PersonalizationModal
-        isOpen={isPersonalizationOpen}
-        onClose={() => setIsPersonalizationOpen(false)}
-        personalizationForm={personalizationForm}
-        setPersonalizationForm={setPersonalizationForm}
-        onSubmit={handlePersonalizationSubmit}
-        dailyCalories={dailyCalories}
-        setDailyCalories={setDailyCalories}
-        caloriesConsumed={caloriesConsumed}
-      />
+
       <ConfirmDialog
         open={confirmState.open}
         title={confirmState.title}

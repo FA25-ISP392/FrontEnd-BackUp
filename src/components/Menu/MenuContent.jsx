@@ -4,6 +4,7 @@ import { categories as CATEGORY_LIST } from "../../lib/menuData";
 export default function MenuContent({
   activeMenuTab,
   filteredDishes,
+  dishSuggests,
   onDishSelect,
   caloriesConsumed,
   estimatedCalories,
@@ -17,18 +18,7 @@ export default function MenuContent({
     { id: "gain", name: "Tăng cân", icon: Zap },
   ];
 
-  const canShowCalorie =
-    isPersonalized &&
-    typeof estimatedCalories === "number" &&
-    isFinite(estimatedCalories) &&
-    estimatedCalories > 0;
-
-  const percent = canShowCalorie
-    ? Math.min(
-        100,
-        Math.max(0, Math.round((caloriesConsumed / estimatedCalories) * 100)),
-      )
-    : 0;
+  const canShowCalorie = isPersonalized || caloriesConsumed > 0;
 
   // ✅ Lọc món theo type mục tiêu (nếu có)
   // const goalType = mapGoalToType[currentGoal];
@@ -48,7 +38,7 @@ export default function MenuContent({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {canShowCalorie && (
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
                 <Target className="h-6 w-6 text-white" />
@@ -58,24 +48,58 @@ export default function MenuContent({
                   Theo dõi Calorie
                 </h3>
                 <p className="text-sm text-neutral-600">
-                  Kiểm soát lượng calo tiêu thụ
+                  Kiểm soát lượng calo tiêu thụ hôm nay
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-8">
               <div className="text-center">
                 <div className="text-2xl font-bold text-orange-600">
-                  {Math.round(caloriesConsumed)}
+                  {Math.round(caloriesConsumed) || 0}
                 </div>
-                <div className="text-sm text-neutral-600">Cal đã thêm</div>
+                <div className="text-sm text-neutral-600">Đã nạp (Cal)</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-600">
+                  {Math.round(estimatedCalories) || 0}
+                </div>
+                <div className="text-sm text-neutral-600">
+                  Cần nạp trong ngày (Cal)
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Thanh tiến độ */}
+          {estimatedCalories > 0 && (
+            <div className="mt-4">
+              {(() => {
+                const percent = Math.min(
+                  100,
+                  ((caloriesConsumed || 0) / estimatedCalories) * 100,
+                ).toFixed(1);
+                return (
+                  <>
+                    <div className="w-full bg-neutral-200 rounded-full h-3 overflow-hidden">
+                      <div
+                        className="h-3 bg-gradient-to-r from-orange-500 to-red-500 transition-all duration-500"
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                    <div className="text-right text-sm text-neutral-600 mt-1">
+                      Bữa ăn này khoảng {percent}% lượng calories trong ngày bạn
+                      cần nạp
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          )}
         </div>
       )}
 
-      {isPersonalized && activeMenuTab === "all" && (
+      {isPersonalized === "all" && (
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-8">
           <h3 className="text-lg font-bold text-neutral-900 mb-4 text-center">
             Mục tiêu của bạn
@@ -103,6 +127,55 @@ export default function MenuContent({
         </div>
       )}
 
+      {/* 🧠 Nếu có món gợi ý, hiển thị riêng */}
+      {dishSuggests && dishSuggests.length > 0 && (
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-10">
+          <h3 className="text-lg font-bold text-neutral-900 mb-4 text-center">
+            🍱 Menu gợi ý cho bạn
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {dishSuggests.map((dish, idx) => (
+              <div
+                key={`${dish.dishId || idx}`}
+                className="bg-white/90 rounded-2xl shadow-md p-4 hover:shadow-xl transition-all border border-white/30 flex flex-col justify-between"
+              >
+                <div>
+                  <img
+                    src={
+                      dish.picture ||
+                      "https://via.placeholder.com/300x200?text=No+Image"
+                    }
+                    alt={dish.dishName}
+                    className="w-full h-40 object-cover rounded-xl mb-3"
+                  />
+                  <h4 className="text-lg font-bold text-neutral-900 mb-1">
+                    {dish.dishName}
+                  </h4>
+                  <p className="text-sm text-neutral-600 line-clamp-2 mb-2">
+                    {dish.description}
+                  </p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold text-orange-600">
+                      {dish.price?.toLocaleString("vi-VN")}₫
+                    </span>
+                    <span className="text-neutral-500">
+                      {dish.calo || dish.calories} cal
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => onDishSelect(dish)}
+                  className="mt-auto w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-2.5 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-medium"
+                >
+                  Chọn món
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {activeMenuTab === "all" &&
         CATEGORY_LIST.map((cat) => {
           const dishes = dishesToShow.filter(
@@ -117,7 +190,7 @@ export default function MenuContent({
                   {dishes.map((dish) => (
                     <div
                       key={dish.id}
-                      className="w-72 flex-shrink-0 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all border border-white/20"
+                      className="w-72 flex-shrink-0 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all border border-white/20 flex flex-col justify-between"
                     >
                       <div className="aspect-w-16 aspect-h-9 mb-3">
                         <img

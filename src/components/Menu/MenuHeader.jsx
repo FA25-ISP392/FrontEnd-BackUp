@@ -16,6 +16,7 @@ export default function MenuHeader({
   onViewStatus,
   pendingCount = 0,
   preparingCount = 0,
+  showPersonalizeButton = true,
 }) {
   const activeCount = (pendingCount || 0) + (preparingCount || 0);
 
@@ -40,14 +41,15 @@ export default function MenuHeader({
           </div>
 
           <div className="flex items-center space-x-4">
-            <button
-              onClick={onPersonalize}
-              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 shadow-lg hover:shadow-xl"
-            >
-              <User className="h-4 w-4" />
-              <span className="font-medium">Theo dõi caloiries</span>
-            </button>
-
+            {showPersonalizeButton && (
+              <button
+                onClick={onPersonalize}
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                <User className="h-4 w-4" />
+                <span className="font-medium">Menu gợi ý</span>
+              </button>
+            )}
             <button
               onClick={onViewStatus}
               className="relative flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-xl hover:from-emerald-600 hover:to-green-600 transition-all duration-300 shadow-lg hover:shadow-xl"

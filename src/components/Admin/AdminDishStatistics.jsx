@@ -7,6 +7,9 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import {
   getRevenueSummary,
@@ -111,9 +114,7 @@ export default function AdminDishStatistics() {
           {/* 🟢 Biểu đồ Doanh thu */}
           <div className="bg-white rounded-xl p-5 shadow border">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                <DollarSign className="h-4 w-4 text-white" />
-              </div>
+              {/* ❌ bỏ icon DollarSign */}
               <h3 className="text-lg font-bold text-green-700">
                 Doanh Thu Theo Phương Thức
               </h3>
@@ -122,29 +123,54 @@ export default function AdminDishStatistics() {
             {revenue.length === 0 ? (
               <p className="text-sm text-neutral-500">Không có dữ liệu.</p>
             ) : (
-              <div className="h-64">
+              <div className="h-72 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={revenue}
-                    margin={{ top: 10, right: 20, left: 0, bottom: 40 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="method"
-                      angle={-10}
-                      textAnchor="middle"
-                      interval={0}
-                      height={40}
-                      tick={{ fontSize: 12, fill: "#374151" }}
+                  <PieChart>
+                    <Tooltip
+                      formatter={(value) =>
+                        new Intl.NumberFormat("vi-VN", {
+                          style: "currency",
+                          currency: "VND",
+                          maximumFractionDigits: 0,
+                        }).format(value)
+                      }
                     />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar
+                    <Pie
+                      data={revenue}
                       dataKey="revenue"
-                      fill="#10B981"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
+                      nameKey="method"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={120}
+                      label={({ method, revenue }) => {
+                        // 💬 Đổi nhãn sang tiếng Việt
+                        const methodLabel =
+                          method === "CASH"
+                            ? "Tiền mặt"
+                            : method === "BANK_TRANSFER"
+                            ? "Chuyển khoản"
+                            : method;
+
+                        return `${methodLabel}: ${new Intl.NumberFormat(
+                          "vi-VN",
+                          {
+                            style: "currency",
+                            currency: "VND",
+                            maximumFractionDigits: 0,
+                          },
+                        ).format(revenue)}`;
+                      }}
+                    >
+                      {revenue.map((entry, index) => {
+                        // 🎨 Gán màu cho từng phương thức
+                        let color = "#10B981"; // xanh lá
+                        if (entry.method === "BANK_TRANSFER")
+                          color = "#FACC15"; // vàng
+                        else if (entry.method === "CASH") color = "#10B981"; // xanh
+                        return <Cell key={`cell-${index}`} fill={color} />;
+                      })}
+                    </Pie>
+                  </PieChart>
                 </ResponsiveContainer>
               </div>
             )}

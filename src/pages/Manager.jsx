@@ -3,10 +3,11 @@ import ManagerSidebar from "../components/Manager/ManagerSidebar";
 import TablesManagement from "../components/Manager/TablesManagement";
 import TableDetailsModal from "../components/Manager/TableDetailsModal";
 import EditToppingModal from "../components/Manager/Topping/EditToppingModal";
-import ToppingsManagement from "../components/Manager/Topping/ToppingManagement";
+import ToppingManagement from "../components/Manager/Topping/ToppingManagement";
 import ManagerDishPage from "../components/Manager/Dish/ManagerDishPage";
 import ManagerDailyPlanPage from "../components/Manager/ManagerDailyPlanPage";
 import ManagerDailyMenuPage from "../components/Manager/ManagerDailyMenuPage";
+import { listToppingPaging, searchToppingByName } from "../lib/apiTopping";
 
 import {
   listBookingsPaging,
@@ -61,8 +62,9 @@ export default function Manager() {
     loadName();
   }, []);
 
-  const [page, setPage] = useState(1);
-  const [size] = useState(6);
+  const [page, setPage] = useState(0); // bắt đầu từ 0 để khớp BE
+  const [size] = useState(10); // mỗi trang 10 topping
+
   const [pageInfo, setPageInfo] = useState({
     page: 1,
     size: 6,
@@ -115,6 +117,58 @@ export default function Manager() {
       cancelled = true;
     };
   }, []);
+
+  // 🧁 Load danh sách topping khi vào tab "toppings"
+  useEffect(() => {
+    if (activeSection !== "toppings") return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const { content, pageInfo } = await listToppingPaging({
+          page,
+          size,
+        });
+
+        if (!cancelled) {
+          setToppings(content);
+          setPageInfo(pageInfo);
+        }
+      } catch (err) {
+        console.error("❌ Lỗi khi load topping:", err);
+        if (!cancelled) setToppings([]);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSection, page, size]);
+
+  const handleSearchTopping = async (keyword = "") => {
+    try {
+      if (!keyword.trim()) {
+        console.log("🔄 Không có từ khoá, load lại full danh sách topping...");
+        const { content } = await listToppingPaging({ page: 0, size: 20 });
+        setToppings(content);
+        return;
+      }
+
+      console.log("🔍 Đang tìm topping theo tên:", keyword);
+      const result = await searchToppingByName(keyword);
+
+      if (Array.isArray(result)) {
+        console.log("✅ Topping search result:", result);
+        setToppings(result);
+      } else {
+        console.warn("⚠️ API search topping không trả về mảng hợp lệ:", result);
+        setToppings([]);
+      }
+    } catch (err) {
+      console.error("❌ Lỗi khi search topping:", err);
+      setToppings([]);
+    }
+  };
 
   const handleReject = async (id) => {
     setBookings((prev) =>
@@ -235,12 +289,16 @@ export default function Manager() {
 
       case "toppings":
         return (
-          <ToppingsManagement
+          <ToppingManagement
             toppings={toppings}
             setToppings={setToppings}
             setIsEditingTopping={setIsEditingTopping}
             setEditingItem={setEditingTopping}
             loading={false}
+            onSearch={handleSearchTopping}
+            page={page}
+            pageInfo={pageInfo}
+            onPageChange={setPage}
           />
         );
 

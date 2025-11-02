@@ -1,15 +1,29 @@
 import { X, Save, User } from "lucide-react";
 import { useMemo } from "react";
 
+// ÁNH XẠ DỮ LIỆU TỪ FE SANG BE
+const FE_TO_BE_DISH_TYPE = {
+  lose: "FAT_LOSS",
+  maintain: "STAY_FIT",
+  gain: "BUILD_MUSCLE",
+};
+const FE_TO_BE_ACTIVITY_LEVEL = {
+  sedentary: "SEDENTARY",
+  light: "LIGHTLY_ACTIVE",
+  moderate: "MODERATELY_ACTIVE",
+  active: "VERY_ACTIVE",
+  very_active: "EXTRA_ACTIVE",
+};
+
 export default function PersonalizationModal({
   isOpen,
   onClose,
   personalizationForm,
   setPersonalizationForm,
-  onSubmit, // vẫn giữ để BE xử lý
-  dailyCalories, // 🆕 nhận từ cha
+  onSubmit, // <--- Sẽ nhận 2 payload
+  dailyCalories,
   setDailyCalories,
-  caloriesConsumed, // 🆕 setter từ cha
+  caloriesConsumed,
 }) {
   if (!isOpen) return null;
 
@@ -70,19 +84,42 @@ export default function PersonalizationModal({
   // ✅ Khi nhấn "Tra cứu"
   const handleSubmit = (e) => {
     e.preventDefault();
-    const { exerciseLevel, goal } = personalizationForm;
+    const { height, weight, age, gender, mealsPerDay, exerciseLevel, goal } =
+      personalizationForm;
 
+    // 1. Logic tính toán TDEE cho hiển thị modal
     const multiplier = activityMultipliers[exerciseLevel] || 1.55;
     const maintenance = bmr * multiplier;
     let result = maintenance;
     if (goal === "lose") result -= 500;
     if (goal === "gain") result += 500;
-
     const rounded = Math.round(result);
-    setDailyCalories(rounded); // 🧠 lưu state ở cha → giữ nguyên khi mở lại
+    setDailyCalories(rounded); // Update local state for display
 
-    // vẫn gọi BE nếu cần
-    onSubmit?.({ ...personalizationForm, dailyCalories: rounded });
+    // 2. TẠO PAYLOAD 1: Cập nhật Customer Profile (PUT /customer/{customerId})
+    // Chứa height, weight, sex, portion (gửi lên API 1)
+    const customerUpdatePayload = {
+      height: height,
+      weight: weight,
+      // Map 'male' (true) / 'female' (false)
+      sex: gender === "male" ? true : false,
+      portion: mealsPerDay || 3, // BE DTO uses Integer portion
+    };
+
+    // 3. TẠO PAYLOAD 2: Gợi ý Menu (POST /suggestions/menu)
+    // Chứa age, activityLevel, goal (gửi lên API 2)
+    const suggestionCreationPayload = {
+      age: age,
+      activityLevel: FE_TO_BE_ACTIVITY_LEVEL[exerciseLevel],
+      goal: FE_TO_BE_DISH_TYPE[goal],
+    };
+
+    // 4. Gọi handler cha (Menu) để thực hiện 2 API tuần tự
+    onSubmit({
+      customerUpdatePayload,
+      suggestionCreationPayload,
+      dailyCalories: rounded, // Truyền TDEE/dailyCalories để Menu.jsx lưu
+    });
   };
 
   return (
