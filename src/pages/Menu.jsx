@@ -774,6 +774,7 @@ export default function Menu() {
                 sessionStorage.setItem(MODE_KEY, "group"); // <-- LƯU TRẠNG THÁI
                 setMode("group");
                 setShowModeSelection(false);
+                window.location.reload();
               }}
               className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-semibold hover:from-amber-500 hover:to-orange-600 transition"
             >
@@ -784,6 +785,7 @@ export default function Menu() {
                 sessionStorage.setItem(MODE_KEY, "solo"); // <-- LƯU TRẠNG THÁI
                 setMode("solo");
                 setShowModeSelection(false);
+                window.location.reload();
               }}
               className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-green-500 text-white font-semibold hover:from-emerald-500 hover:to-green-600 transition"
             >
