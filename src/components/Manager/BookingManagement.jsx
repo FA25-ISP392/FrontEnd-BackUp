@@ -1,13 +1,11 @@
-import { Check, X, Edit, Calendar } from "lucide-react";
+import { Check, X, Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { fmtVNDateTime } from "../../lib/datetimeBooking";
 import TableLayout from "./TableLayout";
 import TableAssignmentModal from "./TableAssignmentModal";
 import TableBookingsModal from "./TableBookingsModal";
-import {
-  approveBookingWithTable,
-  listBookingsByTableDate,
-} from "../../lib/apiBooking";
+import ConfirmCancelModal from "../Home/ConfirmCancelModal";
+import { listBookingsByTableDate, cancelBooking } from "../../lib/apiBooking";
 
 export default function BookingManagement({
   bookings = [],
@@ -15,19 +13,15 @@ export default function BookingManagement({
   setIsEditingBooking,
   setEditingItem,
   loading = false,
-  deletingIds = new Set(),
   page = 1,
   pageInfo = { page: 1, size: 6, totalPages: 1, totalElements: 0 },
   onPageChange = () => {},
-  onApprove,
   onReject,
-  onEdit,
   tables = [],
   onAssignTable,
   statusFilter = "ALL",
   onStatusChange = () => {},
 }) {
-  const [confirmingId, setConfirmingId] = useState(null);
   const [showTableAssignment, setShowTableAssignment] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [selectedTableId, setSelectedTableId] = useState(null);
@@ -41,6 +35,8 @@ export default function BookingManagement({
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   });
   const [loadingTableBookings, setLoadingTableBookings] = useState(false);
+  const [bookingToCancel, setBookingToCancel] = useState(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   async function fetchTableBookings(tableId, dateStr) {
     setLoadingTableBookings(true);
@@ -126,6 +122,38 @@ export default function BookingManagement({
   const handleEdit = (booking) => {
     setEditingItem?.(booking);
     setIsEditingBooking?.(true);
+  };
+
+  const handleOpenCancelModal = (booking) => {
+    setBookingToCancel(booking);
+  };
+
+  const handleCloseCancelModal = () => {
+    if (isCancelling) return;
+    setBookingToCancel(null);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!bookingToCancel) return;
+    setIsCancelling(true);
+    try {
+      // Gọi API
+      await cancelBooking(bookingToCancel.id);
+      // Cập nhật UI
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === bookingToCancel.id ? { ...b, status: "CANCELLED" } : b
+        )
+      );
+      handleCloseCancelModal();
+    } catch (error) {
+      console.error("Lỗi khi hủy đơn đặt:", error);
+      alert(
+        error.response?.data?.message || error.message || "Không thể hủy đơn."
+      );
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   const tableNameById = (id) => {
@@ -350,6 +378,16 @@ export default function BookingManagement({
                       >
                         <Edit className="h-4 w-4" />
                       </button>
+
+                      {status === "APPROVED" && (
+                        <button
+                          onClick={() => handleOpenCancelModal(b)}
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition"
+                          title="Hủy đơn (Khách không đến)"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -505,6 +543,14 @@ export default function BookingManagement({
           if (selectedTable)
             await fetchTableBookings(selectedTable.id, newDateStr);
         }}
+      />
+
+      <ConfirmCancelModal
+        open={!!bookingToCancel}
+        booking={bookingToCancel}
+        disabled={isCancelling}
+        onClose={handleCloseCancelModal}
+        onConfirm={handleConfirmCancel}
       />
     </div>
   );
