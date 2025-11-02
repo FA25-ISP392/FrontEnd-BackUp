@@ -5,7 +5,7 @@ import {
   approveBookingWithTable,
   listBookingsByTableDate,
 } from "../../lib/apiBooking";
-import { showToast } from "../../common/ToastHost";
+import { LogIn } from "lucide-react";
 
 const LEAD_MINUTES = 30;
 
@@ -23,7 +23,7 @@ const ALL_TABLES = [
 export default function BookingForm({
   onSubmit,
   isLoggedIn,
-  onLoginClick,
+  onLoginRequest,
   initialData,
 }) {
   const [form, setForm] = useState({
@@ -124,8 +124,7 @@ export default function BookingForm({
     e.preventDefault();
     if (loading) return;
     if (!isLoggedIn) {
-      onLoginClick?.(form);
-      showToast("Vui lòng đăng nhập để đặt bàn!", "warning");
+      onLoginRequest?.(form);
       return;
     }
 
@@ -139,7 +138,7 @@ export default function BookingForm({
     if (!pickedId && availableTables.length === 1)
       pickedId = availableTables[0].id;
     if (!pickedId) {
-      showToast("Vui lòng chọn bàn trong danh sách bàn trống.", "warning");
+      alert("Vui lòng chọn bàn trong danh sách bàn trống.");
       return;
     }
 
@@ -155,7 +154,7 @@ export default function BookingForm({
       await approveBookingWithTable(bookingId, pickedId);
       onSubmit?.({ ...form, tableId: pickedId, bookingId });
     } catch (err) {
-      showToast(err?.message || "Đặt bàn thất bại.", "error");
+      alert(err?.message || "Đặt bàn thất bại.");
     } finally {
       setLoading(false);
     }
@@ -163,24 +162,7 @@ export default function BookingForm({
 
   return (
     <div className="relative">
-      {!isLoggedIn && (
-        <div
-          className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/35 backdrop-blur-0 rounded-lg"
-          onClick={() => {
-            onLoginClick?.(form);
-            showToast("Vui lòng đăng nhập để đặt bàn!", "warning");
-          }}
-        >
-          <p className="text-gray-700 font-medium mb-3">
-            Bạn cần đăng nhập để sử dụng chức năng này
-          </p>
-          <button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg">
-            Đăng nhập ngay
-          </button>
-        </div>
-      )}
-
-      <div className={isLoggedIn ? "" : "pointer-events-none opacity-75"}>
+      <div>
         <RestaurantTableLayout
           date={form.date}
           time={form.time}
@@ -188,6 +170,29 @@ export default function BookingForm({
         />
 
         <form onSubmit={submit} className="space-y-4">
+          {!isLoggedIn && (
+            <div
+              className="p-4 bg-orange-50 border border-orange-200 rounded-lg flex items-center justify-between gap-4 cursor-pointer"
+              onClick={() => onLoginRequest?.(form)}
+            >
+              <div className="flex-1">
+                <p className="font-semibold text-orange-700">
+                  Bạn chưa đăng nhập
+                </p>
+                <p className="text-sm text-orange-600">
+                  Đăng nhập để đặt bàn và lưu thông tin của bạn.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="bg-orange-500 text-white px-4 py-2 rounded-lg font-medium flex-shrink-0 flex items-center gap-2"
+              >
+                <LogIn className="w-4 h-4" />
+                Đăng nhập
+              </button>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Ngày đặt bàn
@@ -276,9 +281,9 @@ export default function BookingForm({
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-medium transition-colors"
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
           >
-            {loading ? "Đang xử lý..." : "Đặt Bàn"}
+            {isLoggedIn ? (loading ? "Đang xử lý..." : "Đặt Bàn") : "Đặt Bàn"}
           </button>
         </form>
       </div>

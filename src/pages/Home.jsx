@@ -1,6 +1,13 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { MapPin, Phone, Mail, X, CheckCircle } from "lucide-react";
+import {
+  MapPin,
+  Phone,
+  Mail,
+  X,
+  CheckCircle,
+  AlertTriangle,
+} from "lucide-react";
 import HeroSection from "../components/Home/HeroSection";
 import VisionSection from "../components/Home/VisionSection";
 import MenuSection from "../components/Home/MenuSection";
@@ -25,6 +32,7 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [isBookingSuccessOpen, setIsBookingSuccessOpen] = useState(false);
+  const [isLoginRequiredOpen, setIsLoginRequiredOpen] = useState(false);
   const {
     bookingDraft,
     saveBookingDraft,
@@ -118,6 +126,13 @@ export default function Home() {
       saveBookingDraft({ date, time, guests, preferredTable });
     }
     open(HOME_ROUTES.LOGIN);
+  };
+
+  const handleLoginRequest = (currentForm) => {
+    if (currentForm) {
+      saveBookingDraft(currentForm);
+    }
+    setIsLoginRequiredOpen(true);
   };
 
   const handleLoginSubmit = () => {
@@ -296,6 +311,7 @@ export default function Home() {
                 onSubmit={handleBookingSubmit}
                 isLoggedIn={isLoggedIn}
                 onLoginClick={handleLoginFromBooking}
+                onLoginRequest={handleLoginRequest}
                 initialData={bookingDraft}
               />
             </div>
@@ -444,6 +460,42 @@ export default function Home() {
               >
                 Đóng
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isLoginRequiredOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="h-8 w-8 text-orange-600" />
+              </div>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">
+                Yêu cầu Đăng nhập
+              </h3>
+              <p className="text-neutral-600 mb-6">
+                Bạn cần đăng nhập để có thể đặt bàn. Vui lòng đăng nhập để tiếp
+                tục.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setIsLoginRequiredOpen(false)}
+                  className="flex-1 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-6 py-3 rounded-xl transition-all duration-300 font-medium"
+                >
+                  Để sau
+                </button>
+                <button
+                  onClick={() => {
+                    setIsLoginRequiredOpen(false);
+                    open(HOME_ROUTES.LOGIN);
+                  }}
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-medium"
+                >
+                  Đăng nhập
+                </button>
+              </div>
             </div>
           </div>
         </div>
