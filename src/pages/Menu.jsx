@@ -9,6 +9,7 @@ import PaymentSidebar from "../components/Menu/PaymentSidebar";
 import DishOptionsModal from "../components/Menu/DishOptionsModal";
 import OrderStatusSidebar from "../components/Menu/OrderStatusSidebar";
 import { getSuggestedMenu } from "../lib/apiSuggestion";
+
 import {
   createOrder,
   getOrderById,
@@ -110,7 +111,31 @@ const getMenuSuggestions = async (payload) => {
 
 // --- Component Chính ---
 export default function Menu() {
-  const [suggestedMenu, setSuggestedMenu] = useState(null);
+  // --- GỢI Ý MENU ---
+  const [suggestedMenu, setSuggestedMenu] = useState(() => {
+    try {
+      const saved = localStorage.getItem("suggestedMenu");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  useEffect(() => {
+    try {
+      if (
+        suggestedMenu &&
+        Array.isArray(suggestedMenu) &&
+        suggestedMenu.length > 0
+      ) {
+        localStorage.setItem("suggestedMenu", JSON.stringify(suggestedMenu));
+      } else {
+        localStorage.removeItem("suggestedMenu");
+      }
+    } catch (e) {
+      console.error("Không thể lưu suggestedMenu:", e);
+    }
+  }, [suggestedMenu]);
+
   const [tableId, setTableId] = useState(null);
   const [customerId, setCustomerId] = useState(null);
   const [customerName, setCustomerName] = useState(null);
@@ -769,6 +794,12 @@ export default function Menu() {
       </div>
     );
   }
+  useEffect(() => {
+    if (mode === "solo" && customerId && !suggestedMenu) {
+      // ⏳ Tự mở form cá nhân hóa khi chưa có gợi ý
+      setIsPersonalizationOpen(true);
+    }
+  }, [mode, customerId]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
