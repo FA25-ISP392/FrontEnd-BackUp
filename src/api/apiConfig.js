@@ -100,6 +100,10 @@ apiConfig.interceptors.request.use((config) => {
   if (token && !isPublicEndpoint(url, method)) {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    if (config.headers?.Authorization) {
+      delete config.headers.Authorization;
+    }
   }
 
   return config;

@@ -1,24 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
-import { X, Trash2, Users, ChevronLeft, ChevronRight } from "lucide-react"; // 👈 ĐÃ THÊM ICON
-import { getBookingHistoryPaged, cancelBooking } from "../../lib/apiBooking";
-import ConfirmCancelModal from "./ConfirmCancelModal";
+import { X, CreditCard, ChevronLeft, ChevronRight } from "lucide-react";
+import { getPaymentHistoryPaged } from "../../lib/apiPayment";
 
 const statusLabel = (status) => {
   const s = String(status || "PENDING").toUpperCase();
-  if (s === "APPROVED") return "Đã đặt";
-  if (s === "PENDING") return "Chờ duyệt";
+  if (s === "COMPLETED") return "Thành công";
+  if (s === "PENDING") return "Đang chờ";
   if (s === "CANCELLED") return "Đã hủy";
-  if (s === "REJECT" || s === "REJECTED") return "Từ chối";
+  if (s === "FAILED") return "Thất bại";
+  if (s === "EXPIRED") return "Hết hạn";
   return s;
 };
-const statusBadge = (status) => {
+
+const statusBadge = (status, label) => {
   const s = String(status || "PENDING").toUpperCase();
   const map = {
     PENDING: "bg-amber-100 text-amber-800 ring-1 ring-amber-700/20",
-    APPROVED: "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-700/20",
-    REJECT: "bg-red-100 text-red-700 ring-1 ring-red-700/20",
-    REJECTED: "bg-red-100 text-red-700 ring-1 ring-red-700/20",
+    COMPLETED: "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-700/20",
+    FAILED: "bg-red-100 text-red-700 ring-1 ring-red-700/20",
     CANCELLED: "bg-neutral-100 text-neutral-700 ring-1 ring-neutral-500/20",
+    EXPIRED: "bg-neutral-100 text-neutral-700 ring-1 ring-neutral-500/20",
   };
   return (
     <span
@@ -26,30 +27,23 @@ const statusBadge = (status) => {
         map[s] || "bg-gray-100 text-gray-700"
       }`}
     >
-      {statusLabel(s)}
+      {label || statusLabel(s)}
     </span>
   );
 };
 
-const tableName = (id) => (id || id === 0 ? `Bàn ${id}` : "-");
-const fmtVNDateTime = (iso) => {
-  if (!iso) return "-";
-  const d = new Date(iso);
-  const time = d.toLocaleTimeString("vi-VN", {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  const date = d.toLocaleDateString("vi-VN");
-  return `${time} ${date}`;
-};
+const fmtVND = (v = 0) =>
+  new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(Number(v) || 0);
 
-export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
+export default function PaymentHistoryModal({ isOpen, onClose, userInfo }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  // paging state
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(6);
   const [pageInfo, setPageInfo] = useState({
@@ -60,11 +54,6 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
     first: true,
     last: true,
   });
-
-  // confirm-cancel modal state
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmItem, setConfirmItem] = useState(null);
-  const [confirmBusy, setConfirmBusy] = useState(false);
 
   const customerId = useMemo(() => {
     return (
@@ -86,7 +75,7 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
       setLoading(true);
       setErr("");
       try {
-        const { items, pageInfo } = await getBookingHistoryPaged({
+        const { items, pageInfo } = await getPaymentHistoryPaged({
           customerId,
           page,
           size,
@@ -94,44 +83,14 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
         setItems(items);
         setPageInfo(pageInfo);
       } catch (e) {
-        setErr(e.message || "Không thể tải lịch sử đặt bàn");
+        setErr(e.message || "Không thể tải lịch sử thanh toán");
       } finally {
         setLoading(false);
       }
     })();
   }, [isOpen, customerId, page, size]);
 
-  const refresh = async () => {
-    if (!customerId) return;
-    const { items, pageInfo } = await getBookingHistoryPaged({
-      customerId,
-      page,
-      size,
-    });
-    setItems(items);
-    setPageInfo(pageInfo);
-  };
-
-  const openConfirm = (booking) => {
-    setConfirmItem(booking);
-    setConfirmOpen(true);
-  };
-  const doCancel = async () => {
-    if (!confirmItem?.id) return;
-    try {
-      setConfirmBusy(true);
-      await cancelBooking(confirmItem.id);
-      setConfirmOpen(false);
-      setConfirmItem(null);
-      await refresh();
-    } catch (e) {
-      alert(e.message || "Hủy đơn thất bại.");
-    } finally {
-      setConfirmBusy(false);
-    }
-  };
-
-  // 🔽 HÀM BUILD TRANG ĐẸP HƠN
+  // 🔽 HÀM BUILD TRANG MỚI
   const { totalPages, totalElements, first, last } = pageInfo;
   const pageSize = size;
 
@@ -151,7 +110,7 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
 
   const from = totalElements === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, totalElements);
-  // 🔼 HẾT HÀM BUILD TRANG
+  // 🔼 HẾT HÀM BUILD TRANG MỚI
 
   if (!isOpen) return null;
 
@@ -161,9 +120,12 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
       <div className="absolute inset-0 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl w-full max-w-5xl overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b">
-            <h2 className="text-xl font-bold text-neutral-900">
-              Lịch sử đặt bàn
-            </h2>
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-neutral-700" />
+              <h2 className="text-xl font-bold text-neutral-900">
+                Lịch sử thanh toán
+              </h2>
+            </div>
             <button
               className="p-2 hover:bg-neutral-100 rounded-lg"
               onClick={onClose}
@@ -179,7 +141,7 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
               <div className="bg-red-50 text-red-700 rounded-lg p-3">{err}</div>
             ) : items.length === 0 ? (
               <div className="text-neutral-500">
-                Bạn chưa có đơn đặt bàn nào.
+                Bạn chưa có thanh toán nào.
               </div>
             ) : (
               <>
@@ -187,52 +149,31 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
                   <table className="min-w-full text-sm">
                     <thead className="bg-orange-50 text-neutral-900">
                       <tr>
-                        <th className="px-4 py-2 text-left">STT</th>
-                        <th className="px-4 py-2 text-center">Số Người</th>
-                        <th className="px-4 py-2 text-center">Thời Gian Tới</th>
+                        <th className="px-4 py-2 text-left">Mã Thanh Toán</th>
+                        <th className="px-4 py-2 text-left">Mã Đơn</th>
+                        <th className="px-4 py-2 text-right">Tổng Tiền</th>
+                        <th className="px-4 py-2 text-center">Thời Gian</th>
+                        <th className="px-4 py-2 text-center">Phương Thức</th>
                         <th className="px-4 py-2 text-center">Trạng Thái</th>
-                        <th className="px-4 py-2 text-center">Bàn Đặt</th>
-                        <th className="px-4 py-2 text-center">Hành Động</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {items.map((b, i) => {
-                        const st = String(b.status || "PENDING").toUpperCase();
-                        // Cho phép hủy khi còn "Chờ duyệt" hoặc "Đã đặt" (tùy chính sách)
-                        const cancellable =
-                          st === "PENDING" || st === "APPROVED";
+                      {items.map((p) => {
                         return (
-                          <tr key={b.id} className="hover:bg-neutral-50">
-                            <td className="px-4 py-2">
-                              {(page - 1) * size + i + 1}
-                            </td>
-                            <td className="px-4 py-2 text-center">{b.seat}</td>
-                            <td className="px-4 py-2 text-center">
-                              {fmtVNDateTime(b.bookingDate)}
+                          <tr key={p.id} className="hover:bg-neutral-50">
+                            <td className="px-4 py-2 font-medium">#{p.id}</td>
+                            <td className="px-4 py-2">#{p.orderId}</td>
+                            <td className="px-4 py-2 text-right font-semibold text-green-700">
+                              {fmtVND(p.total)}
                             </td>
                             <td className="px-4 py-2 text-center">
-                              {statusBadge(st)}
+                              {p.datetimeText}
                             </td>
                             <td className="px-4 py-2 text-center">
-                              {b.assignedTableId
-                                ? tableName(b.assignedTableId)
-                                : "-"}
+                              {p.methodVi}
                             </td>
                             <td className="px-4 py-2 text-center">
-                              <button
-                                disabled={!cancellable}
-                                onClick={() => openConfirm(b)}
-                                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition
-                                  ${
-                                    cancellable
-                                      ? "bg-rose-600 hover:bg-rose-700 text-white shadow-sm hover:shadow ring-1 ring-rose-700/20"
-                                      : "bg-neutral-200 text-neutral-500 cursor-not-allowed"
-                                  }`}
-                                title="Hủy đơn đặt bàn"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Hủy đơn
-                              </button>
+                              {statusBadge(p.status, p.statusVi)}
                             </td>
                           </tr>
                         );
@@ -241,6 +182,7 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
                   </table>
                 </div>
 
+                {/* 🔽 PHÂN TRANG MỚI (ĐÃ CĂN GIỮA) */}
                 <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
                   <div className="flex items-center gap-2">
                     <button
@@ -302,14 +244,6 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
           </div>
         </div>
       </div>
-
-      <ConfirmCancelModal
-        open={confirmOpen}
-        booking={confirmItem}
-        disabled={confirmBusy}
-        onClose={() => !confirmBusy && setConfirmOpen(false)}
-        onConfirm={doCancel}
-      />
     </div>
   );
 }

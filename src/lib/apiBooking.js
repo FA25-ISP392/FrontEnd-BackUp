@@ -5,16 +5,16 @@ export async function createBooking({ date, time, guests, preferredTable }) {
   if (!localStorage.getItem("token")) {
     throw new Error("Bạn cần đăng nhập trước khi đặt bàn.");
   }
+  const bookingDate = buildISOFromVN(date, time);
+  if (!bookingDate) throw new Error("Thiếu ngày/giờ đặt bàn.");
 
   const payload = {
     seat: Number(guests) || 1,
-    bookingDate: buildISOFromVN(date, time),
+    bookingDate,
     ...(preferredTable ? { wantTable: String(preferredTable) } : {}),
   };
 
-  if (import.meta.env.DEV) {
-    console.log("POST /booking payload:", payload);
-  }
+  if (import.meta.env.DEV) console.log("POST /booking payload:", payload);
   return apiConfig.post("/booking", payload);
 }
 
@@ -37,16 +37,6 @@ function normalizeStatus(u) {
   if (s === "REJECT") return "REJECTED";
   if (s === "APPROVE") return "APPROVED";
   if (s === "CANCEL" || s === "CANCELED") return "CANCELLED";
-  return s;
-}
-
-function mapFilterStatusForAPI(u) {
-  const s = String(u || "ALL").toUpperCase();
-  if (s === "ALL") return "ALL";
-  if (s === "REJECTED" || s === "REJECT") return "REJECT";
-  if (s === "APPROVED" || s === "APPROVE") return "APPROVED";
-  if (["CANCELLED", "CANCELED", "CANCEL"].includes(s)) return "CANCEL";
-  if (s === "PENDING") return "PENDING";
   return s;
 }
 
@@ -147,31 +137,63 @@ export async function approveBookingWithTable(bookingId, tableId) {
 
 export async function listBookingsByTableDate(tableId, date) {
   if (!tableId) throw new Error("Thiếu tableId.");
-
-  const toDateOnly = (date) => {
-    if (!date) return new Date();
-    const newDate = new Date(date);
-    return isNaN(newDate) ? new Date() : newDate;
+  const dayStr = new Date(date || Date.now()).toISOString().slice(0, 10);
+  const mapBooking = (b = {}) => {
+    const id = b.bookingId ?? b.id ?? null;
+    const name =
+      b.customerName ??
+      b.name ??
+      b.customer?.name ??
+      b.customer?.fullName ??
+      "";
+    const phone =
+      b.customerPhone ?? b.phone ?? b.customer?.phone ?? b.phoneNumber ?? "";
+    const email = b.customerEmail ?? b.email ?? b.customer?.email ?? "";
+    return {
+      bookingId: id,
+      customerName: name,
+      customerPhone: phone,
+      customerEmail: email,
+      tableId: b.tableId ?? b.tableID ?? null,
+      seat: b.seat ?? 1,
+      createdAt: normalizeISOFromAPI(b.createdAt),
+      bookingDate: normalizeISOFromAPI(b.bookingDate),
+      wantTable: b.wantTable ?? "",
+      status: String(b.status || "PENDING").toUpperCase(),
+      id,
+      name,
+      phone,
+      email,
+    };
   };
-  const d = toDateOnly(date);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const dayStr = `${year}-${month}-${day}`;
-
-  const res = await apiConfig.get("/booking/by_tableDate", {
-    params: { tableId: Number(tableId), date: dayStr },
-  });
-
-  const list = Array.isArray(res)
-    ? res
-    : Array.isArray(res?.result)
-    ? res.result
-    : Array.isArray(res?.content)
-    ? res.content
-    : [];
-
-  return list.map(normalizeBooking);
+  try {
+    const res = await apiConfig.get("/booking/by_tableDate", {
+      params: { tableId: Number(tableId), date: dayStr },
+    });
+    const list = Array.isArray(res)
+      ? res
+      : Array.isArray(res?.result)
+      ? res.result
+      : [];
+    return list.map(mapBooking);
+  } catch (e) {
+    if (e?.status === 400) {
+      try {
+        const res2 = await apiConfig.get("/booking/by_tableDate", {
+          params: { tableID: Number(tableId), date: dayStr },
+        });
+        const list2 = Array.isArray(res2)
+          ? res2
+          : Array.isArray(res2?.result)
+          ? res2.result
+          : [];
+        return list2.map(mapBooking);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  }
 }
 
 export async function cancelBooking(id) {
@@ -207,4 +229,42 @@ export async function getBookingHistory(customerId) {
     ? res.content
     : [];
   return list.map(normalizeBooking);
+}
+
+export async function getBookingHistoryPaged({
+  customerId,
+  page = 1,
+  size = 6,
+}) {
+  if (!customerId) throw new Error("Thiếu customerId.");
+  const res = await apiConfig.get(`/booking/customer/${customerId}`, {
+    params: { page: Math.max(0, page - 1), size },
+  });
+
+  const box = res?.result ?? res;
+  const list = Array.isArray(box?.content)
+    ? box.content
+    : Array.isArray(box)
+    ? box
+    : [];
+
+  const items = list.map(normalizeBooking);
+  const totalElements = box?.totalElements ?? items.length;
+  const totalPages =
+    box?.totalPages ?? Math.max(1, Math.ceil(totalElements / size));
+  const first = box?.first ?? page === 1;
+  const last = box?.last ?? page >= totalPages;
+
+  return {
+    items,
+    pageInfo: {
+      page,
+      size,
+      totalPages,
+      totalElements,
+      numberOfElements: items.length,
+      first,
+      last,
+    },
+  };
 }

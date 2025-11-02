@@ -142,7 +142,6 @@ export default function OrdersManagement({
 
   const Column = ({ title, colorBox, emptyIcon, emptyText, children }) => (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 flex flex-col">
-      {/* sticky header */}
       <div className="p-6 border-b border-neutral-100 sticky top-0 bg-white/90 backdrop-blur z-10">
         <div className="flex items-center gap-3">
           <div
@@ -154,7 +153,6 @@ export default function OrdersManagement({
         </div>
       </div>
 
-      {/* scrollable list – khoảng cao ~5 thẻ */}
       <div
         className="
           p-6 space-y-4 overflow-y-auto
@@ -165,8 +163,6 @@ export default function OrdersManagement({
       >
         {children}
       </div>
-
-      {/* empty filler (hiện ở cuối nếu children rỗng) */}
       {Array.isArray(children) && children.length === 0 && (
         <div className="p-6">
           <div className="text-center py-8">
@@ -197,7 +193,6 @@ export default function OrdersManagement({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Đơn Chờ */}
         <Column
           title={<span className="text-yellow-700">Đơn Chờ</span>}
           colorBox="bg-gradient-to-br from-yellow-500 to-orange-500"
@@ -213,7 +208,6 @@ export default function OrdersManagement({
           ))}
         </Column>
 
-        {/* Đang Chuẩn Bị */}
         <Column
           title={<span className="text-blue-700">Đang Chuẩn Bị</span>}
           colorBox="bg-gradient-to-br from-blue-500 to-cyan-500"
@@ -229,7 +223,6 @@ export default function OrdersManagement({
           ))}
         </Column>
 
-        {/* Sẵn Sàng */}
         <Column
           title={<span className="text-green-700">Sẵn Sàng</span>}
           colorBox="bg-gradient-to-br from-green-500 to-emerald-500"

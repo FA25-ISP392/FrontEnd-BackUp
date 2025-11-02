@@ -41,7 +41,10 @@ export default function RegisterForm({ onSwitchToLogin }) {
     }
 
     setFormRegister((prev) => ({ ...prev, [name]: next }));
-    setFieldErrs((prev) => ({ ...prev, [name]: "" }));
+    // Xóa lỗi khi người dùng bắt đầu nhập
+    if (fieldErrs[name]) {
+      setFieldErrs((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   function validateCreate(value) {
@@ -126,48 +129,103 @@ export default function RegisterForm({ onSwitchToLogin }) {
     const data = err?.response?.data || {};
     const tmp = {};
 
-    if (status === 400 || status === 409) {
+    const errorCode = data?.code;
+    const message = String(data?.message || err.message || "").toLowerCase();
+
+    if (errorCode === 1100) {
+      tmp.username = "Tên đăng nhập đã tồn tại.";
+    } else if (errorCode === 1109) {
+      tmp.email = "Email đã tồn tại.";
+    } else if (errorCode === 1110) {
+      tmp.phone = "Số điện thoại đã tồn tại.";
+    } else if (status === 400 || status === 409 || status === 500) {
+      const dup = /(exist|exists|duplicate|already|unique|trùng)/i;
+      if (dup.test(message)) {
+        if (message.includes("email") || message.includes("uc_account_email")) {
+          tmp.email = "Email đã tồn tại.";
+        } else if (
+          message.includes("phone") ||
+          message.includes("uc_account_phone")
+        ) {
+          tmp.phone = "Số điện thoại đã tồn tại.";
+        } else if (
+          message.includes("username") ||
+          message.includes("user_exist") ||
+          message.includes("uc_account_username")
+        ) {
+          tmp.username = "Tên đăng nhập đã tồn tại.";
+        }
+      }
+    }
+
+    if (Object.keys(tmp).length === 0) {
       const list =
         data?.errors ||
         data?.result ||
         data?.fieldErrors ||
         data?.violations ||
-        data?.details ||
-        data?.subErrors ||
         [];
+
       if (Array.isArray(list)) {
         for (const it of list) {
           const field = String(
-            it.field || it.fieldName || it.property || it.path || it.param || ""
+            it.field || it.fieldName || it.property || it.path || ""
           ).toLowerCase();
-          const msg =
-            it.defaultMessage || it.message || data?.message || "Không hợp lệ.";
-          if (field.includes("user")) tmp.username = msg;
-          if (field.includes("email")) tmp.email = msg;
-          if (field.includes("phone")) tmp.phone = msg;
-          if (field.includes("name")) tmp.fullName = msg;
-          if (field.includes("pass")) tmp.password = msg;
+          const msg = it.defaultMessage || it.message || "Không hợp lệ.";
+          if (
+            (field.includes("fullname") || field === "name") &&
+            !tmp.fullName
+          ) {
+            tmp.fullName = msg;
+          }
+          if (field.includes("user") && !tmp.username) {
+            tmp.username = msg;
+          }
+
+          if (field.includes("email") && !tmp.email) {
+            tmp.email = msg;
+          }
+          if (field.includes("phone") && !tmp.phone) {
+            tmp.phone = msg;
+          }
+          if (field.startsWith("pass") && !tmp.password) {
+            tmp.password = msg;
+          }
         }
       }
+    }
 
-      const low = String(data?.message || err.message || "").toLowerCase();
-      const dup = /(exist|exists|duplicate|already|unique|trùng)/i;
-      if (!tmp.username && /user(name)?/.test(low) && dup.test(low))
+    let formMessage = "";
+    if (Object.keys(tmp).length === 0) {
+      if (
+        message.includes("user already exists") ||
+        message.includes("user_exist") ||
+        (dup.test(message) && message.includes("username"))
+      ) {
         tmp.username = "Tên đăng nhập đã tồn tại.";
-      if (!tmp.email && /email/.test(low) && dup.test(low))
+      } else if (
+        message.includes("email already exists") ||
+        (dup.test(message) && message.includes("email"))
+      ) {
         tmp.email = "Email đã tồn tại.";
-      if (!tmp.phone && /(phone|sđt)/i.test(low) && dup.test(low))
+      } else if (
+        message.includes("phone number already exists") ||
+        (dup.test(message) && message.includes("phone"))
+      ) {
         tmp.phone = "Số điện thoại đã tồn tại.";
+      } else {
+        formMessage = data?.message || err.message || "Có lỗi xảy ra.";
+      }
     }
 
     return {
       fieldErrors: tmp,
-      message: data?.message || err.message || "Có lỗi xảy ra.",
+      message: formMessage,
     };
   }
 
-  const handleSubmit = async (tmp) => {
-    tmp.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setFormMsg("");
     setFieldErrs({});
 
@@ -187,6 +245,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
     } catch (err) {
       console.error(err);
       const { fieldErrors, message } = parseBackendError(err);
+
       if (Object.keys(fieldErrors).length) {
         setFieldErrs(fieldErrors);
         requestAnimationFrame(() => focusFirstError(fieldErrors));
@@ -219,10 +278,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
             type="text"
             name="username"
             value={formRegister.username}
-            onChange={(event) => {
-              handleInputChange(event);
-              setFieldErrs((prev) => ({ ...prev, username: "" }));
-            }}
+            onChange={handleInputChange}
             required
             autoComplete="username"
             maxLength={30}
@@ -243,10 +299,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
               type={showPassword ? "text" : "password"}
               name="password"
               value={formRegister.password}
-              onChange={(event) => {
-                handleInputChange(event);
-                setFieldErrs((prev) => ({ ...prev, password: "" }));
-              }}
+              onChange={handleInputChange}
               required
               autoComplete="new-password"
               maxLength={30}
@@ -279,10 +332,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
               type={showConfirmPassword ? "text" : "password"}
               name="confirmPassword"
               value={formRegister.confirmPassword}
-              onChange={(event) => {
-                handleInputChange(event);
-                setFieldErrs((prev) => ({ ...prev, confirmPassword: "" }));
-              }}
+              onChange={handleInputChange}
               required
               autoComplete="new-password"
               maxLength={30}
@@ -316,10 +366,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
             type="text"
             name="fullName"
             value={formRegister.fullName}
-            onChange={(event) => {
-              handleInputChange(event);
-              setFieldErrs((prev) => ({ ...prev, fullName: "" }));
-            }}
+            onChange={handleInputChange}
             required
             maxLength={50}
             className="form-input-enhanced"
@@ -338,10 +385,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
             type="tel"
             name="phone"
             value={formRegister.phone}
-            onChange={(event) => {
-              handleInputChange(event);
-              setFieldErrs((prev) => ({ ...prev, phone: "" }));
-            }}
+            onChange={handleInputChange}
             required
             inputMode="numeric"
             pattern="\d*"
@@ -363,10 +407,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
             type="email"
             name="email"
             value={formRegister.email}
-            onChange={(event) => {
-              handleInputChange(event);
-              setFieldErrs((prev) => ({ ...prev, email: "" }));
-            }}
+            onChange={handleInputChange}
             required
             autoComplete="email"
             className="form-input-enhanced"

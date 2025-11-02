@@ -1,7 +1,7 @@
 import { useCustomerLogin } from "../../hooks/useCustomerLogin";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { loginWithGooglePopup } from "../../lib/googleAuth";
+import apiConfig from "../../api/apiConfig";
 
 export default function LoginForm({
   onSubmit,
@@ -33,16 +33,19 @@ export default function LoginForm({
     });
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = () => {
     if (isGoogleLoading) return;
     setGoogleLoading(true);
     try {
-      await loginWithGooglePopup();
-      if (typeof onSubmit === "function") onSubmit();
+      const base = String(apiConfig?.defaults?.baseURL || "");
+      const authUrl = new URL(
+        `${base.replace(/\/$/, "")}/oauth2/authorization/google`,
+        window.location.origin
+      ).toString();
+      window.location.href = authUrl;
     } catch (e) {
       console.error(e);
-      alert(e?.message || "Đăng nhập Google thất bại.");
-    } finally {
+      alert("Không thể bắt đầu đăng nhập Google.");
       setGoogleLoading(false);
     }
   };

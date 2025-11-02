@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 import MenuHeader from "../components/Menu/MenuHeader";
 import MenuContent from "../components/Menu/MenuContent";
 import MenuFooter from "../components/Menu/MenuFooter";
@@ -8,6 +8,7 @@ import CartSidebar from "../components/Menu/CartSidebar";
 import PaymentSidebar from "../components/Menu/PaymentSidebar";
 import DishOptionsModal from "../components/Menu/DishOptionsModal";
 import OrderStatusSidebar from "../components/Menu/OrderStatusSidebar";
+import { getSuggestedMenu } from "../lib/apiSuggestion";
 import {
   createOrder,
   getOrderById,
@@ -27,44 +28,136 @@ import {
 } from "../lib/apiOrderDetail";
 import EditOrderDetailModal from "../components/Menu/EditOrderDetailModal";
 import { createPayment, getPaymentById } from "../lib/apiPayment";
-import ToastHost, { showToast } from "../common/ToastHost";
 import ConfirmDialog from "../common/ConfirmDialog";
 
+// --- Hằng số và Hàm Helper ---
+const PERSONAL_KEY = (cid) => `personalization:${cid}`;
+const MODE_KEY = "menuMode";
+const applyGoal = (cals, goal) => {
+  if (typeof cals !== "number" || !isFinite(cals)) return null;
+  if (goal === "lose") return Math.max(0, cals - 500);
+  if (goal === "gain") return cals + 500;
+  return cals;
+};
+const readAuthUser = () => {
+  try {
+    const raw = localStorage.getItem("user");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+const getDisplayName = (u) =>
+  String(u?.fullName || u?.name || u?.username || "").trim();
+const sumTotal = (items = []) =>
+  items.reduce((s, it) => s + Number(it.totalPrice ?? it.price ?? 0), 0);
+
+// ====================================================================
+// ✅ HÀM GIẢ LẬP API LẤY GỢI Ý MENU (CẦN THAY THẾ BẰNG API THẬT CỦA BẠN)
+// ====================================================================
+const getMenuSuggestions = async (payload) => {
+  // Console log để kiểm tra payload gửi đi
+  console.log("[API Call Mock] POST /suggestions/menu with payload:", payload);
+
+  // Giả lập độ trễ mạng và phản hồi thành công
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  const mockGoalType = payload.goal;
+  // Giả lập cấu trúc response List<MenuSuggestion> từ BE
+  return [
+    {
+      // Giả định cấu trúc DishResponse tương thích với FE
+      drink: {
+        dishId: 101,
+        dishName: `Nước (for ${mockGoalType})`,
+        calo: 50,
+        price: 10000,
+        remainingQuantity: 10,
+        type: mockGoalType,
+        categoryEnum: "DRINKS",
+      },
+      salad: {
+        dishId: 201,
+        dishName: `Salad (for ${mockGoalType})`,
+        calo: 150,
+        price: 40000,
+        remainingQuantity: 5,
+        type: mockGoalType,
+        categoryEnum: "SALAD",
+      },
+      mainCourse: {
+        dishId: 301,
+        dishName: `Món chính (for ${mockGoalType})`,
+        calo: 450,
+        price: 100000,
+        remainingQuantity: 15,
+        type: mockGoalType,
+        categoryEnum: "PIZZA",
+      },
+      dessert: {
+        dishId: 401,
+        dishName: `Tráng miệng (for ${mockGoalType})`,
+        calo: 100,
+        price: 30000,
+        remainingQuantity: 8,
+        type: mockGoalType,
+        categoryEnum: "DESSERT",
+      },
+    },
+  ];
+};
+// ====================================================================
+
+// --- Component Chính ---
 export default function Menu() {
   const [suggestedMenu, setSuggestedMenu] = useState(null);
-
-  const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-  const [isCallStaffOpen, setIsCallStaffOpen] = useState(false);
-  const [isDishOptionsOpen, setIsDishOptionsOpen] = useState(false);
-  const [isStatusOpen, setIsStatusOpen] = useState(false);
-  const [activeMenuTab, setActiveMenuTab] = useState("all");
-  const [selectedDish, setSelectedDish] = useState(null);
-  const [cart, setCart] = useState([]);
-  const [caloriesConsumed, setCaloriesConsumed] = useState(0);
-  const [isPersonalized, setIsPersonalized] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("cash");
   const [tableId, setTableId] = useState(null);
   const [customerId, setCustomerId] = useState(null);
   const [customerName, setCustomerName] = useState(null);
   const [orderId, setOrderId] = useState(
     () => sessionStorage.getItem("orderId") || null,
   );
+
+  // --- State Menu & Món ăn ---
+  const [menuDishes, setMenuDishes] = useState([]);
+  const [activeMenuTab, setActiveMenuTab] = useState("all");
+  const [selectedDish, setSelectedDish] = useState(null);
+  const [isDishOptionsOpen, setIsDishOptionsOpen] = useState(false);
+
+  // --- State Cá nhân hóa (Personalization) ---
+  const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
+  const [isPersonalized, setIsPersonalized] = useState(false);
   const [baseCalories, setBaseCalories] = useState(null);
   const [estimatedCalories, setEstimatedCalories] = useState(null);
   const [dailyCalories, setDailyCalories] = useState(null);
-  const [menuDishes, setMenuDishes] = useState([]);
+
+  // --- State Giỏ hàng (Cart) ---
+  const [cart, setCart] = useState([]);
+  const [caloriesConsumed, setCaloriesConsumed] = useState(0);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // --- State Trạng thái Đơn hàng (Order Status) ---
   const [orderDetails, setOrderDetails] = useState([]);
-  const [paymentItems, setPaymentItems] = useState([]);
+  const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingDetail, setEditingDetail] = useState(null);
-  const [paidSuccessOpen, setPaidSuccessOpen] = useState(false);
-  const [countdown, setCountdown] = useState(10);
-  const paidLockedRef = useRef(false);
-  const pollStopRef = useRef(false);
-  const pollTimerRef = useRef(null);
-  const thanksTimerRef = useRef(null);
+
+  // --- State Thanh toán (Payment) ---
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [paymentItems, setPaymentItems] = useState([]);
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+
+  // --- State Thông báo & Modal ---
+  const [isCallStaffOpen, setIsCallStaffOpen] = useState(false);
+  const [isOrderFoodOpen, setIsOrderFoodOpen] = useState(false);
+  const [isDeleteSuccessOpen, setIsDeleteSuccessOpen] = useState(false);
+  const [isNotServedErrorOpen, setIsNotServedErrorOpen] = useState(false);
+  const [isOrderFoodErrorOpen, setIsOrderFoodErrorOpen] = useState(false);
+  const [orderFoodErrorMessage, setOrderFoodErrorMessage] = useState("");
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isErrorOpen, setIsErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [confirmState, setConfirmState] = useState({
     open: false,
     title: "",
@@ -74,25 +167,15 @@ export default function Menu() {
   const askConfirm = ({ title, message, onYes }) =>
     setConfirmState({ open: true, title, message, onYes });
 
-  const PERSONAL_KEY = (cid) => `personalization:${cid}`;
-  const applyGoal = (cals, goal) => {
-    if (typeof cals !== "number" || !isFinite(cals)) return null;
-    if (goal === "lose") return Math.max(0, cals - 500);
-    if (goal === "gain") return cals + 500;
-    return cals;
-  };
+  // --- State Thoát sau thanh toán ---
+  const [paidSuccessOpen, setPaidSuccessOpen] = useState(false);
+  const [countdown, setCountdown] = useState(10);
+  const paidLockedRef = useRef(false);
+  const pollStopRef = useRef(false);
+  const pollTimerRef = useRef(null);
+  const thanksTimerRef = useRef(null);
 
-  const readAuthUser = () => {
-    try {
-      const raw = localStorage.getItem("user");
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
-  };
-  const getDisplayName = (u) =>
-    String(u?.fullName || u?.name || u?.username || "").trim();
-
+  // === LOGIC CƠ SỞ (AUTH, BÀN, ĐƠN HÀNG) ===
   useEffect(() => {
     const storedTableId = sessionStorage.getItem("customerTableId");
     if (storedTableId) setTableId(storedTableId);
@@ -124,8 +207,9 @@ export default function Menu() {
       window.removeEventListener("auth:changed", sync);
     };
   }, []);
-  const [mode, setMode] = useState(null); // 'solo' hoặc 'group'
-  const [showModeSelection, setShowModeSelection] = useState(true);
+  const initialMode = sessionStorage.getItem(MODE_KEY);
+  const [mode, setMode] = useState(initialMode); // 'solo' hoặc 'group'
+  const [showModeSelection, setShowModeSelection] = useState(!initialMode);
 
   useEffect(() => {
     const ready = Boolean(customerId) && Boolean(tableId);
@@ -149,7 +233,6 @@ export default function Menu() {
           sessionStorage.setItem("orderId", String(order.orderId));
         }
       } catch (err) {
-        console.error("Create order failed:", err?.message || err);
         sessionStorage.removeItem(idemKey);
       }
     })();
@@ -167,22 +250,17 @@ export default function Menu() {
     (async () => {
       try {
         const data = await listDish();
-        console.log("📦 Dữ liệu BE trả về:", data);
         setMenuDishes(data);
-
-        // ✅ Chuẩn hóa dữ liệu từ BE
         const normalized = data.map((d) => ({
           ...d,
-          // Dùng isInDailyPlan do BE trả về, nếu không có thì default false
           isInDailyPlan: Boolean(d.isInDailyPlan),
-          // Một số BE có thể trả về tên field khác như isInPlan hoặc inDailyPlan
           name: d.name ?? d.dishName,
           calo: d.calo ?? d.calories ?? 0,
         }));
-
         setMenuDishes(normalized);
       } catch (err) {
-        console.error("❌ Lỗi khi load món ăn:", err);
+        setErrorMessage("Không thể tải thực đơn: " + err.message);
+        setIsErrorOpen(true);
       }
     })();
   }, []);
@@ -191,57 +269,34 @@ export default function Menu() {
     (dish) => dish.isAvailable && !hiddenNames.includes(dish.name),
   );
 
-  const { personalizationForm, setPersonalizationForm, personalizedDishes } =
-    useMenuPersonalization(filteredDishes);
-
-  useEffect(() => {
-    if (!customerId) return;
-
-    const cachedRaw = localStorage.getItem(PERSONAL_KEY(customerId));
-    if (cachedRaw) {
-      try {
-        const cached = JSON.parse(cachedRaw);
-        if (cached && typeof cached === "object") {
-          const data = cached.data || {};
-          delete data.goal;
-          setPersonalizationForm((prev) => ({ ...prev, ...data }));
-
-          if (typeof cached.perWorkout === "number") {
-            const roundedBase = Math.ceil(cached.perWorkout);
-            const roundedGoal = Math.ceil(
-              applyGoal(cached.perWorkout, data.goal),
-            );
-            setBaseCalories(roundedBase);
-            setEstimatedCalories(roundedGoal);
-            setIsPersonalized(true);
-          } else setIsPersonalized(true);
-        }
-      } catch {}
+  const handleDishSelect = async (dish) => {
+    if (dish.remainingQuantity <= 0) {
+      setErrorMessage("Món này hiện đã hết số lượng trong kế hoạch hôm nay.");
+      setIsErrorOpen(true);
       return;
     }
 
-    (async () => {
-      try {
-        const cus = await getCustomerDetail(customerId);
-        const toForm = {
-          height: Number(cus.height ?? 170),
-          weight: Number(cus.weight ?? 70),
-          gender: cus.sex === true ? "male" : "female",
-          age: 25,
-          mealsPerDay: Number(cus.portion ?? 3),
-          exerciseLevel: "moderate",
-          goal: "",
-        };
-        setPersonalizationForm((prev) => ({ ...prev, ...toForm }));
-        localStorage.setItem(
-          PERSONAL_KEY(customerId),
-          JSON.stringify({ data: toForm, updatedAt: Date.now() }),
-        );
-      } catch (e) {
-        console.warn("Không lấy được personalization từ BE:", e?.message || e);
+    try {
+      let fullDish = await getDish(dish.id);
+      if (!Array.isArray(fullDish.optionalToppings)) {
+        try {
+          const toppings = await getToppingsByDishId(dish.id);
+          fullDish = { ...fullDish, optionalToppings: toppings || [] };
+        } catch (e) {
+          fullDish = { ...fullDish, optionalToppings: [] };
+        }
       }
-    })();
-  }, [customerId]);
+      setSelectedDish(fullDish);
+      setIsDishOptionsOpen(true);
+    } catch (err) {
+      setErrorMessage(err?.message || "Không thể lấy chi tiết món.");
+      setIsErrorOpen(true);
+    }
+  };
+
+  // === LOGIC GIỎ HÀNG (CartSidebar) ===
+  const { personalizationForm, setPersonalizationForm, personalizedDishes } =
+    useMenuPersonalization(filteredDishes);
 
   const addToCart = (item) => {
     const noteKey = item.notes || "";
@@ -297,19 +352,30 @@ export default function Menu() {
     try {
       if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
       if (!cart.length) throw new Error("Giỏ hàng đang trống.");
-      const saved = await createOrderDetailsFromCart(orderId, cart);
+      await createOrderDetailsFromCart(orderId, cart);
       setIsCartOpen(false);
       setCart([]);
       setCaloriesConsumed(0);
       setIsStatusOpen(true);
-      showToast("Đã gửi món thành công!", "success");
+      setIsOrderFoodOpen(true);
     } catch (err) {
-      showToast(
-        `Gọi món thất bại: ${err?.message || "Vui lòng thử lại."}`,
-        "error",
+      setOrderFoodErrorMessage(
+        err?.message || "Gọi món thất bại. Vui lòng thử lại.",
       );
+      setIsOrderFoodErrorOpen(true);
     }
   };
+
+  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  // === LOGIC TRẠNG THÁI ĐƠN HÀNG (OrderStatusSidebar) ===
+  async function fetchOrderDetailsFromOrder() {
+    if (!orderId) return;
+    try {
+      const data = await getOrderDetailsByOrderId(orderId);
+      setOrderDetails(data);
+    } catch (err) {}
+  }
 
   useEffect(() => {
     if (isStatusOpen) fetchOrderDetailsFromOrder();
@@ -324,45 +390,61 @@ export default function Menu() {
     return () => clearInterval(timer);
   }, [isStatusOpen, orderId]);
 
-  const groups = (() => {
-    const g = {
-      pending: [],
-      preparing: [],
-      served: [],
-      cancelled: [],
-      done: [],
-    };
-    for (const od of orderDetails) {
-      const key = String(od.status || "").toLowerCase();
-      if (g[key]) g[key].push(od);
+  const handleIncGroup = async (group) => {
+    const st = String(group?.sample?.status || "").toLowerCase();
+    if (st !== "pending") {
+      setErrorMessage("Món đã qua 'Chờ nấu' – thao tác này không khả dụng.");
+      setIsErrorOpen(true);
+      return;
     }
-    return g;
-  })();
-
-  const handleGoalChange = (goalId) => {
-    setPersonalizationForm((prev) => ({ ...prev, goal: goalId }));
-    const base = baseCalories ?? estimatedCalories;
-    setEstimatedCalories(applyGoal(base, goalId));
+    const it = group.sample;
+    await createOrderDetail({
+      orderId,
+      dishId: it.dishId,
+      note: it.note || "",
+      toppings:
+        it.toppings?.map((t) => ({
+          toppingId: t.toppingId,
+          quantity: t.quantity ?? 1,
+        })) || [],
+    });
+    await fetchOrderDetailsFromOrder();
   };
 
-  const handleOpenPayment = async () => {
-    try {
-      if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
-      if (cart.length) {
-        await createOrderDetailsFromCart(orderId, cart);
+  const handleDecGroup = async (group) => {
+    const st = String(group?.sample?.status || "").toLowerCase();
+    const dishName = group.sample.dishName || "Món này";
+    const idToDelete = group.ids[group.ids.length - 1];
+
+    if (st === "preparing") {
+      askConfirm({
+        title: "Xác nhận huỷ món?",
+        message: `Món "${dishName}" đang được nấu. Bạn có chắc chắn muốn yêu cầu huỷ món này không?`,
+        onYes: async () => {
+          try {
+            await deleteOrderDetail(idToDelete);
+            await fetchOrderDetailsFromOrder();
+            setIsDeleteSuccessOpen(true);
+          } catch (e) {
+            setErrorMessage(e?.message || "Huỷ món thất bại.");
+            setIsErrorOpen(true);
+          } finally {
+            setConfirmState((s) => ({ ...s, open: false }));
+          }
+        },
+      });
+    } else if (st === "pending") {
+      try {
+        await deleteOrderDetail(idToDelete);
+        await fetchOrderDetailsFromOrder();
+        setIsDeleteSuccessOpen(true);
+      } catch (e) {
+        setErrorMessage(e?.message || "Xoá món thất bại.");
+        setIsErrorOpen(true);
       }
-      const details = await getOrderDetailsByOrderId(orderId);
-      setPaymentItems(details);
-      setIsPaymentOpen(true);
-      if (cart.length) {
-        setCart([]);
-        setCaloriesConsumed(0);
-      }
-    } catch (err) {
-      showToast(
-        err?.message || "Không mở được thanh toán. Vui lòng thử lại.",
-        "error",
-      );
+    } else {
+      setErrorMessage("Không thể xoá món đã hoàn thành hoặc đã phục vụ.");
+      setIsErrorOpen(true);
     }
   };
 
@@ -375,9 +457,10 @@ export default function Menu() {
         try {
           await deleteOrderDetail(detail.orderDetailId);
           await fetchOrderDetailsFromOrder();
-          showToast("Đã xoá món.", "success");
+          setIsDeleteSuccessOpen(true);
         } catch (e) {
-          showToast(e?.message || "Xoá món thất bại.", "error");
+          setErrorMessage(e?.message || "Xoá món thất bại.");
+          setIsErrorOpen(true);
         } finally {
           setConfirmState((s) => ({ ...s, open: false }));
         }
@@ -385,13 +468,131 @@ export default function Menu() {
     });
   };
 
+  const handleOpenEdit = (detail) => {
+    const st = String(detail?.status || "").toLowerCase();
+    if (st !== "pending") return;
+    setEditingDetail(detail);
+    setIsEditOpen(true);
+  };
+
   const handleEdited = async () => {
     await fetchOrderDetailsFromOrder();
   };
 
-  const sumTotal = (items = []) =>
-    items.reduce((s, it) => s + Number(it.totalPrice ?? it.price ?? 0), 0);
+  // === LOGIC THANH TOÁN (PaymentSidebar) ===
+  const handleOpenPayment = async () => {
+    try {
+      if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
+      if (cart.length > 0) {
+        setIsNotServedErrorOpen(true);
+        return;
+      }
+      const details = await getOrderDetailsByOrderId(orderId);
+      const notServedItem = details.find((d) => d.status !== "SERVED");
+      if (notServedItem) {
+        setIsNotServedErrorOpen(true);
+        return;
+      }
+      setPaymentItems(details);
+      setIsPaymentOpen(true);
+      if (cart.length) {
+        setCart([]);
+        setCaloriesConsumed(0);
+      }
+    } catch (err) {
+      setErrorMessage(
+        err?.message || "Không mở được thanh toán. Vui lòng thử lại.",
+      );
+      setIsErrorOpen(true);
+    }
+  };
 
+  const handleGoalChange = (goalId) => {
+    setPersonalizationForm((prev) => ({ ...prev, goal: goalId }));
+    const base = baseCalories ?? estimatedCalories;
+    setEstimatedCalories(applyGoal(base, goalId));
+  };
+
+  // ====================================================================
+  // ✅ LOGIC XỬ LÝ SUBMIT FORM CÁ NHÂN HÓA MỚI (LƯU HỒ SƠ & LẤY GỢI Ý)
+  // ====================================================================
+  const handlePersonalizationSubmit = async ({
+    customerUpdatePayload,
+    suggestionCreationPayload,
+    dailyCalories,
+  }) => {
+    if (!customerId) {
+      setErrorMessage("Không tìm thấy ID khách hàng. Vui lòng đăng nhập.");
+      setIsErrorOpen(true);
+      return;
+    }
+
+    try {
+      // 0️⃣ Reset danh sách cũ (xóa các gợi ý cũ khỏi state)
+      setSuggestedMenu([]); // 🧹 clear danh sách cũ trước khi gọi API mới
+
+      // 1️⃣ GỌI API 1: Cập nhật hồ sơ khách hàng
+      await updateCustomerPersonalization(customerId, customerUpdatePayload);
+
+      // 2️⃣ GỌI API 2: Lấy gợi ý menu mới
+      const suggestionsResponse = await getSuggestedMenu(
+        suggestionCreationPayload,
+      );
+
+      // 3️⃣ Chuẩn hoá & copy dishId -> id
+      const flatList = Array.isArray(suggestionsResponse)
+        ? suggestionsResponse.flatMap((r) =>
+            [r.drink, r.salad, r.mainCourse, r.dessert]
+              .filter(Boolean)
+              .map((dish) => ({
+                ...dish,
+                id: dish.dishId ?? dish.id,
+                name: dish.dishName ?? dish.name,
+              })),
+          )
+        : [];
+
+      // 🔢 Giới hạn 12 món (nếu BE trả nhiều hơn)
+      const limitedList = flatList.slice(0, 12);
+
+      // ✅ Cập nhật state
+      setSuggestedMenu(limitedList);
+      setEstimatedCalories(dailyCalories);
+      setIsPersonalized(true);
+
+      setIsPersonalizationOpen(false);
+      setSuccessMessage(
+        "Cá nhân hóa thành công! Thực đơn gợi ý mới đã được tạo.",
+      );
+      setIsSuccessOpen(true);
+    } catch (err) {
+      console.error("❌ Lỗi cá nhân hóa:", err);
+      setErrorMessage(
+        err?.response?.data?.message ||
+          "Lỗi khi cập nhật hồ sơ hoặc lấy thực đơn gợi ý.",
+      );
+      setIsErrorOpen(true);
+    }
+  };
+
+  // ====================================================================
+
+  const handleRequestPayment = async () => {
+    try {
+      if (!orderId) throw new Error("Chưa có orderId.");
+      const total = sumTotal(paymentItems);
+      const p = await createPayment({ orderId, method: "BANK_TRANSFER" });
+      sessionStorage.setItem("paymentId", String(p.id || ""));
+      notifyPaymentStaff({ tableId, orderId, total, paymentId: p.id });
+      setIsPaymentOpen(false);
+      setIsCallStaffOpen(true);
+    } catch (error) {
+      setErrorMessage(error?.message || "Không gửi được yêu cầu thanh toán.");
+      setIsErrorOpen(true);
+    }
+  };
+
+  // === LOGIC GỌI NHÂN VIÊN & TÍN HIỆU (StaffSignal) ===
   function notifyPaymentStaff({ tableId, orderId, total, paymentId }) {
     const payload = { tableId, orderId, total, paymentId, ts: Date.now() };
     window.dispatchEvent(
@@ -411,143 +612,25 @@ export default function Menu() {
       orderId,
       ts: Date.now(),
     };
-
     try {
       const bc = new BroadcastChannel("monngon-signals");
       bc.postMessage(payload);
       bc.close?.();
     } catch {}
-
     localStorage.setItem(
       `signal:callStaff:${payload.ts}`,
       JSON.stringify(payload),
     );
   }
 
-  const handleRequestPayment = async () => {
-    try {
-      if (!orderId) throw new Error("Chưa có orderId.");
-      const total = sumTotal(paymentItems);
-      const p = await createPayment({ orderId, method: "BANK_TRANSFER" });
-      sessionStorage.setItem("paymentId", String(p.id || ""));
-      notifyPaymentStaff({ tableId, orderId, total, paymentId: p.id });
-      setIsPaymentOpen(false);
-      setIsCallStaffOpen(true);
-    } catch (error) {
-      showToast(
-        error?.message || "Không gửi được yêu cầu thanh toán.",
-        "error",
-      );
-    }
-  };
-
-  async function fetchOrderDetailsFromOrder() {
-    if (!orderId) return;
-    try {
-      const data = await getOrderDetailsByOrderId(orderId);
-      setOrderDetails(data);
-    } catch (err) {
-      console.error("❌ Lỗi lấy orderDetails theo orderId:", err);
-    }
-  }
-
-  const handleIncGroup = async (group) => {
-    const st = String(group?.sample?.status || "").toLowerCase();
-    if (st !== "pending") {
-      showToast(
-        "Món đã qua 'Chờ nấu' – thao tác này không khả dụng.",
-        "warning",
-      );
-      return;
-    }
-    const it = group.sample;
-    await createOrderDetail({
-      orderId,
-      dishId: it.dishId,
-      note: it.note || "",
-      toppings:
-        it.toppings?.map((t) => ({
-          toppingId: t.toppingId,
-          quantity: t.quantity ?? 1,
-        })) || [],
-    });
-    await fetchOrderDetailsFromOrder();
-  };
-
-  const handleDecGroup = async (group) => {
-    const st = String(group?.sample?.status || "").toLowerCase();
-    if (st !== "pending") {
-      showToast(
-        "Món đã qua 'Chờ nấu' – thao tác này không khả dụng.",
-        "warning",
-      );
-      return;
-    }
-    const idToDelete = group.ids[group.ids.length - 1];
-    await deleteOrderDetail(idToDelete);
-    await fetchOrderDetailsFromOrder();
-  };
-
-  const handleOpenEdit = (detail) => {
-    const st = String(detail?.status || "").toLowerCase();
-    if (st !== "pending") return;
-    setEditingDetail(detail);
-    setIsEditOpen(true);
-  };
-
-  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-  const handlePersonalizationSubmit = async (form) => {
-    try {
-      if (!customerId) throw new Error("Thiếu customerId");
-      const bmr =
-        form.gender === "male"
-          ? 10 * form.weight + 6.25 * form.height - 5 * form.age + 5
-          : 10 * form.weight + 6.25 * form.height - 5 * form.age - 161;
-      const activityMultipliers = {
-        sedentary: 1.2,
-        light: 1.375,
-        moderate: 1.55,
-        active: 1.725,
-        very_active: 1.9,
-      };
-      const multiplier = activityMultipliers[form.exerciseLevel] || 1.55;
-      const maintenanceCalories = bmr * multiplier;
-      const dailyCalories = applyGoal(maintenanceCalories, form.goal);
-      localStorage.setItem(
-        PERSONAL_KEY(customerId),
-        JSON.stringify({
-          data: form,
-          perWorkout: Math.ceil(maintenanceCalories),
-          goalCalories: Math.ceil(dailyCalories),
-          updatedAt: Date.now(),
-        }),
-      );
-      await updateCustomerPersonalization(customerId, form);
-      setBaseCalories(Math.ceil(maintenanceCalories));
-      setEstimatedCalories(Math.ceil(dailyCalories));
-      setIsPersonalized(true);
-
-      showToast("Đã lưu và tính toán calo thành công!", "success");
-    } catch (err) {
-      showToast("Cập nhật thất bại, vui lòng thử lại.", "error");
-    }
-  };
-
-  // ==== Logout after paid success ====
+  // === LOGIC POLLING THANH TOÁN & THOÁT ===
   function cleanupAndExit() {
     try {
-      // dừng mọi timer trước khi rời trang
       pollStopRef.current = true;
-      if (pollTimerRef.current) {
-        clearTimeout(pollTimerRef.current);
-        pollTimerRef.current = null;
-      }
-      if (thanksTimerRef.current) {
-        clearInterval(thanksTimerRef.current);
-        thanksTimerRef.current = null;
-      }
-
+      if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+      if (thanksTimerRef.current) clearInterval(thanksTimerRef.current);
+      pollTimerRef.current = null;
+      thanksTimerRef.current = null;
       sessionStorage.clear();
       const keysToRemove = [
         "user",
@@ -558,11 +641,7 @@ export default function Menu() {
       ];
       keysToRemove.forEach((k) => localStorage.removeItem(k));
       Object.keys(localStorage).forEach((k) => {
-        if (
-          k.startsWith("signal:callStaff:") ||
-          k.startsWith("signal:callPayment:") ||
-          k.startsWith("signal:paymentSuccess:")
-        ) {
+        if (k.startsWith("signal:")) {
           try {
             localStorage.removeItem(k);
           } catch {}
@@ -573,36 +652,23 @@ export default function Menu() {
   }
 
   function handlePaidSuccess() {
-    // >>> NEW: khóa không cho kích hoạt lại nếu đã mở
     if (paidLockedRef.current) return;
     paidLockedRef.current = true;
-
-    // dừng polling ngay lập tức
     pollStopRef.current = true;
-    if (pollTimerRef.current) {
-      clearTimeout(pollTimerRef.current);
-      pollTimerRef.current = null;
-    }
-
+    if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+    pollTimerRef.current = null;
     setPaidSuccessOpen(true);
     setCountdown(10);
   }
 
-  // Countdown effect (được khóa bằng paidLockedRef + dừng poll)
   useEffect(() => {
     if (!paidSuccessOpen) return;
-    // clear trước khi set để tránh nhân đôi trong StrictMode
-    if (thanksTimerRef.current) {
-      clearInterval(thanksTimerRef.current);
-      thanksTimerRef.current = null;
-    }
+    if (thanksTimerRef.current) clearInterval(thanksTimerRef.current);
     thanksTimerRef.current = setInterval(() => {
       setCountdown((c) => {
         if (c <= 1) {
-          if (thanksTimerRef.current) {
-            clearInterval(thanksTimerRef.current);
-            thanksTimerRef.current = null;
-          }
+          if (thanksTimerRef.current) clearInterval(thanksTimerRef.current);
+          thanksTimerRef.current = null;
           cleanupAndExit();
           return 0;
         }
@@ -610,18 +676,14 @@ export default function Menu() {
       });
     }, 1000);
     return () => {
-      if (thanksTimerRef.current) {
-        clearInterval(thanksTimerRef.current);
-        thanksTimerRef.current = null;
-      }
+      if (thanksTimerRef.current) clearInterval(thanksTimerRef.current);
+      thanksTimerRef.current = null;
     };
   }, [paidSuccessOpen]);
 
-  // OPTIONAL: realtime signal (same-origin tabs)
   useEffect(() => {
     function onStorage(e) {
-      if (!e?.key) return;
-      if (e.key.startsWith("signal:paymentSuccess:")) {
+      if (e.key?.startsWith("signal:paymentSuccess:")) {
         try {
           localStorage.removeItem(e.key);
         } catch {}
@@ -632,16 +694,12 @@ export default function Menu() {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // Poll both payment(status) and order(status) — dừng hẳn khi success
   useEffect(() => {
     if (!orderId) return;
     pollStopRef.current = false;
-
     async function checkOnce() {
       if (pollStopRef.current) return;
-
       try {
-        // 1) Payment status
         const pid = sessionStorage.getItem("paymentId");
         if (pid) {
           try {
@@ -649,11 +707,10 @@ export default function Menu() {
             const pst = String(pay?.status || "").toUpperCase();
             if (["COMPLETED", "PAID", "SUCCESS"].includes(pst)) {
               handlePaidSuccess();
-              return; // không schedule nữa (đã khóa)
+              return;
             }
           } catch {}
         }
-        // 2) Order status (cover cash)
         try {
           const o = await getOrderById(orderId);
           const ost = String(o?.status || "").toUpperCase();
@@ -663,22 +720,16 @@ export default function Menu() {
           }
         } catch {}
       } finally {
-        // chỉ lặp khi chưa dừng
         if (!pollStopRef.current) {
           pollTimerRef.current = setTimeout(checkOnce, 3000);
         }
       }
     }
-
-    // kick off nhẹ sau 2s
     pollTimerRef.current = setTimeout(checkOnce, 2000);
-
     return () => {
       pollStopRef.current = true;
-      if (pollTimerRef.current) {
-        clearTimeout(pollTimerRef.current);
-        pollTimerRef.current = null;
-      }
+      if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+      pollTimerRef.current = null;
     };
   }, [orderId]);
 
@@ -695,6 +746,7 @@ export default function Menu() {
           <div className="flex flex-col space-y-4">
             <button
               onClick={() => {
+                sessionStorage.setItem(MODE_KEY, "group"); // <-- LƯU TRẠNG THÁI
                 setMode("group");
                 setShowModeSelection(false);
               }}
@@ -704,6 +756,7 @@ export default function Menu() {
             </button>
             <button
               onClick={() => {
+                sessionStorage.setItem(MODE_KEY, "solo"); // <-- LƯU TRẠNG THÁI
                 setMode("solo");
                 setShowModeSelection(false);
               }}
@@ -728,9 +781,7 @@ export default function Menu() {
         onViewOrders={() => setIsCartOpen(true)}
         onCallStaff={() => {
           setIsCallStaffOpen(true);
-          if (tableId) {
-            notifyCallStaff({ tableId, orderId });
-          }
+          if (tableId) notifyCallStaff({ tableId, orderId });
         }}
         onCheckout={handleOpenPayment}
         onViewStatus={() => setIsStatusOpen(true)}
@@ -738,25 +789,6 @@ export default function Menu() {
         customerId={customerId}
         showPersonalizeButton={mode === "solo"}
       />
-
-      <OrderStatusSidebar
-        isOpen={isStatusOpen}
-        onClose={() => setIsStatusOpen(false)}
-        items={orderDetails}
-        onEdit={handleOpenEdit}
-        onDelete={handleDeleteDetail}
-        onIncGroup={handleIncGroup}
-        onDecGroup={handleDecGroup}
-      />
-
-      {isEditOpen && editingDetail && (
-        <EditOrderDetailModal
-          isOpen={isEditOpen}
-          onClose={() => setIsEditOpen(false)}
-          detail={editingDetail}
-          onUpdated={handleEdited}
-        />
-      )}
 
       {orderId && tableId && customerId && (
         <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
@@ -778,17 +810,6 @@ export default function Menu() {
           </div>
         </div>
       )}
-
-      <ConfirmDialog
-        open={confirmState.open}
-        title={confirmState.title}
-        message={confirmState.message}
-        confirmText="Xoá"
-        cancelText="Huỷ"
-        onConfirm={confirmState.onYes}
-        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
-      />
-
       <MenuContent
         activeMenuTab={activeMenuTab}
         setActiveMenuTab={setActiveMenuTab}
@@ -831,7 +852,6 @@ export default function Menu() {
         isPersonalized={mode === "solo" && isPersonalized}
         currentGoal={mode === "solo" ? personalizationForm.goal : null}
       />
-
       <MenuFooter />
       {mode === "solo" && (
         <PersonalizationModal
@@ -839,13 +859,10 @@ export default function Menu() {
           onClose={() => setIsPersonalizationOpen(false)}
           personalizationForm={personalizationForm}
           setPersonalizationForm={setPersonalizationForm}
-          onApplySuggestions={(result) => {
-            const flatList = result.flatMap((r) =>
-              [r.drink, r.salad, r.mainCourse, r.dessert].filter(Boolean),
-            );
-            setSuggestedMenu(flatList);
-            setIsPersonalized(true);
-          }}
+          onSubmit={handlePersonalizationSubmit}
+          dailyCalories={dailyCalories}
+          setDailyCalories={setDailyCalories}
+          caloriesConsumed={caloriesConsumed}
         />
       )}
       <CartSidebar
@@ -856,7 +873,15 @@ export default function Menu() {
         onRemoveItem={removeFromCart}
         onOrderFood={handleOrderFood}
       />
-
+      <OrderStatusSidebar
+        isOpen={isStatusOpen}
+        onClose={() => setIsStatusOpen(false)}
+        items={orderDetails}
+        onEdit={handleOpenEdit}
+        onDelete={handleDeleteDetail}
+        onIncGroup={handleIncGroup}
+        onDecGroup={handleDecGroup}
+      />
       <PaymentSidebar
         isOpen={isPaymentOpen}
         onClose={() => setIsPaymentOpen(false)}
@@ -864,12 +889,29 @@ export default function Menu() {
         items={paymentItems}
         onRequestPayment={handleRequestPayment}
       />
-
+      {isEditOpen && editingDetail && (
+        <EditOrderDetailModal
+          isOpen={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          detail={editingDetail}
+          onUpdated={handleEdited}
+        />
+      )}
       <DishOptionsModal
         isOpen={isDishOptionsOpen}
         onClose={() => setIsDishOptionsOpen(false)}
         dish={selectedDish}
         onAddToCart={addToCart}
+      />
+
+      <ConfirmDialog
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmText="Xác nhận"
+        cancelText="Huỷ"
+        onConfirm={confirmState.onYes}
+        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
       />
 
       {isCallStaffOpen && (
@@ -890,6 +932,102 @@ export default function Menu() {
                 className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
               >
                 Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isOrderFoodOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">
+                Đã gửi món thành công!
+              </h3>
+              <p className="text-neutral-600 mb-6">
+                Món ăn của bạn đang được chuẩn bị. Vui lòng theo dõi trong tab
+                "Trạng thái đơn".
+              </p>
+              <button
+                onClick={() => setIsOrderFoodOpen(false)}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isDeleteSuccessOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">
+                Xoá món thành công!
+              </h3>
+              <p className="text-neutral-600 mb-6">
+                Món ăn đã được xoá (hoặc gửi yêu cầu huỷ) khỏi đơn hàng của bạn.
+              </p>
+              <button
+                onClick={() => setIsDeleteSuccessOpen(false)}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isOrderFoodErrorOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <XCircle className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">
+                Gọi món thất bại!
+              </h3>
+              <p className="text-neutral-600 mb-6">{orderFoodErrorMessage}</p>
+              <button
+                onClick={() => setIsOrderFoodErrorOpen(false)}
+                className="bg-gradient-to-r from-red-500 to-rose-500 text-white px-6 py-3 rounded-xl hover:from-red-600 hover:to-rose-600 transition-all duration-300 font-medium"
+              >
+                Đã hiểu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isNotServedErrorOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <XCircle className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">
+                Không thể thanh toán!
+              </h3>
+              <p className="text-neutral-600 mb-6">
+                Vẫn còn món ăn chưa được phục vụ. Vui lòng kiểm tra lại trạng
+                thái đơn hàng.
+              </p>
+              <button
+                onClick={() => setIsNotServedErrorOpen(false)}
+                className="bg-gradient-to-r from-red-500 to-rose-500 text-white px-6 py-3 rounded-xl hover:from-red-600 hover:to-rose-600 transition-all duration-300 font-medium"
+              >
+                Đã hiểu
               </button>
             </div>
           </div>
@@ -921,7 +1059,53 @@ export default function Menu() {
         </div>
       )}
 
-      <ToastHost />
+      {isSuccessOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">
+                Thành công!
+              </h3>
+              <p className="text-neutral-600 mb-6">
+                {successMessage || "Thao tác đã được thực hiện."}
+              </p>
+              <button
+                onClick={() => setIsSuccessOpen(false)}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isErrorOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <XCircle className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">
+                Đã xảy ra lỗi
+              </h3>
+              <p className="text-neutral-600 mb-6">
+                {errorMessage || "Thao tác thất bại. Vui lòng thử lại."}
+              </p>
+              <button
+                onClick={() => setIsErrorOpen(false)}
+                className="bg-gradient-to-r from-red-500 to-rose-500 text-white px-6 py-3 rounded-xl hover:from-red-600 hover:to-rose-600 transition-all duration-300 font-medium"
+              >
+                Đã hiểu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

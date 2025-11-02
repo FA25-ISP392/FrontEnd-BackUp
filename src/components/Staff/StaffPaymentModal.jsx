@@ -117,15 +117,13 @@ export default function StaffPaymentModal({ open, onClose, table }) {
 
         if (["COMPLETED", "PAID", "SUCCESS"].includes(st)) {
           if (!stopped) {
-            alert("Thanh toán QR thành công!");
             onClose?.({ paid: true, method: "QR" });
           }
           return;
         }
         if (["FAILED", "CANCELLED"].includes(st)) {
           if (!stopped) {
-            alert("Thanh toán bị hủy/không thành công.");
-            onClose?.({ paid: false });
+            onClose?.({ paid: false, error: "Thanh toán QR bị hủy/thất bại." });
           }
           return;
         }
@@ -172,10 +170,12 @@ export default function StaffPaymentModal({ open, onClose, table }) {
     setCashError("");
     try {
       await createPayment({ orderId, method: "CASH" });
-      alert("Đã hoàn tất thanh toán tiền mặt.");
-      onClose?.({ paid: true });
+      onClose?.({ paid: true, method: "CASH" });
     } catch (e) {
-      alert(e?.message || "Xử lý tiền mặt thất bại.");
+      onClose?.({
+        paid: false,
+        error: e?.message || "Xử lý tiền mặt thất bại.",
+      });
     } finally {
       setLoading(false);
     }
@@ -183,9 +183,10 @@ export default function StaffPaymentModal({ open, onClose, table }) {
 
   async function handleBankTransfer() {
     if (!paymentId) {
-      alert(
-        "Không tìm thấy paymentId. Vui lòng yêu cầu khách bấm Gọi thanh toán lại."
-      );
+      onClose?.({
+        paid: false,
+        error: "Không tìm thấy paymentId. Yêu cầu khách gọi thanh toán lại.",
+      });
       return;
     }
     setLoading(true);
@@ -195,7 +196,10 @@ export default function StaffPaymentModal({ open, onClose, table }) {
       setCheckoutUrl(p.checkoutUrl || "");
       setQr(p.qrCode || "");
     } catch (e) {
-      alert(e?.message || "Không lấy được thông tin thanh toán.");
+      onClose?.({
+        paid: false,
+        error: e?.message || "Không lấy được thông tin thanh toán.",
+      });
     } finally {
       setLoading(false);
     }
@@ -236,7 +240,11 @@ export default function StaffPaymentModal({ open, onClose, table }) {
                     <div className="mb-2 text-sm text-center">
                       <div className="font-medium">
                         Khách:{" "}
-                        {order.customerName || order.customer?.name || "—"}
+                        {order.customerName ||
+                          order.customer?.fullName ||
+                          order.customer?.name ||
+                          order.customer?.email ||
+                          "—"}
                       </div>
                     </div>
                   )}
@@ -353,7 +361,7 @@ export default function StaffPaymentModal({ open, onClose, table }) {
                   </a>
                 )}
                 <button
-                  onClick={() => onClose?.({ paid: true })}
+                  onClick={() => onClose?.({ paid: true, method: "QR" })}
                   className="w-full py-3 rounded-xl bg-green-600 text-white hover:bg-green-700"
                 >
                   Đóng & đánh dấu đã xử lý

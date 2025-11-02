@@ -86,10 +86,38 @@ export async function getPaymentById(id) {
   return normalizePayment(res?.result ?? res);
 }
 
-export async function getPayments() {
-  const res = await apiConfig.get("/payment");
-  const list = Array.isArray(res) ? res : res?.result ?? [];
-  return list.map(normalizePayment);
+export async function listPaymentsPaging({ page = 0, size = 6 } = {}) {
+  const res = await apiConfig.get("/payment", { params: { page, size } });
+  const result = res?.result ?? res;
+  const list = Array.isArray(result?.content)
+    ? result.content
+    : Array.isArray(result)
+    ? result
+    : [];
+
+  const data = list.map(normalizePayment);
+
+  const totalElements = result?.totalElements ?? data.length;
+  const totalPages = result?.totalPages ?? 1;
+  const number = result?.number ?? page;
+  const sizePage = result?.size ?? size;
+
+  return {
+    items: data,
+    pageInfo: {
+      page: number + 1,
+      size: sizePage,
+      totalPages,
+      totalElements,
+      first: result?.first ?? page === 0,
+      last: result?.last ?? number + 1 >= totalPages,
+    },
+  };
+}
+
+export async function getPayments({ page = 0, size = 100 } = {}) {
+  const { items } = await listPaymentsPaging({ page, size });
+  return items;
 }
 
 export async function cancelPayment({ id, orderCode, status = "CANCELLED" }) {
@@ -97,4 +125,40 @@ export async function cancelPayment({ id, orderCode, status = "CANCELLED" }) {
     params: { id, orderCode, status },
   });
   return res;
+}
+
+export async function getPaymentHistoryPaged({
+  customerId,
+  page = 1,
+  size = 6,
+}) {
+  if (!customerId) throw new Error("Thiếu customerId.");
+  const res = await apiConfig.get(`/payment/customer/${customerId}`, {
+    params: { page: Math.max(0, page - 1), size },
+  });
+  const result = res?.result ?? res;
+  const list = Array.isArray(result?.content)
+    ? result.content
+    : Array.isArray(result)
+    ? result
+    : [];
+
+  const data = list.map(normalizePayment);
+  const totalElements = result?.totalElements ?? data.length;
+  const totalPages =
+    result?.totalPages ?? Math.max(1, Math.ceil(totalElements / size));
+  const number = result?.number ?? page - 1;
+  const sizePage = result?.size ?? size;
+  return {
+    items: data,
+    pageInfo: {
+      page: number + 1,
+      size: sizePage,
+      totalPages,
+      totalElements,
+      numberOfElements: data.length,
+      first: result?.first ?? page === 1,
+      last: result?.last ?? number + 1 >= totalPages,
+    },
+  };
 }

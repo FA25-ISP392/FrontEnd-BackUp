@@ -60,7 +60,6 @@ export async function createOrderDetailsFromCart(orderId, cart = []) {
       : [];
 
     for (let i = 0; i < times; i++) {
-      console.log("push item notes =", item.notes);
       const od = await createOrderDetail({
         orderId,
         dishId: item.id ?? item.dishId,
@@ -99,14 +98,6 @@ export async function updateOrderDetailStatus(
     orderDetailId: Number(orderDetailId),
     status: formattedStatus,
   };
-  if (import.meta.env?.DEV) {
-    console.log(
-      "[PUT] /order-details/",
-      Number(orderDetailId),
-      "payload=",
-      payload
-    );
-  }
   const res = await apiConfig.put(
     `/order-details/${Number(orderDetailId)}`,
     payload

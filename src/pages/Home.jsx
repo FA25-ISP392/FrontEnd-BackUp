@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { MapPin, Phone, Mail, X, Star } from "lucide-react";
+import { MapPin, Phone, Mail, X, CheckCircle } from "lucide-react";
 import HeroSection from "../components/Home/HeroSection";
 import VisionSection from "../components/Home/VisionSection";
 import MenuSection from "../components/Home/MenuSection";
@@ -11,22 +10,21 @@ import ForgotPasswordSidebar from "../components/Home/ForgotPasswordSidebar";
 import ResetPasswordSidebar from "../components/Home/ResetPasswordSidebar";
 import BookingForm from "../components/Home/BookingForm";
 import UserAccountDropdown from "../components/Home/UserAccountDropdown";
-import BookingHistoryModal from "../components/Home/BookingHistoryModal";
 import { logoutCustomer } from "../lib/auth";
 import { useBooking } from "../hooks/useBooking";
-import ToastHost, { showToast } from "../common/ToastHost";
+import ToastHost from "../common/ToastHost";
 import { HOME, HOME_ROUTES, NEED_AUTH } from "../constant/routes";
 import CustomerBookingHistory from "../components/Home/CustomerBookingHistory";
+import PaymentHistoryModal from "../components/Home/PaymentHistoryModal";
 
 export default function Home() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const menuRef = useRef(null);
-
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
-
+  const [isBookingSuccessOpen, setIsBookingSuccessOpen] = useState(false);
   const {
     bookingDraft,
     saveBookingDraft,
@@ -73,6 +71,7 @@ export default function Home() {
     if (p === HOME_ROUTES.HISTORY) return "history";
     if (p === HOME_ROUTES.EDIT) return "edit";
     if (p === HOME_ROUTES.CHANGE_PWD) return "changePwd";
+    if (p === HOME_ROUTES.PAYMENT_HISTORY) return "payment_history";
     return null;
   }, [location.pathname]);
 
@@ -97,7 +96,7 @@ export default function Home() {
         prev.delete("token");
         return prev;
       },
-      { replace: true },
+      { replace: true }
     );
     if (location.pathname.startsWith(HOME)) {
       navigate(HOME, { replace: true });
@@ -107,15 +106,10 @@ export default function Home() {
   const open = (path) => navigate(path);
   const closeToHome = () => navigate(HOME, { replace: true });
 
-  const handleBookingSubmit = ({ bookingId, tableId }) => {
+  const handleBookingSubmit = (result) => {
     clearBookingDraft();
-    showToast(
-      tableId
-        ? `Đặt bàn thành công! Đã gán bàn số ${tableId}.`
-        : "Đặt bàn thành công!",
-      "success",
-    );
     closeToHome();
+    setIsBookingSuccessOpen(true);
   };
 
   const handleLoginFromBooking = (currentForm) => {
@@ -157,19 +151,7 @@ export default function Home() {
   const handleBookingHistoryClick = () => open(HOME_ROUTES.HISTORY);
   const handleEditAccountClick = () => open(HOME_ROUTES.EDIT);
   const handleChangePasswordClick = () => open(HOME_ROUTES.CHANGE_PWD);
-
-  const menuCategories = {
-    "Best Sellers": [
-      { name: "Pizza Margherita", price: "299,000đ", image: "🍕" },
-      { name: "Pasta Carbonara", price: "189,000đ", image: "🍝" },
-      { name: "Beef Steak", price: "599,000đ", image: "🥩" },
-    ],
-    "Good Deals": [
-      { name: "Caesar Salad", price: "149,000đ", image: "🥗" },
-      { name: "Chicken Wings", price: "199,000đ", image: "🍗" },
-      { name: "Tiramisu", price: "129,000đ", image: "🍰" },
-    ],
-  };
+  const handlePaymentHistoryClick = () => open(HOME_ROUTES.PAYMENT_HISTORY);
 
   return (
     <div className="min-h-screen">
@@ -226,6 +208,7 @@ export default function Home() {
               onChangePasswordClick={handleChangePasswordClick}
               onCloseEditAccount={closeToHome}
               onCloseChangePassword={closeToHome}
+              onPaymentHistoryClick={handlePaymentHistoryClick}
             />
           </nav>
         </div>
@@ -280,7 +263,7 @@ export default function Home() {
                 src={
                   "https://www.google.com/maps?q=" +
                   encodeURIComponent(
-                    "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Việt Nam",
+                    "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Việt Nam"
                   ) +
                   "&output=embed"
                 }
@@ -434,6 +417,36 @@ export default function Home() {
           onClose={closeToHome}
           userInfo={userInfo}
         />
+      )}
+
+      {modal === "payment_history" && (
+        <PaymentHistoryModal isOpen onClose={closeToHome} userInfo={userInfo} />
+      )}
+
+      {isBookingSuccessOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-neutral-900 mb-2">
+                Đặt bàn thành công!
+              </h3>
+              <p className="text-neutral-600 mb-6">
+                Bàn của bạn đã được ghi nhận. Cảm ơn bạn đã sử dụng dịch vụ!
+              </p>
+              <button
+                onClick={() => {
+                  setIsBookingSuccessOpen(false);
+                }}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

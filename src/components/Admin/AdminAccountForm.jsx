@@ -23,7 +23,6 @@ export default function AdminAccountForm({
   const [showPassword, setShowPassword] = useState(false);
 
   if (!open) return null;
-  //Tiện ích giúp cho việc ghi đè các field cần và giữ nguyên các field không chạm vào
   const setF = (key, value) => setForm((state) => ({ ...state, [key]: value }));
 
   const ROLES = ["ADMIN", "MANAGER", "STAFF", "CHEF"];

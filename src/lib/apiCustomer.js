@@ -3,8 +3,8 @@ import apiConfig from "../api/apiConfig";
 const compact = (obj) =>
   Object.fromEntries(
     Object.entries(obj).filter(
-      ([_, value]) => value !== "" && value !== null && value !== undefined
-    )
+      ([_, value]) => value !== "" && value !== null && value !== undefined,
+    ),
   );
 
 export const normalizeCustomer = (cus = {}) => ({
@@ -28,7 +28,7 @@ export async function findCustomerByUsername(username) {
     } else {
       console.warn(
         "API returned success but no customer data for username:",
-        username
+        username,
       );
       return null;
     }
@@ -102,12 +102,13 @@ export async function updateCustomerPersonalization(customerId, form = {}) {
   const body = compact({
     height: form.height != null ? Number(form.height) : undefined,
     weight: form.weight != null ? Number(form.weight) : undefined,
-    sex:
-      typeof form.gender === "string"
-        ? String(form.gender).toLowerCase() === "male"
-        : undefined,
-    portion: form.mealsPerDay != null ? Number(form.mealsPerDay) : undefined,
+    // FIX: Đọc form.sex (true/false)
+    // Cần kiểm tra !== undefined để không loại bỏ giá trị false
+    sex: form.sex !== undefined ? Boolean(form.sex) : undefined,
+    // FIX: Đọc form.portion (integer)
+    portion: form.portion != null ? Number(form.portion) : undefined,
   });
+
   if (Object.keys(body).length === 0) {
     throw new Error("Không có trường nào để cập nhật.");
   }

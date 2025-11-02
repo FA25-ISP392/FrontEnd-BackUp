@@ -1,15 +1,22 @@
 export const TZ_VN = "Asia/Ho_Chi_Minh";
 
+export function buildISOFromVN(dateStr, timeStr = "00:00") {
+  if (!dateStr) return null;
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const [hh, mm] = (timeStr || "00:00").split(":").map(Number);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${y}-${pad(m)}-${pad(d)}T${pad(hh)}:${pad(mm)}:00`;
+}
+
 export function normalizeISOFromAPI(isoLike) {
   if (!isoLike) return null;
-  let s = String(isoLike).trim().replace(" ", "T");
-  if (/Z$|[+-]\d{2}:\d{2}$/.test(s)) return s;
-  return `${s}Z`;
+  return String(isoLike).trim().replace(" ", "T").slice(0, 19);
 }
 
 export function fmtVNDateTime(iso, extra = {}) {
   if (!iso) return "-";
-  const d = new Date(normalizeISOFromAPI(iso));
+  const s = normalizeISOFromAPI(iso);
+  const d = new Date(s);
   return new Intl.DateTimeFormat("vi-VN", {
     year: "numeric",
     month: "2-digit",
@@ -24,8 +31,8 @@ export function fmtVNDateTime(iso, extra = {}) {
 
 export function isoToVNParts(iso) {
   if (!iso) return { date: "", time: "" };
-  const normalized = normalizeISOWithTZ(iso);
-  const d = new Date(normalized);
+  const s = normalizeISOFromAPI(iso);
+  const d = new Date(s);
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: TZ_VN,
     year: "numeric",
@@ -40,9 +47,4 @@ export function isoToVNParts(iso) {
     date: `${get("year")}-${get("month")}-${get("day")}`,
     time: `${get("hour")}:${get("minute")}`,
   };
-}
-
-export function buildISOFromVN(dateStr, timeStr = "00:00") {
-  const hhmm = (timeStr || "00:00").padStart(5, "0");
-  return new Date(`${dateStr}T${hhmm}:00+07:00`).toISOString();
 }
