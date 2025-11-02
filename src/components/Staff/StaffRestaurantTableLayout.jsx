@@ -12,41 +12,46 @@ export default function StaffRestaurantTableLayout({
     if (tableNumber >= 7 && tableNumber <= 8) return "8 khách";
     return null;
   };
-  // Build reasonable positions around phòng, tham khảo bố cục ở Home nhưng cho cảm giác ngẫu nhiên có kiểm soát
+
   const rand01 = (seed) => {
     let x = Math.sin(seed) * 10000;
     return x - Math.floor(x);
   };
 
   const buildPositions = (count) => {
-    const margin = 12; // %
-    const bottomReserved = 18; // chừa chỗ cho bếp/ghi chú
+    const margin = 12;
+    const bottomReserved = 18;
     const topY = margin;
     const bottomY = 100 - bottomReserved - margin;
     const leftX = margin;
     const rightX = 100 - margin;
 
-    // Balanced distribution: ~30% top, ~30% bottom, ~20% left, ~20% right
     let nTop = Math.max(1, Math.floor(count * 0.3));
     let nBottom = Math.max(1, Math.floor(count * 0.3));
     let remaining = Math.max(0, count - (nTop + nBottom));
     let nLeft = Math.floor(remaining / 2);
     let nRight = remaining - nLeft;
-    // Ensure total equals count
+
     const totalSides = nTop + nRight + nBottom + nLeft;
     if (totalSides < count) nBottom += count - totalSides;
 
     const spread = (n, from, to) =>
-      Array.from({ length: Math.max(1, n) }, (_, i) => from + ((i + 1) / (n + 1)) * (to - from));
+      Array.from(
+        { length: Math.max(1, n) },
+        (_, i) => from + ((i + 1) / (n + 1)) * (to - from)
+      );
     const edgeSpread = (n, from, to) => {
       if (n <= 0) return [];
       if (n === 1) return [from + (to - from) / 2];
-      return Array.from({ length: n }, (_, i) => from + (i / (n - 1)) * (to - from));
+      return Array.from(
+        { length: n },
+        (_, i) => from + (i / (n - 1)) * (to - from)
+      );
     };
 
     const xSpanFrom = margin + 8;
     const xSpanTo = 100 - margin - 8;
-    const ySpanFrom = margin + 14; // đẩy xa nhau hơn ở hai bên
+    const ySpanFrom = margin + 14;
     const ySpanTo = 100 - bottomReserved - margin - 14;
 
     const topXs = spread(nTop, xSpanFrom, xSpanTo);
@@ -54,28 +59,40 @@ export default function StaffRestaurantTableLayout({
     const leftYs = edgeSpread(nLeft, ySpanFrom, ySpanTo);
     const rightYs = edgeSpread(nRight, ySpanFrom, ySpanTo);
 
-    // Interleave: Top -> Right -> Bottom -> Left
     const pos = [];
-    let iTop = 0, iRight = 0, iBottom = 0, iLeft = 0;
+    let iTop = 0,
+      iRight = 0,
+      iBottom = 0,
+      iLeft = 0;
     while (pos.length < count) {
       if (iTop < nTop) pos.push({ left: `${topXs[iTop++]}%`, top: `${topY}%` });
       if (pos.length >= count) break;
-      if (iRight < nRight) pos.push({ left: `${rightX}%`, top: `${rightYs[iRight++]}%` });
+      if (iRight < nRight)
+        pos.push({ left: `${rightX}%`, top: `${rightYs[iRight++]}%` });
       if (pos.length >= count) break;
-      if (iBottom < nBottom) pos.push({ left: `${botXs[iBottom++]}%`, top: `${bottomY}%` });
+      if (iBottom < nBottom)
+        pos.push({ left: `${botXs[iBottom++]}%`, top: `${bottomY}%` });
       if (pos.length >= count) break;
-      if (iLeft < nLeft) pos.push({ left: `${leftX}%`, top: `${leftYs[iLeft++]}%` });
+      if (iLeft < nLeft)
+        pos.push({ left: `${leftX}%`, top: `${leftYs[iLeft++]}%` });
     }
 
-    // Subtle jitter to look organic but still tidy
     return pos.map((p, idx) => {
-      const jitterX = (rand01((idx + 1) * 137) - 0.5) * 2; // +/-1%
+      const jitterX = (rand01((idx + 1) * 137) - 0.5) * 2;
       const jitterY = (rand01((idx + 1) * 257) - 0.5) * 2;
       const toNum = (s) => Number(String(s).replace("%", ""));
       const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
       const x = clamp(toNum(p.left) + jitterX, margin + 3, 100 - margin - 3);
-      const y = clamp(toNum(p.top) + jitterY, margin + 3, 100 - bottomReserved - 3);
-      return { left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" };
+      const y = clamp(
+        toNum(p.top) + jitterY,
+        margin + 3,
+        100 - bottomReserved - 3
+      );
+      return {
+        left: `${x}%`,
+        top: `${y}%`,
+        transform: "translate(-50%, -50%)",
+      };
     });
   };
 
@@ -95,10 +112,10 @@ export default function StaffRestaurantTableLayout({
         const table = tables[index];
         if (!table) return null;
         return (
-        <button
-          key={table.id}
-          onClick={() => onTableClick(table)}
-          className={`absolute w-24 h-24 rounded-xl transform transition-all duration-300 shadow-lg flex flex-col items-center justify-center cursor-pointer hover:scale-105 hover:shadow-2xl
+          <button
+            key={table.id}
+            onClick={() => onTableClick(table)}
+            className={`absolute w-24 h-24 rounded-xl transform transition-all duration-300 shadow-lg flex flex-col items-center justify-center cursor-pointer hover:scale-105 hover:shadow-2xl
             ${getTableStatusClass(table.status)}
             ${
               selectedTable?.id === table.id
@@ -111,22 +128,22 @@ export default function StaffRestaurantTableLayout({
                 : ""
             }
           `}
-          style={stylePos}
-        >
-          <span className="text-3xl font-bold text-white shadow-text">
-            {table.number}
-          </span>
-          {false && table.guests > 0 && table.status !== "empty" && (
-            <span className="text-xs font-medium text-white bg-black/20 px-2 py-0.5 rounded-full mt-1">
-              {table.guests} K
+            style={stylePos}
+          >
+            <span className="text-3xl font-bold text-white shadow-text">
+              {table.number}
             </span>
-          )}
-          {getCapacityLabel(table.number) && (
-            <span className="text-[11px] font-medium text-white/95 bg-black/15 px-2 py-0.5 rounded-full mt-1">
-              {getCapacityLabel(table.number)}
-            </span>
-          )}
-        </button>
+            {false && table.guests > 0 && table.status !== "empty" && (
+              <span className="text-xs font-medium text-white bg-black/20 px-2 py-0.5 rounded-full mt-1">
+                {table.guests} K
+              </span>
+            )}
+            {getCapacityLabel(table.number) && (
+              <span className="text-[11px] font-medium text-white/95 bg-black/15 px-2 py-0.5 rounded-full mt-1">
+                {getCapacityLabel(table.number)}
+              </span>
+            )}
+          </button>
         );
       })}
 

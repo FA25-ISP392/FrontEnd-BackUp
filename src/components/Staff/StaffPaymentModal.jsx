@@ -335,7 +335,7 @@ export default function StaffPaymentModal({ open, onClose, table }) {
                 ) : (
                   <QrCode className="h-4 w-4" />
                 )}
-                Mã QR (PayOS)
+                Mã QR
               </button>
             </div>
 
