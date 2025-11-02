@@ -125,15 +125,12 @@ export default function Menu() {
   });
   useEffect(() => {
     try {
-      if (
-        suggestedMenu &&
-        Array.isArray(suggestedMenu) &&
-        suggestedMenu.length > 0
-      ) {
+      // 🔒 Chỉ lưu khi có dữ liệu hợp lệ
+      if (Array.isArray(suggestedMenu) && suggestedMenu.length > 0) {
         localStorage.setItem("suggestedMenu", JSON.stringify(suggestedMenu));
-      } else {
-        localStorage.removeItem("suggestedMenu");
       }
+      // ❌ KHÔNG xóa localStorage trong các trường hợp khác
+      // để tránh mất dữ liệu khi reload
     } catch (e) {
       console.error("Không thể lưu suggestedMenu:", e);
     }
@@ -146,7 +143,7 @@ export default function Menu() {
   // --- SỬA Ở ĐÂY 1: Dùng usePersistedState cho orderId ---
   const [orderId, setOrderId] = usePersistedState(
     "currentOrderId", // Tên khóa trong localStorage
-    null
+    null,
   );
 
   // --- State Menu & Món ăn ---
@@ -165,9 +162,12 @@ export default function Menu() {
   // --- SỬA Ở ĐÂY 2: Dùng usePersistedState cho cart ---
   const [cart, setCart] = usePersistedState(
     "shoppingCart", // Tên khóa trong localStorage
-    []
+    [],
   );
-  const [caloriesConsumed, setCaloriesConsumed] = useState(0);
+  const [caloriesConsumed, setCaloriesConsumed] = usePersistedState(
+    "caloriesConsumed",
+    0,
+  );
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   // --- State Trạng thái Đơn hàng (Order Status) ---
@@ -300,7 +300,7 @@ export default function Menu() {
   }, []);
 
   const filteredDishes = menuDishes.filter(
-    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name)
+    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name),
   );
 
   const handleDishSelect = async (dish) => {
@@ -335,21 +335,21 @@ export default function Menu() {
   const addToCart = (item) => {
     const noteKey = item.notes || "";
     const existingItem = cart.find(
-      (it) => it.id === item.id && (it.notes || "") === noteKey
+      (it) => it.id === item.id && (it.notes || "") === noteKey,
     );
     if (existingItem) {
       setCart((prev) =>
         prev.map((it) =>
           it.id === item.id && (it.notes || "") === noteKey
             ? { ...it, quantity: it.quantity + (item.quantity ?? 1) }
-            : it
-        )
+            : it,
+        ),
       );
     } else {
       setCart((prev) => [...prev, { ...item }]);
     }
     setCaloriesConsumed(
-      (prev) => prev + (item.totalCalories || item.calories || 0)
+      (prev) => prev + (item.totalCalories || item.calories || 0),
     );
   };
 
@@ -363,11 +363,11 @@ export default function Menu() {
       const diff = newQuantity - item.quantity;
       setCart((prev) =>
         prev.map((it) =>
-          it.id === itemId ? { ...it, quantity: newQuantity } : it
-        )
+          it.id === itemId ? { ...it, quantity: newQuantity } : it,
+        ),
       );
       setCaloriesConsumed(
-        (prev) => prev + diff * (item.totalCalories || item.calories)
+        (prev) => prev + diff * (item.totalCalories || item.calories),
       );
     }
   };
@@ -377,7 +377,7 @@ export default function Menu() {
     if (item) {
       setCart((prev) => prev.filter((it) => it.id !== itemId));
       setCaloriesConsumed(
-        (prev) => prev - (item.totalCalories || item.calories) * item.quantity
+        (prev) => prev - (item.totalCalories || item.calories) * item.quantity,
       );
     }
   };
@@ -389,12 +389,12 @@ export default function Menu() {
       await createOrderDetailsFromCart(orderId, cart);
       setIsCartOpen(false);
       setCart([]); // Hook này sẽ tự xóa "shoppingCart" khỏi localStorage
-      setCaloriesConsumed(0);
+      // setCaloriesConsumed(0);
       setIsStatusOpen(true);
       setIsOrderFoodOpen(true);
     } catch (err) {
       setOrderFoodErrorMessage(
-        err?.message || "Gọi món thất bại. Vui lòng thử lại."
+        err?.message || "Gọi món thất bại. Vui lòng thử lại.",
       );
       setIsOrderFoodErrorOpen(true);
     }
@@ -535,7 +535,7 @@ export default function Menu() {
       }
     } catch (err) {
       setErrorMessage(
-        err?.message || "Không mở được thanh toán. Vui lòng thử lại."
+        err?.message || "Không mở được thanh toán. Vui lòng thử lại.",
       );
       setIsErrorOpen(true);
     }
@@ -570,7 +570,7 @@ export default function Menu() {
 
       // 2️⃣ GỌI API 2: Lấy gợi ý menu mới
       const suggestionsResponse = await getSuggestedMenu(
-        suggestionCreationPayload
+        suggestionCreationPayload,
       );
 
       // 3️⃣ Chuẩn hoá & copy dishId -> id
@@ -582,7 +582,7 @@ export default function Menu() {
                 ...dish,
                 id: dish.dishId ?? dish.id,
                 name: dish.dishName ?? dish.name,
-              }))
+              })),
           )
         : [];
 
@@ -596,14 +596,14 @@ export default function Menu() {
 
       setIsPersonalizationOpen(false);
       setSuccessMessage(
-        "Cá nhân hóa thành công! Thực đơn gợi ý mới đã được tạo."
+        "Cá nhân hóa thành công! Thực đơn gợi ý mới đã được tạo.",
       );
       setIsSuccessOpen(true);
     } catch (err) {
       console.error("❌ Lỗi cá nhân hóa:", err);
       setErrorMessage(
         err?.response?.data?.message ||
-          "Lỗi khi cập nhật hồ sơ hoặc lấy thực đơn gợi ý."
+          "Lỗi khi cập nhật hồ sơ hoặc lấy thực đơn gợi ý.",
       );
       setIsErrorOpen(true);
     }
@@ -630,11 +630,11 @@ export default function Menu() {
   function notifyPaymentStaff({ tableId, orderId, total, paymentId }) {
     const payload = { tableId, orderId, total, paymentId, ts: Date.now() };
     window.dispatchEvent(
-      new CustomEvent("table:callPayment", { detail: payload })
+      new CustomEvent("table:callPayment", { detail: payload }),
     );
     localStorage.setItem(
       `signal:callPayment:${payload.ts}`,
-      JSON.stringify(payload)
+      JSON.stringify(payload),
     );
   }
 
@@ -653,7 +653,7 @@ export default function Menu() {
     } catch {}
     localStorage.setItem(
       `signal:callStaff:${payload.ts}`,
-      JSON.stringify(payload)
+      JSON.stringify(payload),
     );
   }
 
@@ -666,9 +666,12 @@ export default function Menu() {
       pollTimerRef.current = null;
       thanksTimerRef.current = null;
 
-      // --- SỬA Ở ĐÂY 4: Xóa cart và orderId khỏi state/localStorage ---
+      // --- XÓA TRẠNG THÁI LOCAL ---
       setCart([]);
       setOrderId(null);
+      setCaloriesConsumed(0);
+      setSuggestedMenu([]); // ✅ Thêm dòng này — clear menu gợi ý trong state
+      localStorage.removeItem("suggestedMenu"); // ✅ Và xóa luôn bản lưu localStorage
       // -------------------------------------------------------------
 
       sessionStorage.clear();
@@ -680,6 +683,8 @@ export default function Menu() {
         `personalization:${customerId}`,
       ];
       keysToRemove.forEach((k) => localStorage.removeItem(k));
+
+      // Xóa các tín hiệu broadcast
       Object.keys(localStorage).forEach((k) => {
         if (k.startsWith("signal:")) {
           try {
@@ -793,7 +798,7 @@ export default function Menu() {
               }}
               className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-semibold hover:from-amber-500 hover:to-orange-600 transition"
             >
-              🍽️ Tôi đi nhóm
+              Tôi đi nhóm
             </button>
             <button
               onClick={() => {
@@ -804,7 +809,7 @@ export default function Menu() {
               }}
               className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-green-500 text-white font-semibold hover:from-emerald-500 hover:to-green-600 transition"
             >
-              🧍‍♂️ Tôi đi một mình
+              Tôi đi một mình
             </button>
           </div>
         </div>
@@ -882,7 +887,7 @@ export default function Menu() {
               } catch (e) {
                 console.warn(
                   "⚠️ Không lấy được topping, đặt rỗng:",
-                  e?.message
+                  e?.message,
                 );
                 fullDish = { ...fullDish, optionalToppings: [] };
               }

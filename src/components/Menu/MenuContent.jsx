@@ -131,7 +131,7 @@ export default function MenuContent({
       {dishSuggests && dishSuggests.length > 0 && (
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-10">
           <h3 className="text-lg font-bold text-neutral-900 mb-4 text-center">
-            🍱 Menu gợi ý cho bạn
+            Menu gợi ý cho bạn
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {dishSuggests.map((dish, idx) => (
