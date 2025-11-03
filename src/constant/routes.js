@@ -18,6 +18,7 @@ export const HOME_ROUTES = {
   HISTORY: "/home/lichsudatban",
   EDIT: "/home/suathongtin",
   PAYMENT_HISTORY: "/home/lichsuthanhtoan",
+  ORDER_HISTORY: "/home/lichsugoimon",
 };
 
 export const STAFF_BASE = "/staff";
@@ -35,6 +36,7 @@ export const NEED_AUTH = [
   HOME_ROUTES.HISTORY,
   HOME_ROUTES.EDIT,
   HOME_ROUTES.PAYMENT_HISTORY,
+  HOME_ROUTES.ORDER_HISTORY,
   STAFF_ROUTES.TABLE_LAYOUT,
   STAFF_ROUTES.OVERVIEW,
   STAFF_ROUTES.SERVE_BOARD,

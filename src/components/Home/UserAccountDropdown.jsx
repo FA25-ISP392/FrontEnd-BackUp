@@ -7,15 +7,18 @@ import {
   X,
   History,
   CreditCard,
+  ClipboardList,
 } from "lucide-react";
 import EditAccountModal from "./EditAccountModal";
 import PaymentHistoryModal from "./PaymentHistoryModal";
+import OrderHistoryModal from "./OrderHistoryModal";
 
 export default function UserAccountDropdown({
   isLoggedIn,
   userInfo,
   onLogout,
   onBookingHistoryClick,
+  onOrderHistoryClick,
   onEditAccountClick,
   onPaymentHistoryClick,
   onCloseEditAccount,
@@ -24,6 +27,7 @@ export default function UserAccountDropdown({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isEditAccountOpen, setIsEditAccountOpen] = useState(false);
   const [isPaymentHistoryOpen, setIsPaymentHistoryOpen] = useState(false);
+  const [isOrderHistoryOpen, setIsOrderHistoryOpen] = useState(false);
 
   if (!isLoggedIn) return null;
 
@@ -36,6 +40,12 @@ export default function UserAccountDropdown({
   const handleBookingHistory = () => {
     onBookingHistoryClick();
     setIsDropdownOpen(false);
+  };
+
+  const handleOrderHistory = () => {
+    setIsOrderHistoryOpen(true);
+    setIsDropdownOpen(false);
+    onOrderHistoryClick?.();
   };
 
   const handlePaymentHistory = () => {
@@ -121,6 +131,14 @@ export default function UserAccountDropdown({
               </button>
 
               <button
+                onClick={handleOrderHistory}
+                className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <ClipboardList className="w-4 h-4 text-gray-500" />
+                <span className="text-gray-700 text-sm">Lịch sử gọi món</span>
+              </button>
+
+              <button
                 onClick={handlePaymentHistory}
                 className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors"
               >
@@ -157,6 +175,15 @@ export default function UserAccountDropdown({
         isOpen={isPaymentHistoryOpen}
         onClose={() => {
           setIsPaymentHistoryOpen(false);
+          onCloseEditAccount();
+        }}
+        userInfo={userInfo}
+      />
+
+      <OrderHistoryModal
+        isOpen={isOrderHistoryOpen}
+        onClose={() => {
+          setIsOrderHistoryOpen(false);
           onCloseEditAccount();
         }}
         userInfo={userInfo}

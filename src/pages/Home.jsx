@@ -23,6 +23,7 @@ import ToastHost from "../common/ToastHost";
 import { HOME, HOME_ROUTES, NEED_AUTH } from "../constant/routes";
 import CustomerBookingHistory from "../components/Home/CustomerBookingHistory";
 import PaymentHistoryModal from "../components/Home/PaymentHistoryModal";
+import OrderHistoryModal from "../components/Home/OrderHistoryModal";
 
 export default function Home() {
   const location = useLocation();
@@ -92,6 +93,7 @@ export default function Home() {
     if (p === HOME_ROUTES.HISTORY) return "history";
     if (p === HOME_ROUTES.EDIT) return "edit";
     if (p === HOME_ROUTES.PAYMENT_HISTORY) return "payment_history";
+    if (p === HOME_ROUTES.ORDER_HISTORY) return "order_history";
     return null;
   }, [location.pathname]);
 
@@ -178,6 +180,7 @@ export default function Home() {
   const handleBookingHistoryClick = () => open(HOME_ROUTES.HISTORY);
   const handleEditAccountClick = () => open(HOME_ROUTES.EDIT);
   const handlePaymentHistoryClick = () => open(HOME_ROUTES.PAYMENT_HISTORY);
+  const handleOrderHistoryClick = () => open(HOME_ROUTES.ORDER_HISTORY);
 
   return (
     <div className="min-h-screen">
@@ -253,6 +256,7 @@ export default function Home() {
               onEditAccountClick={handleEditAccountClick}
               onCloseEditAccount={closeToHome}
               onPaymentHistoryClick={handlePaymentHistoryClick}
+              onOrderHistoryClick={handleOrderHistoryClick}
               isScrolled={isScrolled}
             />
           </nav>
@@ -462,6 +466,10 @@ export default function Home() {
 
       {modal === "payment_history" && (
         <PaymentHistoryModal isOpen onClose={closeToHome} userInfo={userInfo} />
+      )}
+
+      {modal === "order_history" && (
+        <OrderHistoryModal isOpen onClose={closeToHome} userInfo={userInfo} />
       )}
 
       {isBookingSuccessOpen && (
