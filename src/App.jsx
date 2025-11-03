@@ -13,6 +13,7 @@ import VerifyEmail from "./pages/VerifyEmail.jsx";
 import PaymentSuccess from "./pages/PaymentSuccess.jsx";
 import PaymentFail from "./pages/PaymentFail.jsx";
 import GoogleCallback from "./pages/GoogleCallback.jsx";
+import NotFoundPage from "./pages/NotFoundPage.jsx";
 
 export default function App() {
   return (
@@ -24,7 +25,7 @@ export default function App() {
       <Route path="/payment/success" element={<PaymentSuccess />} />
       <Route path="/payment/cancel" element={<PaymentFail />} />
       <Route path="/auth/callback" element={<GoogleCallback />} />
-      <Route path="*" element={<Home />} />
+      <Route path="*" element={<NotFoundPage />} />
 
       <Route
         path="/staff/*"
