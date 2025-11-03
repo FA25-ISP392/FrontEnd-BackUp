@@ -57,7 +57,11 @@ export default function StaffTableInfoLayout({
             <div className="flex items-center gap-2 text-sm text-neutral-600">
               <Users className="h-4 w-4" />
               <span>
-                {table.guests > 0 ? `${table.guests} khách` : "Chưa có khách"}
+                {table.status === "empty"
+                  ? "Chưa có khách"
+                  : table.guests > 0
+                  ? `${table.guests} khách`
+                  : "Đang có khách"}
               </span>
             </div>
             {table.status === "reserved" && table.orderTime && (
