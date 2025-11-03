@@ -1,7 +1,18 @@
 import { useState } from "react";
-import { ChefHat, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import {
+  ChefHat,
+  Eye,
+  EyeOff,
+  Loader2,
+  AlertCircle,
+  User,
+  Lock,
+} from "lucide-react";
 import { useLogin } from "../hooks/useLogin";
 import { useNavigate } from "react-router-dom";
+
+const videoUrl =
+  "https://pizza4ps.com/wp-content/themes/pizza4ps/assets/images/joinus.mp4?timestamp=1755742745";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -20,105 +31,80 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-blue-50 to-purple-50 flex items-center justify-center p-4">
-      <div className="max-w-6xl w-full">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-4">
-            Hệ Thống Quản Lý Nhà Hàng
-          </h1>
-          <p className="text-xl text-neutral-600 max-w-3xl mx-auto">
-            Đăng nhập vào hệ thống quản lý nhà hàng
-          </p>
-        </div>
+    <div className="min-h-screen relative w-full h-full overflow-hidden">
+      <video
+        className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto object-cover -translate-x-1/2 -translate-y-1/2"
+        src={videoUrl}
+        autoPlay
+        loop
+        muted
+        playsInline
+      />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          <div className="relative">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/20 overflow-hidden">
-              <div className="relative h-96 rounded-xl overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-red-500 to-pink-500"></div>
-                <div className="absolute inset-0 bg-black/20"></div>
-
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <ChefHat className="h-16 w-16 mx-auto mb-4 opacity-90" />
-                    <h3 className="text-2xl font-bold mb-2">
-                      Nhà Hàng Delicious
-                    </h3>
-                    <p className="text-lg opacity-90">Hương vị tuyệt vời</p>
-                  </div>
-                </div>
+      <div className="absolute inset-0 bg-black/40" />
+      <div className="relative z-10 flex min-h-screen w-full items-center justify-center">
+        <div className="w-full max-w-md bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden mx-4">
+          <div className="p-8 md:p-12">
+            <div className="flex flex-col items-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl flex items-center justify-center border-2 border-white/50 shadow-lg animate-fade-in-up">
+                <ChefHat className="h-8 w-8 text-white" />
               </div>
-
-              <div className="mt-6 text-center">
-                <h4 className="text-xl font-bold text-neutral-900 mb-2">
-                  Chào mừng đến với hệ thống quản lý
-                </h4>
-                <p className="text-neutral-600">
-                  Quản lý nhà hàng hiệu quả và chuyên nghiệp
-                </p>
-              </div>
+              <h2 className="text-3xl font-bold text-white mt-4 shadow-text animate-fade-in-up delay-100">
+                MónCủaBạn
+              </h2>
+              <p className="text-neutral-200 shadow-text animate-fade-in-up delay-200">
+                Đăng nhập hệ thống quản lý
+              </p>
             </div>
-          </div>
-
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-white/20">
-            <h2 className="text-2xl font-bold text-neutral-900 mb-6">
-              Đăng nhập
-            </h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
-                  <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-                  <p className="text-sm text-red-700">{error}</p>
+                <div className="p-3 bg-red-100/80 border border-red-300 rounded-xl flex items-center gap-3 text-red-800 animate-fade-in-up delay-300">
+                  <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                  <p className="text-sm font-medium">{error}</p>
                 </div>
               )}
 
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Tên đăng nhập
-                </label>
+              <div className="relative animate-fade-in-up delay-400">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-300" />
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Nhập tên đăng nhập"
+                  className="w-full pl-12 pr-4 py-3 bg-white/20 text-white placeholder-neutral-300 border border-white/30 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all outline-none"
+                  placeholder="Tên đăng nhập"
                   disabled={isLoading}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Mật khẩu
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 pr-12 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="Nhập mật khẩu"
-                    disabled={isLoading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
-                    disabled={isLoading}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
-                  </button>
-                </div>
+              <div className="relative animate-fade-in-up delay-500">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-300" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-12 pr-12 py-3 bg-white/20 text-white placeholder-neutral-300 border border-white/30 rounded-xl focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all outline-none"
+                  placeholder="Nhập mật khẩu"
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-neutral-300 hover:text-white transition-colors"
+                  disabled={isLoading}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
               </div>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-3 px-4 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 font-medium text-lg shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-4 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-medium text-lg shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none animate-fade-in-up delay-600"
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center gap-2">

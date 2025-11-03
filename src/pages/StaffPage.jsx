@@ -418,11 +418,28 @@ export default function StaffPage({ section = "tableLayout" }) {
                             : "Không rõ ngày"}
                         </span>
                       </div>
+
+                      {/* === KHỐI ĐÃ SỬA === */}
+                      {Array.isArray(od.toppings) && od.toppings.length > 0 && (
+                        <div className="text-xs text-neutral-500 mt-1 pt-1 border-t border-neutral-200/60">
+                          <span className="font-medium text-neutral-700">
+                            Topping:{" "}
+                          </span>
+                          {od.toppings
+                            .map((t) =>
+                              t.quantity > 1
+                                ? `${t.toppingName} x${t.quantity}`
+                                : t.toppingName
+                            )
+                            .join(", ")}
+                        </div>
+                      )}
                       {od.note && (
                         <p className="text-xs italic text-neutral-500 mt-1">
                           Ghi chú: {od.note}
                         </p>
                       )}
+                      {/* === HẾT KHỐI ĐÃ SỬA === */}
                     </div>
                   ))}
                 </div>
