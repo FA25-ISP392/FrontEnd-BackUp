@@ -1,5 +1,3 @@
-// src/pages/Menu.jsx (Đã cập nhật)
-
 import { useState, useEffect, useRef } from "react";
 import { CheckCircle, XCircle } from "lucide-react";
 import MenuHeader from "../components/Menu/MenuHeader";
@@ -32,9 +30,8 @@ import {
 import EditOrderDetailModal from "../components/Menu/EditOrderDetailModal";
 import { createPayment, getPaymentById } from "../lib/apiPayment";
 import ConfirmDialog from "../common/ConfirmDialog";
-import usePersistedState from "../hooks/usePersistedState"; // <-- 1. IMPORT HOOK MỚI
+import usePersistedState from "../hooks/usePersistedState";
 
-// --- Hằng số và Hàm Helper ---
 const PERSONAL_KEY = (cid) => `personalization:${cid}`;
 const MODE_KEY = "menuMode";
 const applyGoal = (cals, goal) => {
@@ -56,65 +53,7 @@ const getDisplayName = (u) =>
 const sumTotal = (items = []) =>
   items.reduce((s, it) => s + Number(it.totalPrice ?? it.price ?? 0), 0);
 
-// ====================================================================
-// ✅ HÀM GIẢ LẬP API LẤY GỢI Ý MENU (CẦN THAY THẾ BẰNG API THẬT CỦA BẠN)
-// ====================================================================
-const getMenuSuggestions = async (payload) => {
-  // Console log để kiểm tra payload gửi đi
-  console.log("[API Call Mock] POST /suggestions/menu with payload:", payload);
-
-  // Giả lập độ trễ mạng và phản hồi thành công
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  const mockGoalType = payload.goal;
-  // Giả lập cấu trúc response List<MenuSuggestion> từ BE
-  return [
-    {
-      // Giả định cấu trúc DishResponse tương thích với FE
-      drink: {
-        dishId: 101,
-        dishName: `Nước (for ${mockGoalType})`,
-        calo: 50,
-        price: 10000,
-        remainingQuantity: 10,
-        type: mockGoalType,
-        categoryEnum: "DRINKS",
-      },
-      salad: {
-        dishId: 201,
-        dishName: `Salad (for ${mockGoalType})`,
-        calo: 150,
-        price: 40000,
-        remainingQuantity: 5,
-        type: mockGoalType,
-        categoryEnum: "SALAD",
-      },
-      mainCourse: {
-        dishId: 301,
-        dishName: `Món chính (for ${mockGoalType})`,
-        calo: 450,
-        price: 100000,
-        remainingQuantity: 15,
-        type: mockGoalType,
-        categoryEnum: "PIZZA",
-      },
-      dessert: {
-        dishId: 401,
-        dishName: `Tráng miệng (for ${mockGoalType})`,
-        calo: 100,
-        price: 30000,
-        remainingQuantity: 8,
-        type: mockGoalType,
-        categoryEnum: "DESSERT",
-      },
-    },
-  ];
-};
-// ====================================================================
-
-// --- Component Chính ---
 export default function Menu() {
-  // --- GỢI Ý MENU ---
   const [suggestedMenu, setSuggestedMenu] = useState(() => {
     try {
       const saved = localStorage.getItem("suggestedMenu");
@@ -125,12 +64,9 @@ export default function Menu() {
   });
   useEffect(() => {
     try {
-      // 🔒 Chỉ lưu khi có dữ liệu hợp lệ
       if (Array.isArray(suggestedMenu) && suggestedMenu.length > 0) {
         localStorage.setItem("suggestedMenu", JSON.stringify(suggestedMenu));
       }
-      // ❌ KHÔNG xóa localStorage trong các trường hợp khác
-      // để tránh mất dữ liệu khi reload
     } catch (e) {
       console.error("Không thể lưu suggestedMenu:", e);
     }
@@ -141,10 +77,7 @@ export default function Menu() {
   const [customerName, setCustomerName] = useState(null);
 
   // --- SỬA Ở ĐÂY 1: Dùng usePersistedState cho orderId ---
-  const [orderId, setOrderId] = usePersistedState(
-    "currentOrderId", // Tên khóa trong localStorage
-    null,
-  );
+  const [orderId, setOrderId] = usePersistedState("currentOrderId", null);
 
   // --- State Menu & Món ăn ---
   const [menuDishes, setMenuDishes] = useState([]);
@@ -162,11 +95,11 @@ export default function Menu() {
   // --- SỬA Ở ĐÂY 2: Dùng usePersistedState cho cart ---
   const [cart, setCart] = usePersistedState(
     "shoppingCart", // Tên khóa trong localStorage
-    [],
+    []
   );
   const [caloriesConsumed, setCaloriesConsumed] = usePersistedState(
     "caloriesConsumed",
-    0,
+    0
   );
   const [isCartOpen, setIsCartOpen] = useState(false);
 
@@ -242,15 +175,12 @@ export default function Menu() {
     };
   }, []);
   const initialMode = sessionStorage.getItem(MODE_KEY);
-  const [mode, setMode] = useState(initialMode); // 'solo' hoặc 'group'
+  const [mode, setMode] = useState(initialMode);
   const [showModeSelection, setShowModeSelection] = useState(!initialMode);
 
-  // --- SỬA Ở ĐÂY 3: Đơn giản hóa logic tạo order ---
   useEffect(() => {
     const ready = Boolean(customerId) && Boolean(tableId);
     if (!ready) return;
-
-    // Nếu đã có orderId (từ usePersistedState), không cần tạo mới
     if (orderId) {
       return;
     }
@@ -263,14 +193,13 @@ export default function Menu() {
       try {
         const order = await createOrder({ customerId, tableId });
         if (order?.orderId) {
-          // Chỉ cần set state, hook sẽ tự lưu vào localStorage
           setOrderId(String(order.orderId));
         }
       } catch (err) {
         sessionStorage.removeItem(idemKey);
       }
     })();
-  }, [customerId, tableId, orderId, setOrderId]); // Thêm orderId và setOrderId
+  }, [customerId, tableId, orderId, setOrderId]);
 
   const hiddenNames = (() => {
     try {
@@ -300,33 +229,8 @@ export default function Menu() {
   }, []);
 
   const filteredDishes = menuDishes.filter(
-    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name),
+    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name)
   );
-
-  const handleDishSelect = async (dish) => {
-    if (dish.remainingQuantity <= 0) {
-      setErrorMessage("Món này hiện đã hết số lượng trong kế hoạch hôm nay.");
-      setIsErrorOpen(true);
-      return;
-    }
-
-    try {
-      let fullDish = await getDish(dish.id);
-      if (!Array.isArray(fullDish.optionalToppings)) {
-        try {
-          const toppings = await getToppingsByDishId(dish.id);
-          fullDish = { ...fullDish, optionalToppings: toppings || [] };
-        } catch (e) {
-          fullDish = { ...fullDish, optionalToppings: [] };
-        }
-      }
-      setSelectedDish(fullDish);
-      setIsDishOptionsOpen(true);
-    } catch (err) {
-      setErrorMessage(err?.message || "Không thể lấy chi tiết món.");
-      setIsErrorOpen(true);
-    }
-  };
 
   // === LOGIC GIỎ HÀNG (CartSidebar) ===
   const { personalizationForm, setPersonalizationForm, personalizedDishes } =
@@ -335,21 +239,21 @@ export default function Menu() {
   const addToCart = (item) => {
     const noteKey = item.notes || "";
     const existingItem = cart.find(
-      (it) => it.id === item.id && (it.notes || "") === noteKey,
+      (it) => it.id === item.id && (it.notes || "") === noteKey
     );
     if (existingItem) {
       setCart((prev) =>
         prev.map((it) =>
           it.id === item.id && (it.notes || "") === noteKey
             ? { ...it, quantity: it.quantity + (item.quantity ?? 1) }
-            : it,
-        ),
+            : it
+        )
       );
     } else {
       setCart((prev) => [...prev, { ...item }]);
     }
     setCaloriesConsumed(
-      (prev) => prev + (item.totalCalories || item.calories || 0),
+      (prev) => prev + (item.totalCalories || item.calories || 0)
     );
   };
 
@@ -363,11 +267,11 @@ export default function Menu() {
       const diff = newQuantity - item.quantity;
       setCart((prev) =>
         prev.map((it) =>
-          it.id === itemId ? { ...it, quantity: newQuantity } : it,
-        ),
+          it.id === itemId ? { ...it, quantity: newQuantity } : it
+        )
       );
       setCaloriesConsumed(
-        (prev) => prev + diff * (item.totalCalories || item.calories),
+        (prev) => prev + diff * (item.totalCalories || item.calories)
       );
     }
   };
@@ -377,7 +281,7 @@ export default function Menu() {
     if (item) {
       setCart((prev) => prev.filter((it) => it.id !== itemId));
       setCaloriesConsumed(
-        (prev) => prev - (item.totalCalories || item.calories) * item.quantity,
+        (prev) => prev - (item.totalCalories || item.calories) * item.quantity
       );
     }
   };
@@ -388,13 +292,12 @@ export default function Menu() {
       if (!cart.length) throw new Error("Giỏ hàng đang trống.");
       await createOrderDetailsFromCart(orderId, cart);
       setIsCartOpen(false);
-      setCart([]); // Hook này sẽ tự xóa "shoppingCart" khỏi localStorage
-      // setCaloriesConsumed(0);
+      setCart([]);
       setIsStatusOpen(true);
       setIsOrderFoodOpen(true);
     } catch (err) {
       setOrderFoodErrorMessage(
-        err?.message || "Gọi món thất bại. Vui lòng thử lại.",
+        err?.message || "Gọi món thất bại. Vui lòng thử lại."
       );
       setIsOrderFoodErrorOpen(true);
     }
@@ -535,7 +438,7 @@ export default function Menu() {
       }
     } catch (err) {
       setErrorMessage(
-        err?.message || "Không mở được thanh toán. Vui lòng thử lại.",
+        err?.message || "Không mở được thanh toán. Vui lòng thử lại."
       );
       setIsErrorOpen(true);
     }
@@ -548,7 +451,7 @@ export default function Menu() {
   };
 
   // ====================================================================
-  // ✅ LOGIC XỬ LÝ SUBMIT FORM CÁ NHÂN HÓA MỚI (LƯU HỒ SƠ & LẤY GỢI Ý)
+  // LOGIC XỬ LÝ SUBMIT FORM CÁ NHÂN HÓA MỚI (LƯU HỒ SƠ & LẤY GỢI Ý)
   // ====================================================================
   const handlePersonalizationSubmit = async ({
     customerUpdatePayload,
@@ -562,18 +465,11 @@ export default function Menu() {
     }
 
     try {
-      // 0️⃣ Reset danh sách cũ (xóa các gợi ý cũ khỏi state)
-      setSuggestedMenu([]); // 🧹 clear danh sách cũ trước khi gọi API mới
-
-      // 1️⃣ GỌI API 1: Cập nhật hồ sơ khách hàng
+      setSuggestedMenu([]);
       await updateCustomerPersonalization(customerId, customerUpdatePayload);
-
-      // 2️⃣ GỌI API 2: Lấy gợi ý menu mới
       const suggestionsResponse = await getSuggestedMenu(
-        suggestionCreationPayload,
+        suggestionCreationPayload
       );
-
-      // 3️⃣ Chuẩn hoá & copy dishId -> id
       const flatList = Array.isArray(suggestionsResponse)
         ? suggestionsResponse.flatMap((r) =>
             [r.drink, r.salad, r.mainCourse, r.dessert]
@@ -582,28 +478,25 @@ export default function Menu() {
                 ...dish,
                 id: dish.dishId ?? dish.id,
                 name: dish.dishName ?? dish.name,
-              })),
+              }))
           )
         : [];
 
-      // 🔢 Giới hạn 12 món (nếu BE trả nhiều hơn)
       const limitedList = flatList.slice(0, 12);
-
-      // ✅ Cập nhật state
       setSuggestedMenu(limitedList);
       setEstimatedCalories(dailyCalories);
       setIsPersonalized(true);
 
       setIsPersonalizationOpen(false);
       setSuccessMessage(
-        "Cá nhân hóa thành công! Thực đơn gợi ý mới đã được tạo.",
+        "Cá nhân hóa thành công! Thực đơn gợi ý mới đã được tạo."
       );
       setIsSuccessOpen(true);
     } catch (err) {
       console.error("❌ Lỗi cá nhân hóa:", err);
       setErrorMessage(
         err?.response?.data?.message ||
-          "Lỗi khi cập nhật hồ sơ hoặc lấy thực đơn gợi ý.",
+          "Lỗi khi cập nhật hồ sơ hoặc lấy thực đơn gợi ý."
       );
       setIsErrorOpen(true);
     }
@@ -630,11 +523,11 @@ export default function Menu() {
   function notifyPaymentStaff({ tableId, orderId, total, paymentId }) {
     const payload = { tableId, orderId, total, paymentId, ts: Date.now() };
     window.dispatchEvent(
-      new CustomEvent("table:callPayment", { detail: payload }),
+      new CustomEvent("table:callPayment", { detail: payload })
     );
     localStorage.setItem(
       `signal:callPayment:${payload.ts}`,
-      JSON.stringify(payload),
+      JSON.stringify(payload)
     );
   }
 
@@ -653,7 +546,7 @@ export default function Menu() {
     } catch {}
     localStorage.setItem(
       `signal:callStaff:${payload.ts}`,
-      JSON.stringify(payload),
+      JSON.stringify(payload)
     );
   }
 
@@ -670,8 +563,8 @@ export default function Menu() {
       setCart([]);
       setOrderId(null);
       setCaloriesConsumed(0);
-      setSuggestedMenu([]); // ✅ Thêm dòng này — clear menu gợi ý trong state
-      localStorage.removeItem("suggestedMenu"); // ✅ Và xóa luôn bản lưu localStorage
+      setSuggestedMenu([]);
+      localStorage.removeItem("suggestedMenu");
       // -------------------------------------------------------------
 
       sessionStorage.clear();
@@ -684,7 +577,6 @@ export default function Menu() {
       ];
       keysToRemove.forEach((k) => localStorage.removeItem(k));
 
-      // Xóa các tín hiệu broadcast
       Object.keys(localStorage).forEach((k) => {
         if (k.startsWith("signal:")) {
           try {
@@ -791,7 +683,7 @@ export default function Menu() {
           <div className="flex flex-col space-y-4">
             <button
               onClick={() => {
-                sessionStorage.setItem(MODE_KEY, "group"); // <-- LƯU TRẠNG THÁI
+                sessionStorage.setItem(MODE_KEY, "group");
                 setMode("group");
                 setShowModeSelection(false);
                 window.location.reload();
@@ -802,7 +694,7 @@ export default function Menu() {
             </button>
             <button
               onClick={() => {
-                sessionStorage.setItem(MODE_KEY, "solo"); // <-- LƯU TRẠNG THÁI
+                sessionStorage.setItem(MODE_KEY, "solo");
                 setMode("solo");
                 setShowModeSelection(false);
                 window.location.reload();
@@ -818,7 +710,6 @@ export default function Menu() {
   }
   useEffect(() => {
     if (mode === "solo" && customerId && !suggestedMenu) {
-      // ⏳ Tự mở form cá nhân hóa khi chưa có gợi ý
       setIsPersonalizationOpen(true);
     }
   }, [mode, customerId]);
@@ -828,7 +719,7 @@ export default function Menu() {
       <MenuHeader
         cartItemCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
         onPersonalize={() => {
-          if (mode === "group") return; // 🚫 không mở nếu đi nhóm
+          if (mode === "group") return;
           setIsPersonalizationOpen(true);
         }}
         onViewOrders={() => setIsCartOpen(true)}
@@ -870,7 +761,6 @@ export default function Menu() {
         dishSuggests={suggestedMenu}
         personalizedMenu={personalizedDishes}
         onDishSelect={async (dish) => {
-          // 🚫 Chặn món có remainingQuantity = 0
           if (dish.remainingQuantity <= 0) {
             alert("❌ Món này hiện đã hết số lượng trong kế hoạch hôm nay.");
             return;
@@ -878,8 +768,6 @@ export default function Menu() {
 
           try {
             let fullDish = await getDish(dish.id);
-
-            // ⚙️ Nếu BE đã trả optionalToppings (kể cả rỗng), KHÔNG gọi lại API
             if (!Array.isArray(fullDish.optionalToppings)) {
               try {
                 const toppings = await getToppingsByDishId(dish.id);
@@ -887,7 +775,7 @@ export default function Menu() {
               } catch (e) {
                 console.warn(
                   "⚠️ Không lấy được topping, đặt rỗng:",
-                  e?.message,
+                  e?.message
                 );
                 fullDish = { ...fullDish, optionalToppings: [] };
               }
