@@ -1,5 +1,7 @@
-import { Target, Zap, Heart, User } from "lucide-react";
+import { Target, Zap, Heart } from "lucide-react";
 import { categories as CATEGORY_LIST } from "../../lib/menuData";
+import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
+import "react-circular-progressbar/dist/styles.css";
 
 export default function MenuContent({
   activeMenuTab,
@@ -20,78 +22,133 @@ export default function MenuContent({
 
   const canShowCalorie = isPersonalized || caloriesConsumed > 0;
 
-  // ✅ Lọc món theo type mục tiêu (nếu có)
-  // const goalType = mapGoalToType[currentGoal];
-  // const dishesToShow =
-  //   goalType && isPersonalized
-  //     ? filteredDishes.filter((d) => d.type === goalType)
-  //     : filteredDishes;
-
-  // ✅ Ưu tiên món có trong daily plan trước, món chưa có thì xuống cuối
+  // ✅ Ưu tiên món còn hàng
   const dishesToShow = [...filteredDishes].sort((a, b) => {
     const remainA = a.remainingQuantity > 0 ? 1 : 0;
     const remainB = b.remainingQuantity > 0 ? 1 : 0;
-    return remainB - remainA; // món còn hàng lên đầu
+    return remainB - remainA;
   });
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* ====================== THEO DÕI CALO (STICKY) ====================== */}
       {canShowCalorie && (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-8">
-          <div className="flex items-center justify-between mb-4">
+        <div
+          className="
+            sticky top-0 z-40 
+            bg-white/90 backdrop-blur-md 
+            rounded-2xl shadow-lg 
+            border border-white/20 
+            mb-8 px-6 py-5
+          "
+        >
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                <Target className="h-6 w-6 text-white" />
+              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+                <Target className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-neutral-900">
+                <h3 className="text-base font-bold text-neutral-900">
                   Theo dõi Calorie
                 </h3>
-                <p className="text-sm text-neutral-600">
+                <p className="text-xs text-neutral-600">
                   Kiểm soát lượng calo tiêu thụ hôm nay
                 </p>
               </div>
             </div>
-
-            <div className="flex items-center gap-8">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">
-                  {Math.round(caloriesConsumed) || 0}
-                </div>
-                <div className="text-sm text-neutral-600">Đã nạp (Cal)</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">
-                  {Math.round(estimatedCalories) || 0}
-                </div>
-                <div className="text-sm text-neutral-600">
-                  Cần nạp trong ngày (Cal)
-                </div>
-              </div>
-            </div>
           </div>
 
-          {/* Thanh tiến độ */}
+          {/* ✅ Vòng tròn tiến độ + thông báo động */}
           {estimatedCalories > 0 && (
-            <div className="mt-4">
+            <div className="mt-2">
               {(() => {
-                const percent = Math.min(
-                  100,
-                  ((caloriesConsumed || 0) / estimatedCalories) * 100,
-                ).toFixed(1);
+                const form =
+                  JSON.parse(
+                    localStorage.getItem("personalization:form") || "{}",
+                  ) || {};
+                const mealsPerDay = Number(
+                  form.mealsPerDay || form.mealPerDay || 3,
+                );
+                const perMealCalories = estimatedCalories / mealsPerDay;
+
+                const percentRaw =
+                  ((caloriesConsumed || 0) / perMealCalories) * 100;
+                const progress = Math.min(100, percentRaw);
+
+                // 🧠 Chọn thông điệp hiển thị dựa trên phần trăm
+                let message = "";
+                let messageColor = "";
+
+                if (percentRaw > 115) {
+                  message =
+                    "Lượng calories này sẽ có thể ảnh hưởng đến sức khoẻ của bạn";
+                  messageColor = "text-red-600";
+                } else if (percentRaw >= 90) {
+                  message =
+                    "Lượng calo này rất phù hợp, chúc bạn thành công với mục tiêu của mình nhé";
+                  messageColor = "text-emerald-600";
+                } else if (percentRaw >= 60) {
+                  message = "Cố lên, bạn sắp hoàn thành mục tiêu rồi";
+                  messageColor = "text-orange-600";
+                } else {
+                  message =
+                    "Lượng calo này hơi ít, chưa đủ để đáp ứng mục tiêu của bạn";
+                  messageColor = "text-amber-600";
+                }
+
                 return (
-                  <>
-                    <div className="w-full bg-neutral-200 rounded-full h-3 overflow-hidden">
-                      <div
-                        className="h-3 bg-gradient-to-r from-orange-500 to-red-500 transition-all duration-500"
-                        style={{ width: `${percent}%` }}
-                      />
+                  <div className="flex flex-col items-center">
+                    {/* --- 3 cột: đã nạp - vòng tròn - cần nạp --- */}
+                    <div className="flex items-center justify-center gap-10 flex-wrap">
+                      {/* Đã nạp */}
+                      <div className="text-center">
+                        <div className="text-xl font-bold text-orange-600">
+                          {Math.round(caloriesConsumed) || 0}
+                        </div>
+                        <div className="text-xs text-neutral-600">
+                          Đã nạp (Cal)
+                        </div>
+                      </div>
+
+                      {/* Vòng tròn % ở giữa */}
+                      <div className="w-20 h-20">
+                        <CircularProgressbar
+                          value={progress}
+                          text={`${Math.round(percentRaw)}%`}
+                          styles={buildStyles({
+                            textColor: percentRaw > 115 ? "#b91c1c" : "#dc2626",
+                            pathColor:
+                              percentRaw > 115
+                                ? "#b91c1c"
+                                : percentRaw >= 90
+                                ? "#16a34a"
+                                : percentRaw >= 60
+                                ? "#fb923c"
+                                : "#f59e0b",
+                            trailColor: "#f3f4f6",
+                            textSize: "16px",
+                          })}
+                        />
+                      </div>
+
+                      {/* Cần nạp mỗi bữa */}
+                      <div className="text-center">
+                        <div className="text-xl font-bold text-red-600">
+                          {Math.round(perMealCalories) || 0}
+                        </div>
+                        <div className="text-xs text-neutral-600">
+                          Cần nạp mỗi bữa (Cal)
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-right text-sm text-neutral-600 mt-1">
-                      Bữa ăn này khoảng {percent}% lượng calories trong ngày bạn
-                      cần nạp
-                    </div>
-                  </>
+
+                    {/* --- Dòng thông điệp động --- */}
+                    <p
+                      className={`mt-3 text-sm font-medium text-center transition-all duration-500 ${messageColor}`}
+                    >
+                      {message}
+                    </p>
+                  </div>
                 );
               })()}
             </div>
@@ -99,6 +156,7 @@ export default function MenuContent({
         </div>
       )}
 
+      {/* ====================== MỤC TIÊU ====================== */}
       {isPersonalized === "all" && (
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-8">
           <h3 className="text-lg font-bold text-neutral-900 mb-4 text-center">
@@ -127,7 +185,7 @@ export default function MenuContent({
         </div>
       )}
 
-      {/* 🧠 Nếu có món gợi ý, hiển thị riêng */}
+      {/* ====================== MENU GỢI Ý ====================== */}
       {dishSuggests && dishSuggests.length > 0 && (
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-10">
           <h3 className="text-lg font-bold text-neutral-900 mb-4 text-center">
@@ -176,6 +234,7 @@ export default function MenuContent({
         </div>
       )}
 
+      {/* ====================== DANH MỤC MÓN ĂN ====================== */}
       {activeMenuTab === "all" &&
         CATEGORY_LIST.map((cat) => {
           const dishes = dishesToShow.filter(
