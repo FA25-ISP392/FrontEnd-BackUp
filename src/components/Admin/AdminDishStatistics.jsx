@@ -201,11 +201,27 @@ export default function AdminDishStatistics() {
                     />
                     <YAxis />
                     <Tooltip
-                      formatter={(value, name, props) => [
-                        `Số lượng đã bán: ${value}`,
-                        "",
-                      ]}
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          const item = payload[0];
+                          return (
+                            <div
+                              className="bg-white border border-gray-200 rounded-lg shadow-md p-2"
+                              style={{ lineHeight: "1.4" }}
+                            >
+                              <p className="font-semibold text-gray-800">
+                                {label}
+                              </p>
+                              <p className="text-green-600">
+                                Số lượng đã bán: {item.value}
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
                     />
+
                     <Bar
                       dataKey="totalSold"
                       fill="#4ADE80"
@@ -246,13 +262,30 @@ export default function AdminDishStatistics() {
                       height={60}
                       tick={{ fontSize: 12, fill: "#374151" }}
                     />
-                    <YAxis />
+                    <YAxis allowDecimals={false} />
+
                     <Tooltip
-                      formatter={(value, name, props) => [
-                        `Số lượng đã bán: ${value}`,
-                        "",
-                      ]}
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          const item = payload[0];
+                          return (
+                            <div
+                              className="bg-white border border-gray-200 rounded-lg shadow-md p-2"
+                              style={{ lineHeight: "1.4" }}
+                            >
+                              <p className="font-semibold text-gray-800">
+                                {label}
+                              </p>
+                              <p className="text-green-600">
+                                Số lượng đã bán: {item.value}
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
                     />
+
                     <Bar
                       dataKey="totalSold"
                       fill="#F87171"

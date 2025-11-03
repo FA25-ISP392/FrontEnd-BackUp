@@ -150,18 +150,18 @@ export default function MenuSection() {
                           {dish.description || "Không có mô tả."}
                         </p>
                         <div className="flex items-center justify-between">
-                          <span className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                          {/* <span className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                             {dish.price
                               ? dish.price.toLocaleString("vi-VN") + "₫"
                               : "—"}
-                          </span>
-                          <button
+                          </span> */}
+                          {/* <button
                             onClick={() => setSelectedDish(dish)}
                             className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all font-medium flex items-center gap-2"
                           >
                             <ShoppingBag className="h-4 w-4" />
                             Xem chi tiết
-                          </button>
+                          </button> */}
                         </div>
                       </div>
                     </div>
@@ -211,11 +211,11 @@ export default function MenuSection() {
                   <p className="text-xs text-neutral-600 line-clamp-2 mb-2">
                     {dish.description || "Không có mô tả"}
                   </p>
-                  <p className="text-lg font-bold text-orange-600">
+                  {/* <p className="text-lg font-bold text-orange-600">
                     {dish.price
                       ? dish.price.toLocaleString("vi-VN") + "₫"
                       : "—"}
-                  </p>
+                  </p> */}
                 </div>
               </div>
             ))}
@@ -226,7 +226,7 @@ export default function MenuSection() {
       {/* Modal xem chi tiết */}
       {selectedDish && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 relative shadow-2xl">
+          <div className="bg-white rounded-2xl max-w-3xl w-full p-8 relative shadow-2xl">
             <button
               onClick={() => setSelectedDish(null)}
               className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
@@ -240,7 +240,7 @@ export default function MenuSection() {
                 selectedDish.image
               }
               alt={selectedDish.dishName || selectedDish.itemName}
-              className="w-full h-56 object-cover rounded-xl mb-4"
+              className="w-full h-[550px] object-cover rounded-2xl mb-6"
             />
             <h3 className="text-2xl font-bold text-neutral-900 mb-2">
               {selectedDish.dishName || selectedDish.itemName}
@@ -248,11 +248,11 @@ export default function MenuSection() {
             <p className="text-neutral-700 mb-4">
               {selectedDish.description || "Không có mô tả chi tiết."}
             </p>
-            <p className="text-xl font-bold text-orange-600">
+            {/* <p className="text-xl font-bold text-orange-600">
               {selectedDish.price
                 ? selectedDish.price.toLocaleString("vi-VN") + "₫"
                 : "—"}
-            </p>
+            </p> */}
           </div>
         </div>
       )}
