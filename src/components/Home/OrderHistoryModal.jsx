@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { X, ClipboardList, ChevronLeft, ChevronRight } from "lucide-react";
 import { getOrderHistoryPaged } from "../../lib/apiOrder";
 
@@ -57,6 +57,8 @@ export default function OrderHistoryModal({ isOpen, onClose, userInfo }) {
     last: true,
   });
 
+  const [expandedId, setExpandedId] = useState(null);
+
   const customerId = useMemo(() => {
     return (
       userInfo?.id ||
@@ -92,7 +94,7 @@ export default function OrderHistoryModal({ isOpen, onClose, userInfo }) {
     })();
   }, [isOpen, customerId, page, size]);
 
-  const { totalPages, totalElements, first, last } = pageInfo;
+  const { totalPages, first, last } = pageInfo;
   const pageSize = size;
 
   const buildPages = () => {
@@ -148,31 +150,91 @@ export default function OrderHistoryModal({ isOpen, onClose, userInfo }) {
                       <tr>
                         <th className="px-4 py-2 text-left">Mã Đơn Hàng</th>
                         <th className="px-4 py-2 text-center">Bàn Số</th>
-                        <th className="px-4 py-2 text-right">Tổng Tiền</th>
                         <th className="px-4 py-2 text-center">Ngày Gọi</th>
                         <th className="px-4 py-2 text-center">Trạng Thái</th>
                       </tr>
                     </thead>
+
                     <tbody className="divide-y">
                       {items.map((o) => {
+                        const isExpanded = expandedId === o.orderId;
                         return (
-                          <tr key={o.orderId} className="hover:bg-neutral-50">
-                            <td className="px-4 py-2 font-medium">
-                              #{o.orderId}
-                            </td>
-                            <td className="px-4 py-2 text-center">
-                              {o.tableId}
-                            </td>
-                            <td className="px-4 py-2 text-right font-semibold text-green-700">
-                              {fmtVND(o.totalPrice)}
-                            </td>
-                            <td className="px-4 py-2 text-center">
-                              {fmtVNDateTime(o.orderDate)}
-                            </td>
-                            <td className="px-4 py-2 text-center">
-                              {statusBadge(o.paid)}
-                            </td>
-                          </tr>
+                          <React.Fragment key={o.orderId}>
+                            <tr
+                              className="hover:bg-neutral-50 cursor-pointer"
+                              onClick={() =>
+                                setExpandedId(isExpanded ? null : o.orderId)
+                              }
+                            >
+                              <td className="px-4 py-2 font-medium">
+                                #{o.orderId}
+                              </td>
+                              <td className="px-4 py-2 text-center">
+                                {o.tableId}
+                              </td>
+                              <td className="px-4 py-2 text-center">
+                                {fmtVNDateTime(o.orderDate)}
+                              </td>
+                              <td className="px-4 py-2 text-center">
+                                {statusBadge(o.paid)}
+                              </td>
+                            </tr>
+
+                            {isExpanded && (
+                              <tr className="bg-neutral-50">
+                                <td colSpan="5" className="p-0">
+                                  <div className="p-3">
+                                    {o.orderDetails.length > 0 ? (
+                                      <table className="min-w-full text-xs">
+                                        <thead>
+                                          <tr className="bg-neutral-200">
+                                            <th className="px-3 py-2 text-left">
+                                              Tên món
+                                            </th>
+                                            <th className="px-3 py-2 text-left">
+                                              Toppings
+                                            </th>
+                                            <th className="px-3 py-2 text-left">
+                                              Ghi chú
+                                            </th>
+                                            <th className="px-3 py-2 text-right">
+                                              Giá
+                                            </th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {o.orderDetails.map((d) => (
+                                            <tr key={d.orderDetailId}>
+                                              <td className="px-3 py-2 font-medium">
+                                                {d.dishName}
+                                              </td>
+                                              <td className="px-3 py-2">
+                                                {d.toppings?.length > 0
+                                                  ? d.toppings
+                                                      .map((t) => t.toppingName)
+                                                      .join(", ")
+                                                  : "Không"}
+                                              </td>
+                                              <td className="px-3 py-2 text-neutral-600">
+                                                {d.note || "Không"}
+                                              </td>
+                                              <td className="px-3 py-2 text-right">
+                                                {fmtVND(d.totalPrice)}
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    ) : (
+                                      <div className="text-xs text-neutral-500 px-3 py-2">
+                                        Đơn hàng này không có chi tiết món ăn.
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
                         );
                       })}
                     </tbody>
