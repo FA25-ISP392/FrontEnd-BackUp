@@ -23,7 +23,7 @@ export default function MenuHeader({
   return (
     <header className="bg-white/90 backdrop-blur-md shadow-lg border-b border-white/20 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 sm:h-16 sm:py-0">
           <div className="flex items-center space-x-6">
             <button
               onClick={() => window.location.reload()}
