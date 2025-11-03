@@ -180,7 +180,69 @@ export async function deleteDish(id) {
   return res;
 }
 
-export async function listDishPaging(page = 0, size = 8) {
-  const res = await apiConfig.get(`/dish/paging?page=${page}&size=${size}`);
-  return res.result;
+// 🧩 Lấy danh sách món ăn (phân trang)
+export async function listDishPaging(page = 0, size = 10, filters = {}) {
+  const token = localStorage.getItem("token");
+
+  const params = {
+    page,
+    size,
+    ...filters,
+  };
+
+  try {
+    const res = await apiConfig.get("/dish/paging", {
+      params,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    // ✅ Nếu BE trả trực tiếp { content, totalPages, ... }
+    const result =
+      res?.data?.result && res.data.result.content
+        ? res.data.result
+        : res?.data?.content
+        ? res.data
+        : res;
+
+    console.log("🍽️ listDishPaging() -> dữ liệu nhận được:", result);
+
+    return {
+      content: (result.content || []).map(normalizeDish),
+      totalElements: result.totalElements ?? 0,
+      totalPages: result.totalPages ?? 0,
+      pageNumber: result.number ?? 0,
+      pageSize: result.size ?? size,
+      first: result.first ?? false,
+      last: result.last ?? false,
+      empty: result.empty ?? false,
+    };
+  } catch (err) {
+    console.error("❌ Lỗi khi gọi listDishPaging:", err);
+    throw err;
+  }
+}
+
+export async function searchDishByName(dishName) {
+  const token = localStorage.getItem("token");
+  if (!dishName || dishName.trim() === "") {
+    return []; // Trả về rỗng nếu tên món ăn trống
+  }
+
+  try {
+    const res = await apiConfig.get(`/dish/by-name/${dishName.trim()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const arr = Array.isArray(res)
+      ? res
+      : Array.isArray(res?.data)
+      ? res.data
+      : res?.data?.result ?? res?.result ?? [];
+
+    console.log("🔍 searchDishByName() -> dữ liệu nhận được:", arr);
+    return arr.map(normalizeDish);
+  } catch (err) {
+    console.error("❌ Lỗi khi gọi searchDishByName:", err);
+    throw err;
+  }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Plus,
   Edit,
@@ -16,27 +16,38 @@ export default function ToppingManagement({
   setIsEditingTopping,
   setEditingItem,
   loading,
-  onSearch,
+  onSearch, // ✅ truyền từ parent — gọi API searchToppingByName(searchTerm)
   page,
   pageInfo,
   onPageChange,
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [debounceTimer, setDebounceTimer] = useState(null);
 
   const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN").format(price) + "đ";
 
-  // 🔍 Tìm kiếm topping theo tên
-  const handleSearch = () => {
-    if (!searchTerm.trim()) {
-      setIsSearching(false);
-      onSearch?.("");
-      return;
-    }
-    setIsSearching(true);
-    onSearch?.(searchTerm);
-  };
+  // 🔍 Gọi search tự động khi gõ (debounce 400ms)
+  useEffect(() => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+
+    const timer = setTimeout(() => {
+      const trimmed = searchTerm.trim();
+
+      if (!trimmed) {
+        setIsSearching(false);
+        onSearch?.(""); // load lại danh sách đầy đủ
+      } else {
+        setIsSearching(true);
+        onSearch?.(trimmed); // gọi API tìm kiếm
+      }
+    }, 400);
+
+    setDebounceTimer(timer);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, onSearch]);
 
   // ❌ Xoá tìm kiếm
   const clearSearch = () => {
@@ -71,35 +82,25 @@ export default function ToppingManagement({
 
         {/* 🔍 Ô tìm kiếm + nút thêm */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="Tìm topping theo tên..."
-                className="pl-9 pr-8 py-2 rounded-xl border border-neutral-300 focus:ring-2 focus:ring-emerald-400 outline-none text-sm"
-              />
-              <Search
-                onClick={handleSearch}
-                className="absolute left-2.5 top-2.5 text-neutral-400 hover:text-emerald-500 cursor-pointer"
+          <div className="relative">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Tìm topping theo tên..."
+              className="pl-9 pr-8 py-2 rounded-xl border border-neutral-300 focus:ring-2 focus:ring-emerald-400 outline-none text-sm w-64"
+            />
+            <Search
+              className="absolute left-2.5 top-2.5 text-neutral-400 pointer-events-none"
+              size={16}
+            />
+            {searchTerm && (
+              <X
+                onClick={clearSearch}
+                className="absolute right-2.5 top-2.5 text-neutral-400 hover:text-red-500 cursor-pointer"
                 size={16}
               />
-              {searchTerm && (
-                <X
-                  onClick={clearSearch}
-                  className="absolute right-2.5 top-2.5 text-neutral-400 hover:text-red-500 cursor-pointer"
-                  size={16}
-                />
-              )}
-            </div>
-            <button
-              onClick={handleSearch}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm font-medium"
-            >
-              Tìm
-            </button>
+            )}
           </div>
 
           <button
@@ -131,10 +132,14 @@ export default function ToppingManagement({
         {/* Body */}
         <div className="divide-y divide-neutral-200">
           {loading ? (
-            <div className="p-6 text-neutral-500">Đang tải danh sách...</div>
-          ) : toppings.length === 0 ? (
             <div className="p-6 text-neutral-500">
-              Không tìm thấy topping nào.
+              {isSearching ? "Đang tìm kiếm..." : "Đang tải danh sách..."}
+            </div>
+          ) : toppings.length === 0 ? (
+            <div className="p-6 text-neutral-500 italic">
+              {isSearching && searchTerm.trim()
+                ? `Không tìm thấy topping nào với từ khóa "${searchTerm}".`
+                : "Chưa có topping nào."}
             </div>
           ) : (
             toppings.map((topping) => (

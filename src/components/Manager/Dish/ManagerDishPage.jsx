@@ -1,17 +1,17 @@
-import { useEffect, useState } from "react";
-import { Plus, Pencil, Utensils, X, Eye, Trash2 } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Plus, Pencil, Utensils, X, Eye, Trash2, Search } from "lucide-react";
 import {
-  listDish,
+  listDishPaging,
   createDish,
   updateDish,
   normalizeDish,
   getDish,
   deleteDish,
+  searchDishByName,
 } from "../../../lib/apiDish";
 import { listTopping } from "../../../lib/apiTopping";
 import {
   addDishToppingsBatch,
-  getToppingsByDishId,
   deleteDishTopping,
 } from "../../../lib/apiDishTopping";
 
@@ -228,33 +228,64 @@ export default function ManagerDishPage() {
   const [openEdit, setOpenEdit] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingDish, setEditingDish] = useState(null);
-
   const [openDetail, setOpenDetail] = useState(false);
   const [detailDish, setDetailDish] = useState(null);
 
-  // ✅ Thêm state phân trang vào đây
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        setLoading(true);
-        // ✅ Gọi API mới có phân trang
-        const res = await listDish(page, 8);
-        const result = res.result ?? res;
-        setDishes(result.content.map(normalizeDish));
-        setTotalPages(result.totalPages);
-      } catch (err) {
-        console.error(err);
-        alert("Không tải được danh sách món ăn");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [page]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
-  // 🧑‍🍳 handleCreate
+  const fetchDishes = useCallback(async () => {
+    try {
+      setLoading(true);
+      if (searchTerm.trim()) {
+        // 🔍 Nếu có từ khóa tìm kiếm, gọi API tìm kiếm
+        setIsSearching(true);
+        const res = await searchDishByName(searchTerm.trim());
+        setDishes(res);
+        setTotalPages(1); // Trong chế độ tìm kiếm, không dùng phân trang
+        setPage(0);
+      } else {
+        // 📄 Nếu không có từ khóa, gọi API phân trang
+        setIsSearching(false);
+        const res = await listDishPaging(page, 8);
+        setDishes(res.content);
+        setTotalPages(res.totalPages);
+      }
+    } catch (err) {
+      console.error("❌ Lỗi tải danh sách món ăn:", err);
+      alert("Không tải được danh sách món ăn");
+      setDishes([]);
+      setTotalPages(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, searchTerm]);
+
+  useEffect(() => {
+    fetchDishes();
+  }, [fetchDishes]);
+
+  // Reset trang về 0 khi bắt đầu tìm kiếm
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    // Bắt đầu tìm kiếm sẽ reset về trang đầu, nhưng vì useEffect chạy ngay sau
+    // khi searchTerm thay đổi, việc gọi setPage(0) là không cần thiết nếu ta
+    // chỉ muốn cập nhật danh sách dựa trên searchTerm mới.
+    // Nếu vẫn muốn giữ setPage(0) khi user gõ, hãy đảm bảo useEffect chỉ dùng fetchDishes
+    // và fetchDishes phụ thuộc vào [page, searchTerm]
+    // Giữ nguyên logic cũ của bạn:
+    setPage(0);
+  };
+
+  // Refetch data sau khi tạo/cập nhật/xóa thành công
+  const handleRefresh = () => {
+    fetchDishes();
+  };
+
+  // 🧑‍🍳 Tạo món ăn
   const handleCreate = async (form) => {
     try {
       setSaving(true);
@@ -272,7 +303,9 @@ export default function ManagerDishPage() {
 
       alert("✅ Thêm món ăn thành công!");
       setOpenCreate(false);
-      setDishes((prev) => [...prev, normalizeDish(dish)]);
+
+      // ✅ Gọi refresh để tải lại (có tính đến bộ lọc/tìm kiếm)
+      handleRefresh();
     } catch (err) {
       console.error(err);
       alert("❌ Lỗi khi thêm món ăn!");
@@ -281,7 +314,7 @@ export default function ManagerDishPage() {
     }
   };
 
-  // ✏️ handleEdit
+  // ✏️ Chỉnh sửa món ăn
   const handleEdit = async (form) => {
     try {
       setSaving(true);
@@ -304,9 +337,8 @@ export default function ManagerDishPage() {
         await addDishToppingsBatch(editingDish.id, toppingIds);
       }
 
-      setDishes((prev) =>
-        prev.map((d) => (d.id === normalized.id ? normalized : d)),
-      );
+      // ✅ Gọi refresh để tải lại (có tính đến bộ lọc/tìm kiếm)
+      handleRefresh();
 
       alert("✅ Cập nhật món ăn thành công!");
       setOpenEdit(false);
@@ -336,7 +368,10 @@ export default function ManagerDishPage() {
     if (!window.confirm("Bạn có chắc chắn muốn xoá món ăn này không?")) return;
     try {
       await deleteDish(id);
-      setDishes((prev) => prev.filter((d) => d.id !== id));
+
+      // ✅ Gọi refresh để tải lại (có tính đến bộ lọc/tìm kiếm)
+      handleRefresh();
+
       alert("✅ Đã xoá món ăn thành công!");
     } catch (err) {
       console.error(err);
@@ -356,10 +391,30 @@ export default function ManagerDishPage() {
         </button>
       </div>
 
+      {/* 🔍 Thanh tìm kiếm */}
+      <div className="mb-5 relative">
+        <input
+          type="text"
+          placeholder="Tìm kiếm theo tên món ăn..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+          className="w-full rounded-xl border px-4 py-2 pl-10 outline-none focus:ring focus:ring-orange-200"
+        />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+      </div>
+
       {loading ? (
-        <div className="text-gray-500">Đang tải danh sách món ăn...</div>
+        <div className="text-gray-500">
+          {isSearching && searchTerm.trim()
+            ? "Đang tìm kiếm..."
+            : "Đang tải danh sách món ăn..."}
+        </div>
       ) : dishes.length === 0 ? (
-        <div className="text-gray-500 italic">Chưa có món ăn nào.</div>
+        <div className="text-gray-500 italic">
+          {isSearching && searchTerm.trim()
+            ? `Không tìm thấy món ăn nào với từ khóa "${searchTerm}".`
+            : "Chưa có món ăn nào."}
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {dishes.map((d) => (
@@ -413,8 +468,8 @@ export default function ManagerDishPage() {
         </div>
       )}
 
-      {/* 🧭 Thanh phân trang */}
-      {totalPages > 1 && (
+      {/* 🧭 Thanh phân trang (Chỉ hiển thị khi KHÔNG tìm kiếm) */}
+      {!isSearching && totalPages > 1 && (
         <div className="flex justify-center items-center mt-6 gap-3">
           <button
             disabled={page === 0}
