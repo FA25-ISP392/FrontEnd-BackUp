@@ -19,6 +19,7 @@ export default function UserAccountDropdown({
   onEditAccountClick,
   onPaymentHistoryClick,
   onCloseEditAccount,
+  isScrolled,
 }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isEditAccountOpen, setIsEditAccountOpen] = useState(false);
@@ -48,23 +49,31 @@ export default function UserAccountDropdown({
     setIsDropdownOpen(false);
   };
 
+  const textColorClass = isScrolled
+    ? "text-gray-700"
+    : "text-white shadow-text";
+  const iconColorClass = isScrolled ? "text-gray-500" : "text-white";
+  const hoverBgClass = isScrolled ? "hover:bg-gray-100" : "hover:bg-white/10";
+
   return (
     <>
       <div className="relative">
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${hoverBgClass}`}
         >
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center">
             <User className="w-4 h-4 text-white" />
           </div>
-          <span className="text-gray-700 font-medium text-sm">
+          <span
+            className={`font-medium text-sm transition-colors ${textColorClass}`}
+          >
             {userInfo?.fullName || userInfo?.username || "Tài khoản"}
           </span>
           <ChevronDown
-            className={`w-4 h-4 text-gray-500 transition-transform ${
+            className={`w-4 h-4 transition-transform ${
               isDropdownOpen ? "rotate-180" : ""
-            }`}
+            } ${iconColorClass}`}
           />
         </button>
 

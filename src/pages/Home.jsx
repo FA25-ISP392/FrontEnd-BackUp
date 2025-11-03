@@ -40,6 +40,8 @@ export default function Home() {
     reloadBookingDraft,
   } = useBooking();
 
+  const [isScrolled, setIsScrolled] = useState(false);
+
   useEffect(() => {
     const syncAuth = () => {
       const token = localStorage.getItem("token");
@@ -65,6 +67,17 @@ export default function Home() {
     return () => {
       window.removeEventListener("storage", syncAuth);
       window.removeEventListener("auth:changed", syncAuth);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll);
+    handleScroll();
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
@@ -169,11 +182,19 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <ToastHost />
-      <header className="fixed top-0 left-0 right-0 w-full bg-white shadow-sm z-50">
+      <header
+        className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 ${
+          isScrolled ? "bg-white shadow-md" : "bg-transparent shadow-none"
+        }`}
+      >
         <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
           <button
             onClick={() => open(HOME)}
-            className="text-2xl font-bold text-orange-600 hover:text-orange-700 transition-colors"
+            className={`text-2xl font-bold transition-colors ${
+              isScrolled
+                ? "text-orange-600 hover:text-orange-700"
+                : "text-white shadow-text"
+            }`}
             aria-label="Go Home"
           >
             MónCủaBạn
@@ -182,7 +203,11 @@ export default function Home() {
           <nav className="flex items-center gap-8">
             <button
               onClick={() => open(HOME_ROUTES.ABOUT)}
-              className="text-gray-700 hover:text-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-md px-3 py-1 rounded-lg"
+              className={`transition-all duration-300 hover:scale-105 px-3 py-1 rounded-lg ${
+                isScrolled
+                  ? "text-gray-700 hover:text-orange-600 hover:shadow-md"
+                  : "text-white hover:bg-white/10 shadow-text"
+              }`}
             >
               Về Chúng Tôi
             </button>
@@ -190,7 +215,11 @@ export default function Home() {
             {!isLoggedIn && (
               <button
                 onClick={() => open(HOME_ROUTES.LOGIN)}
-                className="text-gray-700 hover:text-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-md px-3 py-1 rounded-lg"
+                className={`transition-all duration-300 hover:scale-105 px-3 py-1 rounded-lg ${
+                  isScrolled
+                    ? "text-gray-700 hover:text-orange-600 hover:shadow-md"
+                    : "text-white hover:bg-white/10 shadow-text"
+                }`}
               >
                 Đăng Nhập
               </button>
@@ -198,7 +227,11 @@ export default function Home() {
 
             <button
               onClick={() => open(HOME_ROUTES.BOOKING)}
-              className="text-gray-700 hover:text-orange-600 transition-all duration-300 hover:scale-105 hover:shadow-md px-3 py-1 rounded-lg"
+              className={`transition-all duration-300 hover:scale-105 px-3 py-1 rounded-lg ${
+                isScrolled
+                  ? "text-gray-700 hover:text-orange-600 hover:shadow-md"
+                  : "text-white hover:bg-white/10 shadow-text"
+              }`}
             >
               Đặt Bàn
             </button>
@@ -220,12 +253,14 @@ export default function Home() {
               onEditAccountClick={handleEditAccountClick}
               onCloseEditAccount={closeToHome}
               onPaymentHistoryClick={handlePaymentHistoryClick}
+              isScrolled={isScrolled}
             />
           </nav>
         </div>
       </header>
 
-      <div className="pt-20">
+      <div className="pt-0">
+        {" "}
         <HeroSection />
         <VisionSection />
         <div ref={menuRef}>
@@ -302,7 +337,6 @@ export default function Home() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-
               <BookingForm
                 onSubmit={handleBookingSubmit}
                 isLoggedIn={isLoggedIn}
@@ -331,7 +365,6 @@ export default function Home() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-
               <div className="space-y-4 text-gray-700 leading-relaxed text-sm">
                 <p>
                   Chào mừng bạn đến với nhà hàng của chúng tôi, nơi tinh hoa ẩm
@@ -339,19 +372,16 @@ export default function Home() {
                   kỷ qua, chúng tôi đã phục vụ những món ăn tuyệt hảo được chế
                   biến từ những nguyên liệu tinh túy nhất.
                 </p>
-
                 <p>
                   Những đầu bếp tài hoa của chúng tôi sáng tạo nên thực đơn độc
                   đáo, kết hợp tinh hoa kỹ thuật truyền thống với hương vị hiện
                   đại, mang đến trải nghiệm ẩm thực khó quên trong từng món ăn.
                 </p>
-
                 <p>
                   Chúng tôi tự hào mang đến dịch vụ xuất sắc trong một không
                   gian thoải mái và thanh lịch, lý tưởng cho mọi dịp – từ những
                   bữa tối ấm cúng cho đến các buổi tiệc lớn.
                 </p>
-
                 <div className="bg-orange-50 p-4 rounded-lg">
                   <h3 className="text-lg font-bold text-orange-600 mb-2">
                     Sứ mệnh của chúng tôi
@@ -387,7 +417,6 @@ export default function Home() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-
               <div className="transition-all duration-500 ease-in-out">
                 {modal === "login" ? (
                   <LoginForm
