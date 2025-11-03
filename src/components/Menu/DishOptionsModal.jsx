@@ -26,7 +26,9 @@ export default function DishOptionsModal({
   const imageUrl = dish.picture;
   const basePrice = dish.price ?? 0;
   const baseCalo = dish.calo ?? dish.calories ?? 0;
-  const toppings = dish.optionalToppings ?? [];
+  const toppings = [...(dish.optionalToppings ?? [])].sort(
+    (a, b) => (a.remainingQuantity <= 0) - (b.remainingQuantity <= 0),
+  );
 
   const toppingsTotalPrice = selectedToppings.reduce(
     (sum, t) => sum + (t.price || 0),
@@ -108,15 +110,20 @@ export default function DishOptionsModal({
                   const checked = selectedToppings.some(
                     (x) => x.toppingId === t.toppingId,
                   );
+                  const isOutOfStock = t.remainingQuantity <= 0;
+
                   return (
                     <label
                       key={t.toppingId}
-                      className={`flex justify-between items-center p-3 border rounded-xl cursor-pointer transition ${
-                        checked
-                          ? "border-orange-400 bg-orange-50"
-                          : "border-neutral-200"
+                      className={`flex justify-between items-center p-3 border rounded-xl transition ${
+                        isOutOfStock
+                          ? "opacity-50 cursor-not-allowed bg-gray-50 border-gray-200"
+                          : checked
+                          ? "border-orange-400 bg-orange-50 cursor-pointer"
+                          : "border-neutral-200 cursor-pointer hover:bg-neutral-50"
                       }`}
                       onClick={() => {
+                        if (isOutOfStock) return; // 🚫 không cho chọn topping hết hàng
                         setSelectedToppings((prev) => {
                           if (!Array.isArray(prev)) prev = [];
                           const exists = prev.some(
@@ -127,15 +134,26 @@ export default function DishOptionsModal({
                             : [...prev, t];
                         });
                       }}
+                      title={
+                        isOutOfStock ? "Topping tạm hết hàng" : "Chọn topping"
+                      }
                     >
                       <div className="flex items-center gap-3">
                         <input
                           type="checkbox"
                           checked={checked}
                           readOnly
+                          disabled={isOutOfStock}
                           className="w-5 h-5 accent-orange-500"
                         />
-                        <span className="font-medium">{t.name}</span>
+                        <span className="font-medium">
+                          {t.name}{" "}
+                          {isOutOfStock && (
+                            <span className="text-sm text-red-500 font-medium">
+                              (Tạm hết)
+                            </span>
+                          )}
+                        </span>
                       </div>
                       <div className="text-sm text-neutral-600">
                         +{t.price?.toLocaleString("vi-VN")}₫ •{" "}

@@ -179,3 +179,8 @@ export async function deleteDish(id) {
   });
   return res;
 }
+
+export async function listDishPaging(page = 0, size = 8) {
+  const res = await apiConfig.get(`/dish/paging?page=${page}&size=${size}`);
+  return res.result;
+}

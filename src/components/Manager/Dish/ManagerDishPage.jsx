@@ -229,23 +229,32 @@ export default function ManagerDishPage() {
   const [saving, setSaving] = useState(false);
   const [editingDish, setEditingDish] = useState(null);
 
-  // 🆕 Thêm state mới
   const [openDetail, setOpenDetail] = useState(false);
   const [detailDish, setDetailDish] = useState(null);
+
+  // ✅ Thêm state phân trang vào đây
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     (async () => {
       try {
-        const list = await listDish();
-        setDishes(list);
-      } catch {
+        setLoading(true);
+        // ✅ Gọi API mới có phân trang
+        const res = await listDish(page, 8);
+        const result = res.result ?? res;
+        setDishes(result.content.map(normalizeDish));
+        setTotalPages(result.totalPages);
+      } catch (err) {
+        console.error(err);
         alert("Không tải được danh sách món ăn");
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [page]);
 
+  // 🧑‍🍳 handleCreate
   const handleCreate = async (form) => {
     try {
       setSaving(true);
@@ -257,34 +266,25 @@ export default function ManagerDishPage() {
         typeof t === "object" ? t.toppingId || t.id : Number(t),
       );
 
-      console.log("🍕 Gửi toppingIds:", toppingIds);
-      console.log("🆔 dishId mới:", newId);
-
-      // ✅ Chỉ gọi API nếu có ít nhất 1 topping
       if (toppingIds.length > 0) {
-        const res = await addDishToppingsBatch(newId, toppingIds);
-        console.log("✅ Kết quả addDishToppingsBatch:", res);
-      } else {
-        console.log(
-          "⚠️ Không có topping nào được chọn, bỏ qua addDishToppingsBatch",
-        );
+        await addDishToppingsBatch(newId, toppingIds);
       }
 
       alert("✅ Thêm món ăn thành công!");
       setOpenCreate(false);
       setDishes((prev) => [...prev, normalizeDish(dish)]);
     } catch (err) {
-      console.error("❌ Lỗi khi thêm món ăn:", err);
+      console.error(err);
       alert("❌ Lỗi khi thêm món ăn!");
     } finally {
       setSaving(false);
     }
   };
 
+  // ✏️ handleEdit
   const handleEdit = async (form) => {
     try {
       setSaving(true);
-
       const updated = await updateDish(editingDish.id, form);
       const normalized = normalizeDish(updated?.result ?? updated);
 
@@ -312,26 +312,26 @@ export default function ManagerDishPage() {
       setOpenEdit(false);
       setEditingDish(null);
     } catch (err) {
-      console.error("❌ Lỗi khi cập nhật món ăn:", err);
+      console.error(err);
       alert("❌ Lỗi khi cập nhật món ăn!");
     } finally {
       setSaving(false);
     }
   };
 
-  // 🆕 Xem chi tiết món
+  // 👁️ Xem chi tiết món
   const handleViewDetail = async (id) => {
     try {
       const res = await getDish(id);
       setDetailDish(res);
       setOpenDetail(true);
     } catch (err) {
-      console.error("❌ Lỗi khi xem chi tiết món:", err);
+      console.error(err);
       alert("❌ Không tải được chi tiết món ăn!");
     }
   };
 
-  // 🆕 Xoá món ăn
+  // 🗑️ Xoá món ăn
   const handleDeleteDish = async (id) => {
     if (!window.confirm("Bạn có chắc chắn muốn xoá món ăn này không?")) return;
     try {
@@ -339,7 +339,7 @@ export default function ManagerDishPage() {
       setDishes((prev) => prev.filter((d) => d.id !== id));
       alert("✅ Đã xoá món ăn thành công!");
     } catch (err) {
-      console.error("❌ Lỗi khi xoá món:", err);
+      console.error(err);
       alert("❌ Không thể xoá món ăn!");
     }
   };
@@ -410,6 +410,29 @@ export default function ManagerDishPage() {
               </p>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* 🧭 Thanh phân trang */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center mt-6 gap-3">
+          <button
+            disabled={page === 0}
+            onClick={() => setPage((p) => p - 1)}
+            className="px-3 py-1 rounded-lg border hover:bg-gray-100 disabled:opacity-50"
+          >
+            Trang trước
+          </button>
+          <span>
+            Trang {page + 1} / {totalPages}
+          </span>
+          <button
+            disabled={page + 1 >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="px-3 py-1 rounded-lg border hover:bg-gray-100 disabled:opacity-50"
+          >
+            Trang sau
+          </button>
         </div>
       )}
 

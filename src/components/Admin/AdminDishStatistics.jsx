@@ -16,7 +16,7 @@ import {
   getBestSellingDishes,
   getWorstSellingDishes,
 } from "../../lib/apiStatistics";
-import { DollarSign, Star, Timer } from "lucide-react";
+import { Star, Timer } from "lucide-react";
 
 export default function AdminDishStatistics() {
   const [revenue, setRevenue] = useState([]);
@@ -27,6 +27,23 @@ export default function AdminDishStatistics() {
   const [day, setDay] = useState("");
   const [month, setMonth] = useState("");
   const [year, setYear] = useState(new Date().getFullYear());
+
+  const fmtVND = (n) =>
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+      maximumFractionDigits: 0,
+    }).format(Number(n || 0));
+
+  const METHOD_LABELS = {
+    CASH: "Tiền mặt",
+    BANK_TRANSFER: "Chuyển khoản",
+  };
+
+  const COLORS = {
+    CASH: "#10B981", // xanh lá
+    BANK_TRANSFER: "#FACC15", // vàng
+  };
 
   const fetchData = async () => {
     if (!year) return;
@@ -113,12 +130,9 @@ export default function AdminDishStatistics() {
         <div className="space-y-8">
           {/* 🟢 Biểu đồ Doanh thu */}
           <div className="bg-white rounded-xl p-5 shadow border">
-            <div className="flex items-center gap-3 mb-4">
-              {/* ❌ bỏ icon DollarSign */}
-              <h3 className="text-lg font-bold text-green-700">
-                Doanh Thu Theo Phương Thức
-              </h3>
-            </div>
+            <h3 className="text-lg font-bold text-green-700 mb-4">
+              Doanh Thu Theo Phương Thức
+            </h3>
 
             {revenue.length === 0 ? (
               <p className="text-sm text-neutral-500">Không có dữ liệu.</p>
@@ -126,15 +140,6 @@ export default function AdminDishStatistics() {
               <div className="h-72 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Tooltip
-                      formatter={(value) =>
-                        new Intl.NumberFormat("vi-VN", {
-                          style: "currency",
-                          currency: "VND",
-                          maximumFractionDigits: 0,
-                        }).format(value)
-                      }
-                    />
                     <Pie
                       data={revenue}
                       dataKey="revenue"
@@ -142,34 +147,23 @@ export default function AdminDishStatistics() {
                       cx="50%"
                       cy="50%"
                       outerRadius={120}
-                      label={({ method, revenue }) => {
-                        // 💬 Đổi nhãn sang tiếng Việt
-                        const methodLabel =
-                          method === "CASH"
-                            ? "Tiền mặt"
-                            : method === "BANK_TRANSFER"
-                            ? "Chuyển khoản"
-                            : method;
-
-                        return `${methodLabel}: ${new Intl.NumberFormat(
-                          "vi-VN",
-                          {
-                            style: "currency",
-                            currency: "VND",
-                            maximumFractionDigits: 0,
-                          },
-                        ).format(revenue)}`;
-                      }}
+                      label={({ method, revenue }) =>
+                        `${METHOD_LABELS[method] || method}: ${fmtVND(revenue)}`
+                      }
                     >
-                      {revenue.map((entry, index) => {
-                        // 🎨 Gán màu cho từng phương thức
-                        let color = "#10B981"; // xanh lá
-                        if (entry.method === "BANK_TRANSFER")
-                          color = "#FACC15"; // vàng
-                        else if (entry.method === "CASH") color = "#10B981"; // xanh
-                        return <Cell key={`cell-${index}`} fill={color} />;
-                      })}
+                      {revenue.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[entry.method] || "#10B981"}
+                        />
+                      ))}
                     </Pie>
+                    <Tooltip
+                      formatter={(value, name) => [
+                        fmtVND(value),
+                        METHOD_LABELS[name] || name,
+                      ]}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -206,7 +200,12 @@ export default function AdminDishStatistics() {
                       tick={{ fontSize: 12, fill: "#374151" }}
                     />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip
+                      formatter={(value, name, props) => [
+                        `Số lượng đã bán: ${value}`,
+                        "",
+                      ]}
+                    />
                     <Bar
                       dataKey="totalSold"
                       fill="#4ADE80"
@@ -248,7 +247,12 @@ export default function AdminDishStatistics() {
                       tick={{ fontSize: 12, fill: "#374151" }}
                     />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip
+                      formatter={(value, name, props) => [
+                        `Số lượng đã bán: ${value}`,
+                        "",
+                      ]}
+                    />
                     <Bar
                       dataKey="totalSold"
                       fill="#F87171"
