@@ -188,7 +188,7 @@ export default function ToppingManagement({
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="text-sm text-neutral-300 font-medium">
+          <span>
             Trang {page + 1} / {pageInfo.totalPages}
           </span>
           <button

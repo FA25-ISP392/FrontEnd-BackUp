@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ManagerSidebar from "../components/Manager/ManagerSidebar";
 import TablesManagement from "../components/Manager/TablesManagement";
 import TableDetailsModal from "../components/Manager/TableDetailsModal";
@@ -23,6 +23,8 @@ import { listTables } from "../lib/apiTable";
 export default function Manager() {
   const [managerName, setManagerName] = useState("");
   const [activeSection, setActiveSection] = useState("accounts");
+
+  // Booking
   const [deletingIds] = useState(new Set());
   const [selectedTable, setSelectedTable] = useState(null);
   const [tables, setTables] = useState([]);
@@ -39,18 +41,22 @@ export default function Manager() {
     totalElements: 0,
   });
 
+  // Topping
   const [toppings, setToppings] = useState([]);
   const [isEditingTopping, setIsEditingTopping] = useState(false);
   const [editingTopping, setEditingTopping] = useState(null);
-  const [toppingPage, setToppingPage] = useState(1);
+  const [toppingPage, setToppingPage] = useState(0);
   const [toppingSize] = useState(10);
   const [toppingPageInfo, setToppingPageInfo] = useState({
-    page: 1,
+    page: 0,
     size: 10,
     totalPages: 1,
     totalElements: 0,
   });
+  const [loadingTopping, setLoadingTopping] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
+  // Load manager name
   useEffect(() => {
     const loadName = async () => {
       try {
@@ -79,6 +85,7 @@ export default function Manager() {
     loadName();
   }, []);
 
+  // Load bookings
   useEffect(() => {
     if (activeSection !== "accounts") return;
     let cancelled = false;
@@ -103,19 +110,19 @@ export default function Manager() {
         if (!cancelled) setLoadingBookings(false);
       }
     })();
-
     return () => {
       cancelled = true;
     };
   }, [activeSection, bookingPage, bookingSize, statusFilter]);
 
+  // Load tables
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const data = await listTables();
         if (!cancelled) setTables(Array.isArray(data) ? data : []);
-      } catch (e) {
+      } catch {
         if (!cancelled) setTables([]);
       }
     })();
@@ -124,80 +131,78 @@ export default function Manager() {
     };
   }, []);
 
+  // Load topping paging (no loop)
+  const loadToppings = useCallback(async () => {
+    setLoadingTopping(true);
+    try {
+      const pageData = await listToppingPaging({
+        page: toppingPage,
+        size: toppingSize,
+      });
+
+      setToppings(pageData.content);
+      setToppingPageInfo(pageData.pageInfo);
+    } catch (err) {
+      console.error("❌ Lỗi khi load topping:", err);
+      setToppings([]);
+    } finally {
+      setLoadingTopping(false);
+    }
+  }, [toppingPage, toppingSize]);
+
   useEffect(() => {
     if (activeSection !== "toppings") return;
-    let cancelled = false;
+    if (searchTerm) return; // Nếu đang tìm thì không gọi paging
+    loadToppings();
+  }, [activeSection, toppingPage, searchTerm, loadToppings]);
 
-    (async () => {
-      try {
-        const pageData = await listToppingPaging({
-          page: toppingPage - 1,
-          size: toppingSize,
-        });
-
-        if (!cancelled) {
-          setToppings(pageData.content);
-          setToppingPageInfo({
-            ...pageData,
-            page: toppingPage,
-            totalPages: pageData.totalPages,
-          });
-        }
-      } catch (err) {
-        if (!cancelled) setToppings([]);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activeSection, toppingPage, toppingSize]);
-
-  const handleSearchTopping = async (keyword = "") => {
-    try {
+  // Search topping
+  const handleSearchTopping = useCallback(
+    async (keyword = "") => {
+      setSearchTerm(keyword);
       if (!keyword.trim()) {
-        setToppingPage(1);
-        const pageData = await listToppingPaging({
-          page: 0,
-          size: toppingSize,
-        });
-        setToppings(pageData.content);
-        setToppingPageInfo({ ...pageData, page: 1 });
+        await loadToppings();
         return;
       }
-      const result = await searchToppingByName(keyword);
-      if (Array.isArray(result)) {
-        setToppings(result);
-        setToppingPageInfo({
-          page: 1,
-          size: result.length,
-          totalPages: 1,
-          totalElements: result.length,
-          first: true,
-          last: true,
-        });
-      } else {
+      setLoadingTopping(true);
+      try {
+        const result = await searchToppingByName(keyword);
+        if (Array.isArray(result)) {
+          setToppings(result);
+          setToppingPageInfo({
+            page: 0,
+            size: result.length,
+            totalPages: 1,
+            totalElements: result.length,
+          });
+        } else {
+          setToppings([]);
+        }
+      } catch {
         setToppings([]);
+      } finally {
+        setLoadingTopping(false);
       }
-    } catch (err) {
-      setToppings([]);
-    }
-  };
+    },
+    [loadToppings],
+  );
 
+  // Reject booking
   const handleReject = async (id) => {
     setBookings((prev) =>
-      prev.map((x) => (x.id === id ? { ...x, status: "REJECT" } : x))
+      prev.map((x) => (x.id === id ? { ...x, status: "REJECT" } : x)),
     );
     try {
       await rejectBooking(id);
     } catch (err) {
       setBookings((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, status: "PENDING" } : x))
+        prev.map((x) => (x.id === id ? { ...x, status: "PENDING" } : x)),
       );
       alert(err?.message || "Từ chối thất bại");
     }
   };
 
+  // Approve booking
   const handleAssignTable = async (bookingId, tableId) => {
     try {
       await approveBookingWithTable(bookingId, tableId);
@@ -205,33 +210,35 @@ export default function Manager() {
         prev.map((b) =>
           b.id === bookingId
             ? { ...b, status: "APPROVED", assignedTableId: tableId }
-            : b
-        )
+            : b,
+        ),
       );
       setTables((prev) =>
         prev.map((t) =>
           t.id === tableId
             ? { ...t, status: "reserved", isAvailable: false }
-            : t
-        )
+            : t,
+        ),
       );
     } catch (error) {
       alert(
         error?.response?.data?.message ||
           error?.message ||
-          "Không thể gán bàn cho đơn đặt."
+          "Không thể gán bàn cho đơn đặt.",
       );
     }
   };
 
+  // Update table order
   const updateOrderStatus = (tableId, updatedOrder) => {
     setTables((prevTables) =>
       prevTables.map((table) =>
-        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table
-      )
+        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table,
+      ),
     );
   };
 
+  // Render
   const renderContent = () => {
     switch (activeSection) {
       case "tables":
@@ -281,6 +288,7 @@ export default function Manager() {
             <ManagerDishPage />
           </div>
         );
+
       case "dailyPlan":
         return <ManagerDailyPlanPage />;
 
@@ -294,7 +302,7 @@ export default function Manager() {
             setToppings={setToppings}
             setIsEditingTopping={setIsEditingTopping}
             setEditingItem={setEditingTopping}
-            loading={false}
+            loading={loadingTopping}
             onSearch={handleSearchTopping}
             page={toppingPage}
             pageInfo={toppingPageInfo}
@@ -317,6 +325,7 @@ export default function Manager() {
     }
   };
 
+  // Return JSX
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-neutral-900 to-red-900">
       <div className="flex">
@@ -326,7 +335,7 @@ export default function Manager() {
         />
         <main className="flex-1 p-8 md:p-10">
           <div className="mb-10 animate-fade-in-up">
-            <h1 className="text-4xl font-extrabold text-white shadow-text-lg mb-2">
+            <h1 className="text-4xl font-extrabold text-white mb-2">
               Chào mừng trở lại, {managerName}!
             </h1>
             <p className="text-xl text-red-300">
@@ -346,12 +355,14 @@ export default function Manager() {
         </main>
       </div>
 
+      {/* Table modal */}
       <TableDetailsModal
         selectedTable={selectedTable}
         setSelectedTable={setSelectedTable}
         updateOrderStatus={updateOrderStatus}
       />
 
+      {/* Topping modal */}
       <EditToppingModal
         isEditingTopping={isEditingTopping}
         setIsEditingTopping={setIsEditingTopping}
