@@ -201,50 +201,52 @@ export default function StaffPaymentModal({ open, onClose, table }) {
   if (!open || !table) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-xl border border-white/10">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold">Xử Lý Thanh Toán</h3>
+          <h3 className="text-lg font-semibold text-white">Xử Lý Thanh Toán</h3>
           <button
             onClick={() => onClose?.()}
-            className="p-2 hover:bg-neutral-100 rounded-lg"
+            className="p-2 hover:bg-white/10 rounded-lg text-neutral-300 hover:text-white"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="text-sm text-neutral-600 mb-4">
+        <div className="text-sm text-neutral-300 mb-4">
           Bàn <b>{table?.number}</b> • Order <b>#{orderId}</b>
           {" • Tổng: "}
-          <b>{VND(displayTotal)}</b>
+          <b className="text-green-400">{VND(displayTotal)}</b>
         </div>
 
         {view === "default" && (
           <>
             <div className="mb-4">
               {loading ? (
-                <div className="flex items-center gap-2 text-neutral-500">
+                <div className="flex items-center gap-2 text-neutral-400">
                   <Loader2 className="h-4 w-4 animate-spin" /> Đang tải đơn
                   hàng…
                 </div>
               ) : (
                 <>
                   {order && (
-                    <div className="mb-2 text-sm text-center">
+                    <div className="mb-2 text-sm text-center text-neutral-300">
                       <div className="font-medium">
                         Khách:{" "}
-                        {order.customerName ||
-                          order.customer?.fullName ||
-                          order.customer?.name ||
-                          order.customer?.email ||
-                          "—"}
+                        <span className="text-white">
+                          {order.customerName ||
+                            order.customer?.fullName ||
+                            order.customer?.name ||
+                            order.customer?.email ||
+                            "—"}
+                        </span>
                       </div>
                     </div>
                   )}
 
                   {items?.length > 0 ? (
-                    <div className="border rounded-xl p-3 bg-neutral-50 max-h-56 overflow-auto">
-                      <div className="text-sm font-semibold mb-2 text-center">
+                    <div className="border rounded-xl p-3 bg-black/20 border-white/10 max-h-56 overflow-auto scrollbar-thin scrollbar-thumb-neutral-700">
+                      <div className="text-sm font-semibold mb-2 text-center text-white">
                         Món đã gọi
                       </div>
                       <ul className="space-y-2">
@@ -253,26 +255,28 @@ export default function StaffPaymentModal({ open, onClose, table }) {
                             key={it.orderDetailId || it.id || idx}
                             className="text-sm"
                           >
-                            <div className="flex justify-between">
+                            <div className="flex justify-between text-neutral-200">
                               <span className="font-medium">
                                 {it.dishName ||
                                   it.name ||
                                   `Món #${it.dishId || ""}`}
                               </span>
-                              <span>
+                              <span className="text-neutral-300">
                                 x{it.quantity ?? 1} •{" "}
-                                {VND(
-                                  it.lineTotal ??
-                                    it.totalPrice ??
-                                    it.unitPrice ??
-                                    0
-                                )}
+                                <span className="text-green-400 font-medium">
+                                  {VND(
+                                    it.lineTotal ??
+                                      it.totalPrice ??
+                                      it.unitPrice ??
+                                      0
+                                  )}
+                                </span>
                               </span>
                             </div>
 
                             {Array.isArray(it.toppings) &&
                               it.toppings.length > 0 && (
-                                <div className="text-xs text-neutral-600 mt-0.5">
+                                <div className="text-xs text-neutral-400 mt-0.5">
                                   Topping:{" "}
                                   {it.toppings
                                     .map(
@@ -287,7 +291,7 @@ export default function StaffPaymentModal({ open, onClose, table }) {
                                 </div>
                               )}
                             {it.note && (
-                              <div className="text-xs text-neutral-600">
+                              <div className="text-xs text-neutral-400 italic">
                                 Ghi chú: {it.note}
                               </div>
                             )}
@@ -296,7 +300,7 @@ export default function StaffPaymentModal({ open, onClose, table }) {
                       </ul>
                     </div>
                   ) : (
-                    <div className="text-sm text-neutral-500">
+                    <div className="text-sm text-neutral-400">
                       Chưa có chi tiết món.
                     </div>
                   )}
@@ -308,7 +312,7 @@ export default function StaffPaymentModal({ open, onClose, table }) {
               <button
                 disabled={loading}
                 onClick={openCashForm}
-                className="py-3 rounded-xl bg-neutral-900 text-white hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2"
+                className="py-3 rounded-xl bg-green-600 text-white hover:bg-green-700 disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -335,11 +339,11 @@ export default function StaffPaymentModal({ open, onClose, table }) {
             {(qr || checkoutUrl) && (
               <div className="mt-5 space-y-3">
                 {qr && (
-                  <div className="border rounded-xl overflow-hidden">
+                  <div className="border rounded-xl overflow-hidden bg-white p-2">
                     <img
                       src={qr}
                       alt="QR Code"
-                      className="w-full max-h-[360px] object-contain bg-white"
+                      className="w-full max-h-[360px] object-contain"
                     />
                   </div>
                 )}
@@ -366,9 +370,9 @@ export default function StaffPaymentModal({ open, onClose, table }) {
 
         {view === "cash" && (
           <div className="space-y-4">
-            <div className="rounded-xl border p-4 bg-neutral-50">
+            <div className="rounded-xl border p-4 bg-black/20 border-white/10">
               <div className="mb-3">
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium mb-1 text-neutral-300">
                   Tiền nhận từ khách
                 </label>
                 <input
@@ -380,34 +384,37 @@ export default function StaffPaymentModal({ open, onClose, table }) {
                     setCashInput(e.target.value);
                     setCashError("");
                   }}
-                  className="w-full rounded-lg border px-3 py-2 outline-none focus:ring-2 focus:ring-neutral-800/20"
+                  className="w-full rounded-lg border px-3 py-2 outline-none focus:ring-2 focus:ring-green-500/50 bg-gray-700 border-gray-600 text-white"
                 />
                 {cashInput && (
-                  <div className="text-xs text-neutral-500 mt-1">
-                    Bạn nhập: <b>{VND(parseNumber(cashInput))}</b>
+                  <div className="text-xs text-neutral-400 mt-1">
+                    Bạn nhập:{" "}
+                    <b className="text-white">{VND(parseNumber(cashInput))}</b>
                   </div>
                 )}
                 {cashError && (
-                  <div className="text-sm text-red-600 mt-1">{cashError}</div>
+                  <div className="text-sm text-red-400 mt-1">{cashError}</div>
                 )}
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div className="bg-white rounded-lg border p-3">
-                  <div className="text-neutral-500">Tổng tiền</div>
-                  <div className="font-semibold">{VND(displayTotal)}</div>
+                <div className="bg-gray-700 rounded-lg border border-white/10 p-3">
+                  <div className="text-neutral-400">Tổng tiền</div>
+                  <div className="font-semibold text-white">
+                    {VND(displayTotal)}
+                  </div>
                 </div>
                 <div
                   className={`rounded-lg border p-3 ${
                     notEnough
-                      ? "bg-red-50 border-red-200"
-                      : "bg-green-50 border-green-200"
+                      ? "bg-red-900/30 border-red-500/30"
+                      : "bg-green-900/30 border-green-500/30"
                   }`}
                 >
-                  <div className={`text-neutral-500`}>Tiền thối</div>
+                  <div className={`text-neutral-400`}>Tiền thối</div>
                   <div
                     className={`font-semibold ${
-                      notEnough ? "text-red-700" : "text-green-700"
+                      notEnough ? "text-red-400" : "text-green-400"
                     }`}
                   >
                     {VND(change)}
@@ -420,18 +427,18 @@ export default function StaffPaymentModal({ open, onClose, table }) {
               <button
                 disabled={loading}
                 onClick={goBack}
-                className="py-3 rounded-xl bg-neutral-200 text-neutral-800 hover:bg-neutral-300 disabled:opacity-60 flex items-center justify-center gap-2"
+                className="py-3 rounded-xl bg-neutral-600 text-white hover:bg-neutral-500 disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Quay về
               </button>
 
               <button
-                disabled={loading}
+                disabled={loading || notEnough}
                 onClick={confirmCashPayment}
                 className={`py-3 rounded-xl text-white flex items-center justify-center gap-2 ${
                   notEnough
-                    ? "bg-neutral-400 cursor-not-allowed"
+                    ? "bg-neutral-500 cursor-not-allowed"
                     : "bg-green-600 hover:bg-green-700"
                 }`}
                 title={notEnough ? "Tiền nhận chưa đủ" : ""}

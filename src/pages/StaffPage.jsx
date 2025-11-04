@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, AlertTriangle, History } from "lucide-react";
+import { CheckCircle, AlertTriangle, History, Users } from "lucide-react"; // Đã thêm Users
 import StaffSidebar from "../components/Staff/StaffSidebar";
 import StaffRestaurantTableLayout from "../components/Staff/StaffRestaurantTableLayout";
 import StaffTableInfoLayout from "../components/Staff/StaffTableInfoLayout";
@@ -20,6 +20,7 @@ import {
 } from "../components/Staff/staffUtils";
 import StaffOverview from "../components/Staff/StaffOverview";
 import StaffTableDetailModal from "../components/Staff/StaffTableDetailModal";
+import { getCurrentUser } from "../lib/auth";
 
 export default function StaffPage({ section = "tableLayout" }) {
   const [activeSection, setActiveSection] = useState(section);
@@ -39,6 +40,19 @@ export default function StaffPage({ section = "tableLayout" }) {
   // Noti modals
   const [showSuccessModal, setShowSuccessModal] = useState("");
   const [showErrorModal, setShowErrorModal] = useState("");
+
+  const [staffName, setStaffName] = useState("");
+  useEffect(() => {
+    const u = getCurrentUser();
+    const name =
+      u?.staff_name ||
+      u?.staffName ||
+      u?.fullName ||
+      u?.name ||
+      u?.displayName ||
+      u?.username;
+    setStaffName(name || "Staff");
+  }, []);
 
   useEffect(() => {
     let timer;
@@ -329,123 +343,150 @@ export default function StaffPage({ section = "tableLayout" }) {
     }
   };
 
+  const getSectionTitle = () => {
+    switch (activeSection) {
+      case "tableLayout":
+        return "Sơ Đồ Bàn";
+      case "overview":
+        return "Thông Tin Bàn";
+      case "serveBoard":
+        return "Phục Vụ Món";
+      case "serveHistory":
+        return "Lịch Sử Phục Vụ";
+      default:
+        return "Trang Nhân Viên";
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-green-50 to-emerald-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-neutral-900 to-green-900">
       <div className="flex">
         <StaffSidebar activeSection={activeSection} />
 
-        <main className="flex-1 p-6">
-          {activeSection === "tableLayout" && (
-            <div className="space-y-6">
-              <h1 className="text-2xl font-bold">Sơ Đồ Bàn</h1>
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-                <StaffRestaurantTableLayout
+        <main className="flex-1 p-8 md:p-10">
+          <div className="mb-10 animate-fade-in-up">
+            <h1 className="text-4xl font-extrabold text-white shadow-text-lg mb-2">
+              Chào mừng, {staffName}!
+            </h1>
+            <p className="text-xl text-green-300">
+              {getSectionTitle()} - Quản lý dịch vụ khách hàng
+            </p>
+          </div>
+
+          <div
+            className="animate-fade-in-up"
+            style={{ animationDelay: "100ms" }}
+          >
+            {activeSection === "tableLayout" && (
+              <div className="space-y-6">
+                <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
+                  <StaffRestaurantTableLayout
+                    tables={tables.slice(0, 8)}
+                    onTableClick={setSelectedTable}
+                    selectedTable={selectedTable}
+                  />
+                </div>
+              </div>
+            )}
+
+            {activeSection === "overview" && (
+              <div className="space-y-6">
+                <StaffOverview tables={tables} />
+
+                <StaffTableInfoLayout
                   tables={tables.slice(0, 8)}
                   onTableClick={setSelectedTable}
                   selectedTable={selectedTable}
                 />
               </div>
-            </div>
-          )}
+            )}
 
-          {activeSection === "overview" && (
-            <div className="space-y-6">
-              <h1 className="text-2xl font-bold">Thông Tin Bàn</h1>
-
-              <StaffOverview tables={tables} />
-
-              <StaffTableInfoLayout
-                tables={tables.slice(0, 8)}
-                onTableClick={setSelectedTable}
-                selectedTable={selectedTable}
+            {activeSection === "serveBoard" && (
+              <ServeBoard
+                readyOrders={readyOrders}
+                servedOrders={servedOrders}
+                onServe={handleServe}
+                isLoading={serveLoading}
+                error={serveError}
               />
-            </div>
-          )}
+            )}
 
-          {activeSection === "serveBoard" && (
-            <ServeBoard
-              readyOrders={readyOrders}
-              servedOrders={servedOrders}
-              onServe={handleServe}
-              isLoading={serveLoading}
-              error={serveError}
-            />
-          )}
-
-          {activeSection === "serveHistory" && (
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center">
-                  <History className="h-4 w-4 text-white" />
+            {activeSection === "serveHistory" && (
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-8 h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center">
+                    <History className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">
+                      Lịch Sử Phục Vụ
+                    </h3>
+                    <p className="text-sm text-neutral-300">
+                      Các món đã phục vụ từ những ngày trước
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-neutral-900">
-                    Lịch Sử Phục Vụ
-                  </h3>
-                  <p className="text-sm text-neutral-600">
-                    Các món đã phục vụ từ những ngày trước
+
+                {serveLoading ? (
+                  <p className="text-indigo-200">Đang tải lịch sử...</p>
+                ) : serveError ? (
+                  <p className="text-red-400">{serveError}</p>
+                ) : historicalServed.length === 0 ? (
+                  <p className="text-center py-8 text-neutral-400">
+                    Chưa có lịch sử phục vụ.
                   </p>
-                </div>
-              </div>
-
-              {serveLoading ? (
-                <p>Đang tải lịch sử...</p>
-              ) : serveError ? (
-                <p className="text-red-500">{serveError}</p>
-              ) : historicalServed.length === 0 ? (
-                <p className="text-center py-8 text-neutral-500">
-                  Chưa có lịch sử phục vụ.
-                </p>
-              ) : (
-                <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-neutral-300 scrollbar-track-transparent">
-                  {historicalServed.map((od) => (
-                    <div
-                      key={od.orderDetailId}
-                      className="bg-neutral-50 rounded-lg p-4 border border-neutral-200"
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <span className="font-semibold text-neutral-800">
-                            {od.dishName}
-                          </span>
-                          <span className="text-sm text-neutral-600 ml-2">
-                            (ID: {od.orderDetailId})
+                ) : (
+                  <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent">
+                    {historicalServed.map((od) => (
+                      <div
+                        key={od.orderDetailId}
+                        className="bg-black/20 rounded-lg p-4 border border-white/10"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <span className="font-semibold text-white">
+                              {od.dishName}
+                            </span>
+                            <span className="text-sm text-neutral-400 ml-2">
+                              (ID: {od.orderDetailId})
+                            </span>
+                          </div>
+                          <span className="text-xs font-medium text-neutral-400">
+                            {od.orderDate
+                              ? new Date(od.orderDate).toLocaleDateString(
+                                  "vi-VN"
+                                )
+                              : "Không rõ ngày"}
                           </span>
                         </div>
-                        <span className="text-xs font-medium text-neutral-500">
-                          {od.orderDate
-                            ? new Date(od.orderDate).toLocaleDateString("vi-VN")
-                            : "Không rõ ngày"}
-                        </span>
+
+                        {Array.isArray(od.toppings) &&
+                          od.toppings.length > 0 && (
+                            <div className="text-xs text-neutral-400 mt-1 pt-1 border-t border-white/10">
+                              <span className="font-medium text-neutral-200">
+                                Topping:{" "}
+                              </span>
+                              {od.toppings
+                                .map((t) =>
+                                  t.quantity > 1
+                                    ? `${t.toppingName} x${t.quantity}`
+                                    : t.toppingName
+                                )
+                                .join(", ")}
+                            </div>
+                          )}
+                        {od.note && (
+                          <p className="text-xs italic text-neutral-400 mt-1">
+                            Ghi chú: {od.note}
+                          </p>
+                        )}
                       </div>
-
-                      {/* === KHỐI ĐÃ SỬA === */}
-                      {Array.isArray(od.toppings) && od.toppings.length > 0 && (
-                        <div className="text-xs text-neutral-500 mt-1 pt-1 border-t border-neutral-200/60">
-                          <span className="font-medium text-neutral-700">
-                            Topping:{" "}
-                          </span>
-                          {od.toppings
-                            .map((t) =>
-                              t.quantity > 1
-                                ? `${t.toppingName} x${t.quantity}`
-                                : t.toppingName
-                            )
-                            .join(", ")}
-                        </div>
-                      )}
-                      {od.note && (
-                        <p className="text-xs italic text-neutral-500 mt-1">
-                          Ghi chú: {od.note}
-                        </p>
-                      )}
-                      {/* === HẾT KHỐI ĐÃ SỬA === */}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </main>
       </div>
 
@@ -485,21 +526,21 @@ export default function StaffPage({ section = "tableLayout" }) {
       )}
 
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-white/20">
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-8 w-8 text-green-600" />
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-green-300">
+                <CheckCircle className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-neutral-900 mb-2">
+              <h3 className="text-xl font-bold text-white mb-2">
                 {showSuccessModal}
               </h3>
-              <p className="text-neutral-600 mb-6">
+              <p className="text-neutral-300 mb-6">
                 Hoạt động đã được ghi nhận.
               </p>
               <button
                 onClick={() => setShowSuccessModal("")}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
+                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 font-medium"
               >
                 Đóng
               </button>
@@ -509,19 +550,19 @@ export default function StaffPage({ section = "tableLayout" }) {
       )}
 
       {showErrorModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-white/20">
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertTriangle className="h-8 w-8 text-red-600" />
+              <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-rose-600 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-red-300">
+                <AlertTriangle className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-neutral-900 mb-2">
+              <h3 className="text-xl font-bold text-white mb-2">
                 Đã xảy ra lỗi
               </h3>
-              <p className="text-neutral-600 mb-6">{showErrorModal}</p>
+              <p className="text-neutral-300 mb-6">{showErrorModal}</p>
               <button
                 onClick={() => setShowErrorModal("")}
-                className="bg-gradient-to-r from-red-500 to-rose-500 text-white px-6 py-3 rounded-xl hover:from-red-600 hover:to-rose-600 transition-all duration-300 font-medium"
+                className="bg-gradient-to-r from-red-500 to-rose-600 text-white px-6 py-3 rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-300 font-medium"
               >
                 Đóng
               </button>

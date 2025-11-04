@@ -1,4 +1,4 @@
-import { Table, Users, Clock } from "lucide-react";
+import { Table, Users, Clock } from "lucide-react"; // Bỏ DollarSign
 
 export default function StaffOverview({ tables = [] }) {
   const servingTables = tables.filter(
@@ -10,53 +10,69 @@ export default function StaffOverview({ tables = [] }) {
   ).length;
   const callPaymentCount = tables.filter((table) => table.callPayment).length;
 
+  const stats = [
+    {
+      title: "Bàn Đã Đặt",
+      value: reservedTables,
+      icon: Table,
+      color: "text-yellow-200",
+      gradient: "from-yellow-500 to-orange-500",
+    },
+    {
+      title: "Bàn Trống",
+      value: emptyTables,
+      icon: Users,
+      color: "text-green-200",
+      gradient: "from-green-500 to-emerald-500",
+    },
+    {
+      title: "Bàn Đang Phục Vụ",
+      value: servingTables,
+      icon: Clock,
+      color: "text-red-200",
+      gradient: "from-red-500 to-rose-500",
+    },
+    {
+      title: "Gọi Thanh Toán",
+      value: callPaymentCount,
+      icon: null, // Bỏ icon ở đây
+      color: "text-blue-200",
+      gradient: "from-blue-500 to-cyan-500",
+    },
+  ];
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-      <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-yellow-500">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-neutral-600 text-sm">Bàn Đã Đặt</p>
-            <p className="text-2xl font-bold text-yellow-600">
-              {reservedTables}
+      {stats.map((stat) => {
+        const Icon = stat.icon;
+        return (
+          <div
+            key={stat.title}
+            className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20 hover:border-white/40 transition-all transform hover:scale-105"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <p className={`text-base font-medium ${stat.color}`}>
+                {stat.title}
+              </p>
+              <div
+                className={`w-10 h-10 bg-gradient-to-br ${stat.gradient} rounded-xl flex items-center justify-center shadow-lg`}
+              >
+                {/* === THAY ĐỔI Ở ĐÂY === */}
+                {/* Kiểm tra nếu là 'Gọi Thanh Toán' thì hiện text "VND", nếu không thì hiện Icon */}
+                {stat.title === "Gọi Thanh Toán" ? (
+                  <span className="text-sm font-bold text-white">VND</span>
+                ) : (
+                  <Icon className="h-5 w-5 text-white" />
+                )}
+                {/* === HẾT THAY ĐỔI === */}
+              </div>
+            </div>
+            <p className="text-4xl font-extrabold text-white shadow-text">
+              {stat.value}
             </p>
           </div>
-          <Table className="h-8 w-8 text-yellow-600" />
-        </div>
-      </div>
-
-      <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-green-500">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-neutral-600 text-sm">Bàn Trống</p>
-            <p className="text-2xl font-bold text-green-600">{emptyTables}</p>
-          </div>
-          <Users className="h-8 w-8 text-green-600" />
-        </div>
-      </div>
-
-      <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-orange-500">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-neutral-600 text-sm">Bàn Đang Phục Vụ</p>
-            <p className="text-2xl font-bold text-orange-600">
-              {servingTables}
-            </p>
-          </div>
-          <Clock className="h-8 w-8 text-orange-600" />
-        </div>
-      </div>
-
-      <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-neutral-600 text-sm">Gọi Thanh Toán</p>
-            <p className="text-2xl font-bold text-blue-600">
-              {callPaymentCount}
-            </p>
-          </div>
-          <span className="font-bold text-2xl text-blue-600">VND</span>
-        </div>
-      </div>
+        );
+      })}
     </div>
   );
 }

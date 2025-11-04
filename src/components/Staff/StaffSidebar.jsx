@@ -1,6 +1,7 @@
 import { Users, Table, BarChart3, Utensils, History } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { STAFF_ROUTES } from "../../constant/routes";
+
 export default function StaffSidebar({ activeSection }) {
   const sidebarItems = [
     {
@@ -30,39 +31,44 @@ export default function StaffSidebar({ activeSection }) {
   ];
 
   return (
-    <div className="w-64 bg-white/80 backdrop-blur-sm border-r border-white/20 min-h-screen">
+    <aside className="w-64 bg-white/10 backdrop-blur-lg border-r border-white/10 min-h-screen sticky top-0">
       <div className="p-6">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
-            <Users className="h-5 w-5 text-white" />
+        <div className="flex items-center gap-3 mb-10 px-2">
+          <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+            <Users className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-neutral-900">
-              Trang Nhân Viên
-            </h2>
-            <p className="text-xs text-neutral-600">Phục vụ khách hàng</p>
+            <h2 className="text-l font-bold text-white">Trang Nhân Viên</h2>
+            <p className="text-sm text-green-300 mt-1">Phục vụ khách hàng</p>
           </div>
         </div>
 
-        <nav className="space-y-2">
-          {sidebarItems.map(({ id, label, icon: Icon, to }) => (
-            <NavLink
-              key={id}
-              to={to}
-              className={({ isActive }) =>
-                `w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
-                  isActive || activeSection === id
-                    ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg"
-                    : "text-neutral-700 hover:bg-green-50 hover:text-green-700"
-                }`
-              }
-            >
-              <Icon className="h-5 w-5" />
-              <span className="font-medium">{label}</span>
-            </NavLink>
-          ))}
+        <nav className="space-y-3">
+          {sidebarItems.map(({ id, label, icon: Icon, to }) => {
+            const isActive = activeSection === id;
+            return (
+              <NavLink
+                key={id}
+                to={to}
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-300 group ${
+                  isActive
+                    ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg transform scale-105"
+                    : "text-neutral-300 hover:bg-white/20 hover:shadow-lg hover:text-green-300 transform hover:-translate-y-0.5"
+                }`}
+              >
+                <Icon
+                  className={`h-5 w-5 transition-colors ${
+                    isActive
+                      ? "text-white"
+                      : "text-neutral-400 group-hover:text-green-300"
+                  }`}
+                />
+                <span className="font-medium">{label}</span>
+              </NavLink>
+            );
+          })}
         </nav>
       </div>
-    </div>
+    </aside>
   );
 }
