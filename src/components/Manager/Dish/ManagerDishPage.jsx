@@ -10,6 +10,8 @@ import {
   Save,
   ImageIcon,
   UploadCloud,
+  CheckCircle,
+  AlertTriangle,
 } from "lucide-react";
 import {
   listDishPaging,
@@ -314,6 +316,32 @@ export default function ManagerDishPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // 👈 === PHẦN THÊM MỚI 1: State cho modal xác nhận ===
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+  // ==========================================================
+
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
+
   const fetchDishes = useCallback(async () => {
     try {
       setLoading(true);
@@ -331,7 +359,7 @@ export default function ManagerDishPage() {
       }
     } catch (err) {
       console.error("❌ Lỗi tải danh sách món ăn:", err);
-      alert("Không tải được danh sách món ăn");
+      setErrorMessage("Không tải được danh sách món ăn");
       setDishes([]);
       setTotalPages(0);
     } finally {
@@ -367,12 +395,12 @@ export default function ManagerDishPage() {
         await addDishToppingsBatch(newId, toppingIds);
       }
 
-      alert("✅ Thêm món ăn thành công!");
+      setSuccessMessage("Thêm món ăn thành công!");
       setOpenCreate(false);
       handleRefresh();
     } catch (err) {
       console.error(err);
-      alert("❌ Lỗi khi thêm món ăn!");
+      setErrorMessage("Lỗi khi thêm món ăn!");
     } finally {
       setSaving(false);
     }
@@ -401,12 +429,12 @@ export default function ManagerDishPage() {
       }
 
       handleRefresh();
-      alert("✅ Cập nhật món ăn thành công!");
+      setSuccessMessage("Cập nhật món ăn thành công!");
       setOpenEdit(false);
       setEditingDish(null);
     } catch (err) {
       console.error(err);
-      alert("❌ Lỗi khi cập nhật món ăn!");
+      setErrorMessage("Lỗi khi cập nhật món ăn!");
     } finally {
       setSaving(false);
     }
@@ -419,21 +447,36 @@ export default function ManagerDishPage() {
       setOpenDetail(true);
     } catch (err) {
       console.error(err);
-      alert("❌ Không tải được chi tiết món ăn!");
+      setErrorMessage("Không tải được chi tiết món ăn!");
     }
   };
 
-  const handleDeleteDish = async (id) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xoá món ăn này không?")) return;
+  // 👈 === PHẦN SỬA 2: Hàm mở modal xác nhận ===
+  const handleDeleteDish = (dish) => {
+    if (!dish || !dish.id) return;
+    setConfirmModal({
+      isOpen: true,
+      title: "Xác nhận xoá món ăn?",
+      message: `Bạn có chắc muốn xoá vĩnh viễn món "${
+        dish.name || "này"
+      }"? Hành động này không thể hoàn tác.`,
+      onConfirm: () => _executeDelete(dish.id),
+    });
+  };
+
+  // 👈 === PHẦN SỬA 3: Hàm thực thi việc xoá ===
+  const _executeDelete = async (id) => {
+    setConfirmModal({ isOpen: false });
     try {
       await deleteDish(id);
       handleRefresh();
-      alert("✅ Đã xoá món ăn thành công!");
+      setSuccessMessage("Đã xoá món ăn thành công!");
     } catch (err) {
       console.error(err);
-      alert("❌ Không thể xoá món ăn!");
+      setErrorMessage("Không thể xoá món ăn!");
     }
   };
+  // ==========================================================
 
   return (
     <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
@@ -503,13 +546,15 @@ export default function ManagerDishPage() {
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
+                  {/* 👈 === PHẦN SỬA 4: Cập nhật onClick === */}
                   <button
-                    onClick={() => handleDeleteDish(d.id)}
+                    onClick={() => handleDeleteDish(d)}
                     className="text-neutral-400 hover:text-red-400 p-1 rounded-lg hover:bg-red-900/50"
                     title="Xoá món ăn"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
+                  {/* ======================================= */}
                 </div>
               </div>
               <p className="mt-2 text-neutral-300 text-sm line-clamp-2">
@@ -653,6 +698,82 @@ export default function ManagerDishPage() {
           </div>
         )}
       </Modal>
+
+      {/* 👈 === PHẦN SỬA 5: Thêm JSX của Modal Xác nhận Xoá === */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+          <div className="bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-white/20">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center bg-red-500/20">
+                <AlertTriangle className="h-6 w-6 text-red-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-white mb-2">
+                  {confirmModal.title}
+                </h3>
+                <p className="text-neutral-300 mb-6">{confirmModal.message}</p>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => setConfirmModal({ isOpen: false })}
+                    className="px-4 py-2 rounded-lg bg-black/30 text-white hover:bg-black/50 transition-all font-medium text-sm"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={confirmModal.onConfirm}
+                    className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-all font-medium text-sm"
+                  >
+                    Xác nhận Xoá
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ========================================================== */}
+
+      {/* Modal Thông báo (Thành công/Lỗi) */}
+      {successMessage && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+          <div className="bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-green-500/50">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Thành công!</h3>
+              <p className="text-neutral-300 mb-6">{successMessage}</p>
+              <button
+                onClick={() => setSuccessMessage("")}
+                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-2 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium text-sm"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {errorMessage && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+          <div className="bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-red-500/50">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                Đã xảy ra lỗi
+              </h3>
+              <p className="text-neutral-300 mb-6">{errorMessage}</p>
+              <button
+                onClick={() => setErrorMessage("")}
+                className="bg-gradient-to-r from-red-500 to-rose-500 text-white px-6 py-2 rounded-xl hover:from-red-600 hover:to-rose-600 transition-all duration-300 font-medium text-sm"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
