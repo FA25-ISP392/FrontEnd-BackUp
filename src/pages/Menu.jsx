@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react"; // 👈 SỬA: Thêm useMemo
+import { useState, useEffect, useRef, useMemo } from "react";
 import { CheckCircle, XCircle, Bell, AlertTriangle } from "lucide-react";
 import MenuHeader from "../components/Menu/MenuHeader";
 import MenuContent from "../components/Menu/MenuContent";
@@ -15,7 +15,8 @@ import {
   getOrderDetailsByOrderId,
 } from "../lib/apiOrder";
 import { useMenuPersonalization } from "../hooks";
-import { listDish, getDish } from "../lib/apiDish";
+// 👈 === SỬA 1: Thêm normalizeDish VÀO ĐÂY ===
+import { listDish, getDish, normalizeDish } from "../lib/apiDish";
 import {
   updateCustomerPersonalization,
   getCustomerDetail,
@@ -429,6 +430,8 @@ export default function Menu() {
     const base = baseCalories ?? estimatedCalories;
     setEstimatedCalories(applyGoal(base, goalId));
   };
+
+  // 👈 === SỬA 2: SỬA HÀM NÀY ===
   const handlePersonalizationSubmit = async ({
     customerUpdatePayload,
     suggestionCreationPayload,
@@ -445,19 +448,23 @@ export default function Menu() {
       const suggestionsResponse = await getSuggestedMenu(
         suggestionCreationPayload
       );
+
+      // 👈 === SỬA TỪ ĐÂY ===
+      // Quay lại logic "làm phẳng" (flatten) mảng
       const flatList = Array.isArray(suggestionsResponse)
         ? suggestionsResponse.flatMap((r) =>
             [r.drink, r.salad, r.mainCourse, r.dessert]
               .filter(Boolean)
-              .map((dish) => ({
-                ...dish,
-                id: dish.dishId ?? dish.id,
-                name: dish.dishName ?? dish.name,
-              }))
+              // Chuẩn hóa món ăn ngay tại đây
+              .map((dish) => normalizeDish(dish))
           )
         : [];
+
+      // Lấy 12 món đầu tiên
       const limitedList = flatList.slice(0, 12);
-      setSuggestedMenu(limitedList);
+      setSuggestedMenu(limitedList); // 👈 Lưu mảng 12 món
+      // 👈 === SỬA ĐẾN ĐÂY ===
+
       setEstimatedCalories(dailyCalories);
       setIsPersonalized(true);
       setIsPersonalizationOpen(false);
@@ -474,6 +481,8 @@ export default function Menu() {
       setIsErrorOpen(true);
     }
   };
+  // 👈 === HẾT SỬA HÀM NÀY ===
+
   const handleRequestPayment = async () => {
     try {
       if (!orderId) throw new Error("Chưa có orderId.");
@@ -918,7 +927,7 @@ export default function Menu() {
             </p>
             <button
               onClick={cleanupAndExit}
-              className="mt-6 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
+              className="mt-6 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 font-medium"
             >
               Thoát ngay
             </button>

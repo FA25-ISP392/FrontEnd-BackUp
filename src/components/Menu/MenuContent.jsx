@@ -1,9 +1,8 @@
-import { Target, Zap, Heart, ImageOff } from "lucide-react"; // 👈 Thêm ImageOff
-// import { categories as CATEGORY_LIST } from "../../lib/menuData"; // <-- ĐÃ XÓA DÒNG NÀY
+import { Target, Zap, Heart, ImageOff } from "lucide-react";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 
-// === SỬA: Tách Card Món Ăn ra thành component riêng (trong cùng file) ===
+// === Card Món Ăn (Giữ nguyên) ===
 const DishCard = ({ dish, onDishSelect }) => {
   const {
     name,
@@ -12,7 +11,7 @@ const DishCard = ({ dish, onDishSelect }) => {
     calo,
     calories,
     picture,
-    remainingQuantity = 1, // Mặc định là còn hàng
+    remainingQuantity = 1,
   } = dish;
 
   const isSoldOut = remainingQuantity <= 0;
@@ -23,7 +22,6 @@ const DishCard = ({ dish, onDishSelect }) => {
         isSoldOut ? "opacity-60" : "hover:shadow-2xl hover:border-orange-300"
       }`}
     >
-      {/* === SỬA: Thêm Overlay Hết Hàng === */}
       {isSoldOut && (
         <div className="absolute inset-0 bg-black/50 z-10 flex items-center justify-center">
           <span className="px-4 py-2 bg-white/90 text-red-600 font-bold rounded-lg shadow-xl">
@@ -31,8 +29,6 @@ const DishCard = ({ dish, onDishSelect }) => {
           </span>
         </div>
       )}
-
-      {/* Hình ảnh */}
       <div className="relative h-48 w-full overflow-hidden">
         {picture ? (
           <img
@@ -49,8 +45,6 @@ const DishCard = ({ dish, onDishSelect }) => {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
       </div>
-
-      {/* Thông tin */}
       <div className="p-4 flex flex-col flex-grow">
         <h4 className="text-lg font-bold text-neutral-900 truncate mb-1">
           {name}
@@ -58,9 +52,7 @@ const DishCard = ({ dish, onDishSelect }) => {
         <p className="text-sm text-neutral-600 h-10 line-clamp-2 mb-3">
           {description || "Chưa có mô tả cho món ăn này."}
         </p>
-
         <div className="flex-grow"></div>
-
         <div className="flex items-end justify-between mt-2">
           <div className="flex flex-col">
             <span className="text-xl font-extrabold text-orange-600">
@@ -89,15 +81,15 @@ const DishCard = ({ dish, onDishSelect }) => {
 
 export default function MenuContent({
   activeMenuTab,
-  filteredDishes,
-  dishSuggests,
+  filteredDishes, // Đây là danh sách TẤT CẢ món ăn
+  dishSuggests, // Đây là danh sách các món GỢI Ý (mảng 12 món)
   onDishSelect,
   caloriesConsumed,
   estimatedCalories,
   onGoalChange,
   isPersonalized,
   currentGoal,
-  setActiveMenuTab, // 👈 Thêm prop này
+  setActiveMenuTab,
 }) {
   const goals = [
     { id: "lose", name: "Giảm cân", icon: Target },
@@ -107,19 +99,19 @@ export default function MenuContent({
 
   const canShowCalorie = isPersonalized || caloriesConsumed > 0;
 
+  // dishesToShow chỉ dùng cho tab "Tất Cả"
   const dishesToShow = [...filteredDishes].sort((a, b) => {
     const remainA = a.remainingQuantity > 0 ? 1 : 0;
     const remainB = b.remainingQuantity > 0 ? 1 : 0;
     return remainB - remainA;
   });
 
-  // === SỬA: Tách riêng phần Tab Categories ===
+  // categoriesWithSuggest chỉ còn 2 tab
   const categoriesWithSuggest = [
     { id: "all", name: "Tất Cả" },
     ...(dishSuggests && dishSuggests.length > 0
       ? [{ id: "suggested", name: "Gợi Ý Cho Bạn" }]
       : []),
-    // ...CATEGORY_LIST, // <-- ĐÃ XÓA DÒNG NÀY
   ];
 
   return (
@@ -135,7 +127,6 @@ export default function MenuContent({
             mb-8 px-6 py-5
           "
         >
-          {/* === SỬA: Giao diện Calorie Tracker đẹp hơn === */}
           {estimatedCalories > 0 && (
             <div>
               {(() => {
@@ -243,7 +234,6 @@ export default function MenuContent({
           <h3 className="text-lg font-bold text-neutral-900 mb-4 text-center">
             Mục tiêu của bạn
           </h3>
-          {/* === SỬA: Nút mục tiêu đẹp hơn === */}
           <div className="flex justify-center gap-4">
             {goals.map((goal) => {
               const Icon = goal.icon;
@@ -268,7 +258,7 @@ export default function MenuContent({
         </div>
       )}
 
-      {/* === SỬA: Thanh Tab Categories === */}
+      {/* ====================== THANH TAB ====================== */}
       <div className="mb-8 overflow-x-auto pb-2">
         <div className="flex items-center gap-3 w-max">
           {categoriesWithSuggest.map((cat) => {
@@ -295,12 +285,7 @@ export default function MenuContent({
 
       {/* ====================== DANH MỤC MÓN ĂN ====================== */}
       {activeMenuTab === "all" ? (
-        // *****************************************************************
-        // THAY ĐỔI LOGIC Ở ĐÂY:
-        // Lấy danh sách categories từ file menuData.js để lặp và render
-        // Nhưng vì đã xóa CATEGORY_LIST, chúng ta cần 1 nguồn khác.
-        // Giải pháp: Lấy categories duy nhất từ `dishesToShow`
-        // *****************************************************************
+        // === PHẦN "TẤT CẢ" (Giữ nguyên logic lần trước) ===
         (() => {
           const categoriesInMenu = dishesToShow.reduce((acc, dish) => {
             if (dish.category && !acc.some((c) => c.name === dish.category)) {
@@ -318,7 +303,7 @@ export default function MenuContent({
                 (d.categoryEnum || d.category)?.toLowerCase() ===
                 cat.id?.toLowerCase()
             );
-            if (dishes.length === 0) return null; // Ẩn danh mục trống
+            if (dishes.length === 0) return null;
 
             return (
               <div key={cat.id} className="mb-10">
@@ -339,16 +324,18 @@ export default function MenuContent({
           });
         })()
       ) : (
-        // === SỬA: Render tập trung cho tab "Gợi ý" hoặc 1 Category ===
+        // 👈 === SỬA TỪ ĐÂY: Logic cho tab "GỢI Ý" ===
         <div className="mb-10">
           <h3 className="text-3xl font-bold text-neutral-900 mb-5">
             {categoriesWithSuggest.find((c) => c.id === activeMenuTab)?.name}
           </h3>
-          {filteredDishes.length > 0 ? (
+          {/* SỬA LỖI: Dùng `dishSuggests` (mảng 12 món) thay vì `filteredDishes` */}
+          {dishSuggests && dishSuggests.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredDishes.map((dish) => (
+              {/* Lặp qua mảng 12 món gợi ý */}
+              {dishSuggests.map((dish) => (
                 <DishCard
-                  key={dish.id}
+                  key={dish.id || dish.dishId} // Đảm bảo key là duy nhất
                   dish={dish}
                   onDishSelect={onDishSelect}
                 />
@@ -360,6 +347,7 @@ export default function MenuContent({
             </p>
           )}
         </div>
+        // 👈 === SỬA ĐẾN ĐÂY ===
       )}
     </div>
   );
