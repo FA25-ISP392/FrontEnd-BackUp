@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, ArrowRight, ChefHat, ShoppingBag, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChefHat, X } from "lucide-react";
 import { getBestSellingDishes } from "../../lib/apiStatistics";
 import { getDish } from "../../lib/apiDish";
 
@@ -15,16 +15,11 @@ export default function MenuSection() {
       try {
         const now = new Date();
         const year = now.getFullYear();
-        const month = now.getMonth() + 1;
 
-        // 🔹 Lấy danh sách món bán chạy
-        const best = await getBestSellingDishes({
-          year,
-          month,
-          limit: 5,
-        });
+        // 🔹 Lấy món bán chạy nhất năm (bỏ month)
+        const best = await getBestSellingDishes({ year, limit: 5 });
 
-        // 🔹 Gọi thêm API getDish(id) để lấy chi tiết từng món
+        // 🔹 Lấy chi tiết từng món
         const detailed = await Promise.all(
           best.map(async (b) => {
             try {
@@ -90,7 +85,7 @@ export default function MenuSection() {
             Thực đơn đặc biệt
           </h2>
           <p className="text-xl text-neutral-600 max-w-3xl mx-auto leading-relaxed">
-            Khám phá những món ăn được yêu thích nhất tháng này
+            Khám phá những món ăn được yêu thích nhất <b>năm nay</b>
           </p>
         </div>
 
@@ -149,20 +144,6 @@ export default function MenuSection() {
                         <p className="text-neutral-600 mb-6 leading-relaxed line-clamp-3">
                           {dish.description || "Không có mô tả."}
                         </p>
-                        <div className="flex items-center justify-between">
-                          {/* <span className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                            {dish.price
-                              ? dish.price.toLocaleString("vi-VN") + "₫"
-                              : "—"}
-                          </span> */}
-                          {/* <button
-                            onClick={() => setSelectedDish(dish)}
-                            className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all font-medium flex items-center gap-2"
-                          >
-                            <ShoppingBag className="h-4 w-4" />
-                            Xem chi tiết
-                          </button> */}
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -211,11 +192,6 @@ export default function MenuSection() {
                   <p className="text-xs text-neutral-600 line-clamp-2 mb-2">
                     {dish.description || "Không có mô tả"}
                   </p>
-                  {/* <p className="text-lg font-bold text-orange-600">
-                    {dish.price
-                      ? dish.price.toLocaleString("vi-VN") + "₫"
-                      : "—"}
-                  </p> */}
                 </div>
               </div>
             ))}
@@ -223,7 +199,7 @@ export default function MenuSection() {
         </div>
       </div>
 
-      {/* Modal xem chi tiết */}
+      {/* ✅ Modal xem chi tiết (đặt bên trong section để render cùng) */}
       {selectedDish && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
           <div className="bg-white rounded-2xl max-w-3xl w-full p-8 relative shadow-2xl">
@@ -248,11 +224,6 @@ export default function MenuSection() {
             <p className="text-neutral-700 mb-4">
               {selectedDish.description || "Không có mô tả chi tiết."}
             </p>
-            {/* <p className="text-xl font-bold text-orange-600">
-              {selectedDish.price
-                ? selectedDish.price.toLocaleString("vi-VN") + "₫"
-                : "—"}
-            </p> */}
           </div>
         </div>
       )}
