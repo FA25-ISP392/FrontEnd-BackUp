@@ -64,10 +64,10 @@ export default function MenuContent({
               {(() => {
                 const form =
                   JSON.parse(
-                    localStorage.getItem("personalization:form") || "{}",
+                    localStorage.getItem("personalization:form") || "{}"
                   ) || {};
                 const mealsPerDay = Number(
-                  form.mealsPerDay || form.mealPerDay || 3,
+                  form.mealsPerDay || form.mealPerDay || 3
                 );
                 const perMealCalories = estimatedCalories / mealsPerDay;
 
@@ -238,7 +238,7 @@ export default function MenuContent({
       {activeMenuTab === "all" &&
         CATEGORY_LIST.map((cat) => {
           const dishes = dishesToShow.filter(
-            (d) => d.categoryEnum?.toLowerCase() === cat.id?.toLowerCase(),
+            (d) => d.categoryEnum?.toLowerCase() === cat.id?.toLowerCase()
           );
 
           return (
