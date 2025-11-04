@@ -24,6 +24,7 @@ import { HOME, HOME_ROUTES, NEED_AUTH } from "../constant/routes";
 import CustomerBookingHistory from "../components/Home/CustomerBookingHistory";
 import PaymentHistoryModal from "../components/Home/PaymentHistoryModal";
 import OrderHistoryModal from "../components/Home/OrderHistoryModal";
+import TypewriterText from "../components/Home/TypewriterText";
 
 export default function Home() {
   const location = useLocation();
@@ -42,6 +43,15 @@ export default function Home() {
   } = useBooking();
 
   const [isScrolled, setIsScrolled] = useState(false);
+
+  const aboutText1 =
+    "Chào mừng bạn đến với nhà hàng của chúng tôi, nơi tinh hoa ẩm thực hòa quện cùng sự hiếu khách nồng ấm. Trong hơn một thập kỷ qua, chúng tôi đã phục vụ những món ăn tuyệt hảo được chế biến từ những nguyên liệu tinh túy nhất.";
+  const aboutText2 =
+    "Những đầu bếp tài hoa của chúng tôi sáng tạo nên thực đơn độc đáo, kết hợp tinh hoa kỹ thuật truyền thống với hương vị hiện đại, mang đến trải nghiệm ẩm thực khó quên trong từng món ăn.";
+  const aboutText3 =
+    "Chúng tôi tự hào mang đến dịch vụ xuất sắc trong một không gian thoải mái và thanh lịch, lý tưởng cho mọi dịp – từ những bữa tối ấm cúng cho đến các buổi tiệc lớn.";
+  const missionText =
+    "Tạo nên những trải nghiệm ẩm thực khó quên thông qua món ăn tuyệt hảo, dịch vụ xuất sắc và sự hiếu khách nồng ấm. Đồng thời, chúng tôi mang đến thực đơn đa dạng và cá nhân hóa theo nhu cầu từng người, nhằm phục vụ mục tiêu ăn uống lành mạnh – từ tăng, giảm cho đến duy trì cân nặng một cách bền vững.";
 
   useEffect(() => {
     const syncAuth = () => {
@@ -206,10 +216,10 @@ export default function Home() {
           <nav className="flex items-center gap-8">
             <button
               onClick={() => open(HOME_ROUTES.ABOUT)}
-              className={`transition-all duration-300 hover:scale-105 px-3 py-1 rounded-lg ${
+              className={`transition-all duration-200 transform hover:-translate-y-0.5 active:scale-95 active:shadow-inner px-3 py-1 rounded-lg ${
                 isScrolled
-                  ? "text-gray-700 hover:text-orange-600 hover:shadow-md"
-                  : "text-white hover:bg-white/10 shadow-text"
+                  ? "text-gray-700 hover:text-orange-600 hover:shadow-lg"
+                  : "text-white hover:bg-white/10 shadow-text hover:shadow-lg"
               }`}
             >
               Về Chúng Tôi
@@ -218,10 +228,10 @@ export default function Home() {
             {!isLoggedIn && (
               <button
                 onClick={() => open(HOME_ROUTES.LOGIN)}
-                className={`transition-all duration-300 hover:scale-105 px-3 py-1 rounded-lg ${
+                className={`transition-all duration-200 transform hover:-translate-y-0.5 active:scale-95 active:shadow-inner px-3 py-1 rounded-lg ${
                   isScrolled
-                    ? "text-gray-700 hover:text-orange-600 hover:shadow-md"
-                    : "text-white hover:bg-white/10 shadow-text"
+                    ? "text-gray-700 hover:text-orange-600 hover:shadow-lg"
+                    : "text-white hover:bg-white/10 shadow-text hover:shadow-lg"
                 }`}
               >
                 Đăng Nhập
@@ -230,10 +240,10 @@ export default function Home() {
 
             <button
               onClick={() => open(HOME_ROUTES.BOOKING)}
-              className={`transition-all duration-300 hover:scale-105 px-3 py-1 rounded-lg ${
+              className={`transition-all duration-200 transform hover:-translate-y-0.5 active:scale-95 active:shadow-inner px-3 py-1 rounded-lg ${
                 isScrolled
-                  ? "text-gray-700 hover:text-orange-600 hover:shadow-md"
-                  : "text-white hover:bg-white/10 shadow-text"
+                  ? "text-gray-700 hover:text-orange-600 hover:shadow-lg"
+                  : "text-white hover:bg-white/10 shadow-text hover:shadow-lg"
               }`}
             >
               Đặt Bàn
@@ -243,7 +253,7 @@ export default function Home() {
               onClick={() => {
                 menuRef.current?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg transform"
+              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg transform active:scale-95"
             >
               Món phải thử
             </button>
@@ -353,6 +363,7 @@ export default function Home() {
         </div>
       )}
 
+      {/* ===== MODAL "VỀ CHÚNG TÔI" ĐÃ SỬA ===== */}
       {modal === "about" && (
         <div className="fixed inset-0 z-50 transition-opacity duration-300">
           <div className="absolute inset-0 bg-black/40" onClick={closeToHome} />
@@ -370,40 +381,37 @@ export default function Home() {
                 </button>
               </div>
               <div className="space-y-4 text-gray-700 leading-relaxed text-sm">
-                <p>
-                  Chào mừng bạn đến với nhà hàng của chúng tôi, nơi tinh hoa ẩm
-                  thực hòa quện cùng sự hiếu khách nồng ấm. Trong hơn một thập
-                  kỷ qua, chúng tôi đã phục vụ những món ăn tuyệt hảo được chế
-                  biến từ những nguyên liệu tinh túy nhất.
-                </p>
-                <p>
-                  Những đầu bếp tài hoa của chúng tôi sáng tạo nên thực đơn độc
-                  đáo, kết hợp tinh hoa kỹ thuật truyền thống với hương vị hiện
-                  đại, mang đến trải nghiệm ẩm thực khó quên trong từng món ăn.
-                </p>
-                <p>
-                  Chúng tôi tự hào mang đến dịch vụ xuất sắc trong một không
-                  gian thoải mái và thanh lịch, lý tưởng cho mọi dịp – từ những
-                  bữa tối ấm cúng cho đến các buổi tiệc lớn.
-                </p>
+                <TypewriterText
+                  text={aboutText1}
+                  speed={20}
+                  className="text-gray-700 leading-relaxed text-sm"
+                />
+                <TypewriterText
+                  text={aboutText2}
+                  speed={20}
+                  className="text-gray-700 leading-relaxed text-sm"
+                />
+                <TypewriterText
+                  text={aboutText3}
+                  speed={20}
+                  className="text-gray-700 leading-relaxed text-sm"
+                />
                 <div className="bg-orange-50 p-4 rounded-lg">
                   <h3 className="text-lg font-bold text-orange-600 mb-2">
                     Sứ mệnh của chúng tôi
                   </h3>
-                  <p className="text-sm">
-                    Tạo nên những trải nghiệm ẩm thực khó quên thông qua món ăn
-                    tuyệt hảo, dịch vụ xuất sắc và sự hiếu khách nồng ấm. Đồng
-                    thời, chúng tôi mang đến thực đơn đa dạng và cá nhân hóa
-                    theo nhu cầu từng người, nhằm phục vụ mục tiêu ăn uống lành
-                    mạnh – từ tăng, giảm cho đến duy trì cân nặng một cách bền
-                    vững.
-                  </p>
+                  <TypewriterText
+                    text={missionText}
+                    speed={20}
+                    className="text-sm"
+                  />
                 </div>
               </div>
             </div>
           </div>
         </div>
       )}
+      {/* ===== HẾT MODAL ĐÃ SỬA ===== */}
 
       {(modal === "login" || modal === "register") && (
         <div className="fixed inset-0 z-50 transition-opacity duration-300">
