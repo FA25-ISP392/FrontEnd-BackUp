@@ -1,4 +1,12 @@
-import { Heart, Zap, Leaf, Smile, Globe, BookOpen } from "lucide-react";
+import {
+  Heart,
+  Leaf,
+  Smile,
+  Globe,
+  Award,
+  Users,
+  Sparkles,
+} from "lucide-react";
 
 export default function VisionSection() {
   const values = [
@@ -46,45 +54,57 @@ export default function VisionSection() {
           </p>
         </div>
 
-        {/* WOW Score Card */}
-        <div className="bg-gradient-to-br from-white to-blue-50 rounded-3xl p-8 shadow-2xl border border-white/20 mb-16 hover:shadow-3xl transition-all duration-500 animate-fade-in-up">
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl mb-6 shadow-lg">
-              <Zap className="h-10 w-10 text-white" />
-            </div>
-            <h3 className="text-3xl font-bold text-neutral-900 mb-4">
-              WOW Score: 9.2/10
+        <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl p-12 shadow-2xl border-4 border-white/30 mb-16 animate-fade-in-up transition-all duration-500 hover:shadow-3xl">
+          <div className="text-center mb-8">
+            <h3 className="text-4xl font-bold text-white mb-4 shadow-text">
+              Cam Kết Của Chúng Tôi
             </h3>
-            <p className="text-lg text-neutral-600 mb-6">
-              Điểm số đánh giá tổng thể từ khách hàng về trải nghiệm tại nhà
-              hàng
+            <p className="text-xl text-orange-100 max-w-2xl mx-auto shadow-text">
+              Mang đến trải nghiệm vượt trội trong từng chi tiết.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600 mb-2">
-                  4.9/5
-                </div>
-                <div className="text-sm text-neutral-600">
-                  Chất lượng món ăn
-                </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center text-white">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-2xl mb-6 shadow-lg border-2 border-white/50 backdrop-blur-sm">
+                <Award className="h-10 w-10 text-white" />
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600 mb-2">
-                  4.8/5
-                </div>
-                <div className="text-sm text-neutral-600">Dịch vụ</div>
+              <h4 className="text-2xl font-bold mb-2 shadow-text">
+                Chất Lượng Hàng Đầu
+              </h4>
+              <p className="text-orange-50 shadow-text">
+                Nguyên liệu tuyển chọn, công thức độc quyền và sự tỉ mỉ trong
+                từng món ăn.
+              </p>
+            </div>
+
+            <div className="text-center text-white">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-2xl mb-6 shadow-lg border-2 border-white/50 backdrop-blur-sm">
+                <Users className="h-10 w-10 text-white" />
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600 mb-2">
-                  4.7/5
-                </div>
-                <div className="text-sm text-neutral-600">Không gian</div>
+              <h4 className="text-2xl font-bold mb-2 shadow-text">
+                Phục Vụ Tận Tâm
+              </h4>
+              <p className="text-orange-50 shadow-text">
+                Đội ngũ nhân viên chuyên nghiệp, thân thiện và luôn sẵn sàng hỗ
+                trợ bạn.
+              </p>
+            </div>
+
+            <div className="text-center text-white">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-white/20 rounded-2xl mb-6 shadow-lg border-2 border-white/50 backdrop-blur-sm">
+                <Sparkles className="h-10 w-10 text-white" />
               </div>
+              <h4 className="text-2xl font-bold mb-2 shadow-text">
+                Trải Nghiệm Đáng Nhớ
+              </h4>
+              <p className="text-orange-50 shadow-text">
+                Không gian sang trọng, ấm cúng và công nghệ cá nhân hóa độc đáo.
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Values Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {values.map((value, index) => {
             const Icon = value.icon;
