@@ -1,4 +1,4 @@
-import { X, Trash2, Edit } from "lucide-react"; // 👈 Sửa icon
+import { X, Trash2, Edit, ListChecks } from "lucide-react"; // 👈 Sửa icon
 
 const STATUS_LABEL = {
   pending: "Chờ nấu",
@@ -64,11 +64,16 @@ export default function OrderStatusSidebar({
       />
       <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-white shadow-2xl z-50">
         <div className="flex flex-col h-full">
-          {/* === SỬA: Header === */}
-          <div className="bg-gradient-to-r from-emerald-500 to-green-500 p-6 text-white flex items-center justify-between shadow-md">
-            <div>
-              <h2 className="text-2xl font-bold">Trạng thái đơn hàng</h2>
-              <p className="text-emerald-100 text-sm">Theo dõi món đã gọi</p>
+          {/* === SỬA: Header (Đổi sang màu Xanh Biển) === */}
+          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-6 text-white flex items-center justify-between shadow-md">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
+                <ListChecks className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">Trạng thái đơn hàng</h2>
+                <p className="text-blue-100 text-sm">Theo dõi món đã gọi</p>
+              </div>
             </div>
             <button
               onClick={onClose}

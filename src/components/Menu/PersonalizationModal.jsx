@@ -31,7 +31,8 @@ const InfoSlider = ({ label, value, min, max, step = 1, unit, onChange }) => (
       step={step}
       value={value}
       onChange={onChange}
-      className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer range-thumb"
+      // === SỬA LỖI TẠI ĐÂY: Đổi "range-thumb" thành "slider" ===
+      className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer slider"
     />
   </div>
 );
