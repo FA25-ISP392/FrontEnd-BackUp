@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { CheckCircle, XCircle, Bell, AlertTriangle } from "lucide-react"; // 👈 Thêm icon
+import { useState, useEffect, useRef, useMemo } from "react"; // 👈 SỬA: Thêm useMemo
+import { CheckCircle, XCircle, Bell, AlertTriangle } from "lucide-react";
 import MenuHeader from "../components/Menu/MenuHeader";
 import MenuContent from "../components/Menu/MenuContent";
 import MenuFooter from "../components/Menu/MenuFooter";
@@ -289,6 +289,32 @@ export default function Menu() {
     }
     return () => clearInterval(timer);
   }, [isStatusOpen, orderId]);
+
+  // 👈 SỬA: Tính toán số lượng món đang chờ và đang nấu
+  const { pendingCount, preparingCount } = useMemo(() => {
+    let pending = 0;
+    let preparing = 0;
+    const groups = new Map();
+
+    // Nhóm các orderDetail lại (vì 1 món SL 2 sẽ là 2 orderDetail)
+    for (const item of orderDetails) {
+      const key = `${item.dishId}|${item.note}|${(item.toppings || [])
+        .map((t) => t.toppingId)
+        .join(",")}`;
+      if (!groups.has(key)) {
+        groups.set(key, { status: String(item.status || "").toUpperCase() });
+      }
+    }
+
+    // Đếm số lượng nhóm theo trạng thái
+    for (const [key, group] of groups.entries()) {
+      if (group.status === "PENDING") pending++;
+      if (group.status === "PREPARING") preparing++;
+    }
+    return { pendingCount: pending, preparingCount: preparing };
+  }, [orderDetails]);
+  // ----------------------------------------------------
+
   const handleIncGroup = async (group) => {
     const st = String(group?.sample?.status || "").toLowerCase();
     if (st !== "pending") {
@@ -657,6 +683,9 @@ export default function Menu() {
         tableId={tableId}
         customerId={customerId}
         showPersonalizeButton={mode === "solo"}
+        // 👈 SỬA: Truyền 2 props này xuống Header
+        pendingCount={pendingCount}
+        preparingCount={preparingCount}
       />
 
       {orderId && tableId && customerId && (

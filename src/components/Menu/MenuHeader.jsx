@@ -1,7 +1,6 @@
 import {
   ShoppingCart,
   User,
-  Bell,
   CreditCard,
   ChefHat,
   ListChecks,
@@ -11,11 +10,10 @@ export default function MenuHeader({
   cartItemCount,
   onPersonalize,
   onViewOrders,
-  onCallStaff,
   onCheckout,
   onViewStatus,
-  pendingCount = 0, // Giữ nguyên props
-  preparingCount = 0, // Giữ nguyên props
+  pendingCount = 0,
+  preparingCount = 0,
   showPersonalizeButton = true,
 }) {
   const activeCount = (pendingCount || 0) + (preparingCount || 0);
@@ -23,9 +21,7 @@ export default function MenuHeader({
   return (
     <header className="bg-white/95 backdrop-blur-md shadow-sm border-b border-neutral-200/80 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* === SỬA: Đổi thành flex-row, h-20 để header cao hơn === */}
         <div className="flex items-center justify-between h-20">
-          {/* === SỬA: Logo to, đẹp hơn === */}
           <div className="flex items-center space-x-3">
             <button
               onClick={() => window.location.reload()}
@@ -40,7 +36,6 @@ export default function MenuHeader({
             </button>
           </div>
 
-          {/* === SỬA: Cụm nút bấm được thiết kế lại === */}
           <div className="flex items-center space-x-3">
             {showPersonalizeButton && (
               <button
@@ -76,14 +71,6 @@ export default function MenuHeader({
                   {cartItemCount}
                 </span>
               )}
-            </button>
-
-            <button
-              onClick={onCallStaff}
-              className="flex items-center justify-center w-10 h-10 bg-white text-neutral-700 rounded-full hover:bg-neutral-100 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 border border-neutral-200"
-              aria-label="Gọi nhân viên"
-            >
-              <Bell className="h-5 w-5 text-yellow-500" />
             </button>
 
             <button
