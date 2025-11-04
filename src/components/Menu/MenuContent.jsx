@@ -1,5 +1,5 @@
 import { Target, Zap, Heart, ImageOff } from "lucide-react"; // 👈 Thêm ImageOff
-import { categories as CATEGORY_LIST } from "../../lib/menuData";
+// import { categories as CATEGORY_LIST } from "../../lib/menuData"; // <-- ĐÃ XÓA DÒNG NÀY
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 
@@ -119,7 +119,7 @@ export default function MenuContent({
     ...(dishSuggests && dishSuggests.length > 0
       ? [{ id: "suggested", name: "Gợi Ý Cho Bạn" }]
       : []),
-    ...CATEGORY_LIST,
+    // ...CATEGORY_LIST, // <-- ĐÃ XÓA DÒNG NÀY
   ];
 
   return (
@@ -295,29 +295,49 @@ export default function MenuContent({
 
       {/* ====================== DANH MỤC MÓN ĂN ====================== */}
       {activeMenuTab === "all" ? (
-        CATEGORY_LIST.map((cat) => {
-          const dishes = dishesToShow.filter(
-            (d) => d.categoryEnum?.toLowerCase() === cat.id?.toLowerCase()
-          );
-          if (dishes.length === 0) return null; // Ẩn danh mục trống
+        // *****************************************************************
+        // THAY ĐỔI LOGIC Ở ĐÂY:
+        // Lấy danh sách categories từ file menuData.js để lặp và render
+        // Nhưng vì đã xóa CATEGORY_LIST, chúng ta cần 1 nguồn khác.
+        // Giải pháp: Lấy categories duy nhất từ `dishesToShow`
+        // *****************************************************************
+        (() => {
+          const categoriesInMenu = dishesToShow.reduce((acc, dish) => {
+            if (dish.category && !acc.some((c) => c.name === dish.category)) {
+              acc.push({
+                id: dish.categoryEnum || dish.category,
+                name: dish.category,
+              });
+            }
+            return acc;
+          }, []);
 
-          return (
-            <div key={cat.id} className="mb-10">
-              <h3 className="text-3xl font-bold text-neutral-900 mb-5">
-                {cat.name}
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {dishes.map((dish) => (
-                  <DishCard
-                    key={dish.id}
-                    dish={dish}
-                    onDishSelect={onDishSelect}
-                  />
-                ))}
+          return categoriesInMenu.map((cat) => {
+            const dishes = dishesToShow.filter(
+              (d) =>
+                (d.categoryEnum || d.category)?.toLowerCase() ===
+                cat.id?.toLowerCase()
+            );
+            if (dishes.length === 0) return null; // Ẩn danh mục trống
+
+            return (
+              <div key={cat.id} className="mb-10">
+                <h3 className="text-3xl font-bold text-neutral-900 mb-5">
+                  {cat.name}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {dishes.map((dish) => (
+                    <DishCard
+                      key={dish.id}
+                      dish={dish}
+                      onDishSelect={onDishSelect}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          );
-        })
+            );
+          });
+        })()
       ) : (
         // === SỬA: Render tập trung cho tab "Gợi ý" hoặc 1 Category ===
         <div className="mb-10">
