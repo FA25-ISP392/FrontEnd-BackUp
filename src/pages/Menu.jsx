@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, Bell, AlertTriangle } from "lucide-react"; // 👈 Thêm icon
 import MenuHeader from "../components/Menu/MenuHeader";
 import MenuContent from "../components/Menu/MenuContent";
 import MenuFooter from "../components/Menu/MenuFooter";
@@ -9,7 +9,6 @@ import PaymentSidebar from "../components/Menu/PaymentSidebar";
 import DishOptionsModal from "../components/Menu/DishOptionsModal";
 import OrderStatusSidebar from "../components/Menu/OrderStatusSidebar";
 import { getSuggestedMenu } from "../lib/apiSuggestion";
-
 import {
   createOrder,
   getOrderById,
@@ -32,6 +31,10 @@ import { createPayment, getPaymentById } from "../lib/apiPayment";
 import ConfirmDialog from "../common/ConfirmDialog";
 import usePersistedState from "../hooks/usePersistedState";
 
+// ... (Toàn bộ logic state và helper functions của bạn được giữ nguyên) ...
+// (Giữ nguyên từ dòng 30 đến 450)
+
+// === GỐC: TỪ DÒNG 30 ĐẾN 450 CỦA BẠN ===
 const PERSONAL_KEY = (cid) => `personalization:${cid}`;
 const MODE_KEY = "menuMode";
 const applyGoal = (cals, goal) => {
@@ -75,46 +78,29 @@ export default function Menu() {
   const [tableId, setTableId] = useState(null);
   const [customerId, setCustomerId] = useState(null);
   const [customerName, setCustomerName] = useState(null);
-
-  // --- SỬA Ở ĐÂY 1: Dùng usePersistedState cho orderId ---
   const [orderId, setOrderId] = usePersistedState("currentOrderId", null);
-
-  // --- State Menu & Món ăn ---
   const [menuDishes, setMenuDishes] = useState([]);
   const [activeMenuTab, setActiveMenuTab] = useState("all");
   const [selectedDish, setSelectedDish] = useState(null);
   const [isDishOptionsOpen, setIsDishOptionsOpen] = useState(false);
-
-  // --- State Cá nhân hóa (Personalization) ---
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
   const [isPersonalized, setIsPersonalized] = useState(false);
   const [baseCalories, setBaseCalories] = useState(null);
   const [estimatedCalories, setEstimatedCalories] = useState(null);
   const [dailyCalories, setDailyCalories] = useState(null);
-
-  // --- SỬA Ở ĐÂY 2: Dùng usePersistedState cho cart ---
-  const [cart, setCart] = usePersistedState(
-    "shoppingCart", // Tên khóa trong localStorage
-    []
-  );
+  const [cart, setCart] = usePersistedState("shoppingCart", []);
   const [caloriesConsumed, setCaloriesConsumed] = usePersistedState(
     "caloriesConsumed",
     0
   );
   const [isCartOpen, setIsCartOpen] = useState(false);
-
-  // --- State Trạng thái Đơn hàng (Order Status) ---
   const [orderDetails, setOrderDetails] = useState([]);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingDetail, setEditingDetail] = useState(null);
-
-  // --- State Thanh toán (Payment) ---
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [paymentItems, setPaymentItems] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState("cash");
-
-  // --- State Thông báo & Modal ---
   const [isCallStaffOpen, setIsCallStaffOpen] = useState(false);
   const [isOrderFoodOpen, setIsOrderFoodOpen] = useState(false);
   const [isDeleteSuccessOpen, setIsDeleteSuccessOpen] = useState(false);
@@ -133,20 +119,15 @@ export default function Menu() {
   });
   const askConfirm = ({ title, message, onYes }) =>
     setConfirmState({ open: true, title, message, onYes });
-
-  // --- State Thoát sau thanh toán ---
   const [paidSuccessOpen, setPaidSuccessOpen] = useState(false);
   const [countdown, setCountdown] = useState(10);
   const paidLockedRef = useRef(false);
   const pollStopRef = useRef(false);
   const pollTimerRef = useRef(null);
   const thanksTimerRef = useRef(null);
-
-  // === LOGIC CƠ SỞ (AUTH, BÀN, ĐƠN HÀNG) ===
   useEffect(() => {
     const storedTableId = sessionStorage.getItem("customerTableId");
     if (storedTableId) setTableId(storedTableId);
-
     const user = readAuthUser();
     const cid =
       user?.customerId ?? user?.id ?? sessionStorage.getItem("customerId");
@@ -156,7 +137,6 @@ export default function Menu() {
     }
     const name = getDisplayName(user);
     if (name) setCustomerName(name);
-
     const sync = () => {
       const u = readAuthUser();
       const c = u?.customerId ?? u?.id;
@@ -177,18 +157,15 @@ export default function Menu() {
   const initialMode = sessionStorage.getItem(MODE_KEY);
   const [mode, setMode] = useState(initialMode);
   const [showModeSelection, setShowModeSelection] = useState(!initialMode);
-
   useEffect(() => {
     const ready = Boolean(customerId) && Boolean(tableId);
     if (!ready) return;
     if (orderId) {
       return;
     }
-
     const idemKey = `orderInit_${customerId}_${tableId}`;
     if (sessionStorage.getItem(idemKey) === "1") return;
     sessionStorage.setItem(idemKey, "1");
-
     (async () => {
       try {
         const order = await createOrder({ customerId, tableId });
@@ -200,7 +177,6 @@ export default function Menu() {
       }
     })();
   }, [customerId, tableId, orderId, setOrderId]);
-
   const hiddenNames = (() => {
     try {
       return JSON.parse(localStorage.getItem("hidden_dishes")) || [];
@@ -208,7 +184,6 @@ export default function Menu() {
       return [];
     }
   })();
-
   useEffect(() => {
     (async () => {
       try {
@@ -227,15 +202,11 @@ export default function Menu() {
       }
     })();
   }, []);
-
   const filteredDishes = menuDishes.filter(
     (dish) => dish.isAvailable && !hiddenNames.includes(dish.name)
   );
-
-  // === LOGIC GIỎ HÀNG (CartSidebar) ===
   const { personalizationForm, setPersonalizationForm, personalizedDishes } =
     useMenuPersonalization(filteredDishes);
-
   const addToCart = (item) => {
     const noteKey = item.notes || "";
     const existingItem = cart.find(
@@ -256,7 +227,6 @@ export default function Menu() {
       (prev) => prev + (item.totalCalories || item.calories || 0)
     );
   };
-
   const updateCartQuantity = (itemId, newQuantity) => {
     if (newQuantity <= 0) {
       removeFromCart(itemId);
@@ -275,7 +245,6 @@ export default function Menu() {
       );
     }
   };
-
   const removeFromCart = (itemId) => {
     const item = cart.find((it) => it.id === itemId);
     if (item) {
@@ -285,7 +254,6 @@ export default function Menu() {
       );
     }
   };
-
   const handleOrderFood = async () => {
     try {
       if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
@@ -302,10 +270,7 @@ export default function Menu() {
       setIsOrderFoodErrorOpen(true);
     }
   };
-
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-  // === LOGIC TRẠNG THÁI ĐƠN HÀNG (OrderStatusSidebar) ===
   async function fetchOrderDetailsFromOrder() {
     if (!orderId) return;
     try {
@@ -313,11 +278,9 @@ export default function Menu() {
       setOrderDetails(data);
     } catch (err) {}
   }
-
   useEffect(() => {
     if (isStatusOpen) fetchOrderDetailsFromOrder();
   }, [isStatusOpen, orderId]);
-
   useEffect(() => {
     let timer;
     if (isStatusOpen) {
@@ -326,7 +289,6 @@ export default function Menu() {
     }
     return () => clearInterval(timer);
   }, [isStatusOpen, orderId]);
-
   const handleIncGroup = async (group) => {
     const st = String(group?.sample?.status || "").toLowerCase();
     if (st !== "pending") {
@@ -347,12 +309,10 @@ export default function Menu() {
     });
     await fetchOrderDetailsFromOrder();
   };
-
   const handleDecGroup = async (group) => {
     const st = String(group?.sample?.status || "").toLowerCase();
     const dishName = group.sample.dishName || "Món này";
     const idToDelete = group.ids[group.ids.length - 1];
-
     if (st === "preparing") {
       askConfirm({
         title: "Xác nhận huỷ món?",
@@ -384,7 +344,6 @@ export default function Menu() {
       setIsErrorOpen(true);
     }
   };
-
   const handleDeleteDetail = async (detail) => {
     if (!detail?.orderDetailId) return;
     askConfirm({
@@ -404,19 +363,15 @@ export default function Menu() {
       },
     });
   };
-
   const handleOpenEdit = (detail) => {
     const st = String(detail?.status || "").toLowerCase();
     if (st !== "pending") return;
     setEditingDetail(detail);
     setIsEditOpen(true);
   };
-
   const handleEdited = async () => {
     await fetchOrderDetailsFromOrder();
   };
-
-  // === LOGIC THANH TOÁN (PaymentSidebar) ===
   const handleOpenPayment = async () => {
     try {
       if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
@@ -443,16 +398,11 @@ export default function Menu() {
       setIsErrorOpen(true);
     }
   };
-
   const handleGoalChange = (goalId) => {
     setPersonalizationForm((prev) => ({ ...prev, goal: goalId }));
     const base = baseCalories ?? estimatedCalories;
     setEstimatedCalories(applyGoal(base, goalId));
   };
-
-  // ====================================================================
-  // LOGIC XỬ LÝ SUBMIT FORM CÁ NHÂN HÓA MỚI (LƯU HỒ SƠ & LẤY GỢI Ý)
-  // ====================================================================
   const handlePersonalizationSubmit = async ({
     customerUpdatePayload,
     suggestionCreationPayload,
@@ -463,7 +413,6 @@ export default function Menu() {
       setIsErrorOpen(true);
       return;
     }
-
     try {
       setSuggestedMenu([]);
       await updateCustomerPersonalization(customerId, customerUpdatePayload);
@@ -481,12 +430,10 @@ export default function Menu() {
               }))
           )
         : [];
-
       const limitedList = flatList.slice(0, 12);
       setSuggestedMenu(limitedList);
       setEstimatedCalories(dailyCalories);
       setIsPersonalized(true);
-
       setIsPersonalizationOpen(false);
       setSuccessMessage(
         "Cá nhân hóa thành công! Thực đơn gợi ý mới đã được tạo."
@@ -501,9 +448,6 @@ export default function Menu() {
       setIsErrorOpen(true);
     }
   };
-
-  // ====================================================================
-
   const handleRequestPayment = async () => {
     try {
       if (!orderId) throw new Error("Chưa có orderId.");
@@ -518,8 +462,6 @@ export default function Menu() {
       setIsErrorOpen(true);
     }
   };
-
-  // === LOGIC GỌI NHÂN VIÊN & TÍN HIỆU (StaffSignal) ===
   function notifyPaymentStaff({ tableId, orderId, total, paymentId }) {
     const payload = { tableId, orderId, total, paymentId, ts: Date.now() };
     window.dispatchEvent(
@@ -530,7 +472,6 @@ export default function Menu() {
       JSON.stringify(payload)
     );
   }
-
   function notifyCallStaff({ tableId, orderId }) {
     const payload = {
       type: "callStaff",
@@ -549,34 +490,20 @@ export default function Menu() {
       JSON.stringify(payload)
     );
   }
-
-  // === LOGIC POLLING THANH TOÁN & THOÁT ===
   function cleanupAndExit() {
     try {
       pollStopRef.current = true;
       if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
       if (thanksTimerRef.current) clearInterval(thanksTimerRef.current);
-      pollTimerRef.current = null;
-      thanksTimerRef.current = null;
-
-      // --- XÓA TRẠNG THÁI LOCAL ---
       setCart([]);
       setOrderId(null);
       setCaloriesConsumed(0);
       setSuggestedMenu([]);
       localStorage.removeItem("suggestedMenu");
-      // -------------------------------------------------------------
-
+      localStorage.removeItem(`personalization:${customerId}`);
       sessionStorage.clear();
-      const keysToRemove = [
-        "user",
-        "accessToken",
-        "token",
-        "hidden_dishes",
-        `personalization:${customerId}`,
-      ];
+      const keysToRemove = ["user", "accessToken", "token", "hidden_dishes"];
       keysToRemove.forEach((k) => localStorage.removeItem(k));
-
       Object.keys(localStorage).forEach((k) => {
         if (k.startsWith("signal:")) {
           try {
@@ -587,7 +514,6 @@ export default function Menu() {
     } catch {}
     window.location.replace("/home");
   }
-
   function handlePaidSuccess() {
     if (paidLockedRef.current) return;
     paidLockedRef.current = true;
@@ -597,7 +523,18 @@ export default function Menu() {
     setPaidSuccessOpen(true);
     setCountdown(10);
   }
-
+  useEffect(() => {
+    function onStorage(e) {
+      if (e.key?.startsWith("signal:paymentSuccess:")) {
+        try {
+          localStorage.removeItem(e.key);
+        } catch {}
+        handlePaidSuccess();
+      }
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
   useEffect(() => {
     if (!paidSuccessOpen) return;
     if (thanksTimerRef.current) clearInterval(thanksTimerRef.current);
@@ -617,20 +554,6 @@ export default function Menu() {
       thanksTimerRef.current = null;
     };
   }, [paidSuccessOpen]);
-
-  useEffect(() => {
-    function onStorage(e) {
-      if (e.key?.startsWith("signal:paymentSuccess:")) {
-        try {
-          localStorage.removeItem(e.key);
-        } catch {}
-        handlePaidSuccess();
-      }
-    }
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
-
   useEffect(() => {
     if (!orderId) return;
     pollStopRef.current = false;
@@ -669,7 +592,9 @@ export default function Menu() {
       pollTimerRef.current = null;
     };
   }, [orderId]);
+  // === HẾT LOGIC GỐC ===
 
+  // === PHẦN RENDER (Return) ===
   if (showModeSelection) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-orange-50 to-red-100">
@@ -765,7 +690,6 @@ export default function Menu() {
             alert("❌ Món này hiện đã hết số lượng trong kế hoạch hôm nay.");
             return;
           }
-
           try {
             let fullDish = await getDish(dish.id);
             if (!Array.isArray(fullDish.optionalToppings)) {
@@ -780,7 +704,6 @@ export default function Menu() {
                 fullDish = { ...fullDish, optionalToppings: [] };
               }
             }
-
             setSelectedDish(fullDish);
             setIsDishOptionsOpen(true);
           } catch (err) {
@@ -810,6 +733,7 @@ export default function Menu() {
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         cart={cart}
+        cartItemCount={cartItemCount}
         onUpdateQuantity={updateCartQuantity}
         onRemoveItem={removeFromCart}
         onOrderFood={handleOrderFood}
@@ -844,7 +768,6 @@ export default function Menu() {
         dish={selectedDish}
         onAddToCart={addToCart}
       />
-
       <ConfirmDialog
         open={confirmState.open}
         title={confirmState.title}
@@ -855,7 +778,13 @@ export default function Menu() {
         onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
       />
 
-      {isCallStaffOpen && (
+      {/* === KHỐI MODAL ĐÃ SỬA GIAO DIỆN === */}
+
+      {/* Modal Thông báo chung (Success) */}
+      {(isSuccessOpen ||
+        isCallStaffOpen ||
+        isOrderFoodOpen ||
+        isDeleteSuccessOpen) && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
             <div className="text-center">
@@ -863,13 +792,35 @@ export default function Menu() {
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
               <h3 className="text-xl font-bold text-neutral-900 mb-2">
-                Thành công!
+                {isCallStaffOpen
+                  ? "Đã gửi yêu cầu!"
+                  : isOrderFoodOpen
+                  ? "Đã gửi món thành công!"
+                  : isDeleteSuccessOpen
+                  ? "Xoá món thành công!"
+                  : successMessage
+                  ? "Thành công!"
+                  : "Thành công!"}
               </h3>
               <p className="text-neutral-600 mb-6">
-                Nhân viên sẽ đến hỗ trợ bạn ngay! Cảm ơn bạn đã sử dụng dịch vụ.
+                {isCallStaffOpen
+                  ? "Nhân viên sẽ đến hỗ trợ bạn ngay!"
+                  : isOrderFoodOpen
+                  ? "Món ăn của bạn đang được chuẩn bị. Vui lòng theo dõi trong 'Trạng thái đơn'."
+                  : isDeleteSuccessOpen
+                  ? "Món ăn đã được xoá (hoặc gửi yêu cầu huỷ) khỏi đơn hàng."
+                  : successMessage
+                  ? successMessage
+                  : "Thao tác đã được thực hiện."}
               </p>
               <button
-                onClick={() => setIsCallStaffOpen(false)}
+                onClick={() => {
+                  setIsCallStaffOpen(false);
+                  setIsOrderFoodOpen(false);
+                  setIsDeleteSuccessOpen(false);
+                  setIsSuccessOpen(false);
+                  setSuccessMessage("");
+                }}
                 className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
               >
                 Đóng
@@ -879,68 +830,38 @@ export default function Menu() {
         </div>
       )}
 
-      {isOrderFoodOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-8 w-8 text-green-600" />
-              </div>
-              <h3 className="text-xl font-bold text-neutral-900 mb-2">
-                Đã gửi món thành công!
-              </h3>
-              <p className="text-neutral-600 mb-6">
-                Món ăn của bạn đang được chuẩn bị. Vui lòng theo dõi trong tab
-                "Trạng thái đơn".
-              </p>
-              <button
-                onClick={() => setIsOrderFoodOpen(false)}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
-              >
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isDeleteSuccessOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-8 w-8 text-green-600" />
-              </div>
-              <h3 className="text-xl font-bold text-neutral-900 mb-2">
-                Xoá món thành công!
-              </h3>
-              <p className="text-neutral-600 mb-6">
-                Món ăn đã được xoá (hoặc gửi yêu cầu huỷ) khỏi đơn hàng của bạn.
-              </p>
-              <button
-                onClick={() => setIsDeleteSuccessOpen(false)}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
-              >
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isOrderFoodErrorOpen && (
+      {/* Modal Thông báo chung (Error) */}
+      {(isErrorOpen || isNotServedErrorOpen || isOrderFoodErrorOpen) && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
             <div className="text-center">
               <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <XCircle className="h-8 w-8 text-red-600" />
+                <AlertTriangle className="h-8 w-8 text-red-600" />
               </div>
               <h3 className="text-xl font-bold text-neutral-900 mb-2">
-                Gọi món thất bại!
+                {isNotServedErrorOpen
+                  ? "Không thể thanh toán!"
+                  : isOrderFoodErrorOpen
+                  ? "Gọi món thất bại!"
+                  : "Đã xảy ra lỗi"}
               </h3>
-              <p className="text-neutral-600 mb-6">{orderFoodErrorMessage}</p>
+              <p className="text-neutral-600 mb-6">
+                {isNotServedErrorOpen
+                  ? "Vẫn còn món ăn chưa được phục vụ. Vui lòng kiểm tra lại trạng thái đơn hàng."
+                  : isOrderFoodErrorOpen
+                  ? orderFoodErrorMessage
+                  : errorMessage
+                  ? errorMessage
+                  : "Thao tác thất bại. Vui lòng thử lại."}
+              </p>
               <button
-                onClick={() => setIsOrderFoodErrorOpen(false)}
+                onClick={() => {
+                  setIsErrorOpen(false);
+                  setErrorMessage("");
+                  setIsNotServedErrorOpen(false);
+                  setIsOrderFoodErrorOpen(false);
+                  setOrderFoodErrorMessage("");
+                }}
                 className="bg-gradient-to-r from-red-500 to-rose-500 text-white px-6 py-3 rounded-xl hover:from-red-600 hover:to-rose-600 transition-all duration-300 font-medium"
               >
                 Đã hiểu
@@ -950,31 +871,7 @@ export default function Menu() {
         </div>
       )}
 
-      {isNotServedErrorOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <XCircle className="h-8 w-8 text-red-600" />
-              </div>
-              <h3 className="text-xl font-bold text-neutral-900 mb-2">
-                Không thể thanh toán!
-              </h3>
-              <p className="text-neutral-600 mb-6">
-                Vẫn còn món ăn chưa được phục vụ. Vui lòng kiểm tra lại trạng
-                thái đơn hàng.
-              </p>
-              <button
-                onClick={() => setIsNotServedErrorOpen(false)}
-                className="bg-gradient-to-r from-red-500 to-rose-500 text-white px-6 py-3 rounded-xl hover:from-red-600 hover:to-rose-600 transition-all duration-300 font-medium"
-              >
-                Đã hiểu
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Modal Cảm ơn khi thanh toán */}
       {paidSuccessOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center">
@@ -996,54 +893,6 @@ export default function Menu() {
             >
               Thoát ngay
             </button>
-          </div>
-        </div>
-      )}
-
-      {isSuccessOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-8 w-8 text-green-600" />
-              </div>
-              <h3 className="text-xl font-bold text-neutral-900 mb-2">
-                Thành công!
-              </h3>
-              <p className="text-neutral-600 mb-6">
-                {successMessage || "Thao tác đã được thực hiện."}
-              </p>
-              <button
-                onClick={() => setIsSuccessOpen(false)}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium"
-              >
-                Đóng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isErrorOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <XCircle className="h-8 w-8 text-red-600" />
-              </div>
-              <h3 className="text-xl font-bold text-neutral-900 mb-2">
-                Đã xảy ra lỗi
-              </h3>
-              <p className="text-neutral-600 mb-6">
-                {errorMessage || "Thao tác thất bại. Vui lòng thử lại."}
-              </p>
-              <button
-                onClick={() => setIsErrorOpen(false)}
-                className="bg-gradient-to-r from-red-500 to-rose-500 text-white px-6 py-3 rounded-xl hover:from-red-600 hover:to-rose-600 transition-all duration-300 font-medium"
-              >
-                Đã hiểu
-              </button>
-            </div>
           </div>
         </div>
       )}

@@ -45,6 +45,18 @@ export default function AdminDishStatistics() {
     BANK_TRANSFER: "#8B5CF6", // Purple-500
   };
 
+  // Màu sắc cho biểu đồ tròn món ăn
+  const PIE_COLORS = [
+    "#FF6B6B", // Red
+    "#4ECDC4", // Teal
+    "#45B7D1", // Light Blue
+    "#96CEB4", // Greenish
+    "#FFEAA7", // Light Yellow
+    "#ff9f43", // Orange
+    "#ee5253", // Dark Red
+    "#0abde3", // Cyan
+  ];
+
   const fetchData = async () => {
     if (!year) return;
     setLoading(true);
@@ -82,7 +94,6 @@ export default function AdminDishStatistics() {
     fetchData();
   }, []);
 
-  // ⭐ ĐÂY LÀ CLASS ĐÃ SỬA (FIXED_INPUT_CLASS) ⭐
   const FIXED_INPUT_CLASS =
     "border rounded-lg px-3 py-2 w-full bg-white/10 text-white border-white/30 placeholder-indigo-300 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition-all";
 
@@ -97,7 +108,7 @@ export default function AdminDishStatistics() {
             value={day}
             onChange={(e) => setDay(e.target.value)}
             placeholder="VD: 15"
-            className={FIXED_INPUT_CLASS} // 👈 Sửa ở đây
+            className={FIXED_INPUT_CLASS}
           />
         </div>
         <div className="w-24">
@@ -107,7 +118,7 @@ export default function AdminDishStatistics() {
             value={month}
             onChange={(e) => setMonth(e.target.value)}
             placeholder="VD: 10"
-            className={FIXED_INPUT_CLASS} // 👈 Sửa ở đây
+            className={FIXED_INPUT_CLASS}
           />
         </div>
         <div className="w-28">
@@ -117,7 +128,7 @@ export default function AdminDishStatistics() {
             value={year}
             onChange={(e) => setYear(e.target.value)}
             required
-            className={FIXED_INPUT_CLASS} // 👈 Sửa ở đây
+            className={FIXED_INPUT_CLASS}
           />
         </div>
         <button
@@ -132,146 +143,9 @@ export default function AdminDishStatistics() {
       {loading ? (
         <p className="text-indigo-200 text-center py-4">Đang tải dữ liệu...</p>
       ) : (
-        <div className="space-y-8">
-          {/* 🟢 Biểu đồ Doanh thu */}
-          <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/10">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-cyan-500 rounded-lg flex items-center justify-center">
-                <PieChartIcon className="h-4 w-4 text-white" />
-              </div>
-              <h3 className="text-lg font-bold text-white">
-                Doanh Thu Theo Phương Thức
-              </h3>
-            </div>
-
-            {revenue.length === 0 ? (
-              <p className="text-sm text-indigo-200">Không có dữ liệu.</p>
-            ) : (
-              <div className="h-72 flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={revenue}
-                      dataKey="revenue"
-                      nameKey="method"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={120}
-                      labelLine={false}
-                      label={({ method, revenue, percent }) =>
-                        `${METHOD_LABELS[method] || method}: ${(
-                          percent * 100
-                        ).toFixed(0)}%`
-                      }
-                      fill="#8884d8"
-                      stroke="none"
-                    >
-                      {revenue.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[entry.method] || "#3B82F6"}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value, name) => [
-                        fmtVND(value),
-                        METHOD_LABELS[name] || name,
-                      ]}
-                      contentStyle={{
-                        backgroundColor: "rgba(30, 41, 59, 0.9)",
-                        borderColor: "rgba(255, 255, 255, 0.2)",
-                        borderRadius: "8px",
-                      }}
-                      labelStyle={{ color: "#e0e7ff" }}
-                      itemStyle={{ color: "#c7d2fe" }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
-
-          {/* 🟣 Món bán chạy nhất */}
-          <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/10">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                <Star className="h-4 w-4 text-white" />
-              </div>
-              <h3 className="text-lg font-bold text-white">
-                Món Bán Chạy Nhất
-              </h3>
-            </div>
-
-            {bestDishes.length === 0 ? (
-              <p className="text-sm text-indigo-200">Không có dữ liệu.</p>
-            ) : (
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={bestDishes}
-                    margin={{ top: 10, right: 20, left: 0, bottom: 60 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
-                    <XAxis
-                      dataKey="itemName"
-                      angle={-15}
-                      textAnchor="end"
-                      interval={0}
-                      height={60}
-                      tick={{ fontSize: 12, fill: "#c7d2fe" }}
-                      stroke="#4f46e5"
-                    />
-                    <YAxis
-                      tick={{ fontSize: 12, fill: "#c7d2fe" }}
-                      stroke="#4f46e5"
-                    />
-                    <Tooltip
-                      content={({ active, payload, label }) => {
-                        if (active && payload && payload.length) {
-                          const item = payload[0];
-                          return (
-                            <div className="bg-slate-800/90 border border-white/20 rounded-lg shadow-md p-3">
-                              <p className="font-semibold text-white">
-                                {label}
-                              </p>
-                              <p className="text-blue-400">
-                                Số lượng đã bán: {item.value}
-                              </p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                      cursor={{ fill: "rgba(255, 255, 255, 0.1)" }}
-                    />
-
-                    <Bar
-                      dataKey="totalSold"
-                      fill="url(#colorUv)" // 👈 Sử dụng gradient
-                      radius={[4, 4, 0, 0]}
-                    />
-                    <defs>
-                      <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-                        <stop
-                          offset="5%"
-                          stopColor="#8B5CF6"
-                          stopOpacity={0.9}
-                        />
-                        <stop
-                          offset="95%"
-                          stopColor="#3B82F6"
-                          stopOpacity={0.7}
-                        />
-                      </linearGradient>
-                    </defs>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
-
-          {/* 🔴 Món bán chậm nhất */}
+        // --- BỐ CỤC ĐÃ HOÁN ĐỔI ---
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* 🔴 Món bán chậm nhất (Bar Chart) - HÀNG 1, CỘT 1 */}
           <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/10">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-orange-500 rounded-lg flex items-center justify-center">
@@ -303,6 +177,7 @@ export default function AdminDishStatistics() {
                     />
                     <YAxis
                       allowDecimals={false}
+                      tickFormatter={(value) => `${value}`}
                       tick={{ fontSize: 12, fill: "#c7d2fe" }}
                       stroke="#4f46e5"
                     />
@@ -329,9 +204,183 @@ export default function AdminDishStatistics() {
 
                     <Bar
                       dataKey="totalSold"
-                      fill="#F87171"
+                      fill="url(#gradientWorstSelling)"
                       radius={[4, 4, 0, 0]}
+                      animationBegin={800} // Bắt đầu animation sau 800ms
+                      animationDuration={1500}
+                      animationEasing="ease-out"
                     />
+                    <defs>
+                      <linearGradient
+                        id="gradientWorstSelling"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor="#F87171"
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="#DC2626"
+                          stopOpacity={0.7}
+                        />
+                      </linearGradient>
+                    </defs>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+
+          {/* 🟢 Biểu đồ Doanh thu (Pie Chart) - HÀNG 1, CỘT 2 */}
+          <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                <PieChartIcon className="h-4 w-4 text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-white">
+                Doanh Thu Theo Phương Thức
+              </h3>
+            </div>
+
+            {revenue.length === 0 ? (
+              <p className="text-sm text-indigo-200">Không có dữ liệu.</p>
+            ) : (
+              <div className="h-64 flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={revenue}
+                      dataKey="revenue"
+                      nameKey="method"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      labelLine={false}
+                      label={({ method, revenue, percent }) =>
+                        `${METHOD_LABELS[method] || method}: ${(
+                          percent * 100
+                        ).toFixed(0)}%`
+                      }
+                      fill="#8884d8"
+                      stroke="none"
+                      animationBegin={400}
+                      animationDuration={1500}
+                      animationEasing="ease-out"
+                    >
+                      {revenue.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[entry.method] || "#3B82F6"}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value, name) => [
+                        fmtVND(value),
+                        METHOD_LABELS[name] || name,
+                      ]}
+                      contentStyle={{
+                        backgroundColor: "rgba(30, 41, 59, 0.9)",
+                        borderColor: "rgba(255, 255, 255, 0.2)",
+                        borderRadius: "8px",
+                      }}
+                      labelStyle={{ color: "#e0e7ff" }}
+                      itemStyle={{ color: "#c7d2fe" }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+
+          {/* 🟣 Món bán chạy nhất (Bar Chart) - HÀNG 2 (Full width) */}
+          <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/10 lg:col-span-2">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                <Star className="h-4 w-4 text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-white">
+                Món Bán Chạy Nhất
+              </h3>
+            </div>
+
+            {bestDishes.length === 0 ? (
+              <p className="text-sm text-indigo-200">Không có dữ liệu.</p>
+            ) : (
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={bestDishes}
+                    margin={{ top: 10, right: 20, left: 0, bottom: 60 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
+                    <XAxis
+                      dataKey="itemName"
+                      angle={-15}
+                      textAnchor="end"
+                      interval={0}
+                      height={60}
+                      tick={{ fontSize: 12, fill: "#c7d2fe" }}
+                      stroke="#4f46e5"
+                    />
+                    <YAxis
+                      tickFormatter={(value) => `${value}`}
+                      tick={{ fontSize: 12, fill: "#c7d2fe" }}
+                      stroke="#4f46e5"
+                    />
+                    <Tooltip
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          const item = payload[0];
+                          return (
+                            <div className="bg-slate-800/90 border border-white/20 rounded-lg shadow-md p-3">
+                              <p className="font-semibold text-white">
+                                {label}
+                              </p>
+                              <p className="text-blue-400">
+                                Số lượng đã bán: {item.value}
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                      cursor={{ fill: "rgba(255, 255, 255, 0.1)" }}
+                    />
+
+                    <Bar
+                      dataKey="totalSold"
+                      fill="url(#gradientBestSelling)"
+                      radius={[4, 4, 0, 0]}
+                      animationBegin={1200} // Bắt đầu animation sau cùng
+                      animationDuration={1500}
+                      animationEasing="ease-out"
+                    />
+                    <defs>
+                      <linearGradient
+                        id="gradientBestSelling"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor="#8B5CF6"
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="#3B82F6"
+                          stopOpacity={0.7}
+                        />
+                      </linearGradient>
+                    </defs>
                   </BarChart>
                 </ResponsiveContainer>
               </div>

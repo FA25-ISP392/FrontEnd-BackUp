@@ -1,4 +1,4 @@
-import { X, Trash2 } from "lucide-react";
+import { X, Trash2, Edit } from "lucide-react"; // 👈 Sửa icon
 
 const STATUS_LABEL = {
   pending: "Chờ nấu",
@@ -7,12 +7,14 @@ const STATUS_LABEL = {
   cancelled: "Đã hủy",
   done: "Đã nấu xong",
 };
-const STATUS_COLOR = {
-  pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  preparing: "bg-blue-100 text-blue-700 border-blue-200",
-  served: "bg-green-100 text-green-700 border-green-200",
-  cancelled: "bg-red-100 text-red-700 border-red-200",
-  done: "bg-emerald-100 text-emerald-700 border-emerald-200",
+// === SỬA: Dùng màu viền (border) thay vì màu nền ===
+const STATUS_STYLE = {
+  pending: "border-yellow-500 bg-yellow-50 text-yellow-700 border-l-4",
+  preparing:
+    "border-blue-500 bg-blue-50 text-blue-700 border-l-4 animate-pulse",
+  served: "border-green-500 bg-green-50 text-green-700 border-l-4",
+  cancelled: "border-red-500 bg-red-50 text-red-700 border-l-4",
+  done: "border-emerald-500 bg-emerald-50 text-emerald-700 border-l-4",
 };
 const fmtVND = (n) =>
   typeof n === "number" && isFinite(n) ? n.toLocaleString("vi-VN") + "₫" : "-";
@@ -62,23 +64,24 @@ export default function OrderStatusSidebar({
       />
       <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-white shadow-2xl z-50">
         <div className="flex flex-col h-full">
-          <div className="bg-gradient-to-r from-emerald-500 to-green-500 p-6 text-white flex items-center justify-between">
+          {/* === SỬA: Header === */}
+          <div className="bg-gradient-to-r from-emerald-500 to-green-500 p-6 text-white flex items-center justify-between shadow-md">
             <div>
-              <h2 className="text-xl font-bold">Trạng thái đơn hàng</h2>
+              <h2 className="text-2xl font-bold">Trạng thái đơn hàng</h2>
               <p className="text-emerald-100 text-sm">Theo dõi món đã gọi</p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-lg transition"
+              className="p-2 hover:bg-white/20 rounded-full transition"
               aria-label="Đóng"
             >
               <X className="h-6 w-6" />
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-3">
+          <div className="flex-1 overflow-y-auto p-6 space-y-3 bg-neutral-50">
             {groups.length === 0 ? (
-              <div className="text-sm text-neutral-500 border rounded-xl p-4">
+              <div className="text-sm text-neutral-500 border rounded-xl p-6 text-center">
                 Chưa có món nào được gọi.
               </div>
             ) : (
@@ -86,52 +89,38 @@ export default function OrderStatusSidebar({
                 const it = g.sample;
                 const st = String(it.status || "").toLowerCase();
                 const badge =
-                  STATUS_COLOR[st] ||
-                  "bg-neutral-100 text-neutral-700 border-neutral-200";
+                  STATUS_STYLE[st] ||
+                  "border-neutral-300 bg-neutral-100 text-neutral-700 border-l-4";
                 const isEditable = st === "pending";
-                const canChangeQty = st === "pending";
+                const canChangeQty = st === "pending" || st === "preparing";
 
                 return (
+                  // === SỬA: Card item đẹp hơn ===
                   <div
                     key={`${it.orderDetailId}-group`}
-                    className="relative border rounded-xl p-3 hover:bg-neutral-50"
+                    className={`relative bg-white rounded-xl p-4 shadow-lg ${badge}`}
                   >
-                    {isEditable && (
-                      <button
-                        className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600"
-                        onClick={() => onDecGroup && onDecGroup(g)}
-                        aria-label="Xoá 1"
-                        title="Xoá 1 đơn vị"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-
-                    <div
-                      className={`flex items-start justify-between pr-8 ${
-                        isEditable
-                          ? "cursor-pointer"
-                          : "cursor-not-allowed opacity-80"
-                      }`}
-                      onClick={() => isEditable && onEdit && onEdit(it)}
-                      role={isEditable ? "button" : undefined}
-                      title={
-                        isEditable
-                          ? "Sửa topping/ghi chú"
-                          : "Không thể chỉnh khi không ở trạng thái Chờ nấu"
-                      }
-                    >
-                      <div className="font-semibold text-neutral-900">
-                        {it.dishName}
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="font-semibold text-neutral-900 text-lg">
+                          {it.dishName}
+                        </h4>
+                        <span
+                          className={`inline-block text-sm font-bold ${badge
+                            .replace(/bg-[\w-]+/, "")
+                            .replace(/border-[\w-]+/, "")}`}
+                        >
+                          {STATUS_LABEL[st] || st || "unknown"}
+                        </span>
                       </div>
-                      <div className="text-sm font-bold text-emerald-600">
-                        {fmtVND(it.totalPrice)}
+                      <div className="text-lg font-bold text-orange-600">
+                        {fmtVND(it.totalPrice * g.count)}
                       </div>
                     </div>
 
                     {Array.isArray(it.toppings) && it.toppings.length > 0 && (
-                      <div className="text-xs text-neutral-500 mt-1">
-                        Topping:{" "}
+                      <div className="text-sm text-neutral-600 mt-2">
+                        <span className="font-medium">Topping: </span>
                         {it.toppings
                           .map((t) =>
                             t.quantity > 1
@@ -141,37 +130,59 @@ export default function OrderStatusSidebar({
                           .join(", ")}
                       </div>
                     )}
-
                     {it.note && (
-                      <div className="text-xs text-neutral-500 mt-1">
+                      <div className="text-sm text-orange-700 italic mt-1">
                         Ghi chú: {it.note}
                       </div>
                     )}
 
-                    <div className="mt-2 flex items-center justify-between">
-                      <span
-                        className={`inline-block text-xs px-2 py-0.5 rounded-lg border ${badge}`}
-                      >
-                        {STATUS_LABEL[st] || st || "unknown"}
-                      </span>
-
+                    <div className="mt-3 pt-3 border-t border-neutral-200 flex items-center justify-between">
+                      {/* === SỬA: Nút Sửa/Xoá === */}
                       <div className="flex items-center gap-2">
                         <button
-                          disabled={!canChangeQty || g.count <= 1}
-                          className="px-2 py-1 rounded-lg bg-neutral-100 disabled:opacity-50"
+                          disabled={!isEditable}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-100 text-neutral-700 text-sm font-medium hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={() => isEditable && onEdit && onEdit(it)}
+                          title={
+                            isEditable
+                              ? "Sửa topping/ghi chú"
+                              : "Không thể sửa khi không ở trạng thái 'Chờ nấu'"
+                          }
+                        >
+                          <Edit className="w-4 h-4" /> Sửa
+                        </button>
+                        <button
+                          disabled={!canChangeQty}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-700 text-sm font-medium hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
                           onClick={() => onDecGroup && onDecGroup(g)}
-                          title={canChangeQty ? "Giảm 1" : "Không thể chỉnh"}
+                          title={
+                            canChangeQty
+                              ? "Xoá 1 món (hoặc yêu cầu huỷ)"
+                              : "Không thể xoá"
+                          }
+                        >
+                          <Trash2 className="w-4 h-4" /> Xoá 1
+                        </button>
+                      </div>
+
+                      {/* === SỬA: Nút Tăng/Giảm === */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          disabled={!isEditable || g.count <= 1}
+                          className="w-8 h-8 rounded-full bg-neutral-100 border border-neutral-300 flex items-center justify-center hover:bg-neutral-200 disabled:opacity-50"
+                          onClick={() => onDecGroup && onDecGroup(g)}
+                          title={isEditable ? "Giảm 1" : "Không thể chỉnh"}
                         >
                           –
                         </button>
-                        <span className="min-w-6 text-center text-sm font-semibold">
+                        <span className="min-w-6 text-center text-lg font-bold text-neutral-900">
                           {g.count}
                         </span>
                         <button
-                          disabled={!canChangeQty}
-                          className="px-2 py-1 rounded-lg bg-neutral-100 disabled:opacity-50"
+                          disabled={!isEditable}
+                          className="w-8 h-8 rounded-full bg-neutral-100 border border-neutral-300 flex items-center justify-center hover:bg-neutral-200 disabled:opacity-50"
                           onClick={() => onIncGroup && onIncGroup(g)}
-                          title={canChangeQty ? "Tăng 1" : "Không thể chỉnh"}
+                          title={isEditable ? "Tăng 1" : "Không thể chỉnh"}
                         >
                           +
                         </button>
