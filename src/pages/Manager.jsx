@@ -30,9 +30,26 @@ export default function Manager() {
   const [loadingBookings, setLoadingBookings] = useState(false);
   const [bookingsError, setBookingsError] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [bookingPage, setBookingPage] = useState(1);
+  const [bookingSize] = useState(6);
+  const [bookingPageInfo, setBookingPageInfo] = useState({
+    page: 1,
+    size: 6,
+    totalPages: 1,
+    totalElements: 0,
+  });
+
   const [toppings, setToppings] = useState([]);
   const [isEditingTopping, setIsEditingTopping] = useState(false);
   const [editingTopping, setEditingTopping] = useState(null);
+  const [toppingPage, setToppingPage] = useState(1);
+  const [toppingSize] = useState(10);
+  const [toppingPageInfo, setToppingPageInfo] = useState({
+    page: 1,
+    size: 10,
+    totalPages: 1,
+    totalElements: 0,
+  });
 
   useEffect(() => {
     const loadName = async () => {
@@ -62,36 +79,26 @@ export default function Manager() {
     loadName();
   }, []);
 
-  const [page, setPage] = useState(0); // bắt đầu từ 0 để khớp BE
-  const [size] = useState(10); // mỗi trang 10 topping
-
-  const [pageInfo, setPageInfo] = useState({
-    page: 1,
-    size: 6,
-    totalPages: 1,
-    totalElements: 0,
-  });
-
   useEffect(() => {
     if (activeSection !== "accounts") return;
     let cancelled = false;
-
     (async () => {
       setLoadingBookings(true);
       setBookingsError("");
       try {
         const { items, pageInfo } = await listBookingsPaging({
-          page,
-          size,
+          page: bookingPage,
+          size: bookingSize,
           status: statusFilter,
         });
         if (!cancelled) {
           setBookings(items);
-          setPageInfo(pageInfo);
+          setBookingPageInfo(pageInfo);
         }
       } catch (err) {
-        if (!cancelled)
+        if (!cancelled) {
           setBookingsError(err?.message || "Không tải được danh sách đặt bàn.");
+        }
       } finally {
         if (!cancelled) setLoadingBookings(false);
       }
@@ -100,7 +107,7 @@ export default function Manager() {
     return () => {
       cancelled = true;
     };
-  }, [activeSection, page, size, statusFilter]);
+  }, [activeSection, bookingPage, bookingSize, statusFilter]);
 
   useEffect(() => {
     let cancelled = false;
@@ -110,7 +117,6 @@ export default function Manager() {
         if (!cancelled) setTables(Array.isArray(data) ? data : []);
       } catch (e) {
         if (!cancelled) setTables([]);
-        console.error("Load tables failed:", e);
       }
     })();
     return () => {
@@ -118,24 +124,26 @@ export default function Manager() {
     };
   }, []);
 
-  // 🧁 Load danh sách topping khi vào tab "toppings"
   useEffect(() => {
     if (activeSection !== "toppings") return;
     let cancelled = false;
 
     (async () => {
       try {
-        const { content, pageInfo } = await listToppingPaging({
-          page,
-          size,
+        const pageData = await listToppingPaging({
+          page: toppingPage - 1,
+          size: toppingSize,
         });
 
         if (!cancelled) {
-          setToppings(content);
-          setPageInfo(pageInfo);
+          setToppings(pageData.content);
+          setToppingPageInfo({
+            ...pageData,
+            page: toppingPage,
+            totalPages: pageData.totalPages,
+          });
         }
       } catch (err) {
-        console.error("❌ Lỗi khi load topping:", err);
         if (!cancelled) setToppings([]);
       }
     })();
@@ -143,29 +151,35 @@ export default function Manager() {
     return () => {
       cancelled = true;
     };
-  }, [activeSection, page, size]);
+  }, [activeSection, toppingPage, toppingSize]);
 
   const handleSearchTopping = async (keyword = "") => {
     try {
       if (!keyword.trim()) {
-        console.log("🔄 Không có từ khoá, load lại full danh sách topping...");
-        const { content } = await listToppingPaging({ page: 0, size: 20 });
-        setToppings(content);
+        setToppingPage(1);
+        const pageData = await listToppingPaging({
+          page: 0,
+          size: toppingSize,
+        });
+        setToppings(pageData.content);
+        setToppingPageInfo({ ...pageData, page: 1 });
         return;
       }
-
-      console.log("🔍 Đang tìm topping theo tên:", keyword);
       const result = await searchToppingByName(keyword);
-
       if (Array.isArray(result)) {
-        console.log("✅ Topping search result:", result);
         setToppings(result);
+        setToppingPageInfo({
+          page: 1,
+          size: result.length,
+          totalPages: 1,
+          totalElements: result.length,
+          first: true,
+          last: true,
+        });
       } else {
-        console.warn("⚠️ API search topping không trả về mảng hợp lệ:", result);
         setToppings([]);
       }
     } catch (err) {
-      console.error("❌ Lỗi khi search topping:", err);
       setToppings([]);
     }
   };
@@ -247,15 +261,15 @@ export default function Manager() {
             setBookings={setBookings}
             loading={loadingBookings}
             deletingIds={deletingIds}
-            page={page}
-            pageInfo={pageInfo}
-            onPageChange={setPage}
+            page={bookingPage}
+            pageInfo={bookingPageInfo}
+            onPageChange={setBookingPage}
             onReject={handleReject}
             tables={tables}
             onAssignTable={handleAssignTable}
             statusFilter={statusFilter}
             onStatusChange={(v) => {
-              setPage(1);
+              setBookingPage(1);
               setStatusFilter(v);
             }}
           />
@@ -273,20 +287,6 @@ export default function Manager() {
       case "dailyDishes":
         return <ManagerDailyMenuPage />;
 
-      case "invoices":
-        return (
-          <ManagerInvoicesToday
-            invoices={mockRevenueData.map((r, i) => ({
-              id: i + 1,
-              table: (i % 10) + 1,
-              amount: Math.round(r.revenue * 1.1),
-              time: "--:--",
-              date: new Date().toISOString().slice(0, 10),
-              paymentMethod: i % 2 ? "Card" : "Cash",
-            }))}
-          />
-        );
-
       case "toppings":
         return (
           <ToppingManagement
@@ -296,9 +296,9 @@ export default function Manager() {
             setEditingItem={setEditingTopping}
             loading={false}
             onSearch={handleSearchTopping}
-            page={page}
-            pageInfo={pageInfo}
-            onPageChange={setPage}
+            page={toppingPage}
+            pageInfo={toppingPageInfo}
+            onPageChange={setToppingPage}
           />
         );
 
@@ -332,7 +332,7 @@ export default function Manager() {
             <p className="text-neutral-600 text-lg">
               Quản lý nhà hàng hiệu quả với dashboard thông minh
             </p>
-            {bookingsError && (
+            {activeSection === "accounts" && bookingsError && (
               <p className="text-red-600 mt-2">{bookingsError}</p>
             )}
           </div>

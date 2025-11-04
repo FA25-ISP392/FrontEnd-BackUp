@@ -57,38 +57,26 @@ export async function listBookingsPaging({
     setStatusPage !== "ALL"
       ? `/booking/status/${encodeURIComponent(setStatusPage)}`
       : "/booking";
-  const res = await apiConfig.get(endpoint);
-  const list = Array.isArray(res)
-    ? res
-    : Array.isArray(res?.result)
-    ? res.result
-    : Array.isArray(res?.content)
-    ? res.content
-    : [];
-
-  const data = list
-    .map(normalizeBooking)
-    .sort(
-      (firstKey, secondKey) =>
-        new Date(secondKey.createdAt || secondKey.bookingDate) -
-        new Date(firstKey.createdAt || firstKey.bookingDate)
-    );
-
-  const totalElements = data.length;
-  const totalPages = Math.max(1, Math.ceil(totalElements / size));
-  const start = (page - 1) * size;
-  const end = start + size;
+  const res = await apiConfig.get(endpoint, {
+    params: { page: page - 1, size },
+  });
+  const pageData = res;
+  if (!pageData) {
+    throw new Error("Không nhận được dữ liệu trang (pageData) từ API.");
+  }
+  const list = Array.isArray(pageData?.content) ? pageData.content : [];
+  const data = list.map(normalizeBooking);
 
   return {
-    items: data.slice(start, end),
+    items: data,
     pageInfo: {
-      page,
-      size,
-      totalPages,
-      totalElements,
-      numberOfElements: Math.min(size, totalElements - start),
-      first: page === 1,
-      last: page >= totalPages,
+      page: page,
+      size: pageData.size,
+      totalPages: pageData.totalPages,
+      totalElements: pageData.totalElements,
+      numberOfElements: pageData.numberOfElements,
+      first: pageData.first,
+      last: pageData.last,
     },
   };
 }
