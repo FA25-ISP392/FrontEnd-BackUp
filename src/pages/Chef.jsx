@@ -6,7 +6,6 @@ import { mockChefDishes } from "../lib/chefData";
 import { getCurrentUser } from "../lib/auth";
 import ChefDailyPlan from "../components/Chef/ChefDailyPlan";
 import ChefDailyDishes from "../components/Chef/ChefDailyDishes";
-import ChefRejectedDishes from "../components/Chef/ChefRejectedDishes";
 import ChefDailyPlanTopping from "../components/Chef/ChefDailyPlanTopping";
 import ChefDailyToppings from "../components/Chef/ChefDailyToppings";
 import { History } from "lucide-react";
@@ -143,46 +142,46 @@ export default function Chef() {
 
       case "orderHistory":
         return (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-8 h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center">
                 <History className="h-4 w-4 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-neutral-900">
+                <h3 className="text-xl font-bold text-white">
                   Lịch Sử Đơn Món
                 </h3>
-                <p className="text-sm text-neutral-600">
+                <p className="text-sm text-neutral-300">
                   Các món đã nấu xong từ những ngày trước
                 </p>
               </div>
             </div>
 
             {isLoading ? (
-              <p>Đang tải lịch sử...</p>
+              <p className="text-indigo-200">Đang tải lịch sử...</p>
             ) : error ? (
-              <p className="text-red-500">{error}</p>
+              <p className="text-red-400">{error}</p>
             ) : historicalReady.length === 0 ? (
-              <p className="text-center py-8 text-neutral-500">
+              <p className="text-center py-8 text-neutral-400">
                 Chưa có lịch sử món ăn.
               </p>
             ) : (
-              <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-neutral-300 scrollbar-track-transparent">
+              <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent">
                 {historicalReady.map((od) => (
                   <div
                     key={od.orderDetailId}
-                    className="bg-neutral-50 rounded-lg p-4 border border-neutral-200"
+                    className="bg-black/20 rounded-lg p-4 border border-white/10"
                   >
                     <div className="flex justify-between items-center">
                       <div>
-                        <span className="font-semibold text-neutral-800">
+                        <span className="font-semibold text-white">
                           {od.dishName}
                         </span>
-                        <span className="text-sm text-neutral-600 ml-2">
+                        <span className="text-sm text-neutral-400 ml-2">
                           (ID: {od.orderDetailId})
                         </span>
                       </div>
-                      <span className="text-xs font-medium text-neutral-500">
+                      <span className="text-xs font-medium text-neutral-400">
                         {od.orderDate
                           ? new Date(od.orderDate).toLocaleDateString("vi-VN")
                           : "Không rõ ngày"}
@@ -191,8 +190,8 @@ export default function Chef() {
 
                     {/* === KHỐI ĐÃ SỬA === */}
                     {Array.isArray(od.toppings) && od.toppings.length > 0 && (
-                      <div className="text-xs text-neutral-500 mt-1 pt-1 border-t border-neutral-200/60">
-                        <span className="font-medium text-neutral-700">
+                      <div className="text-xs text-neutral-400 mt-1 pt-1 border-t border-white/10">
+                        <span className="font-medium text-neutral-200">
                           Topping:{" "}
                         </span>
                         {od.toppings
@@ -205,11 +204,10 @@ export default function Chef() {
                       </div>
                     )}
                     {od.note && (
-                      <p className="text-xs italic text-neutral-500 mt-1">
+                      <p className="text-xs italic text-neutral-400 mt-1">
                         Ghi chú: {od.note}
                       </p>
                     )}
-                    {/* === HẾT KHỐI ĐÃ SỬA === */}
                   </div>
                 ))}
               </div>
@@ -232,7 +230,9 @@ export default function Chef() {
               <button
                 onClick={() => setSubTab("dish")}
                 className={`px-4 py-2 rounded-lg font-semibold ${
-                  subTab === "dish" ? "bg-blue-500 text-white" : "bg-gray-100"
+                  subTab === "dish"
+                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg"
+                    : "bg-black/20 text-neutral-300 hover:bg-black/30"
                 }`}
               >
                 Món ăn
@@ -241,8 +241,8 @@ export default function Chef() {
                 onClick={() => setSubTab("topping")}
                 className={`px-4 py-2 rounded-lg font-semibold ${
                   subTab === "topping"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-100"
+                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg"
+                    : "bg-black/20 text-neutral-300 hover:bg-black/30"
                 }`}
               >
                 Topping
@@ -260,7 +260,9 @@ export default function Chef() {
               <button
                 onClick={() => setSubTab("dish")}
                 className={`px-4 py-2 rounded-lg font-semibold ${
-                  subTab === "dish" ? "bg-blue-500 text-white" : "bg-gray-100"
+                  subTab === "dish"
+                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg"
+                    : "bg-black/20 text-neutral-300 hover:bg-black/30"
                 }`}
               >
                 Món ăn
@@ -269,8 +271,8 @@ export default function Chef() {
                 onClick={() => setSubTab("topping")}
                 className={`px-4 py-2 rounded-lg font-semibold ${
                   subTab === "topping"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-100"
+                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg"
+                    : "bg-black/20 text-neutral-300 hover:bg-black/30"
                 }`}
               >
                 Topping
@@ -281,16 +283,13 @@ export default function Chef() {
           </div>
         );
 
-      case "rejectedDishes":
-        return <ChefRejectedDishes />;
-
       case "invoices":
         return (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
+            <h3 className="text-xl font-bold text-white mb-4">
               Quản Lý Hóa Đơn
             </h3>
-            <p className="text-neutral-600">
+            <p className="text-indigo-200">
               Chức năng quản lý hóa đơn sẽ được phát triển...
             </p>
           </div>
@@ -298,9 +297,9 @@ export default function Chef() {
 
       case "settings":
         return (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">Cài Đặt</h3>
-            <p className="text-neutral-600">
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
+            <h3 className="text-xl font-bold text-white mb-4">Cài Đặt</h3>
+            <p className="text-indigo-200">
               Chức năng cài đặt sẽ được phát triển...
             </p>
           </div>
@@ -312,7 +311,7 @@ export default function Chef() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-neutral-900 to-red-900">
       <div className="flex">
         <ChefSidebar
           activeSection={activeSection}
@@ -321,10 +320,10 @@ export default function Chef() {
 
         <main className="flex-1 p-6">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+            <h1 className="text-3xl font-bold text-white shadow-text-lg mb-2">
               Chào mừng trở lại, {chefName}!
             </h1>
-            <p className="text-neutral-600 text-lg">
+            <p className="text-red-300 text-lg">
               Quản lý bếp hiệu quả với dashboard thông minh
             </p>
           </div>

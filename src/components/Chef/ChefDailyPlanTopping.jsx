@@ -6,7 +6,7 @@ import {
   createDailyPlansBatch,
   ITEM_TYPES,
 } from "../../lib/apiDailyPlan";
-import { Plus, Minus, Clock, CheckCircle } from "lucide-react";
+import { Plus, Minus, Clock, CheckCircle, Send } from "lucide-react";
 
 export default function ChefDailyPlanTopping() {
   const [toppings, setToppings] = useState([]);
@@ -42,7 +42,7 @@ export default function ChefDailyPlanTopping() {
           (p) =>
             p.planDate === today &&
             p.staffId === staffId &&
-            p.itemType === ITEM_TYPES.TOPPING,
+            p.itemType === ITEM_TYPES.TOPPING
         );
 
         const mapped = {};
@@ -87,7 +87,7 @@ export default function ChefDailyPlanTopping() {
       .map(([key, qty]) => {
         const [type, id] = key.split("_");
         const existingPlan = plans.find(
-          (p) => p.itemId === Number(id) && p.itemType === type,
+          (p) => p.itemId === Number(id) && p.itemType === type
         );
 
         // Nếu chưa có plan -> gửi tạo mới
@@ -131,7 +131,7 @@ export default function ChefDailyPlanTopping() {
 
       const refreshed = await listDailyPlans();
       const todayPlans = (refreshed || []).filter(
-        (p) => p.planDate === today && p.staffId === staffId,
+        (p) => p.planDate === today && p.staffId === staffId
       );
       setPlans(todayPlans);
     } catch (err) {
@@ -153,8 +153,8 @@ export default function ChefDailyPlanTopping() {
   };
 
   return (
-    <div className="bg-white/80 rounded-2xl p-6 shadow-lg border border-white/20">
-      <h3 className="text-xl font-bold mb-6 text-neutral-900">
+    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
+      <h3 className="text-xl font-bold mb-6 text-white">
         Lên Kế Hoạch Topping Trong Ngày
       </h3>
 
@@ -164,7 +164,7 @@ export default function ChefDailyPlanTopping() {
           const qty = quantities[key] || 0;
           const status = getPlanStatus(t.id, ITEM_TYPES.TOPPING);
           const plan = plans.find(
-            (p) => p.itemId === t.id && p.itemType === ITEM_TYPES.TOPPING,
+            (p) => p.itemId === t.id && p.itemType === ITEM_TYPES.TOPPING
           );
 
           return (
@@ -172,23 +172,23 @@ export default function ChefDailyPlanTopping() {
               key={key}
               className={`rounded-xl p-4 border shadow-sm ${
                 status === "pending"
-                  ? "bg-blue-50 border-blue-200"
+                  ? "bg-blue-900/20 border-blue-500/30"
                   : status === "approved"
-                  ? "bg-green-50 border-green-200"
-                  : "bg-white border-gray-100"
+                  ? "bg-green-900/20 border-green-500/30"
+                  : "bg-black/20 border-white/10"
               }`}
             >
               <div className="flex justify-between mb-2">
-                <h4 className="font-semibold">{t.name}</h4>
+                <h4 className="font-semibold text-white">{t.name}</h4>
               </div>
 
               <div className="flex justify-between items-center mb-3">
-                <span>Số lượng:</span>
+                <span className="text-neutral-300">Số lượng:</span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleQuantityChange(t.id, -1)}
                     disabled={loading}
-                    className="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
+                    className="w-8 h-8 rounded-lg bg-red-900/30 text-red-300 hover:bg-red-900/50"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
@@ -199,13 +199,13 @@ export default function ChefDailyPlanTopping() {
                     min="0"
                     onChange={(e) => handleQuantityInput(t.id, e.target.value)}
                     disabled={loading}
-                    className="w-14 text-center font-semibold border rounded-lg border-gray-300"
+                    className="w-14 text-center font-semibold border rounded-lg bg-black/20 border-white/10 text-white"
                   />
 
                   <button
                     onClick={() => handleQuantityChange(t.id, 1)}
                     disabled={loading}
-                    className="w-8 h-8 rounded-lg bg-green-100 text-green-600 hover:bg-green-200"
+                    className="w-8 h-8 rounded-lg bg-green-900/30 text-green-300 hover:bg-green-900/50"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
@@ -213,12 +213,12 @@ export default function ChefDailyPlanTopping() {
               </div>
 
               {status === "approved" && plan?.remainingQuantity > 0 && (
-                <div className="text-green-600 text-sm flex items-center gap-2">
+                <div className="text-green-400 text-sm flex items-center gap-2">
                   <CheckCircle className="h-4 w-4" /> <span>Đã duyệt</span>
                 </div>
               )}
               {status === "pending" && (
-                <div className="text-blue-600 text-sm flex items-center gap-2">
+                <div className="text-blue-400 text-sm flex items-center gap-2">
                   <Clock className="h-4 w-4 animate-spin" />{" "}
                   <span>Chờ duyệt...</span>
                 </div>
@@ -233,7 +233,14 @@ export default function ChefDailyPlanTopping() {
         disabled={loading}
         className="w-full py-3 rounded-xl text-white font-semibold text-lg bg-gradient-to-r from-blue-500 to-cyan-500 hover:opacity-90 transition-all"
       >
-        {loading ? "Đang gửi kế hoạch topping..." : "Gửi kế hoạch topping"}
+        {loading ? (
+          "Đang gửi kế hoạch topping..."
+        ) : (
+          <>
+            <Send className="inline w-5 h-5 mr-2" />
+            Gửi kế hoạch topping
+          </>
+        )}
       </button>
     </div>
   );

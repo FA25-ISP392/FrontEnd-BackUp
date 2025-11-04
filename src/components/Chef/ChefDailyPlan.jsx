@@ -40,7 +40,7 @@ export default function ChefDailyPlan() {
           (p) =>
             p.planDate === today &&
             p.staffId === staffId &&
-            p.itemType === ITEM_TYPES.DISH,
+            p.itemType === ITEM_TYPES.DISH
         );
 
         const mapped = {};
@@ -82,7 +82,7 @@ export default function ChefDailyPlan() {
       .filter(([_, qty]) => qty > 0)
       .map(([id, qty]) => {
         const existingPlan = plans.find(
-          (p) => p.itemId === Number(id) && p.itemType === ITEM_TYPES.DISH,
+          (p) => p.itemId === Number(id) && p.itemType === ITEM_TYPES.DISH
         );
 
         if (!existingPlan) {
@@ -124,7 +124,7 @@ export default function ChefDailyPlan() {
 
       const refreshed = await listDailyPlans();
       const todayPlans = (refreshed || []).filter(
-        (p) => p.planDate === today && p.staffId === staffId,
+        (p) => p.planDate === today && p.staffId === staffId
       );
       setPlans(todayPlans);
     } catch (err) {
@@ -137,7 +137,7 @@ export default function ChefDailyPlan() {
 
   const getPlanStatus = (dishId) => {
     const plan = plans.find(
-      (p) => p.itemId === dishId && p.itemType === ITEM_TYPES.DISH,
+      (p) => p.itemId === dishId && p.itemType === ITEM_TYPES.DISH
     );
     if (!plan) return null;
     if (plan.status === false) return "pending";
@@ -146,8 +146,8 @@ export default function ChefDailyPlan() {
   };
 
   return (
-    <div className="bg-white/80 rounded-2xl p-6 shadow-lg border border-white/20">
-      <h3 className="text-xl font-bold mb-6 text-neutral-900">
+    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
+      <h3 className="text-xl font-bold mb-6 text-white">
         Lên Kế Hoạch Món Ăn Trong Ngày
       </h3>
 
@@ -160,23 +160,23 @@ export default function ChefDailyPlan() {
               key={dish.id}
               className={`rounded-xl p-4 border shadow-sm ${
                 status === "pending"
-                  ? "bg-blue-50 border-blue-200"
+                  ? "bg-blue-900/20 border-blue-500/30"
                   : status === "approved"
-                  ? "bg-green-50 border-green-200"
-                  : "bg-white border-gray-100"
+                  ? "bg-green-900/20 border-green-500/30"
+                  : "bg-black/20 border-white/10"
               }`}
             >
               <div className="flex justify-between mb-2">
-                <h4 className="font-semibold">{dish.name}</h4>
+                <h4 className="font-semibold text-white">{dish.name}</h4>
               </div>
 
               <div className="flex justify-between items-center mb-3">
-                <span>Số lượng:</span>
+                <span className="text-neutral-300">Số lượng:</span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleQuantityChange(dish.id, -1)}
                     disabled={loading}
-                    className="w-8 h-8 rounded-lg bg-red-100 text-red-600 hover:bg-red-200"
+                    className="w-8 h-8 rounded-lg bg-red-900/30 text-red-300 hover:bg-red-900/50"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
@@ -189,13 +189,13 @@ export default function ChefDailyPlan() {
                       handleQuantityInput(dish.id, e.target.value)
                     }
                     disabled={loading}
-                    className="w-14 text-center font-semibold border rounded-lg border-gray-300"
+                    className="w-14 text-center font-semibold border rounded-lg bg-black/20 border-white/10 text-white"
                   />
 
                   <button
                     onClick={() => handleQuantityChange(dish.id, 1)}
                     disabled={loading}
-                    className="w-8 h-8 rounded-lg bg-green-100 text-green-600 hover:bg-green-200"
+                    className="w-8 h-8 rounded-lg bg-green-900/30 text-green-300 hover:bg-green-900/50"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
@@ -203,12 +203,12 @@ export default function ChefDailyPlan() {
               </div>
 
               {status === "approved" && (
-                <div className="text-green-600 text-sm flex items-center gap-2">
+                <div className="text-green-400 text-sm flex items-center gap-2">
                   <CheckCircle className="h-4 w-4" /> <span>Đã duyệt</span>
                 </div>
               )}
               {status === "pending" && (
-                <div className="text-blue-600 text-sm flex items-center gap-2">
+                <div className="text-blue-400 text-sm flex items-center gap-2">
                   <Clock className="h-4 w-4 animate-spin" />{" "}
                   <span>Chờ duyệt...</span>
                 </div>
