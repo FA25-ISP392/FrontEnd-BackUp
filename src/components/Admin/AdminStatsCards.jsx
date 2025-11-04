@@ -1,11 +1,19 @@
 import { useEffect, useState } from "react";
 import { getRevenueSummary } from "../../lib/apiStatistics";
+import {
+  DollarSign,
+  Banknote,
+  CreditCard,
+  Users,
+  FileText,
+} from "lucide-react"; // 👈 Thêm icon
 
-export default function AdminStatsCards() {
-  const [todayRevenue, setTodayRevenue] = useState(0);
-  const [revenueByMethod, setRevenueByMethod] = useState([]);
-  const [loading, setLoading] = useState(false);
-
+export default function AdminStatsCards({
+  loading,
+  totalRevenue,
+  totalAccounts,
+  totalInvoices,
+}) {
   const fmtVND = (n) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -13,89 +21,66 @@ export default function AdminStatsCards() {
       maximumFractionDigits: 0,
     }).format(Number(n || 0));
 
-  // 🧾 Lấy tổng doanh thu hôm nay và chi tiết phương thức
-  const fetchTodayRevenue = async () => {
-    try {
-      setLoading(true);
-      const now = new Date();
-      const params = {
-        day: now.getDate(),
-        month: now.getMonth() + 1,
-        year: now.getFullYear(),
-      };
-
-      const res = await getRevenueSummary(params);
-      console.log("📊 Dữ liệu doanh thu:", res);
-
-      // Lấy danh sách theo phương thức
-      const list =
-        res?.data?.result?.revenueByMethod ??
-        res?.result?.revenueByMethod ??
-        res?.revenueByMethod ??
-        [];
-
-      // Tổng cộng doanh thu
-      const total = list.reduce(
-        (sum, item) => sum + Number(item?.totalRevenue || 0),
-        0,
-      );
-
-      setTodayRevenue(total);
-      setRevenueByMethod(list);
-    } catch (err) {
-      console.error("❌ Lỗi tải doanh thu hôm nay:", err);
-      setTodayRevenue(0);
-      setRevenueByMethod([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTodayRevenue();
-
-    // Tự reload khi qua ngày mới
-    const timer = setInterval(() => {
-      const now = new Date();
-      if (now.getHours() === 0 && now.getMinutes() < 5) {
-        fetchTodayRevenue();
-      }
-    }, 60000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  // Tìm doanh thu từng phương thức
-  const cashRevenue =
-    revenueByMethod.find((m) => m.method === "CASH")?.totalRevenue || 0;
-  const bankRevenue =
-    revenueByMethod.find((m) => m.method === "BANK_TRANSFER")?.totalRevenue ||
-    0;
-
   return (
-    <div className="mb-8">
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 hover:shadow-xl transition-all">
-        <p className="text-neutral-600 text-sm mb-2">Tổng Doanh Thu Hôm Nay</p>
-
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      {/* Card 1: Doanh Thu Hôm Nay */}
+      <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20 hover:border-white/40 transition-all transform hover:scale-105">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-base font-medium text-blue-200">
+            Doanh Thu Hôm Nay
+          </p>
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+            <DollarSign className="h-5 w-5 text-white" />
+          </div>
+        </div>
         {loading ? (
-          <p className="text-lg text-neutral-500">Đang tải...</p>
+          <p className="text-3xl font-extrabold text-white animate-pulse">
+            Đang tải...
+          </p>
         ) : (
-          <>
-            <p className="text-4xl font-bold text-green-700 mb-4">
-              {fmtVND(todayRevenue)}
-            </p>
+          <p className="text-4xl font-extrabold text-white shadow-text">
+            {fmtVND(totalRevenue)}
+          </p>
+        )}
+      </div>
 
-            <div className="flex flex-col gap-1 text-sm text-neutral-700">
-              <p>
-                💵 <span className="font-medium">Tiền mặt:</span>{" "}
-                <span className="text-green-700">{fmtVND(cashRevenue)}</span>
-              </p>
-              <p>
-                🏦 <span className="font-medium">Chuyển khoản:</span>{" "}
-                <span className="text-green-700">{fmtVND(bankRevenue)}</span>
-              </p>
-            </div>
-          </>
+      {/* Card 2: Tổng Tài Khoản */}
+      <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20 hover:border-white/40 transition-all transform hover:scale-105">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-base font-medium text-purple-200">
+            Tổng Tài Khoản
+          </p>
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-violet-500 rounded-xl flex items-center justify-center shadow-lg">
+            <Users className="h-5 w-5 text-white" />
+          </div>
+        </div>
+        {loading ? (
+          <p className="text-3xl font-extrabold text-white animate-pulse">
+            ...
+          </p>
+        ) : (
+          <p className="text-4xl font-extrabold text-white shadow-text">
+            {totalAccounts}
+          </p>
+        )}
+      </div>
+
+      {/* Card 3: Tổng Hóa Đơn (Hôm nay) */}
+      <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20 hover:border-white/40 transition-all transform hover:scale-105">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-base font-medium text-emerald-200">Tổng Hóa Đơn</p>
+          <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl flex items-center justify-center shadow-lg">
+            <FileText className="h-5 w-5 text-white" />
+          </div>
+        </div>
+        {loading ? (
+          <p className="text-3xl font-extrabold text-white animate-pulse">
+            ...
+          </p>
+        ) : (
+          <p className="text-4xl font-extrabold text-white shadow-text">
+            {totalInvoices}
+          </p>
         )}
       </div>
     </div>

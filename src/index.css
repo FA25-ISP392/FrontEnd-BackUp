@@ -853,3 +853,43 @@ html {
 .shadow-text {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
+
+@keyframes pulse-neon {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 5px theme("colors.purple.400"),
+      0 0 10px theme("colors.purple.300");
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 15px theme("colors.blue.400"),
+      0 0 25px theme("colors.blue.300");
+  }
+}
+
+.animate-pulse-neon {
+  animation: pulse-neon 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes background-pan {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-background-pan {
+  background-size: 200% 200%;
+  animation: background-pan 3s ease infinite;
+}
+
+/* Thêm shadow-text đậm hơn */
+.shadow-text-lg {
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+}

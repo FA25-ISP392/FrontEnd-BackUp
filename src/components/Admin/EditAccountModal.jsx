@@ -197,11 +197,11 @@ export default function AdminEditAccountModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-4 text-white rounded-t-xl">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50 p-4">
+      <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden border border-white/20">
+        <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-6 text-white rounded-t-2xl">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold">
+            <h2 className="text-xl font-bold">
               {editingItem ? "Chỉnh Sửa Tài Khoản" : "Thêm Tài Khoản Mới"}
             </h2>
             <button
@@ -209,17 +209,21 @@ export default function AdminEditAccountModal({
                 setIsEditingAccount(false);
                 setEditingItem(null);
               }}
-              className="p-1.5 hover:bg-white/20 rounded-lg transition"
+              className="p-2 hover:bg-white/20 rounded-lg transition"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
             </button>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} noValidate className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="p-6 space-y-4 max-h-[calc(90vh-100px)] overflow-y-auto"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Tên
               </label>
               <input
@@ -229,7 +233,7 @@ export default function AdminEditAccountModal({
                 minLength={2}
                 maxLength={50}
                 onChange={() => setFieldErrs((s) => ({ ...s, name: "" }))}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                className="form-input-enhanced"
               />
               {fieldErrs.name && (
                 <p className="text-xs text-red-600 mt-1">{fieldErrs.name}</p>
@@ -237,7 +241,7 @@ export default function AdminEditAccountModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Ngày sinh
               </label>
               <input
@@ -247,7 +251,7 @@ export default function AdminEditAccountModal({
                   editingItem?.dob ? String(editingItem.dob).slice(0, 10) : ""
                 }
                 onChange={() => setFieldErrs((s) => ({ ...s, dob: "" }))}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                className="form-input-enhanced"
               />
               {fieldErrs.dob && (
                 <p className="text-xs text-red-600 mt-1">{fieldErrs.dob}</p>
@@ -255,7 +259,7 @@ export default function AdminEditAccountModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Email
               </label>
               <input
@@ -263,7 +267,7 @@ export default function AdminEditAccountModal({
                 name="email"
                 defaultValue={editingItem?.email || ""}
                 onChange={() => setFieldErrs((s) => ({ ...s, email: "" }))}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                className="form-input-enhanced"
               />
               {fieldErrs.email && (
                 <p className="text-xs text-red-600 mt-1">{fieldErrs.email}</p>
@@ -271,7 +275,7 @@ export default function AdminEditAccountModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Số Điện Thoại
               </label>
               <input
@@ -279,7 +283,7 @@ export default function AdminEditAccountModal({
                 name="phone"
                 defaultValue={editingItem?.phone || ""}
                 onChange={() => setFieldErrs((s) => ({ ...s, phone: "" }))}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                className="form-input-enhanced"
               />
               {fieldErrs.phone && (
                 <p className="text-xs text-red-600 mt-1">{fieldErrs.phone}</p>
@@ -287,20 +291,20 @@ export default function AdminEditAccountModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
-                Mật khẩu mới
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                Mật khẩu mới (Bỏ trống nếu không đổi)
               </label>
               <div className="relative">
                 <input
                   type={showPwd ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 pr-8 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                  className="form-input-enhanced pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPwd((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-500"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500"
                 >
                   {showPwd ? (
                     <EyeOff className="h-4 w-4" />
@@ -317,7 +321,7 @@ export default function AdminEditAccountModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
                 Nhập lại mật khẩu
               </label>
               <div className="relative">
@@ -328,12 +332,12 @@ export default function AdminEditAccountModal({
                     setConfirm(e.target.value);
                     setFieldErrs((s) => ({ ...s, confirm: "" }));
                   }}
-                  className="w-full px-3 py-2 pr-8 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                  className="form-input-enhanced pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirm((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-500"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500"
                 >
                   {showConfirm ? (
                     <EyeOff className="h-4 w-4" />
@@ -349,7 +353,7 @@ export default function AdminEditAccountModal({
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-neutral-700 mb-1">
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
               Vai Trò
             </label>
             <select
@@ -357,7 +361,7 @@ export default function AdminEditAccountModal({
               value={role}
               onChange={(e) => setRole(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+              className="form-input-enhanced"
             >
               <option value="admin">Admin</option>
               <option value="manager">Manager</option>
@@ -368,24 +372,24 @@ export default function AdminEditAccountModal({
 
           {err && <p className="text-sm text-red-600 mb-3">{err}</p>}
 
-          <div className="flex gap-2">
+          <div className="flex gap-3 pt-4 border-t border-neutral-200">
             <button
               type="button"
               onClick={() => {
                 setIsEditingAccount(false);
                 setEditingItem(null);
               }}
-              className="flex-1 px-3 py-2 border border-neutral-300 text-neutral-700 rounded-lg hover:bg-neutral-50 transition-all font-medium text-sm"
+              className="flex-1 px-4 py-3 bg-white border border-neutral-300 text-neutral-700 rounded-xl hover:bg-neutral-100 transition-all font-medium"
             >
               Hủy
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-2 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all font-medium flex items-center justify-center gap-2 text-sm"
+              className="flex-1 btn-submit-enhanced py-3"
             >
-              <Save className="h-4 w-4" />
-              {saving ? "Đang lưu..." : "Lưu"}
+              <Save className="h-4 w-4 inline-block mr-2" />
+              {saving ? "Đang lưu..." : "Lưu thay đổi"}
             </button>
           </div>
         </form>

@@ -267,8 +267,8 @@ export default function AdminAccountForm({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-lg flex items-center justify-center z-50 p-4">
+      <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-md w-full border border-white/20">
         <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-6 text-white rounded-t-2xl">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold">Thêm Tài Khoản Nhân Sự</h2>
@@ -288,7 +288,7 @@ export default function AdminAccountForm({
             </label>
             <input
               name="username"
-              className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="form-input-enhanced"
               value={form.username}
               onChange={(e) => {
                 setF("username", e.target.value);
@@ -309,7 +309,7 @@ export default function AdminAccountForm({
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                className="w-full px-4 py-3 pr-10 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                className="form-input-enhanced pr-10"
                 value={form.password}
                 onChange={(e) => {
                   setF("password", e.target.value);
@@ -341,7 +341,7 @@ export default function AdminAccountForm({
               Họ Tên
             </label>
             <input
-              className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="form-input-enhanced"
               value={form.fullName}
               onChange={(e) => {
                 setF("fullName", e.target.value);
@@ -361,7 +361,7 @@ export default function AdminAccountForm({
             <input
               name="email"
               type="email"
-              className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="form-input-enhanced"
               value={form.email}
               onChange={(e) => {
                 setF("email", e.target.value);
@@ -380,7 +380,7 @@ export default function AdminAccountForm({
             </label>
             <input
               type="date"
-              className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="form-input-enhanced"
               value={form.dob}
               onChange={(e) => {
                 setF("dob", e.target.value);
@@ -398,7 +398,7 @@ export default function AdminAccountForm({
             </label>
             <input
               name="phone"
-              className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="form-input-enhanced"
               value={form.phone}
               onChange={(e) => {
                 setF("phone", e.target.value);
@@ -416,7 +416,7 @@ export default function AdminAccountForm({
               Vai Trò
             </label>
             <select
-              className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="form-input-enhanced"
               value={form.role}
               onChange={(e) => setF("role", e.target.value)}
               required
@@ -437,16 +437,16 @@ export default function AdminAccountForm({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-3 border border-neutral-300 text-neutral-700 rounded-xl hover:bg-neutral-50 transition-all font-medium"
+              className="flex-1 px-4 py-3 bg-white border border-neutral-300 text-neutral-700 rounded-xl hover:bg-neutral-100 transition-all font-medium"
             >
               Hủy
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-3 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+              className="flex-1 btn-submit-enhanced py-3" // 👈 Class mới
             >
-              <Save className="h-4 w-4" />
+              <Save className="h-4 w-4 inline-block mr-2" />
               {saving ? "Đang tạo..." : "Tạo nhân sự"}
             </button>
           </div>

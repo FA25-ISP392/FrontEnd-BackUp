@@ -45,17 +45,17 @@ export default function AdminAccountManagement({
   const to = Math.min(page * pageSize, totalElements);
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
             <Users className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h3 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
               Quản Lý Tài Khoản
             </h3>
-            <p className="text-sm text-neutral-600">
+            <p className="text-sm text-indigo-200">
               Quản lý tài khoản hệ thống
             </p>
           </div>
@@ -63,16 +63,16 @@ export default function AdminAccountManagement({
 
         <button
           onClick={() => setOpenCreate(true)}
-          className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 font-medium flex items-center gap-2"
+          className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 font-medium flex items-center gap-2 transform hover:scale-105 animate-background-pan"
         >
           <Plus className="h-4 w-4" />
           Thêm Tài Khoản
         </button>
       </div>
 
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden">
-        <div className="bg-gradient-to-r from-neutral-50 to-neutral-100 px-6 py-4 border-b border-neutral-200">
-          <div className="grid grid-cols-6 gap-4 text-sm font-semibold text-neutral-700">
+      <div className="bg-black/20 backdrop-blur-sm rounded-2xl shadow-lg border border-white/10 overflow-hidden">
+        <div className="bg-black/30 px-6 py-4 border-b border-white/10">
+          <div className="grid grid-cols-6 gap-4 text-sm font-semibold text-indigo-200">
             <div className="truncate">Tên</div>
             <div className="truncate">Số Điện Thoại</div>
             <div className="truncate">Ngày sinh</div>
@@ -82,11 +82,11 @@ export default function AdminAccountManagement({
           </div>
         </div>
 
-        <div className="divide-y divide-neutral-200">
+        <div className="divide-y divide-white/10">
           {loading ? (
-            <div className="p-6 text-neutral-500">Đang tải danh sách...</div>
+            <div className="p-6 text-indigo-200">Đang tải danh sách...</div>
           ) : accounts.length === 0 ? (
-            <div className="p-6 text-neutral-500">Chưa có nhân viên nào.</div>
+            <div className="p-6 text-indigo-200">Chưa có nhân viên nào.</div>
           ) : (
             accounts.map((account) => {
               const isSelf =
@@ -101,28 +101,28 @@ export default function AdminAccountManagement({
               return (
                 <div
                   key={account.id}
-                  className="px-6 py-4 hover:bg-neutral-50 transition-colors"
+                  className="px-6 py-4 hover:bg-white/5 transition-colors"
                 >
                   <div className="grid grid-cols-6 gap-4 items-center">
                     <div
-                      className="font-medium text-neutral-900 truncate"
+                      className="font-medium text-white truncate"
                       title={account.name}
                     >
                       {account.name}{" "}
                       {isSelf && (
-                        <span className="text-xs text-neutral-500">(Bạn)</span>
+                        <span className="text-xs text-neutral-400">(Bạn)</span>
                       )}
                     </div>
 
                     <div
-                      className="text-neutral-600 truncate"
+                      className="text-neutral-300 truncate"
                       title={account.phone || "-"}
                     >
                       {account.phone || "-"}
                     </div>
 
                     <div
-                      className="text-neutral-600 truncate"
+                      className="text-neutral-300 truncate"
                       title={account.dob || "-"}
                     >
                       {account.dob
@@ -131,14 +131,14 @@ export default function AdminAccountManagement({
                     </div>
 
                     <div
-                      className="text-neutral-600 truncate"
+                      className="text-neutral-300 truncate"
                       title={account.email}
                     >
                       {account.email}
                     </div>
 
                     <div
-                      className="text-neutral-600 truncate"
+                      className="text-neutral-300 truncate"
                       title={account.role}
                     >
                       {account.role}
@@ -150,7 +150,7 @@ export default function AdminAccountManagement({
                           setEditingItem(account);
                           setIsEditingAccount(true);
                         }}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                        className="p-2 text-blue-400 hover:bg-blue-900/50 rounded-lg transition"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
@@ -171,8 +171,8 @@ export default function AdminAccountManagement({
                         }}
                         className={`p-2 rounded-lg transition ${
                           delDisabled
-                            ? "text-neutral-400 cursor-not-allowed"
-                            : "text-red-600 hover:bg-red-50"
+                            ? "text-neutral-600 cursor-not-allowed"
+                            : "text-red-500 hover:bg-red-900/50"
                         }`}
                       >
                         {confirmingId === account.id ? (
@@ -189,7 +189,7 @@ export default function AdminAccountManagement({
                       {confirmingId === account.id && !isSelf && (
                         <button
                           onClick={() => setConfirmingId(null)}
-                          className="ml-2 text-neutral-500 hover:text-neutral-700 text-sm"
+                          className="ml-2 text-neutral-400 hover:text-white text-sm"
                         >
                           Huỷ
                         </button>
@@ -202,15 +202,15 @@ export default function AdminAccountManagement({
           )}
         </div>
 
-        <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
+        <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 p-4">
           <div className="flex items-center gap-2">
             <button
               onClick={() => onPageChange(Math.max(1, page - 1))}
               disabled={pageInfo.first}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 pageInfo.first
-                  ? "text-neutral-400 bg-neutral-100 cursor-not-allowed"
-                  : "text-neutral-700 bg-white border border-neutral-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 shadow-sm"
+                  ? "text-neutral-500 bg-black/20 cursor-not-allowed"
+                  : "text-neutral-200 bg-white/10 border border-white/20 hover:bg-white/20 hover:text-white shadow-sm"
               }`}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -222,7 +222,7 @@ export default function AdminAccountManagement({
                 p === "…" ? (
                   <span
                     key={`e-${i}`}
-                    className="px-3 py-2 text-neutral-500 font-medium"
+                    className="px-3 py-2 text-neutral-400 font-medium"
                   >
                     …
                   </span>
@@ -233,7 +233,7 @@ export default function AdminAccountManagement({
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       p === page
                         ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105"
-                        : "text-neutral-700 bg-white border border-neutral-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 shadow-sm"
+                        : "text-neutral-200 bg-white/10 border border-white/20 hover:bg-white/20 hover:text-white shadow-sm"
                     }`}
                   >
                     {p}
@@ -249,8 +249,8 @@ export default function AdminAccountManagement({
               disabled={pageInfo.last}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 pageInfo.last
-                  ? "text-neutral-400 bg-neutral-100 cursor-not-allowed"
-                  : "text-neutral-700 bg-white border border-neutral-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 shadow-sm"
+                  ? "text-neutral-500 bg-black/20 cursor-not-allowed"
+                  : "text-neutral-200 bg-white/10 border border-white/20 hover:bg-white/20 hover:text-white shadow-sm"
               }`}
             >
               Sau

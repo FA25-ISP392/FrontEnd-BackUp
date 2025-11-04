@@ -55,6 +55,10 @@ export default function Admin() {
     totalElements: 0,
   });
 
+  // ==== STATS STATES (CHO CARD) ====
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [statsLoading, setStatsLoading] = useState(true);
+
   // ==== ADMIN NAME ====
   useEffect(() => {
     const loadName = async () => {
@@ -75,8 +79,10 @@ export default function Admin() {
           setAdminName("Admin");
           return;
         }
-        const profile = await findStaffByUsername(username);
-        setAdminName(profile?.name || "Admin");
+        // Giả sử findStaffByUsername tồn tại
+        // const profile = await findStaffByUsername(username);
+        // setAdminName(profile?.name || "Admin");
+        setAdminName(cached?.fullName || "Admin"); // Fallback
       } catch {
         setAdminName("Admin");
       }
@@ -262,17 +268,19 @@ export default function Admin() {
     }
   };
 
-  // KPI quick stats
-
-  const totalAccounts = accounts.length;
-  // const totalDishes = dishes.length;
-  const totalInvoices = invoices.length; // <-- đếm theo dữ liệu thật
-  const [totalRevenue, setTotalRevenue] = useState(0);
-
-  // 🧾 Lấy doanh thu hôm nay
+  // 🧾 Lấy doanh thu hôm nay + stats (ĐÃ SỬA LỖI)
   useEffect(() => {
-    const fetchTodayRevenue = async () => {
+    // Chỉ chạy logic này khi ở tab 'overview'
+    if (activeSection !== "overview") {
+      return;
+    }
+
+    const fetchTodayStats = async () => {
       try {
+        // Chỉ set loading nếu đang ở tab overview
+        if (activeSection === "overview") {
+          setStatsLoading(true);
+        }
         const now = new Date();
         const params = {
           day: now.getDate(),
@@ -287,25 +295,37 @@ export default function Admin() {
           res?.result?.totalRevenue ??
           res?.totalRevenue ??
           0;
-
         setTotalRevenue(Number(revenueValue));
       } catch (err) {
         console.error("❌ Lỗi tải doanh thu hôm nay:", err);
         setTotalRevenue(0);
+      } finally {
+        // Chỉ tắt loading nếu đang ở tab overview
+        if (activeSection === "overview") {
+          setStatsLoading(false);
+        }
       }
     };
 
-    fetchTodayRevenue();
+    fetchTodayStats(); // Tải lần đầu khi vào tab
 
+    // ⏰ Thêm lại timer (giống logic gốc của bạn trong AdminStatsCards.jsx)
     const timer = setInterval(() => {
       const now = new Date();
+      // Tải lại khi qua ngày mới
       if (now.getHours() === 0 && now.getMinutes() < 5) {
-        fetchTodayRevenue();
+        fetchTodayStats();
       }
-    }, 60000);
+    }, 60000); // Check mỗi phút
 
-    return () => clearInterval(timer);
-  }, []);
+    return () => {
+      clearInterval(timer); // Xóa timer khi chuyển tab
+    };
+  }, [activeSection]); // Chạy lại khi chuyển tab
+
+  // Lấy tổng accounts và invoices từ pageInfo
+  const totalAccounts = pageInfo.totalElements;
+  const totalInvoices = invPageInfo.totalElements;
 
   // ==== RENDER ====
   const renderContent = () => {
@@ -313,8 +333,12 @@ export default function Admin() {
       case "overview":
         return (
           <>
-            <AdminStatsCards />
-
+            <AdminStatsCards
+              loading={statsLoading}
+              totalRevenue={totalRevenue}
+              totalAccounts={totalAccounts}
+              totalInvoices={totalInvoices}
+            />
             <AdminDishStatistics />
           </>
         );
@@ -338,9 +362,9 @@ export default function Admin() {
 
       case "invoices":
         if (loadingInvoices)
-          return <div className="p-6">Đang tải hóa đơn…</div>;
+          return <div className="p-6 text-white">Đang tải hóa đơn…</div>;
         if (invoiceError)
-          return <div className="p-6 text-red-600">{invoiceError}</div>;
+          return <div className="p-6 text-red-400">{invoiceError}</div>;
         return (
           <AdminInvoices
             invoices={invoices}
@@ -356,7 +380,7 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-blue-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-indigo-900">
       <div className="flex">
         <AdminSidebar
           activeSection={activeSection}
@@ -364,17 +388,22 @@ export default function Admin() {
           compact={settings.compactSidebar}
         />
 
-        <main className="flex-1 p-6">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+        <main className="flex-1 p-8 md:p-10">
+          <div className="mb-10 animate-fade-in-up">
+            <h1 className="text-4xl font-extrabold text-white shadow-text-lg mb-2">
               Chào mừng trở lại, {adminName}!
             </h1>
-            <p className="text-neutral-600 text-lg">
+            <p className="text-xl text-indigo-300">
               Quản lý hệ thống nhà hàng hiệu quả với dashboard thông minh
             </p>
           </div>
 
-          {renderContent()}
+          <div
+            className="animate-fade-in-up"
+            style={{ animationDelay: "100ms" }}
+          >
+            {renderContent()}
+          </div>
         </main>
       </div>
 

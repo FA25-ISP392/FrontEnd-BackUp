@@ -17,7 +17,7 @@ function toDatetimeText(raw) {
   if (!raw) return "-";
   const s = String(raw).trim();
   const m = s.match(
-    /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})(?::\d{2})?(?:\.\d+)?/
+    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::\d{2})?(?:\.\d+)?/
   );
   if (m) return `${m[1]} ${m[2]}`;
   return s;
@@ -34,12 +34,14 @@ function StatusPill({ status, label }) {
       : "Đang xử lý");
   const styles =
     s === "COMPLETED"
-      ? "bg-emerald-100 text-emerald-700"
+      ? "bg-emerald-100 text-emerald-800"
       : s === "CANCELLED"
-      ? "bg-red-100 text-red-700"
-      : "bg-amber-100 text-amber-700";
+      ? "bg-red-100 text-red-800"
+      : "bg-amber-100 text-amber-800";
   return (
-    <span className={`px-2 py-1 rounded-md text-xs font-semibold ${styles}`}>
+    <span
+      className={`px-2.5 py-1 rounded-full text-xs font-bold ${styles}`} // 👈 Thêm font-bold, py-1
+    >
       {vi}
     </span>
   );
@@ -115,17 +117,17 @@ export default function AdminInvoices({
   const isLast = curPage >= totalPages;
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
             <FileText className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h3 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
               Hóa Đơn
             </h3>
-            <p className="text-sm text-neutral-600">
+            <p className="text-sm text-indigo-200">
               Xem các hóa đơn đã thanh toán
             </p>
           </div>
@@ -134,7 +136,7 @@ export default function AdminInvoices({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400" />
           <input
-            className="pl-9 pr-3 py-2 border rounded-lg text-sm"
+            className="pl-10 pr-4 py-2 border border-white/30 bg-white/10 text-white placeholder-indigo-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm w-96"
             placeholder="Tìm theo Payment ID / Order ID / Phương thức / Trạng thái"
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -142,9 +144,9 @@ export default function AdminInvoices({
         </div>
       </div>
 
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden">
-        <div className="bg-gradient-to-r from-neutral-50 to-neutral-100 px-6 py-4 border-b border-neutral-200">
-          <div className="grid grid-cols-6 gap-4 text-sm font-semibold text-neutral-700">
+      <div className="bg-black/20 backdrop-blur-sm rounded-2xl shadow-lg border border-white/10 overflow-hidden">
+        <div className="bg-black/30 px-6 py-4 border-b border-white/10">
+          <div className="grid grid-cols-6 gap-4 text-sm font-semibold text-indigo-200">
             <div>Payment ID</div>
             <div>Order ID</div>
             <div>Số tiền</div>
@@ -154,22 +156,22 @@ export default function AdminInvoices({
           </div>
         </div>
 
-        <div className="divide-y divide-neutral-200">
+        <div className="divide-y divide-white/10">
           {filtered.map((p) => (
             <div
               key={p.id}
-              className="px-6 py-4 hover:bg-neutral-50 transition-colors"
+              className="px-6 py-4 hover:bg-white/5 transition-colors"
             >
               <div className="grid grid-cols-6 gap-4 items-center">
-                <div className="font-medium">{p.id}</div>
-                <div>{p.orderId || "-"}</div>
-                <div className="text-green-600 font-semibold">
+                <div className="font-medium text-white">{p.id}</div>
+                <div className="text-neutral-300">{p.orderId || "-"}</div>
+                <div className="text-emerald-400 font-semibold">
                   {fmtVND(p.total)}
                 </div>
-                <div>
+                <div className="text-sm text-neutral-300">
                   {p.datetimeText || toDatetimeText(p.createdAt) || "-"}
                 </div>
-                <div className="text-sm">
+                <div className="text-sm text-neutral-300">
                   {p.methodVi || methodLabel(p.method)}
                 </div>
                 <div>
@@ -180,18 +182,18 @@ export default function AdminInvoices({
           ))}
 
           {filtered.length === 0 && (
-            <div className="px-6 py-10 text-center text-neutral-600">
+            <div className="px-6 py-10 text-center text-indigo-200">
               Chưa có hóa đơn
             </div>
           )}
         </div>
       </div>
 
-      <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-neutral-700">
+      <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-neutral-300">
         <div className="flex items-center gap-3">
           <span>
             Tổng trên trang:{" "}
-            <span className="ml-1 font-bold text-green-600">
+            <span className="ml-1 font-bold text-emerald-400 text-base">
               {fmtVND(total)}
             </span>
           </span>
@@ -203,8 +205,8 @@ export default function AdminInvoices({
             disabled={isFirst}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
               isFirst
-                ? "text-neutral-400 bg-neutral-100 cursor-not-allowed"
-                : "text-neutral-700 bg-white border border-neutral-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 shadow-sm"
+                ? "text-neutral-500 bg-black/20 cursor-not-allowed"
+                : "text-neutral-200 bg-white/10 border border-white/20 hover:bg-white/20 hover:text-white shadow-sm"
             }`}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -216,7 +218,7 @@ export default function AdminInvoices({
               p === "..." ? (
                 <span
                   key={`e-${i}`}
-                  className="px-3 py-2 text-neutral-500 font-medium"
+                  className="px-3 py-2 text-neutral-400 font-medium"
                 >
                   …
                 </span>
@@ -227,7 +229,7 @@ export default function AdminInvoices({
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     p === curPage
                       ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105"
-                      : "text-neutral-700 bg-white border border-neutral-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 shadow-sm"
+                      : "text-neutral-200 bg-white/10 border border-white/20 hover:bg-white/20 hover:text-white shadow-sm"
                   }`}
                 >
                   {p}
@@ -241,8 +243,8 @@ export default function AdminInvoices({
             disabled={isLast}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
               isLast
-                ? "text-neutral-400 bg-neutral-100 cursor-not-allowed"
-                : "text-neutral-700 bg-white border border-neutral-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 shadow-sm"
+                ? "text-neutral-500 bg-black/20 cursor-not-allowed"
+                : "text-neutral-200 bg-white/10 border border-white/20 hover:bg-white/20 hover:text-white shadow-sm"
             }`}
           >
             Sau
