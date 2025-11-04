@@ -16,7 +16,7 @@ export default function ToppingManagement({
   setIsEditingTopping,
   setEditingItem,
   loading,
-  onSearch, // ✅ truyền từ parent — gọi API searchToppingByName(searchTerm)
+  onSearch,
   page,
   pageInfo,
   onPageChange,
@@ -28,7 +28,6 @@ export default function ToppingManagement({
   const formatPrice = (price) =>
     new Intl.NumberFormat("vi-VN").format(price) + "đ";
 
-  // 🔍 Gọi search tự động khi gõ (debounce 400ms)
   useEffect(() => {
     if (debounceTimer) clearTimeout(debounceTimer);
 
@@ -37,10 +36,10 @@ export default function ToppingManagement({
 
       if (!trimmed) {
         setIsSearching(false);
-        onSearch?.(""); // load lại danh sách đầy đủ
+        onSearch?.("");
       } else {
         setIsSearching(true);
-        onSearch?.(trimmed); // gọi API tìm kiếm
+        onSearch?.(trimmed);
       }
     }, 400);
 
@@ -49,21 +48,19 @@ export default function ToppingManagement({
     return () => clearTimeout(timer);
   }, [searchTerm, onSearch]);
 
-  // ❌ Xoá tìm kiếm
   const clearSearch = () => {
     setSearchTerm("");
     setIsSearching(false);
     onSearch?.("");
   };
 
-  // 🗑️ Xoá topping
   const handleDelete = (id) => {
     if (!window.confirm("Bạn có chắc muốn xoá topping này không?")) return;
     setToppings((prev) => prev.filter((t) => t.id !== id));
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div className="flex items-center gap-3">
@@ -71,16 +68,16 @@ export default function ToppingManagement({
             <Salad className="h-4 w-4 text-white" />
           </div>
           <div>
-            <h3 className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+            <h3 className="text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
               Quản Lý Topping
             </h3>
-            <p className="text-sm text-neutral-600">
+            <p className="text-sm text-indigo-200">
               Quản lý các loại topping cho món ăn
             </p>
           </div>
         </div>
 
-        {/* 🔍 Ô tìm kiếm + nút thêm */}
+        {/* Search Box + Add Button */}
         <div className="flex items-center gap-3">
           <div className="relative">
             <input
@@ -88,7 +85,7 @@ export default function ToppingManagement({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Tìm topping theo tên..."
-              className="pl-9 pr-8 py-2 rounded-xl border border-neutral-300 focus:ring-2 focus:ring-emerald-400 outline-none text-sm w-64"
+              className="pl-9 pr-8 py-2 rounded-xl border border-white/30 bg-white/10 text-white placeholder-indigo-300 focus:ring-2 focus:ring-emerald-400 outline-none text-sm w-64"
             />
             <Search
               className="absolute left-2.5 top-2.5 text-neutral-400 pointer-events-none"
@@ -108,7 +105,7 @@ export default function ToppingManagement({
               setEditingItem(null);
               setIsEditingTopping(true);
             }}
-            className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 font-medium flex items-center gap-2"
+            className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 font-medium flex items-center gap-2 transform hover:scale-105"
           >
             <Plus className="h-4 w-4" />
             Thêm Topping
@@ -116,11 +113,11 @@ export default function ToppingManagement({
         </div>
       </div>
 
-      {/* Danh sách topping */}
-      <div className="bg-white/70 backdrop-blur rounded-2xl shadow border border-neutral-200 overflow-hidden">
+      {/* Topping List Table */}
+      <div className="bg-black/20 backdrop-blur-sm rounded-2xl shadow-lg border border-white/10 overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-neutral-50 to-neutral-100 px-6 py-4 border-b border-neutral-200">
-          <div className="grid grid-cols-6 gap-4 text-sm font-semibold text-neutral-700">
+        <div className="bg-black/30 px-6 py-4 border-b border-white/10">
+          <div className="grid grid-cols-6 gap-4 text-sm font-semibold text-indigo-200">
             <div>Tên topping</div>
             <div>Giá</div>
             <div>Calories</div>
@@ -130,13 +127,13 @@ export default function ToppingManagement({
         </div>
 
         {/* Body */}
-        <div className="divide-y divide-neutral-200">
+        <div className="divide-y divide-white/10">
           {loading ? (
-            <div className="p-6 text-neutral-500">
+            <div className="p-6 text-indigo-200">
               {isSearching ? "Đang tìm kiếm..." : "Đang tải danh sách..."}
             </div>
           ) : toppings.length === 0 ? (
-            <div className="p-6 text-neutral-500 italic">
+            <div className="p-6 text-indigo-200 italic">
               {isSearching && searchTerm.trim()
                 ? `Không tìm thấy topping nào với từ khóa "${searchTerm}".`
                 : "Chưa có topping nào."}
@@ -145,17 +142,17 @@ export default function ToppingManagement({
             toppings.map((topping) => (
               <div
                 key={topping.id}
-                className="px-6 py-4 hover:bg-neutral-50 transition-colors"
+                className="px-6 py-4 hover:bg-white/5 transition-colors"
               >
                 <div className="grid grid-cols-6 gap-4 items-center">
-                  <div className="font-medium text-neutral-900 truncate">
+                  <div className="font-medium text-white truncate">
                     {topping.name}
                   </div>
-                  <div className="text-green-600 font-semibold">
+                  <div className="text-green-400 font-semibold">
                     {formatPrice(topping.price)}
                   </div>
-                  <div className="text-neutral-600">{topping.calories}</div>
-                  <div className="text-neutral-600">{topping.gram}</div>
+                  <div className="text-neutral-300">{topping.calories}</div>
+                  <div className="text-neutral-300">{topping.gram}</div>
 
                   <div className="flex gap-2 items-center col-span-2">
                     <button
@@ -163,13 +160,13 @@ export default function ToppingManagement({
                         setEditingItem(topping);
                         setIsEditingTopping(true);
                       }}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                      className="p-2 text-blue-400 hover:bg-blue-900/50 rounded-lg transition"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(topping.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                      className="p-2 text-red-400 hover:bg-red-900/50 rounded-lg transition"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -181,23 +178,23 @@ export default function ToppingManagement({
         </div>
       </div>
 
-      {/* ✅ Phân trang */}
+      {/* Pagination */}
       {!loading && !isSearching && pageInfo?.totalPages > 1 && (
         <div className="flex justify-center items-center gap-4 mt-6">
           <button
             disabled={page <= 0}
             onClick={() => onPageChange(page - 1)}
-            className="p-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 disabled:opacity-40"
+            className="p-2 rounded-lg bg-white/10 border border-white/20 text-neutral-300 hover:bg-white/20 disabled:opacity-40"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="text-sm text-neutral-700 font-medium">
+          <span className="text-sm text-neutral-300 font-medium">
             Trang {page + 1} / {pageInfo.totalPages}
           </span>
           <button
             disabled={page + 1 >= pageInfo.totalPages}
             onClick={() => onPageChange(page + 1)}
-            className="p-2 rounded-lg bg-neutral-100 hover:bg-neutral-200 disabled:opacity-40"
+            className="p-2 rounded-lg bg-white/10 border border-white/20 text-neutral-300 hover:bg-white/20 disabled:opacity-40"
           >
             <ChevronRight className="w-4 h-4" />
           </button>

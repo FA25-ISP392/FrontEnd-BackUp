@@ -11,12 +11,12 @@ export default function TableLayout({
   );
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-6">
+    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20 mb-6">
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+        <h3 className="text-lg font-semibold text-white mb-2">
           Sơ đồ bàn nhà hàng
         </h3>
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-indigo-200">
           Nhấp vào bàn để xem thông tin chi tiết
         </p>
       </div>
@@ -30,28 +30,28 @@ export default function TableLayout({
           return (
             <div
               key={table.id}
-              className={`bg-gradient-to-br from-white to-orange-50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-orange-200 group cursor-pointer transform hover:scale-105 ${
+              className={`bg-black/20 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/10 group cursor-pointer transform hover:scale-105 ${
                 selectedTableId === table.id
-                  ? "ring-2 ring-orange-500 shadow-orange-200"
-                  : ""
+                  ? "ring-2 ring-orange-500 shadow-orange-700/30"
+                  : "hover:border-white/20"
               }`}
               onClick={() => onTableClick?.(table.id)}
             >
               <div className="text-center">
                 <div className="flex items-center justify-center gap-2 mb-4">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <Table className="h-6 w-6 text-orange-600" />
+                  <div className="p-2 bg-orange-500/20 rounded-lg">
+                    <Table className="h-6 w-6 text-orange-300" />
                   </div>
-                  <span className="font-bold text-neutral-900 text-lg">
+                  <span className="font-bold text-white text-lg">
                     Bàn {number}
                   </span>
                 </div>
 
-                <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl p-4 border border-orange-300">
-                  <div className="text-3xl font-bold text-orange-800 mb-1">
+                <div className="bg-gradient-to-br from-orange-900/30 to-orange-800/20 rounded-xl p-4 border border-orange-500/30">
+                  <div className="text-3xl font-bold text-orange-200 mb-1">
                     {capacity}
                   </div>
-                  <div className="text-sm text-orange-700 font-medium">
+                  <div className="text-sm text-orange-300 font-medium">
                     chỗ ngồi
                   </div>
                 </div>

@@ -304,9 +304,9 @@ export default function Manager() {
 
       case "settings":
         return (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">Cài Đặt</h3>
-            <p className="text-neutral-600">
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
+            <h3 className="text-xl font-bold text-white mb-4">Cài Đặt</h3>
+            <p className="text-red-200">
               Chức năng cài đặt sẽ được phát triển...
             </p>
           </div>
@@ -318,25 +318,31 @@ export default function Manager() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-neutral-900 to-red-900">
       <div className="flex">
         <ManagerSidebar
           activeSection={activeSection}
           setActiveSection={setActiveSection}
         />
-        <main className="flex-1 p-6">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+        <main className="flex-1 p-8 md:p-10">
+          <div className="mb-10 animate-fade-in-up">
+            <h1 className="text-4xl font-extrabold text-white shadow-text-lg mb-2">
               Chào mừng trở lại, {managerName}!
             </h1>
-            <p className="text-neutral-600 text-lg">
+            <p className="text-xl text-red-300">
               Quản lý nhà hàng hiệu quả với dashboard thông minh
             </p>
             {activeSection === "accounts" && bookingsError && (
-              <p className="text-red-600 mt-2">{bookingsError}</p>
+              <p className="text-red-400 mt-2">{bookingsError}</p>
             )}
           </div>
-          {renderContent()}
+
+          <div
+            className="animate-fade-in-up"
+            style={{ animationDelay: "100ms" }}
+          >
+            {renderContent()}
+          </div>
         </main>
       </div>
 

@@ -8,22 +8,19 @@ export default function ManagerDailyApprovedDishes() {
 
   const today = new Date().toISOString().split("T")[0]; // yyyy-MM-dd
 
-  // 🧩 Load danh sách món đã duyệt trong ngày
   useEffect(() => {
     const fetchApprovedDishes = async () => {
       setLoading(true);
       try {
         const allPlans = await listDailyPlans();
 
-        // ✅ Lọc ra những món hôm nay đã được duyệt (status = true)
         const approvedToday = (allPlans || []).filter(
           (p) =>
             p.itemType === "DISH" &&
             p.planDate === today &&
-            (p.status === true || p.status === 1),
+            (p.status === true || p.status === 1)
         );
 
-        // 🔤 Sắp xếp theo tên món
         approvedToday.sort((a, b) => a.itemName.localeCompare(b.itemName));
 
         setApprovedPlans(approvedToday);
@@ -36,26 +33,26 @@ export default function ManagerDailyApprovedDishes() {
 
     fetchApprovedDishes();
 
-    // ⏱️ Tự refresh mỗi 30 giây (nếu Manager duyệt ở tab khác)
     const interval = setInterval(fetchApprovedDishes, 30000);
     return () => clearInterval(interval);
   }, [today]);
 
   return (
-    <div className="p-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20">
+    <div className="p-0">
+      {" "}
+      {/* Đã xóa p-6 và nền */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-neutral-900">
+        <h2 className="text-xl font-bold text-white">
           Món Trong Ngày (Đã Duyệt)
         </h2>
-        <span className="text-gray-500 text-sm">
+        <span className="text-gray-400 text-sm">
           Ngày {today.split("-").reverse().join("/")}
         </span>
       </div>
-
       {loading ? (
-        <p className="text-gray-600 text-center">Đang tải dữ liệu...</p>
+        <p className="text-indigo-200 text-center">Đang tải dữ liệu...</p>
       ) : approvedPlans.length === 0 ? (
-        <p className="text-gray-600 text-center">
+        <p className="text-indigo-200 text-center">
           Chưa có món nào được duyệt hôm nay.
         </p>
       ) : (
@@ -63,24 +60,24 @@ export default function ManagerDailyApprovedDishes() {
           {approvedPlans.map((p) => (
             <div
               key={p.planId}
-              className="bg-green-50 rounded-xl p-4 shadow-sm border border-green-200 hover:shadow-md transition-all"
+              className="bg-green-900/30 rounded-xl p-4 shadow-lg border border-green-500/30 hover:shadow-xl transition-all"
             >
               <div className="flex justify-between items-center mb-2">
-                <h4 className="font-semibold text-gray-900">{p.itemName}</h4>
-                <CheckCircle className="text-green-500 h-5 w-5" />
+                <h4 className="font-semibold text-white">{p.itemName}</h4>
+                <CheckCircle className="text-green-400 h-5 w-5" />
               </div>
 
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-neutral-300">
                 Số lượng dự kiến:{" "}
-                <span className="font-semibold text-gray-900">
+                <span className="font-semibold text-white">
                   {p.plannedQuantity}
                 </span>
               </p>
 
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-neutral-400 mt-1">
                 👨‍🍳 Người lập: {p.staffName || "Không rõ"}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-neutral-400">
                 ✅ Người duyệt: {p.approverName || "Manager"}
               </p>
             </div>
