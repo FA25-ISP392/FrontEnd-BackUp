@@ -431,7 +431,7 @@ export default function Menu() {
     setEstimatedCalories(applyGoal(base, goalId));
   };
 
-  // 👈 === SỬA 2: SỬA HÀM NÀY ===
+  // 👈 === SỬA HÀM NÀY ===
   const handlePersonalizationSubmit = async ({
     customerUpdatePayload,
     suggestionCreationPayload,
@@ -449,8 +449,6 @@ export default function Menu() {
         suggestionCreationPayload
       );
 
-      // 👈 === SỬA TỪ ĐÂY ===
-      // Quay lại logic "làm phẳng" (flatten) mảng
       const flatList = Array.isArray(suggestionsResponse)
         ? suggestionsResponse.flatMap((r) =>
             [r.drink, r.salad, r.mainCourse, r.dessert]
@@ -460,14 +458,17 @@ export default function Menu() {
           )
         : [];
 
-      // Lấy 12 món đầu tiên
       const limitedList = flatList.slice(0, 12);
-      setSuggestedMenu(limitedList); // 👈 Lưu mảng 12 món
-      // 👈 === SỬA ĐẾN ĐÂY ===
+      setSuggestedMenu(limitedList);
 
       setEstimatedCalories(dailyCalories);
       setIsPersonalized(true);
       setIsPersonalizationOpen(false);
+
+      // ✨====== DÒNG BẠN YÊU CẦU ======✨
+      setActiveMenuTab("suggested");
+      // ✨===============================✨
+
       setSuccessMessage(
         "Cá nhân hóa thành công! Thực đơn gợi ý mới đã được tạo."
       );

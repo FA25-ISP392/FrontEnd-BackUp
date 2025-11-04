@@ -114,6 +114,47 @@ export default function MenuContent({
       : []),
   ];
 
+  // === 💖 BẮT ĐẦU SỬA THEO YÊU CẦU 💖 ===
+  // Định nghĩa thứ tự sắp xếp mong muốn
+  const CATEGORY_ORDER = [
+    "Pizza",
+    "Mì ý",
+    "Bò bít tết",
+    "Salad",
+    "Đồ uống",
+    "Tráng miệng",
+  ];
+
+  // Lấy tất cả các category CÓ TRONG MÓN ĂN (dùng tên hiển thị, vd: "Pizza")
+  const allCategoriesInMenu = dishesToShow.reduce((acc, dish) => {
+    if (dish.category && !acc.includes(dish.category)) {
+      acc.push(dish.category);
+    }
+    return acc;
+  }, []);
+
+  // Sắp xếp các category theo thứ tự mong muốn
+  const sortedCategories = allCategoriesInMenu.sort((a, b) => {
+    const indexA = CATEGORY_ORDER.indexOf(a);
+    const indexB = CATEGORY_ORDER.indexOf(b);
+
+    // Nếu cả hai đều có trong danh sách_order -> sắp xếp theo danh sách
+    if (indexA !== -1 && indexB !== -1) {
+      return indexA - indexB;
+    }
+    // Nếu chỉ A có trong danh sách -> A lên trước
+    if (indexA !== -1) {
+      return -1;
+    }
+    // Nếu chỉ B có trong danh sách -> B lên trước
+    if (indexB !== -1) {
+      return 1;
+    }
+    // Nếu cả hai đều không có -> sắp xếp theo alphabet
+    return a.localeCompare(b);
+  });
+  // === 💖 KẾT THÚC SỬA 💖 ===
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* ====================== THEO DÕI CALO (STICKY) ====================== */}
@@ -285,30 +326,20 @@ export default function MenuContent({
 
       {/* ====================== DANH MỤC MÓN ĂN ====================== */}
       {activeMenuTab === "all" ? (
-        // === PHẦN "TẤT CẢ" (Giữ nguyên logic lần trước) ===
+        // === 💖 SỬA PHẦN RENDER TAB "TẤT CẢ" 💖 ===
         (() => {
-          const categoriesInMenu = dishesToShow.reduce((acc, dish) => {
-            if (dish.category && !acc.some((c) => c.name === dish.category)) {
-              acc.push({
-                id: dish.categoryEnum || dish.category,
-                name: dish.category,
-              });
-            }
-            return acc;
-          }, []);
-
-          return categoriesInMenu.map((cat) => {
-            const dishes = dishesToShow.filter(
-              (d) =>
-                (d.categoryEnum || d.category)?.toLowerCase() ===
-                cat.id?.toLowerCase()
-            );
+          // Sử dụng `sortedCategories` đã được sắp xếp
+          return sortedCategories.map((catName) => {
+            // 👇 SỬA LỖI: Chỉ lọc theo `d.category` (tên hiển thị)
+            // vì `catName` chính là tên hiển thị (VD: "Pizza")
+            const dishes = dishesToShow.filter((d) => d.category === catName);
+            // 👆 HẾT SỬA LỖI
             if (dishes.length === 0) return null;
 
             return (
-              <div key={cat.id} className="mb-10">
+              <div key={catName} className="mb-10">
                 <h3 className="text-3xl font-bold text-neutral-900 mb-5">
-                  {cat.name}
+                  {catName}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {dishes.map((dish) => (
@@ -324,18 +355,15 @@ export default function MenuContent({
           });
         })()
       ) : (
-        // 👈 === SỬA TỪ ĐÂY: Logic cho tab "GỢI Ý" ===
         <div className="mb-10">
           <h3 className="text-3xl font-bold text-neutral-900 mb-5">
             {categoriesWithSuggest.find((c) => c.id === activeMenuTab)?.name}
           </h3>
-          {/* SỬA LỖI: Dùng `dishSuggests` (mảng 12 món) thay vì `filteredDishes` */}
           {dishSuggests && dishSuggests.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {/* Lặp qua mảng 12 món gợi ý */}
               {dishSuggests.map((dish) => (
                 <DishCard
-                  key={dish.id || dish.dishId} // Đảm bảo key là duy nhất
+                  key={dish.id || dish.dishId}
                   dish={dish}
                   onDishSelect={onDishSelect}
                 />
@@ -347,7 +375,6 @@ export default function MenuContent({
             </p>
           )}
         </div>
-        // 👈 === SỬA ĐẾN ĐÂY ===
       )}
     </div>
   );
