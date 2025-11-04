@@ -36,8 +36,7 @@ export default function App() {
                 icon: "👥",
                 title: "Trang nhân viên",
                 subtitle: "Quản lý dịch vụ khách hàng",
-                userRole: "staff",
-                userName: "staff",
+                theme: "staff", // 👈 THÊM VÀO ĐÂY
               }}
               showFooter={false}
             >
@@ -75,8 +74,7 @@ export default function App() {
                 icon: "📊",
                 title: "Trang quản trị",
                 subtitle: "Quản lý hệ thống",
-                userRole: "admin",
-                userName: "admin",
+                theme: "admin", // 👈 THÊM VÀO ĐÂY
               }}
               showFooter={false}
             >
@@ -95,8 +93,7 @@ export default function App() {
                 icon: "👨‍🍳",
                 title: "Trang bếp",
                 subtitle: "Quản lý món ăn và đơn hàng",
-                userRole: "chef",
-                userName: "chef",
+                theme: "chef", // 👈 THÊM VÀO ĐÂY
               }}
               showFooter={false}
             >
@@ -115,8 +112,7 @@ export default function App() {
                 icon: "👔",
                 title: "Trang quản lý",
                 subtitle: "Quản lý nhà hàng",
-                userRole: "manager",
-                userName: "manager",
+                theme: "manager", // 👈 THÊM VÀO ĐÂY
               }}
               showFooter={false}
             >
