@@ -1,4 +1,4 @@
-// components/Manager/ManagerSidebar.jsx
+// src/components/Manager/ManagerSidebar.jsx
 import { NavLink } from "react-router-dom";
 import {
   BarChart3,
@@ -8,32 +8,33 @@ import {
   ClipboardList,
   CheckCircle,
 } from "lucide-react";
+import { MANAGER_ROUTES } from "../../constant/routes";
 
 const sidebarItems = [
   {
     id: "quanlydatban",
     label: "Quản Lý Đặt Bàn",
     icon: Users,
-    to: "/manager/quanlydatban",
+    to: MANAGER_ROUTES.BOOKING,
   },
-  { id: "monan", label: "Món Ăn", icon: Package, to: "/manager/monan" },
+  { id: "monan", label: "Món Ăn", icon: Package, to: MANAGER_ROUTES.DISH },
   {
-    id: "topping",
+    id: "thanhphanmon",
     label: "Thành phần món",
     icon: Salad,
-    to: "/manager/thanhphanmon",
+    to: MANAGER_ROUTES.TOPPING,
   },
   {
     id: "kehoachtrongngay",
     label: "Kế Hoạch Trong Ngày",
     icon: ClipboardList,
-    to: "/manager/kehoachtrongngay",
+    to: MANAGER_ROUTES.DAILY_PLAN,
   },
   {
     id: "montrongngay",
     label: "Món Trong Ngày",
     icon: CheckCircle,
-    to: "/manager/montrongngay",
+    to: MANAGER_ROUTES.DAILY_MENU,
   },
 ];
 
@@ -49,35 +50,32 @@ export default function ManagerSidebar() {
         </div>
 
         <nav className="space-y-3">
-          {sidebarItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.id}
-                to={item.to}
-                className={({ isActive }) =>
-                  `w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-300 group ${
-                    isActive
-                      ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg transform scale-105"
-                      : "text-neutral-300 hover:bg-white/20 hover:shadow-lg hover:text-orange-300 transform hover:-translate-y-0.5"
-                  }`
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <Icon
-                      className={`h-5 w-5 transition-colors ${
-                        isActive
-                          ? "text-white"
-                          : "text-neutral-400 group-hover:text-orange-300"
-                      }`}
-                    />
-                    <span className="font-medium">{item.label}</span>
-                  </>
-                )}
-              </NavLink>
-            );
-          })}
+          {sidebarItems.map(({ id, label, icon: Icon, to }) => (
+            <NavLink
+              key={id}
+              to={to}
+              className={({ isActive }) =>
+                `w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-300 group ${
+                  isActive
+                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg transform scale-105"
+                    : "text-neutral-300 hover:bg-white/20 hover:shadow-lg hover:text-orange-300 transform hover:-translate-y-0.5"
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon
+                    className={`h-5 w-5 transition-colors ${
+                      isActive
+                        ? "text-white"
+                        : "text-neutral-400 group-hover:text-orange-300"
+                    }`}
+                  />
+                  <span className="font-medium">{label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
         </nav>
       </div>
     </aside>

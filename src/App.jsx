@@ -1,4 +1,4 @@
-// App.jsx
+// src/App.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./layout/MainLayout.jsx";
 import Login from "./pages/Login.jsx";
@@ -106,7 +106,7 @@ export default function App() {
         }
       />
 
-      {/* MANAGER: thêm /* để hỗ trợ các path con */}
+      {/* MANAGER: có /* để nhận các route con */}
       <Route
         path="/manager/*"
         element={
@@ -120,7 +120,6 @@ export default function App() {
               }}
               showFooter={false}
             >
-              {/* Manager tự định nghĩa route con bên trong */}
               <Manager />
             </MainLayout>
           </ProtectedRoute>

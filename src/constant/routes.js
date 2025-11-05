@@ -1,3 +1,4 @@
+// src/routes.js
 export const APP_ORIGIN =
   import.meta.env.VITE_PUBLIC_ORIGIN ||
   (import.meta.env.PROD
@@ -29,9 +30,20 @@ export const STAFF_ROUTES = {
   SERVE_HISTORY: "/staff/lichsuphucvu",
 };
 
+// ✅ Thêm nhóm MANAGER
+export const MANAGER_BASE = "/manager";
+export const MANAGER_ROUTES = {
+  BOOKING: "/manager/quanlydatban", // Quản Lý Đặt Bàn
+  DISH: "/manager/monan", // Món Ăn
+  TOPPING: "/manager/thanhphanmon", // Thành phần món
+  DAILY_PLAN: "/manager/kehoachtrongngay", // Kế Hoạch Trong Ngày
+  DAILY_MENU: "/manager/montrongngay", // Món Trong Ngày
+};
+
 export const VERIFY_EMAIL = "/verify-email";
 export const VERIFY_EMAIL_URL = joinUrl(APP_ORIGIN, VERIFY_EMAIL);
 
+// ✅ Bổ sung các route Manager vào NEED_AUTH để ép đăng nhập
 export const NEED_AUTH = [
   HOME_ROUTES.HISTORY,
   HOME_ROUTES.EDIT,
@@ -41,6 +53,13 @@ export const NEED_AUTH = [
   STAFF_ROUTES.OVERVIEW,
   STAFF_ROUTES.SERVE_BOARD,
   STAFF_ROUTES.SERVE_HISTORY,
+
+  // Manager
+  MANAGER_ROUTES.BOOKING,
+  MANAGER_ROUTES.DISH,
+  MANAGER_ROUTES.TOPPING,
+  MANAGER_ROUTES.DAILY_PLAN,
+  MANAGER_ROUTES.DAILY_MENU,
 ];
 
 export const TABLE_LOGIN_ROUTES = {
