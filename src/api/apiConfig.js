@@ -2,8 +2,10 @@ import axios from "axios";
 import { getToken } from "../lib/auth";
 
 const USE_PROXY = !!import.meta.env.DEV;
+// const BASE_API =
+//   import.meta.env.VITE_API_BASE || "https://api-monngon88.purintech.id.vn";
 const BASE_API =
-  import.meta.env.VITE_API_BASE || "https://api-monngon88.purintech.id.vn";
+  import.meta.env.VITE_API_BASE || "https://backend-79cz.onrender.com";
 const API_PREFIX = import.meta.env.VITE_API_PREFIX || "/isp392";
 const PROXY_PREFIX = import.meta.env.VITE_PROXY_PREFIX || "/api";
 

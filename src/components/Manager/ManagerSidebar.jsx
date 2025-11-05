@@ -1,3 +1,5 @@
+// components/Manager/ManagerSidebar.jsx
+import { NavLink } from "react-router-dom";
 import {
   BarChart3,
   Users,
@@ -8,14 +10,34 @@ import {
 } from "lucide-react";
 
 const sidebarItems = [
-  { id: "accounts", label: "Quản Lý Đặt Bàn", icon: Users },
-  { id: "dishes", label: "Món Ăn", icon: Package },
-  { id: "toppings", label: "Topping", icon: Salad },
-  { id: "dailyPlan", label: "Kế Hoạch Trong Ngày", icon: ClipboardList },
-  { id: "dailyDishes", label: "Món Trong Ngày", icon: CheckCircle },
+  {
+    id: "quanlydatban",
+    label: "Quản Lý Đặt Bàn",
+    icon: Users,
+    to: "/manager/quanlydatban",
+  },
+  { id: "monan", label: "Món Ăn", icon: Package, to: "/manager/monan" },
+  {
+    id: "topping",
+    label: "Thành phần món",
+    icon: Salad,
+    to: "/manager/thanhphanmon",
+  },
+  {
+    id: "kehoachtrongngay",
+    label: "Kế Hoạch Trong Ngày",
+    icon: ClipboardList,
+    to: "/manager/kehoachtrongngay",
+  },
+  {
+    id: "montrongngay",
+    label: "Món Trong Ngày",
+    icon: CheckCircle,
+    to: "/manager/montrongngay",
+  },
 ];
 
-export default function ManagerSidebar({ activeSection, setActiveSection }) {
+export default function ManagerSidebar() {
   return (
     <aside className="w-64 bg-white/10 backdrop-blur-lg border-r border-white/10 min-h-screen sticky top-0">
       <div className="p-6">
@@ -30,24 +52,30 @@ export default function ManagerSidebar({ activeSection, setActiveSection }) {
           {sidebarItems.map((item) => {
             const Icon = item.icon;
             return (
-              <button
+              <NavLink
                 key={item.id}
-                onClick={() => setActiveSection(item.id)}
-                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-300 group ${
-                  activeSection === item.id
-                    ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg transform scale-105"
-                    : "text-neutral-300 hover:bg-white/20 hover:shadow-lg hover:text-orange-300 transform hover:-translate-y-0.5"
-                }`}
+                to={item.to}
+                className={({ isActive }) =>
+                  `w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-300 group ${
+                    isActive
+                      ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg transform scale-105"
+                      : "text-neutral-300 hover:bg-white/20 hover:shadow-lg hover:text-orange-300 transform hover:-translate-y-0.5"
+                  }`
+                }
               >
-                <Icon
-                  className={`h-5 w-5 transition-colors ${
-                    activeSection === item.id
-                      ? "text-white"
-                      : "text-neutral-400 group-hover:text-orange-300"
-                  }`}
-                />
-                <span className="font-medium">{item.label}</span>
-              </button>
+                {({ isActive }) => (
+                  <>
+                    <Icon
+                      className={`h-5 w-5 transition-colors ${
+                        isActive
+                          ? "text-white"
+                          : "text-neutral-400 group-hover:text-orange-300"
+                      }`}
+                    />
+                    <span className="font-medium">{item.label}</span>
+                  </>
+                )}
+              </NavLink>
             );
           })}
         </nav>

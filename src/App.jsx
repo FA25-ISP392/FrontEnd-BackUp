@@ -1,3 +1,4 @@
+// App.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./layout/MainLayout.jsx";
 import Login from "./pages/Login.jsx";
@@ -25,8 +26,8 @@ export default function App() {
       <Route path="/payment/success" element={<PaymentSuccess />} />
       <Route path="/payment/cancel" element={<PaymentFail />} />
       <Route path="/auth/callback" element={<GoogleCallback />} />
-      <Route path="*" element={<NotFoundPage />} />
 
+      {/* STAFF */}
       <Route
         path="/staff/*"
         element={
@@ -36,7 +37,7 @@ export default function App() {
                 icon: "👥",
                 title: "Trang nhân viên",
                 subtitle: "Quản lý dịch vụ khách hàng",
-                theme: "staff", // 👈 THÊM VÀO ĐÂY
+                theme: "staff",
               }}
               showFooter={false}
             >
@@ -65,6 +66,7 @@ export default function App() {
         }
       />
 
+      {/* ADMIN */}
       <Route
         path="/admin"
         element={
@@ -74,7 +76,7 @@ export default function App() {
                 icon: "📊",
                 title: "Trang quản trị",
                 subtitle: "Quản lý hệ thống",
-                theme: "admin", // 👈 THÊM VÀO ĐÂY
+                theme: "admin",
               }}
               showFooter={false}
             >
@@ -84,6 +86,7 @@ export default function App() {
         }
       />
 
+      {/* CHEF */}
       <Route
         path="/chef"
         element={
@@ -93,7 +96,7 @@ export default function App() {
                 icon: "👨‍🍳",
                 title: "Trang bếp",
                 subtitle: "Quản lý món ăn và đơn hàng",
-                theme: "chef", // 👈 THÊM VÀO ĐÂY
+                theme: "chef",
               }}
               showFooter={false}
             >
@@ -103,8 +106,9 @@ export default function App() {
         }
       />
 
+      {/* MANAGER: thêm /* để hỗ trợ các path con */}
       <Route
-        path="/manager"
+        path="/manager/*"
         element={
           <ProtectedRoute allowedRoles={["MANAGER"]}>
             <MainLayout
@@ -112,15 +116,18 @@ export default function App() {
                 icon: "👔",
                 title: "Trang quản lý",
                 subtitle: "Quản lý nhà hàng",
-                theme: "manager", // 👈 THÊM VÀO ĐÂY
+                theme: "manager",
               }}
               showFooter={false}
             >
+              {/* Manager tự định nghĩa route con bên trong */}
               <Manager />
             </MainLayout>
           </ProtectedRoute>
         }
       />
+
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

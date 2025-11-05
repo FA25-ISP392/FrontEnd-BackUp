@@ -1,4 +1,6 @@
+// pages/Manager.jsx
 import { useState, useEffect, useCallback } from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import ManagerSidebar from "../components/Manager/ManagerSidebar";
 import TablesManagement from "../components/Manager/TablesManagement";
 import TableDetailsModal from "../components/Manager/TableDetailsModal";
@@ -21,8 +23,9 @@ import TableLayout from "../components/Manager/TableLayout";
 import { listTables } from "../lib/apiTable";
 
 export default function Manager() {
+  const location = useLocation();
+
   const [managerName, setManagerName] = useState("");
-  const [activeSection, setActiveSection] = useState("accounts");
 
   // Booking
   const [deletingIds] = useState(new Set());
@@ -56,6 +59,8 @@ export default function Manager() {
   const [loadingTopping, setLoadingTopping] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
+  const isAt = (slug) => location.pathname.startsWith(`/manager/${slug}`);
+
   // Load manager name
   useEffect(() => {
     const loadName = async () => {
@@ -85,9 +90,9 @@ export default function Manager() {
     loadName();
   }, []);
 
-  // Load bookings
+  // Load bookings khi ở trang Quản Lý Đặt Bàn
   useEffect(() => {
-    if (activeSection !== "accounts") return;
+    if (!isAt("quanlydatban")) return;
     let cancelled = false;
     (async () => {
       setLoadingBookings(true);
@@ -113,9 +118,9 @@ export default function Manager() {
     return () => {
       cancelled = true;
     };
-  }, [activeSection, bookingPage, bookingSize, statusFilter]);
+  }, [location.pathname, bookingPage, bookingSize, statusFilter]);
 
-  // Load tables
+  // Load tables (dùng chung nhiều trang)
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -131,7 +136,7 @@ export default function Manager() {
     };
   }, []);
 
-  // Load topping paging (no loop)
+  // Load topping paging
   const loadToppings = useCallback(async () => {
     setLoadingTopping(true);
     try {
@@ -139,7 +144,6 @@ export default function Manager() {
         page: toppingPage,
         size: toppingSize,
       });
-
       setToppings(pageData.content);
       setToppingPageInfo(pageData.pageInfo);
     } catch (err) {
@@ -150,11 +154,12 @@ export default function Manager() {
     }
   }, [toppingPage, toppingSize]);
 
+  // Chỉ load khi ở trang Topping và không có keyword tìm kiếm
   useEffect(() => {
-    if (activeSection !== "toppings") return;
-    if (searchTerm) return; // Nếu đang tìm thì không gọi paging
+    if (!isAt("thanhphanmon")) return;
+    if (searchTerm) return;
     loadToppings();
-  }, [activeSection, toppingPage, searchTerm, loadToppings]);
+  }, [location.pathname, toppingPage, searchTerm, loadToppings]);
 
   // Search topping
   const handleSearchTopping = useCallback(
@@ -184,19 +189,19 @@ export default function Manager() {
         setLoadingTopping(false);
       }
     },
-    [loadToppings],
+    [loadToppings]
   );
 
   // Reject booking
   const handleReject = async (id) => {
     setBookings((prev) =>
-      prev.map((x) => (x.id === id ? { ...x, status: "REJECT" } : x)),
+      prev.map((x) => (x.id === id ? { ...x, status: "REJECT" } : x))
     );
     try {
       await rejectBooking(id);
     } catch (err) {
       setBookings((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, status: "PENDING" } : x)),
+        prev.map((x) => (x.id === id ? { ...x, status: "PENDING" } : x))
       );
       alert(err?.message || "Từ chối thất bại");
     }
@@ -210,21 +215,21 @@ export default function Manager() {
         prev.map((b) =>
           b.id === bookingId
             ? { ...b, status: "APPROVED", assignedTableId: tableId }
-            : b,
-        ),
+            : b
+        )
       );
       setTables((prev) =>
         prev.map((t) =>
           t.id === tableId
             ? { ...t, status: "reserved", isAvailable: false }
-            : t,
-        ),
+            : t
+        )
       );
     } catch (error) {
       alert(
         error?.response?.data?.message ||
           error?.message ||
-          "Không thể gán bàn cho đơn đặt.",
+          "Không thể gán bàn cho đơn đặt."
       );
     }
   };
@@ -233,106 +238,16 @@ export default function Manager() {
   const updateOrderStatus = (tableId, updatedOrder) => {
     setTables((prevTables) =>
       prevTables.map((table) =>
-        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table,
-      ),
+        table.id === tableId ? { ...table, currentOrder: updatedOrder } : table
+      )
     );
   };
 
-  // Render
-  const renderContent = () => {
-    switch (activeSection) {
-      case "tables":
-        return (
-          <>
-            <TableLayout
-              tables={tables}
-              onTableClick={(id) => {
-                const found = tables.find((t) => t.id === id);
-                if (found) setSelectedTable(found);
-              }}
-              selectedTableId={selectedTable?.id}
-            />
-            <TablesManagement
-              tables={tables}
-              selectedTable={selectedTable}
-              setSelectedTable={setSelectedTable}
-              updateOrderStatus={updateOrderStatus}
-            />
-          </>
-        );
-
-      case "accounts":
-        return (
-          <BookingManagement
-            bookings={bookings}
-            setBookings={setBookings}
-            loading={loadingBookings}
-            deletingIds={deletingIds}
-            page={bookingPage}
-            pageInfo={bookingPageInfo}
-            onPageChange={setBookingPage}
-            onReject={handleReject}
-            tables={tables}
-            onAssignTable={handleAssignTable}
-            statusFilter={statusFilter}
-            onStatusChange={(v) => {
-              setBookingPage(1);
-              setStatusFilter(v);
-            }}
-          />
-        );
-
-      case "dishes":
-        return (
-          <div className="space-y-6">
-            <ManagerDishPage />
-          </div>
-        );
-
-      case "dailyPlan":
-        return <ManagerDailyPlanPage />;
-
-      case "dailyDishes":
-        return <ManagerDailyMenuPage />;
-
-      case "toppings":
-        return (
-          <ToppingManagement
-            toppings={toppings}
-            setToppings={setToppings}
-            setIsEditingTopping={setIsEditingTopping}
-            setEditingItem={setEditingTopping}
-            loading={loadingTopping}
-            onSearch={handleSearchTopping}
-            page={toppingPage}
-            pageInfo={toppingPageInfo}
-            onPageChange={setToppingPage}
-          />
-        );
-
-      case "settings":
-        return (
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
-            <h3 className="text-xl font-bold text-white mb-4">Cài Đặt</h3>
-            <p className="text-red-200">
-              Chức năng cài đặt sẽ được phát triển...
-            </p>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  // Return JSX
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-neutral-900 to-red-900">
       <div className="flex">
-        <ManagerSidebar
-          activeSection={activeSection}
-          setActiveSection={setActiveSection}
-        />
+        <ManagerSidebar />
+
         <main className="flex-1 p-8 md:p-10">
           <div className="mb-10 animate-fade-in-up">
             <h1 className="text-4xl font-extrabold text-white mb-2">
@@ -341,16 +256,80 @@ export default function Manager() {
             <p className="text-xl text-red-300">
               Quản lý nhà hàng hiệu quả với dashboard thông minh
             </p>
-            {activeSection === "accounts" && bookingsError && (
+            {isAt("quanlydatban") && bookingsError && (
               <p className="text-red-400 mt-2">{bookingsError}</p>
             )}
           </div>
 
+          {/* Nested routes cho trang Manager */}
           <div
             className="animate-fade-in-up"
             style={{ animationDelay: "100ms" }}
           >
-            {renderContent()}
+            <Routes>
+              {/* index -> /manager => chuyển sang /manager/quanlydatban */}
+              <Route index element={<Navigate to="quanlydatban" replace />} />
+
+              {/* /manager/quanlydatban */}
+              <Route
+                path="quanlydatban"
+                element={
+                  <BookingManagement
+                    bookings={bookings}
+                    setBookings={setBookings}
+                    loading={loadingBookings}
+                    deletingIds={deletingIds}
+                    page={bookingPage}
+                    pageInfo={bookingPageInfo}
+                    onPageChange={setBookingPage}
+                    onReject={handleReject}
+                    tables={tables}
+                    onAssignTable={handleAssignTable}
+                    statusFilter={statusFilter}
+                    onStatusChange={(v) => {
+                      setBookingPage(1);
+                      setStatusFilter(v);
+                    }}
+                  />
+                }
+              />
+
+              {/* /manager/monan */}
+              <Route path="monan" element={<ManagerDishPage />} />
+
+              {/* /manager/topping */}
+              <Route
+                path="thanhphanmon"
+                element={
+                  <ToppingManagement
+                    toppings={toppings}
+                    setToppings={setToppings}
+                    setIsEditingTopping={setIsEditingTopping}
+                    setEditingItem={setEditingTopping}
+                    loading={loadingTopping}
+                    onSearch={handleSearchTopping}
+                    page={toppingPage}
+                    pageInfo={toppingPageInfo}
+                    onPageChange={setToppingPage}
+                  />
+                }
+              />
+
+              {/* /manager/kehoachtrongngay */}
+              <Route
+                path="kehoachtrongngay"
+                element={<ManagerDailyPlanPage />}
+              />
+
+              {/* /manager/montrongngay */}
+              <Route path="montrongngay" element={<ManagerDailyMenuPage />} />
+
+              {/* fallback */}
+              <Route
+                path="*"
+                element={<Navigate to="quanlydatban" replace />}
+              />
+            </Routes>
           </div>
         </main>
       </div>
