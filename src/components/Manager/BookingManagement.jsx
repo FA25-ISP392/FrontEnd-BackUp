@@ -154,8 +154,8 @@ export default function BookingManagement({
   const tableNameById = (id) => {
     if (!id && id !== 0) return "-";
     const t = tables.find((x) => String(x.id) === String(id));
-    const name = t?.name || `Table ${id}`;
-    return String(name).replace(/^Bàn\s*/i, "Table ");
+    const name = t?.name || `Bàn ${id}`;
+    return String(name).replace(/^Table\s*/i, "Bàn ");
   };
 
   const filterOptions = [
@@ -249,13 +249,12 @@ export default function BookingManagement({
           </div>
 
           <div className="grid grid-cols-12 gap-2 text-sm font-semibold text-indigo-200">
-            <div className="col-span-2">Tên Khách Hàng</div>
+            <div className="col-span-3">Tên Khách Hàng</div>
             <div className="col-span-2">Số Điện Thoại</div>
             <div className="col-span-2">Email</div>
             <div className="col-span-1">Số Người</div>
-            <div className="col-span-1">Bàn Mong Muốn</div>
             <div className="col-span-2">Thời gian tới</div>
-            <div className="col-span-1">Bàn được gán</div>
+            <div className="col-span-1">Bàn Đặt</div>
             <div className="col-span-1">Hành Động</div>
           </div>
         </div>
@@ -274,7 +273,7 @@ export default function BookingManagement({
               return (
                 <div key={b.id} className="px-6 py-4 hover:bg-white/5">
                   <div className="grid grid-cols-12 gap-2 items-center">
-                    <div className="col-span-2 font-medium text-white truncate text-sm">
+                    <div className="col-span-3 font-medium text-white truncate text-sm">
                       {b.customerName}
                     </div>
 
@@ -288,20 +287,6 @@ export default function BookingManagement({
 
                     <div className="col-span-1 text-neutral-300 text-center text-sm">
                       <span className="font-medium">{b.seat}</span>
-                    </div>
-
-                    <div className="col-span-1 text-neutral-300 text-center">
-                      <span
-                        className={`px-1 py-0.5 rounded-full text-xs ${
-                          b.preferredTable
-                            ? "bg-orange-900/50 text-orange-300 font-medium"
-                            : "text-neutral-400"
-                        }`}
-                      >
-                        {b.preferredTable
-                          ? tableNameById(b.preferredTable)
-                          : "-"}
-                      </span>
                     </div>
 
                     <div className="col-span-2 text-neutral-300">
@@ -446,30 +431,42 @@ export default function BookingManagement({
                 Trước
               </button>
 
+              {/* 🔽 PHẦN ĐÃ SỬA: Tách logic class ra ngoài 🔽 */}
               <div className="flex items-center gap-1">
-                {buildPages().map((p, i) =>
-                  p === "…" ? (
-                    <span
-                      key={`e-${i}`}
-                      className="px-3 py-2 text-neutral-400 font-medium"
-                    >
-                      …
-                    </span>
-                  ) : (
+                {buildPages().map((p, i) => {
+                  if (p === "…") {
+                    return (
+                      <span
+                        key={`e-${i}`}
+                        className="px-3 py-2 text-neutral-400 font-medium"
+                      >
+                        …
+                      </span>
+                    );
+                  }
+
+                  const baseClass =
+                    "px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200";
+                  const activeClass =
+                    "bg-orange-500 text-white shadow-lg transform scale-105";
+                  const inactiveClass =
+                    "text-neutral-200 bg-white/10 border border-white/20 hover:bg-white/20 hover:text-white shadow-sm";
+                  const btnClass = `${baseClass} ${
+                    p === page ? activeClass : inactiveClass
+                  }`;
+
+                  return (
                     <button
                       key={p}
                       onClick={() => onPageChange(p)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                        p === page
-                          ? "bg-orange-500 text-white shadow-lg transform scale-105"
-                          : "text-neutral-200 bg-white/10 border border-white/20 hover:bg-white/20 hover:text-white shadow-sm"
-                      }`}
+                      className={btnClass}
                     >
                       {p}
                     </button>
-                  )
-                )}
+                  );
+                })}
               </div>
+              {/* 🔼 HẾT PHẦN SỬA 🔼 */}
 
               <button
                 onClick={() =>
