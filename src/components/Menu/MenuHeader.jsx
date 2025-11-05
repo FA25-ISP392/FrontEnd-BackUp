@@ -1,7 +1,6 @@
 import {
   ShoppingCart,
   User,
-  Bell,
   CreditCard,
   ChefHat,
   ListChecks,
@@ -11,7 +10,6 @@ export default function MenuHeader({
   cartItemCount,
   onPersonalize,
   onViewOrders,
-  onCallStaff,
   onCheckout,
   onViewStatus,
   pendingCount = 0,
@@ -20,57 +18,65 @@ export default function MenuHeader({
 }) {
   const activeCount = (pendingCount || 0) + (preparingCount || 0);
 
+  // === TÁI SỬ DỤNG CLASS CHO CÁC NÚT ===
+  const buttonClass =
+    "relative flex items-center space-x-2 px-4 py-2 rounded-full text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5";
+
   return (
-    <header className="bg-white/90 backdrop-blur-md shadow-lg border-b border-white/20 sticky top-0 z-40">
+    <header className="bg-white/95 backdrop-blur-md shadow-sm border-b border-neutral-200/80 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 sm:h-16 sm:py-0">
-          <div className="flex items-center space-x-6">
+        <div className="flex items-center justify-between h-20">
+          <div className="flex items-center space-x-3">
             <button
               onClick={() => window.location.reload()}
-              className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+              className="flex items-center space-x-3 group"
             >
-              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                <ChefHat className="h-6 w-6 text-white" />
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-lg transform transition-transform duration-300 group-hover:scale-105">
+                <ChefHat className="h-7 w-7 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-neutral-900">
-                  MónCủaBạn
-                </h1>
-              </div>
+              <h1 className="text-2xl font-bold text-neutral-900 transition-colors duration-300 group-hover:text-orange-600">
+                MónCủaBạn
+              </h1>
             </button>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
+            {/* === 1. NÚT MENU GỢI Ý (Giữ nguyên) === */}
             {showPersonalizeButton && (
               <button
                 onClick={onPersonalize}
-                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+                className={`${buttonClass} bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600`}
               >
-                <User className="h-4 w-4" />
-                <span className="font-medium">Menu gợi ý</span>
+                <User className="h-5 w-5" />
+                <span className="font-medium text-sm">Menu Gợi Ý</span>
               </button>
             )}
+
+            {/* === 2. NÚT TRẠNG THÁI ĐƠN (Sửa màu) === */}
             <button
               onClick={onViewStatus}
-              className="relative flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded-xl hover:from-emerald-600 hover:to-green-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+              className={`${buttonClass} bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600`}
             >
-              <ListChecks className="h-4 w-4" />
-              <span className="font-medium">Trạng thái đơn</span>
+              {/* Đổi icon sang màu trắng */}
+              <ListChecks className="h-5 w-5 text-white" />
+              <span className="font-medium text-sm">Trạng thái đơn</span>
               {activeCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-white text-emerald-600 text-xs rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center font-bold">
+                <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold border-2 border-white">
                   {activeCount}
                 </span>
               )}
             </button>
 
+            {/* === 3. NÚT GIỎ HÀNG (Sửa màu) === */}
             <button
               onClick={onViewOrders}
-              className="relative flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+              className={`${buttonClass} bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600`}
             >
-              <ShoppingCart className="h-4 w-4" />
-              <span className="font-medium">Giỏ Hàng</span>
+              {/* Đổi icon sang màu trắng */}
+              <ShoppingCart className="h-5 w-5 text-white" />
+              <span className="font-medium text-sm">Giỏ Hàng</span>
               {cartItemCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold border-2 border-white">
                   {cartItemCount}
                 </span>
               )}
@@ -78,10 +84,10 @@ export default function MenuHeader({
 
             <button
               onClick={onCheckout}
-              className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+              className={`${buttonClass} px-5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700`}
             >
-              <CreditCard className="h-4 w-4" />
-              <span className="font-medium">Thanh Toán</span>
+              <CreditCard className="h-5 w-5" />
+              <span className="font-medium text-sm">Thanh Toán</span>
             </button>
           </div>
         </div>

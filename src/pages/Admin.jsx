@@ -268,53 +268,60 @@ export default function Admin() {
     }
   };
 
-  // 🧾 Lấy doanh thu hôm nay + stats (ĐÃ SỬA LỖI)
+  // 🧾 Lấy stats cho Card (Doanh thu, Tổng TK, Tổng HĐ)
   useEffect(() => {
     // Chỉ chạy logic này khi ở tab 'overview'
     if (activeSection !== "overview") {
       return;
     }
 
-    const fetchTodayStats = async () => {
+    const fetchOverviewStats = async () => {
+      setStatsLoading(true);
       try {
-        // Chỉ set loading nếu đang ở tab overview
-        if (activeSection === "overview") {
-          setStatsLoading(true);
-        }
         const now = new Date();
-        const params = {
+        const revenueParams = {
           day: now.getDate(),
           month: now.getMonth() + 1,
           year: now.getFullYear(),
         };
 
-        const res = await getRevenueSummary(params);
+        // Gọi cả 3 API song song
+        const [revenueRes, accountInfo, invoiceInfo] = await Promise.all([
+          getRevenueSummary(revenueParams),
+          listStaffPaging({ page: 1, size: 1 }), // Lấy size 1 để lấy totalElements
+          listPaymentsPaging({ page: 0, size: 1 }), // Lấy size 1 để lấy totalElements
+        ]);
 
-        const revenueValue =
-          res?.data?.result?.totalRevenue ??
-          res?.result?.totalRevenue ??
-          res?.totalRevenue ??
-          0;
+        // 1. Xử lý Doanh thu (VỚI BUG FIX)
+        const revenueValue = revenueRes?.totalRevenue ?? 0; // Fix lỗi truy cập
         setTotalRevenue(Number(revenueValue));
-      } catch (err) {
-        console.error("❌ Lỗi tải doanh thu hôm nay:", err);
-        setTotalRevenue(0);
-      } finally {
-        // Chỉ tắt loading nếu đang ở tab overview
-        if (activeSection === "overview") {
-          setStatsLoading(false);
+
+        // 2. Xử lý Tổng Tài khoản
+        if (accountInfo?.pageInfo) {
+          setPageInfo(accountInfo.pageInfo); // Cập nhật pageInfo để card hiển thị
         }
+
+        // 3. Xử lý Tổng Hóa đơn
+        if (invoiceInfo?.pageInfo) {
+          setInvPageInfo(invoiceInfo.pageInfo); // Cập nhật invPageInfo để card hiển thị
+        }
+      } catch (err) {
+        console.error("❌ Lỗi tải dữ liệu thống kê overview:", err);
+        setTotalRevenue(0);
+        // Có thể set lỗi chung ở đây nếu muốn
+      } finally {
+        setStatsLoading(false);
       }
     };
 
-    fetchTodayStats(); // Tải lần đầu khi vào tab
+    fetchOverviewStats(); // Tải lần đầu khi vào tab
 
-    // ⏰ Thêm lại timer (giống logic gốc của bạn trong AdminStatsCards.jsx)
+    // ⏰ Thêm lại timer (giống logic gốc của bạn)
     const timer = setInterval(() => {
       const now = new Date();
       // Tải lại khi qua ngày mới
       if (now.getHours() === 0 && now.getMinutes() < 5) {
-        fetchTodayStats();
+        fetchOverviewStats();
       }
     }, 60000); // Check mỗi phút
 

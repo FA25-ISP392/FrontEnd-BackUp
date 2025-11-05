@@ -893,3 +893,180 @@ html {
 .shadow-text-lg {
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
 }
+
+.aurora-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+@keyframes aurora-move {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(1.5);
+  }
+  25% {
+    transform: translate(-50%, -50%) rotate(20deg) scale(1.7);
+  }
+  50% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(2);
+  }
+  75% {
+    transform: translate(-50%, -50%) rotate(-20deg) scale(1.7);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(1.5);
+  }
+}
+
+.aurora-shape {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150vmax;
+  height: 150vmax;
+  border-radius: 50%;
+  animation: aurora-move 30s infinite linear;
+}
+
+/* Các lớp màu cho hiệu ứng */
+.aurora-shape-1 {
+  background: radial-gradient(
+    circle at center,
+    rgba(251, 146, 60, 0.3) 0%,
+    /* orange-400 */ rgba(251, 146, 60, 0) 50%
+  );
+  animation-delay: 0s;
+}
+
+.aurora-shape-2 {
+  background: radial-gradient(
+    circle at center,
+    rgba(239, 68, 68, 0.25) 0%,
+    /* red-500 */ rgba(239, 68, 68, 0) 50%
+  );
+  animation-delay: -5s;
+  animation-duration: 35s;
+}
+
+.aurora-shape-3 {
+  background: radial-gradient(
+    circle at center,
+    rgba(192, 38, 211, 0.2) 0%,
+    /* fuchsia-600 */ rgba(192, 38, 211, 0) 50%
+  );
+  animation-delay: -10s;
+  animation-duration: 40s;
+}
+
+.aurora-shape-4 {
+  background: radial-gradient(
+    circle at center,
+    rgba(14, 165, 233, 0.2) 0%,
+    /* sky-500 */ rgba(14, 165, 233, 0) 50%
+  );
+  animation-delay: -15s;
+  animation-duration: 45s;
+}
+
+/* Hiệu ứng "Shine" khi hover (thêm vào nút) */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shine::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 80%
+  );
+  transition: left 0.6s ease-out;
+}
+
+.btn-shine:hover::before {
+  left: 100%;
+}
+
+/* Nâng cấp form input cho nền tối */
+.form-input-dark {
+  @apply w-full px-3 py-2 border rounded-lg transition-all duration-300;
+  @apply bg-black/20 text-white border-white/30 placeholder-neutral-400;
+  @apply focus:ring-2 focus:ring-orange-400 focus:border-transparent focus:bg-black/30 outline-none;
+}
+
+/* Nâng cấp modal cho "wow" */
+.wow-modal-pane {
+  @apply bg-white/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl;
+}
+
+.wow-sidebar-pane {
+  @apply bg-white/95 backdrop-blur-xl border-l border-white/20 shadow-2xl;
+}
+
+/* Hiệu ứng load-in (đã có) */
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+  opacity: 0;
+}
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.delay-100 {
+  animation-delay: 100ms;
+}
+.delay-200 {
+  animation-delay: 200ms;
+}
+.delay-300 {
+  animation-delay: 300ms;
+}
+
+.range-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #f97316;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.range-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #f97316;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.range-thumb::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #f97316;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
