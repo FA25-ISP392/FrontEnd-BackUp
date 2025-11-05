@@ -535,6 +535,17 @@ export default function Menu() {
       setIsErrorOpen(true);
       return;
     }
+
+    // ================== THÊM VALIDATION ==================
+    // Kiểm tra xem `goal` trong `suggestionCreationPayload` có tồn tại không
+    // (nó sẽ là `undefined` nếu `personalizationForm.goal` là chuỗi rỗng)
+    if (!suggestionCreationPayload.goal) {
+      setErrorMessage("Vui lòng chọn 'Mục tiêu cá nhân' của bạn.");
+      setIsErrorOpen(true);
+      return; // Dừng lại, không gọi API
+    }
+    // ================== HẾT VALIDATION ==================
+
     try {
       setSuggestedMenu([]);
       await updateCustomerPersonalization(customerId, customerUpdatePayload);
