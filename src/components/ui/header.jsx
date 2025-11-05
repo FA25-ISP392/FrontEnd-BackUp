@@ -44,7 +44,10 @@ export default function Header({
   };
 
   return (
-    <header className="w-full bg-white border-b border-gray-200">
+    // 👈 SỬA: Áp dụng gradientClass, border và shadow cho header
+    <header
+      className={`w-full bg-gradient-to-r ${gradientClass} border-b border-white/20 shadow-lg`}
+    >
       <div className="mx-auto max-w-7xl px-4 py-4 flex items-center justify-between">
         {/* Left Section */}
         <div className="flex items-center gap-4">
@@ -54,8 +57,11 @@ export default function Header({
             <span className="text-white text-xl">{icon}</span>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{title}</h1>
-            <p className="text-sm text-gray-500">{subtitle}</p>
+            {/* 👈 SỬA: Đổi màu chữ sang trắng và thêm shadow */}
+            <h1 className="text-xl font-bold text-white shadow-text-lg">
+              {title}
+            </h1>
+            <p className="text-sm text-indigo-200 shadow-text">{subtitle}</p>
           </div>
         </div>
 
@@ -63,16 +69,18 @@ export default function Header({
         <div className="flex items-center gap-4">
           <button
             onClick={handleUserClick}
-            className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="flex items-center gap-3 p-2 hover:bg-white/10 rounded-lg transition-colors"
           >
             <div
-              className={`w-8 h-8 rounded-full bg-gradient-to-r ${gradientClass} flex items-center justify-center`}
+              // 👈 SỬA: Đổi avatar BG sang trong suốt để nổi bật trên nền gradient
+              className={`w-8 h-8 rounded-full bg-white/20 flex items-center justify-center`}
             >
               <span className="text-white text-sm font-semibold">
                 {currentUser.name.charAt(0).toUpperCase()}
               </span>
             </div>
-            <span className="text-gray-700 font-medium">
+            {/* 👈 SỬA: Đổi màu chữ sang trắng */}
+            <span className="text-white shadow-text font-medium">
               {currentUser.role}
             </span>
           </button>
