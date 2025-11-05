@@ -97,7 +97,7 @@ export default function OrderStatusSidebar({
                   STATUS_STYLE[st] ||
                   "border-neutral-300 bg-neutral-100 text-neutral-700 border-l-4";
                 const isEditable = st === "pending";
-                const canChangeQty = st === "pending" || st === "preparing";
+                const canChangeQty = st === "pending";
 
                 return (
                   // === SỬA: Card item đẹp hơn ===
