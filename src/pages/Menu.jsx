@@ -54,6 +54,27 @@ const getDisplayName = (u) =>
 const sumTotal = (items = []) =>
   items.reduce((s, it) => s + Number(it.totalPrice ?? it.price ?? 0), 0);
 
+// 👈 === FIX MỚI (PHẦN 1/6): Thêm hàm helper tính calo chính xác ===
+// Hàm này sẽ tính calo của món + TẤT CẢ topping đi kèm
+const getCaloriesFromDetail = (detail) => {
+  if (!detail) return 0;
+
+  // 1. Calo cơ bản của món ăn (API trả về trong 'calories' hoặc 'calo')
+  const baseCals = detail.calories || detail.calo || 0;
+
+  // 2. Calo của tất cả topping
+  const toppingCals = (detail.toppings || []).reduce((sum, topping) => {
+    // API có thể trả về calo trong 'calories' hoặc 'calo'
+    const toppingCal = topping.calories || topping.calo || 0;
+    const quantity = topping.quantity || 1;
+    return sum + toppingCal * quantity;
+  }, 0);
+
+  // Trả về tổng calo
+  return baseCals + toppingCals;
+};
+// 👈 === HẾT FIX MỚI (PHẦN 1/6) ===
+
 export default function Menu() {
   const [suggestedMenu, setSuggestedMenu] = useState(() => {
     try {
@@ -82,9 +103,21 @@ export default function Menu() {
   const [selectedDish, setSelectedDish] = useState(null);
   const [isDishOptionsOpen, setIsDishOptionsOpen] = useState(false);
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
-  const [isPersonalized, setIsPersonalized] = useState(false);
+
+  // 👈 === FIX VẤN ĐỀ 2 (PHẦN 1/2) ===
+  // const [isPersonalized, setIsPersonalized] = useState(false); // DÒNG GỐC
+  // const [estimatedCalories, setEstimatedCalories] = useState(null); // DÒNG GỐC
+  const [isPersonalized, setIsPersonalized] = usePersistedState(
+    "isPersonalized",
+    false
+  );
+  const [estimatedCalories, setEstimatedCalories] = usePersistedState(
+    "estimatedCalories",
+    null
+  );
+  // 👈 === HẾT FIX ===
+
   const [baseCalories, setBaseCalories] = useState(null);
-  const [estimatedCalories, setEstimatedCalories] = useState(null);
   const [dailyCalories, setDailyCalories] = useState(null);
   const [cart, setCart] = usePersistedState("shoppingCart", []);
   const [caloriesConsumed, setCaloriesConsumed] = usePersistedState(
@@ -96,6 +129,11 @@ export default function Menu() {
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingDetail, setEditingDetail] = useState(null);
+
+  // 👈 === FIX MỚI (PHẦN 2/6): Thêm state để lưu calo CŨ khi sửa ===
+  const [editingDetailCalories, setEditingDetailCalories] = useState(0);
+  // 👈 === HẾT FIX MỚI (PHẦN 2/6) ===
+
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [paymentItems, setPaymentItems] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState("cash");
@@ -331,6 +369,10 @@ export default function Menu() {
           quantity: t.quantity ?? 1,
         })) || [],
     });
+    // Tăng calo ngay lập tức
+    const itemCalories = getCaloriesFromDetail(group.sample); // Dùng helper
+    setCaloriesConsumed((prev) => prev + itemCalories);
+    // Fetch lại
     await fetchOrderDetailsFromOrder();
   };
   const handleDecGroup = async (group) => {
@@ -346,6 +388,11 @@ export default function Menu() {
             await deleteOrderDetail(idToDelete);
             await fetchOrderDetailsFromOrder();
             setIsDeleteSuccessOpen(true);
+
+            // 👈 === FIX MỚI (PHẦN 3/6): Dùng helper để trừ calo CHÍNH XÁC ===
+            const itemCalories = getCaloriesFromDetail(group.sample);
+            setCaloriesConsumed((prev) => Math.max(0, prev - itemCalories));
+            // 👈 === HẾT FIX MỚI ===
           } catch (e) {
             setErrorMessage(e?.message || "Huỷ món thất bại.");
             setIsErrorOpen(true);
@@ -359,6 +406,11 @@ export default function Menu() {
         await deleteOrderDetail(idToDelete);
         await fetchOrderDetailsFromOrder();
         setIsDeleteSuccessOpen(true);
+
+        // 👈 === FIX MỚI (PHẦN 4/6): Dùng helper để trừ calo CHÍNH XÁC ===
+        const itemCalories = getCaloriesFromDetail(group.sample);
+        setCaloriesConsumed((prev) => Math.max(0, prev - itemCalories));
+        // 👈 === HẾT FIX MỚI ===
       } catch (e) {
         setErrorMessage(e?.message || "Xoá món thất bại.");
         setIsErrorOpen(true);
@@ -378,6 +430,11 @@ export default function Menu() {
           await deleteOrderDetail(detail.orderDetailId);
           await fetchOrderDetailsFromOrder();
           setIsDeleteSuccessOpen(true);
+
+          // 👈 === FIX MỚI (PHẦN 5/6): Dùng helper để trừ calo CHÍNH XÁC ===
+          const itemCalories = getCaloriesFromDetail(detail);
+          setCaloriesConsumed((prev) => Math.max(0, prev - itemCalories));
+          // 👈 === HẾT FIX MỚI ===
         } catch (e) {
           setErrorMessage(e?.message || "Xoá món thất bại.");
           setIsErrorOpen(true);
@@ -387,15 +444,54 @@ export default function Menu() {
       },
     });
   };
+
+  // 👈 === FIX MỚI (PHẦN 6/6): Cập nhật logic Sửa và Mở Sửa ===
   const handleOpenEdit = (detail) => {
     const st = String(detail?.status || "").toLowerCase();
     if (st !== "pending") return;
+
+    // 1. Lưu lại calo CŨ trước khi mở modal
+    const oldCalories = getCaloriesFromDetail(detail);
+    setEditingDetailCalories(oldCalories);
+
+    // 2. Mở modal
     setEditingDetail(detail);
     setIsEditOpen(true);
   };
+
   const handleEdited = async () => {
-    await fetchOrderDetailsFromOrder();
+    if (!orderId || !editingDetail) return; // Thoát nếu không có thông tin
+
+    try {
+      // 1. Fetch dữ liệu MỚI (nhưng chưa set state)
+      const newData = await getOrderDetailsByOrderId(orderId);
+
+      // 2. Tìm món vừa được sửa trong dữ liệu mới
+      const editedItem = newData.find(
+        (item) => item.orderDetailId === editingDetail.orderDetailId
+      );
+
+      // 3. Tính calo MỚI
+      const newCalories = getCaloriesFromDetail(editedItem);
+      // 4. Lấy calo CŨ (đã lưu từ lúc handleOpenEdit)
+      const oldCalories = editingDetailCalories;
+
+      // 5. Tính chênh lệch và cập nhật calo tổng
+      const diff = newCalories - oldCalories;
+      setCaloriesConsumed((prev) => Math.max(0, prev + diff));
+
+      // 6. Cập nhật danh sách và reset state
+      setOrderDetails(newData);
+      setEditingDetailCalories(0); // Reset calo cũ
+      setEditingDetail(null); // Reset món đang sửa
+    } catch (err) {
+      console.error("Lỗi khi cập nhật chi tiết món:", err);
+      // Nếu lỗi, fetch lại bình thường
+      await fetchOrderDetailsFromOrder();
+    }
   };
+  // 👈 === HẾT FIX MỚI ===
+
   const handleOpenPayment = async () => {
     try {
       if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
@@ -534,6 +630,12 @@ export default function Menu() {
       setSuggestedMenu([]);
       localStorage.removeItem("suggestedMenu");
       localStorage.removeItem(`personalization:${customerId}`);
+
+      // 👈 === FIX VẤN ĐỀ 2 (PHẦN 2/2) ===
+      localStorage.removeItem("isPersonalized");
+      localStorage.removeItem("estimatedCalories");
+      // 👈 === HẾT FIX ===
+
       sessionStorage.clear();
       const keysToRemove = ["user", "accessToken", "token", "hidden_dishes"];
       keysToRemove.forEach((k) => localStorage.removeItem(k));
