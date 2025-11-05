@@ -8,7 +8,11 @@ import {
 } from "../../lib/apiDailyPlan";
 import { Plus, Minus, Clock, CheckCircle, Send } from "lucide-react";
 
-export default function ChefDailyPlanTopping() {
+// 🔽 THÊM MỚI: Nhận props
+export default function ChefDailyPlanTopping({
+  setSuccessMessage = () => {},
+  setErrorMessage = () => {},
+}) {
   const [toppings, setToppings] = useState([]);
   const [plans, setPlans] = useState([]);
   const [quantities, setQuantities] = useState({});
@@ -77,7 +81,8 @@ export default function ChefDailyPlanTopping() {
   // ✅ PHIÊN BẢN CHỈ DÙNG POST /daily-plans/batch
   const handleSubmitAll = async () => {
     if (!staffId) {
-      alert("⚠️ Không xác định được Staff ID. Vui lòng đăng nhập lại!");
+      // 🔽 SỬA: Dùng modal lỗi
+      setErrorMessage("Không xác định được Staff ID. Vui lòng đăng nhập lại!");
       return;
     }
 
@@ -118,7 +123,8 @@ export default function ChefDailyPlanTopping() {
       .filter(Boolean); // Bỏ null ra
 
     if (selected.length === 0) {
-      alert("⚠️ Không có thay đổi nào cần gửi!");
+      // 🔽 SỬA: Dùng modal lỗi
+      setErrorMessage("Không có thay đổi nào cần gửi!");
       return;
     }
 
@@ -127,7 +133,8 @@ export default function ChefDailyPlanTopping() {
       console.log("📦 [POST] Gửi batch daily plan (chỉ thay đổi):", selected);
       await createDailyPlansBatch(selected);
 
-      alert("✅ Cập nhật kế hoạch topping thành công!");
+      // 🔽 SỬA: Dùng modal thành công
+      setSuccessMessage("Gửi kế hoạch topping thành công!");
 
       const refreshed = await listDailyPlans();
       const todayPlans = (refreshed || []).filter(
@@ -137,8 +144,12 @@ export default function ChefDailyPlanTopping() {
     } catch (err) {
       console.error("❌ Lỗi gửi kế hoạch topping:", err);
       if (err?.response?.data?.code === 4005)
-        alert("⚠️ Một số topping đã được duyệt, không thể cập nhật lại.");
-      else alert("❌ Gửi kế hoạch topping thất bại!");
+        // 🔽 SỬA: Dùng modal lỗi
+        setErrorMessage(
+          "Một số topping đã được duyệt, không thể cập nhật lại."
+        );
+      // 🔽 SỬA: Dùng modal lỗi
+      else setErrorMessage("Gửi kế hoạch topping thất bại!");
     } finally {
       setLoading(false);
     }

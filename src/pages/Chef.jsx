@@ -8,7 +8,8 @@ import ChefDailyPlan from "../components/Chef/ChefDailyPlan";
 import ChefDailyDishes from "../components/Chef/ChefDailyDishes";
 import ChefDailyPlanTopping from "../components/Chef/ChefDailyPlanTopping";
 import ChefDailyToppings from "../components/Chef/ChefDailyToppings";
-import { History } from "lucide-react";
+// 🔽 THÊM MỚI: Import icon
+import { History, CheckCircle, AlertTriangle } from "lucide-react";
 
 import {
   getOrderDetailsByStatus,
@@ -27,7 +28,45 @@ export default function Chef() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [subTab, setSubTab] = useState("dish");
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isErrorOpen, setIsErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
+  // 🔽 THÊM MỚI: useEffect để tự động đóng modal
+  useEffect(() => {
+    let timer;
+    if (isSuccessOpen) {
+      timer = setTimeout(() => {
+        setIsSuccessOpen(false);
+        setSuccessMessage("");
+      }, 3000);
+    }
+    return () => clearTimeout(timer);
+  }, [isSuccessOpen]);
+
+  useEffect(() => {
+    let timer;
+    if (isErrorOpen) {
+      timer = setTimeout(() => {
+        setIsErrorOpen(false);
+        setErrorMessage("");
+      }, 3000);
+    }
+    return () => clearTimeout(timer);
+  }, [isErrorOpen]);
+
+  // 🔽 THÊM MỚI: Wrapper functions để set state
+  const showSuccess = (message) => {
+    setSuccessMessage(message);
+    setIsSuccessOpen(true);
+  };
+
+  const showError = (message) => {
+    setErrorMessage(message);
+    setIsErrorOpen(true);
+  };
+  // (Các useEffect và hàm fetchAllOrders giữ nguyên)
   useEffect(() => {
     const u = getCurrentUser();
     const name =
@@ -108,7 +147,8 @@ export default function Chef() {
       await updateOrderDetailStatus(orderDetailId, itemToMove, newStatus);
     } catch (err) {
       console.error(`Lỗi cập nhật món ${orderDetailId}:`, err);
-      alert(`Cập nhật thất bại: ${err.message}. Đang tải lại danh sách...`);
+      // 🔽 SỬA: Dùng modal lỗi
+      showError(`Cập nhật thất bại: ${err.message}. Đang tải lại...`);
       setIsLoading(true);
       fetchAllOrders();
     }
@@ -248,8 +288,18 @@ export default function Chef() {
                 Topping
               </button>
             </div>
-
-            {subTab === "dish" ? <ChefDailyPlan /> : <ChefDailyPlanTopping />}
+            {/* 🔽 SỬA: Truyền props thông báo xuống */}
+            {subTab === "dish" ? (
+              <ChefDailyPlan
+                setSuccessMessage={showSuccess}
+                setErrorMessage={showError}
+              />
+            ) : (
+              <ChefDailyPlanTopping
+                setSuccessMessage={showSuccess}
+                setErrorMessage={showError}
+              />
+            )}
           </div>
         );
 
@@ -331,6 +381,48 @@ export default function Chef() {
           {renderContent()}
         </main>
       </div>
+
+      {isSuccessOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+          <div className="bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-green-500/50">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-green-300">
+                <CheckCircle className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Thành công!</h3>
+              <p className="text-neutral-300 mb-6">{successMessage}</p>
+              <button
+                onClick={() => setIsSuccessOpen(false)}
+                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 font-medium text-sm"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isErrorOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
+          <div className="bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-red-500/50">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-rose-600 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-red-300">
+                <AlertTriangle className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                Đã xảy ra lỗi
+              </h3>
+              <p className="text-neutral-300 mb-6">{errorMessage}</p>
+              <button
+                onClick={() => setIsErrorOpen(false)}
+                className="bg-gradient-to-r from-red-500 to-rose-500 text-white px-6 py-2 rounded-xl hover:from-red-600 hover:to-rose-600 transition-all duration-300 font-medium text-sm"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

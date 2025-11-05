@@ -8,7 +8,11 @@ import {
 } from "../../lib/apiDailyPlan";
 import { Plus, Minus, Clock, CheckCircle, Send } from "lucide-react";
 
-export default function ChefDailyPlan() {
+// 🔽 THÊM MỚI: Nhận props
+export default function ChefDailyPlan({
+  setSuccessMessage = () => {},
+  setErrorMessage = () => {},
+}) {
   const [dishes, setDishes] = useState([]);
   const [plans, setPlans] = useState([]);
   const [quantities, setQuantities] = useState({});
@@ -73,7 +77,8 @@ export default function ChefDailyPlan() {
   // ✅ Gửi batch POST /daily-plans/batch
   const handleSubmitAll = async () => {
     if (!staffId) {
-      alert("⚠️ Không xác định được Staff ID. Vui lòng đăng nhập lại!");
+      // 🔽 SỬA: Dùng modal lỗi
+      setErrorMessage("Không xác định được Staff ID. Vui lòng đăng nhập lại!");
       return;
     }
 
@@ -112,15 +117,15 @@ export default function ChefDailyPlan() {
       .filter(Boolean);
 
     if (selected.length === 0) {
-      alert("⚠️ Không có thay đổi nào cần gửi!");
+      // 🔽 SỬA: Dùng modal lỗi
+      setErrorMessage("Không có thay đổi nào cần gửi!");
       return;
     }
 
     setLoading(true);
     try {
-      console.log("📦 [POST] Gửi batch daily plan (DISH):", selected);
       await createDailyPlansBatch(selected);
-      alert("✅ Cập nhật kế hoạch món ăn thành công!");
+      setSuccessMessage("Gửi kế hoạch món ăn thành công!");
 
       const refreshed = await listDailyPlans();
       const todayPlans = (refreshed || []).filter(
@@ -129,7 +134,7 @@ export default function ChefDailyPlan() {
       setPlans(todayPlans);
     } catch (err) {
       console.error("❌ Lỗi gửi kế hoạch món ăn:", err);
-      alert("❌ Gửi kế hoạch thất bại!");
+      setErrorMessage("Gửi kế hoạch thất bại!");
     } finally {
       setLoading(false);
     }
