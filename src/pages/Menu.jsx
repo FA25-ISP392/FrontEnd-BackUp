@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { CheckCircle, XCircle, Bell, AlertTriangle } from "lucide-react";
+import { CheckCircle, AlertTriangle, User, Table, Hash } from "lucide-react";
 import MenuHeader from "../components/Menu/MenuHeader";
 import MenuContent from "../components/Menu/MenuContent";
 import MenuFooter from "../components/Menu/MenuFooter";
@@ -17,10 +17,7 @@ import {
 import { useMenuPersonalization } from "../hooks";
 // 👈 === SỬA 1: Thêm normalizeDish VÀO ĐÂY ===
 import { listDish, getDish, normalizeDish } from "../lib/apiDish";
-import {
-  updateCustomerPersonalization,
-  getCustomerDetail,
-} from "../lib/apiCustomer";
+import { updateCustomerPersonalization } from "../lib/apiCustomer";
 import { getToppingsByDishId } from "../lib/apiDishTopping";
 import {
   createOrderDetailsFromCart,
@@ -699,21 +696,43 @@ export default function Menu() {
       />
 
       {orderId && tableId && customerId && (
-        <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
-          <div className="max-w-7xl mx-auto flex items-center justify-center space-x-6 text-sm">
-            <div className="flex items-center space-x-2">
-              <span className="text-blue-600 font-medium">Chào Mừng</span>
-              <span className="text-blue-800 font-semibold">
-                {customerName}
-              </span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-indigo-600 font-medium">Bàn</span>
-              <span className="text-indigo-800 font-semibold">{tableId}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-purple-600 font-medium">Mã Đơn</span>
-              <span className="text-purple-800 font-semibold">{orderId}</span>
+        <div className="bg-white shadow-md border-b border-neutral-200/80 animate-fade-in-up">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+              {/* Chào mừng */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-lg">
+                  <User className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-sm text-neutral-600">Chào mừng</div>
+                  <div className="text-lg font-bold text-neutral-900">
+                    {customerName}
+                  </div>
+                </div>
+              </div>
+
+              {/* Thông tin bàn & đơn */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-full px-4 py-2">
+                  <Table className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm font-medium text-neutral-700">
+                    Bàn:
+                  </span>
+                  <span className="text-sm font-bold text-blue-800">
+                    {tableId}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-full px-4 py-2">
+                  <Hash className="w-4 h-4 text-purple-600" />
+                  <span className="text-sm font-medium text-neutral-700">
+                    Mã Đơn:
+                  </span>
+                  <span className="text-sm font-bold text-purple-800">
+                    #{orderId}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { X, Minus, Plus, Save } from "lucide-react";
+import { X, Minus, Plus, Save, PackagePlus, Edit2 } from "lucide-react"; // 👈 Thêm icon
 import { updateOrderDetail } from "../../lib/apiOrderDetail";
 import { getDish } from "../../lib/apiDish";
 
@@ -27,14 +27,6 @@ export default function EditOrderDetailModal({
     );
     setPicked(m);
 
-    // (async () => {
-    //   try {
-    //     const opts = await getToppingsByDishId(detail.dishId);
-    //     setAllToppings(Array.isArray(opts) ? opts : []);
-    //   } catch {
-    //     setAllToppings([]);
-    //   }
-    // })();
     (async () => {
       try {
         const dish = await getDish(detail.dishId);
@@ -47,6 +39,8 @@ export default function EditOrderDetailModal({
           toppingName: o.toppingName ?? o.name ?? "",
           price: Number(o.price ?? o.toppingPrice ?? 0),
           calories: Number(o.calories ?? o.calo ?? 0),
+          // Giả lập trạng thái hết hàng (nếu backend có)
+          isAvailable: (o.remainingQuantity ?? 1) > 0,
         }));
 
         setAllToppings(mapped);
@@ -59,10 +53,12 @@ export default function EditOrderDetailModal({
 
   if (!isOpen || !detail) return null;
 
-  const toggleTop = (tId) => {
+  const toggleTop = (t) => {
+    if (!t.isAvailable) return;
     const m = new Map(picked);
-    if (m.has(tId)) m.delete(tId);
-    else m.set(tId, 1);
+    const id = Number(t.toppingId ?? t.id);
+    if (m.has(id)) m.delete(id);
+    else m.set(id, 1);
     setPicked(m);
   };
 
@@ -96,103 +92,146 @@ export default function EditOrderDetailModal({
     }
   };
 
+  // === 💅 Giao diện mới 💅 ===
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full">
-        <div className="p-5 border-b flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-bold">{detail.dishName}</h3>
-            <p className="text-xs text-neutral-500">Sửa topping, ghi chú</p>
+      <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-5 text-white flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+              <Edit2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold">{detail.dishName}</h3>
+              <p className="text-sm text-blue-100">
+                Chỉnh sửa Topping & Ghi chú
+              </p>
+            </div>
           </div>
           <button
-            className="p-2 rounded-lg hover:bg-neutral-100"
+            className="p-2 rounded-full hover:bg-white/20"
             onClick={onClose}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
-          <div>
-            <div className="text-sm font-medium mb-2">Toppings</div>
-            <div className="space-y-2">
-              {allToppings.map((t) => {
-                const id = Number(t.toppingId ?? t.id);
-                const selected = picked.has(id);
-                const qty = picked.get(id) ?? 1;
+        {/* Content */}
+        <div className="p-6 space-y-5 max-h-[calc(90vh-160px)] overflow-y-auto">
+          {/* Toppings */}
+          {allToppings.length > 0 && (
+            <div>
+              <label className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <PackagePlus className="w-5 h-5 text-blue-600" />
+                Chọn Toppings
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {allToppings.map((t) => {
+                  const id = Number(t.toppingId ?? t.id);
+                  const selected = picked.has(id);
+                  const qty = picked.get(id) ?? 1;
 
-                return (
-                  <div
-                    key={id}
-                    className={`flex items-center justify-between border rounded-xl p-2 ${
-                      selected ? "bg-emerald-50 border-emerald-200" : ""
-                    }`}
-                  >
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        className="w-4 h-4"
-                        checked={selected}
-                        onChange={() => toggleTop(id)}
-                      />
-                      <span className="text-sm">{t.toppingName ?? t.name}</span>
-                    </label>
-
-                    {selected && (
+                  return (
+                    <div
+                      key={id}
+                      onClick={() => toggleTop(t)}
+                      className={`flex items-center justify-between border-2 rounded-xl p-3 transition-all ${
+                        !t.isAvailable
+                          ? "opacity-50 cursor-not-allowed bg-neutral-100 border-neutral-200"
+                          : selected
+                          ? "border-blue-500 bg-blue-50 shadow-md"
+                          : "border-neutral-200 cursor-pointer hover:bg-neutral-50 hover:border-blue-300"
+                      }`}
+                      title={
+                        !t.isAvailable ? "Topping tạm hết hàng" : "Chọn topping"
+                      }
+                    >
                       <div className="flex items-center gap-2">
-                        <button
-                          className="p-1 rounded-lg bg-neutral-100"
-                          onClick={() => changeQty(id, -1)}
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="w-6 text-center text-sm">{qty}</span>
-                        <button
-                          className="p-1 rounded-lg bg-neutral-100"
-                          onClick={() => changeQty(id, +1)}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 accent-blue-500"
+                          checked={selected}
+                          readOnly
+                          disabled={!t.isAvailable}
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-neutral-800">
+                            {t.toppingName ?? t.name}
+                          </span>
+                          <span className="text-xs text-blue-600">
+                            +{(t.price || 0).toLocaleString("vi-VN")}₫
+                          </span>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-              {!allToppings.length && (
-                <div className="text-xs text-neutral-500">
-                  Món này chưa có danh sách topping.
-                </div>
-              )}
-            </div>
-          </div>
 
+                      {selected && (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            className="w-6 h-6 rounded-full bg-neutral-100 border border-neutral-300 flex items-center justify-center hover:bg-neutral-200"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              changeQty(id, -1);
+                            }}
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="w-5 text-center text-sm font-bold">
+                            {qty}
+                          </span>
+                          <button
+                            type="button"
+                            className="w-6 h-6 rounded-full bg-neutral-100 border border-neutral-300 flex items-center justify-center hover:bg-neutral-200"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              changeQty(id, +1);
+                            }}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Ghi chú */}
           <div>
-            <div className="text-sm font-medium mb-2">Ghi chú</div>
+            <label className="block text-sm font-semibold text-gray-800 mb-2">
+              Ghi chú (Tuỳ chọn)
+            </label>
             <textarea
-              className="w-full border rounded-xl p-2 text-sm"
+              className="w-full border rounded-xl p-3 text-sm border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               rows={3}
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Ít cay / thêm phô mai..."
+              placeholder="Ví dụ: Ít cay, không hành..."
             />
           </div>
         </div>
 
-        <div className="p-5 border-t flex items-center justify-end gap-3">
+        {/* Footer */}
+        <div className="p-5 border-t border-neutral-200 flex items-center justify-end gap-3 bg-neutral-50">
           <button
-            className="px-4 py-2 rounded-xl bg-neutral-100"
+            type="button"
+            className="px-5 py-2.5 rounded-xl bg-neutral-100 text-neutral-700 font-medium hover:bg-neutral-200 transition"
             onClick={onClose}
             disabled={loading}
           >
             Hủy
           </button>
           <button
+            type="button"
             onClick={handleSave}
             disabled={loading}
-            className="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-2"
+            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 flex items-center justify-center gap-2 font-medium"
           >
             <Save className="w-4 h-4" />
-            Lưu thay đổi
+            {loading ? "Đang lưu..." : "Lưu thay đổi"}
           </button>
         </div>
       </div>
