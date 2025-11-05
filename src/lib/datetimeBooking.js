@@ -10,7 +10,7 @@ export function buildISOFromVN(dateStr, timeStr = "00:00") {
 
 export function normalizeISOFromAPI(isoLike) {
   if (!isoLike) return null;
-  return String(isoLike).trim().replace(" ", "T").slice(0, 19);
+  return String(isoLike).trim().replace(" ", "T");
 }
 
 export function fmtVNDateTime(iso, extra = {}) {
