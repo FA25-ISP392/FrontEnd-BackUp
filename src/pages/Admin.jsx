@@ -12,6 +12,9 @@ import { listPaymentsPaging } from "../lib/apiPayment";
 import AdminDishStatistics from "../components/Admin/AdminDishStatistics";
 import { mockAdminRevenueData, mockAdminDishSalesData } from "../lib/adminData";
 
+// ✅ Tránh lỗi nếu chưa có import normalizeStaff ở nơi khác
+const normalizeStaff = (raw) => raw || {};
+
 export default function Admin() {
   const [adminName, setAdminName] = useState("");
   const [activeSection, setActiveSection] = useState("overview");
@@ -58,6 +61,8 @@ export default function Admin() {
   // ==== STATS STATES (CHO CARD) ====
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [cashRevenueToday, setCashRevenueToday] = useState(0); // ✅ mới
+  const [bankRevenueToday, setBankRevenueToday] = useState(0); // ✅ mới
 
   // ==== ADMIN NAME ====
   useEffect(() => {
@@ -79,7 +84,6 @@ export default function Admin() {
           setAdminName("Admin");
           return;
         }
-        // Giả sử findStaffByUsername tồn tại
         // const profile = await findStaffByUsername(username);
         // setAdminName(profile?.name || "Admin");
         setAdminName(cached?.fullName || "Admin"); // Fallback
@@ -113,7 +117,7 @@ export default function Admin() {
       } catch (err) {
         if (!cancelled)
           setAccountsError(
-            err?.message || "Không tải được danh sách nhân viên.",
+            err?.message || "Không tải được danh sách nhân viên."
           );
       } finally {
         if (!cancelled) setLoadingAccounts(false);
@@ -146,7 +150,7 @@ export default function Admin() {
               size: invSize,
               totalPages: 1,
               totalElements: items?.length || 0,
-            },
+            }
           );
         }
       } catch (e) {
@@ -197,7 +201,7 @@ export default function Admin() {
       const response = await updateStaff(staffId, payload);
       const updated = normalizeStaff(response?.result ?? response);
       setAccounts((prev) =>
-        prev.map((arr) => (arr.id === staffId ? { ...arr, ...updated } : arr)),
+        prev.map((arr) => (arr.id === staffId ? { ...arr, ...updated } : arr))
       );
     } catch (err) {
       const data = err?.response?.data || err?.data || {};
@@ -219,7 +223,7 @@ export default function Admin() {
   const deleteAccount = async (staffId) => {
     if (!staffId) return;
     const targetDelete = accounts.find(
-      (arr) => Number(arr.staffId) === Number(staffId),
+      (arr) => Number(arr.staffId) === Number(staffId)
     );
     if (!targetDelete) return;
     const me = getCurrentUser() || {};
@@ -270,10 +274,7 @@ export default function Admin() {
 
   // 🧾 Lấy stats cho Card (Doanh thu, Tổng TK, Tổng HĐ)
   useEffect(() => {
-    // Chỉ chạy logic này khi ở tab 'overview'
-    if (activeSection !== "overview") {
-      return;
-    }
+    if (activeSection !== "overview") return;
 
     const fetchOverviewStats = async () => {
       setStatsLoading(true);
@@ -285,66 +286,72 @@ export default function Admin() {
           year: now.getFullYear(),
         };
 
-        // Gọi cả 3 API song song
         const [revenueRes, accountInfo, invoiceInfo] = await Promise.all([
           getRevenueSummary(revenueParams),
-          listStaffPaging({ page: 1, size: 1 }), // Lấy size 1 để lấy totalElements
-          listPaymentsPaging({ page: 0, size: 1 }), // Lấy size 1 để lấy totalElements
+          listStaffPaging({ page: 1, size: 1 }),
+          listPaymentsPaging({ page: 0, size: 1 }),
         ]);
 
-        // 1. Xử lý Doanh thu (VỚI BUG FIX)
-        const revenueValue = revenueRes?.totalRevenue ?? 0; // Fix lỗi truy cập
-        setTotalRevenue(Number(revenueValue));
+        // ✅ Map linh hoạt theo field backend
+        const cash = Number(
+          revenueRes?.cashRevenueToday ??
+            revenueRes?.cash ??
+            revenueRes?.cashToday ??
+            0
+        );
+        const bank = Number(
+          revenueRes?.bankRevenueToday ??
+            revenueRes?.bank ??
+            revenueRes?.bankToday ??
+            0
+        );
+        const total = Number(
+          revenueRes?.totalRevenue != null
+            ? revenueRes.totalRevenue
+            : cash + bank
+        );
 
-        // 2. Xử lý Tổng Tài khoản
-        if (accountInfo?.pageInfo) {
-          setPageInfo(accountInfo.pageInfo); // Cập nhật pageInfo để card hiển thị
-        }
+        setCashRevenueToday(cash);
+        setBankRevenueToday(bank);
+        setTotalRevenue(total);
 
-        // 3. Xử lý Tổng Hóa đơn
-        if (invoiceInfo?.pageInfo) {
-          setInvPageInfo(invoiceInfo.pageInfo); // Cập nhật invPageInfo để card hiển thị
-        }
+        if (accountInfo?.pageInfo) setPageInfo(accountInfo.pageInfo);
+        if (invoiceInfo?.pageInfo) setInvPageInfo(invoiceInfo.pageInfo);
       } catch (err) {
         console.error("❌ Lỗi tải dữ liệu thống kê overview:", err);
+        setCashRevenueToday(0);
+        setBankRevenueToday(0);
         setTotalRevenue(0);
-        // Có thể set lỗi chung ở đây nếu muốn
       } finally {
         setStatsLoading(false);
       }
     };
 
-    fetchOverviewStats(); // Tải lần đầu khi vào tab
+    fetchOverviewStats();
 
-    // ⏰ Thêm lại timer (giống logic gốc của bạn)
     const timer = setInterval(() => {
       const now = new Date();
-      // Tải lại khi qua ngày mới
       if (now.getHours() === 0 && now.getMinutes() < 5) {
         fetchOverviewStats();
       }
-    }, 60000); // Check mỗi phút
+    }, 60000);
 
-    return () => {
-      clearInterval(timer); // Xóa timer khi chuyển tab
-    };
-  }, [activeSection]); // Chạy lại khi chuyển tab
+    return () => clearInterval(timer);
+  }, [activeSection]);
 
-  // Lấy tổng accounts và invoices từ pageInfo
   const totalAccounts = pageInfo.totalElements;
   const totalInvoices = invPageInfo.totalElements;
 
-  // ==== RENDER ====
   const renderContent = () => {
     switch (activeSection) {
       case "overview":
         return (
           <>
             <AdminStatsCards
-              loading={loading}
-              totalRevenue={cashRevenueToday + bankRevenueToday}
-              cashRevenueToday={cashRevenueToday}
-              bankRevenueToday={bankRevenueToday}
+              loading={statsLoading} // ✅ dùng đúng biến
+              totalRevenue={totalRevenue} // ✅ tổng từ API/fallback
+              cashRevenueToday={cashRevenueToday} // ✅ mới
+              bankRevenueToday={bankRevenueToday} // ✅ mới
               totalAccounts={totalAccounts}
               totalInvoices={totalInvoices}
             />
