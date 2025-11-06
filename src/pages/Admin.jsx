@@ -274,7 +274,6 @@ export default function Admin() {
     }
   };
 
-  // ===== OVERVIEW CARDS =====
   useEffect(() => {
     if (activeSection !== "overview") return;
     const fetchOverviewStats = async () => {
@@ -287,27 +286,18 @@ export default function Admin() {
           year: now.getFullYear(),
         };
         const [revenueRes, accountInfo, invoiceInfo] = await Promise.all([
-          getRevenueSummary(revenueParams),
+          getRevenueSummary(revenueParams), //
           listStaffPaging({ page: 1, size: 1 }),
           listPaymentsPaging({ page: 0, size: 1 }),
         ]);
-        const cash = Number(
-          revenueRes?.cashRevenueToday ??
-            revenueRes?.cash ??
-            revenueRes?.cashToday ??
-            0
-        );
-        const bank = Number(
-          revenueRes?.bankRevenueToday ??
-            revenueRes?.bank ??
-            revenueRes?.bankToday ??
-            0
-        );
-        const total = Number(
-          revenueRes?.totalRevenue != null
-            ? revenueRes.totalRevenue
-            : cash + bank
-        );
+        const total = Number(revenueRes?.grandTotalRevenue ?? 0);
+        const methodsList = Array.isArray(revenueRes?.revenueByMethod)
+          ? revenueRes.revenueByMethod
+          : [];
+        const cashItem = methodsList.find((m) => m.method === "CASH");
+        const cash = Number(cashItem?.totalRevenue ?? 0);
+        const bankItem = methodsList.find((m) => m.method === "BANK_TRANSFER");
+        const bank = Number(bankItem?.totalRevenue ?? 0);
         setCashRevenueToday(cash);
         setBankRevenueToday(bank);
         setTotalRevenue(total);
