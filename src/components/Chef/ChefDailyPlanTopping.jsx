@@ -41,12 +41,13 @@ export default function ChefDailyPlanTopping({
           listTopping(),
           listDailyPlans(),
         ]);
+        console.log("✅ Topping List:", toppingList);
 
         const todayPlans = (planList || []).filter(
           (p) =>
             p.planDate === today &&
             p.staffId === staffId &&
-            p.itemType === ITEM_TYPES.TOPPING
+            p.itemType === ITEM_TYPES.TOPPING,
         );
 
         const mapped = {};
@@ -92,7 +93,7 @@ export default function ChefDailyPlanTopping({
       .map(([key, qty]) => {
         const [type, id] = key.split("_");
         const existingPlan = plans.find(
-          (p) => p.itemId === Number(id) && p.itemType === type
+          (p) => p.itemId === Number(id) && p.itemType === type,
         );
 
         // Nếu chưa có plan -> gửi tạo mới
@@ -138,7 +139,7 @@ export default function ChefDailyPlanTopping({
 
       const refreshed = await listDailyPlans();
       const todayPlans = (refreshed || []).filter(
-        (p) => p.planDate === today && p.staffId === staffId
+        (p) => p.planDate === today && p.staffId === staffId,
       );
       setPlans(todayPlans);
     } catch (err) {
@@ -146,7 +147,7 @@ export default function ChefDailyPlanTopping({
       if (err?.response?.data?.code === 4005)
         // 🔽 SỬA: Dùng modal lỗi
         setErrorMessage(
-          "Một số topping đã được duyệt, không thể cập nhật lại."
+          "Một số topping đã được duyệt, không thể cập nhật lại.",
         );
       // 🔽 SỬA: Dùng modal lỗi
       else setErrorMessage("Gửi kế hoạch topping thất bại!");
@@ -175,7 +176,7 @@ export default function ChefDailyPlanTopping({
           const qty = quantities[key] || 0;
           const status = getPlanStatus(t.id, ITEM_TYPES.TOPPING);
           const plan = plans.find(
-            (p) => p.itemId === t.id && p.itemType === ITEM_TYPES.TOPPING
+            (p) => p.itemId === t.id && p.itemType === ITEM_TYPES.TOPPING,
           );
 
           return (

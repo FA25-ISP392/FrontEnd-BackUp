@@ -10,11 +10,34 @@ export function normalizeTopping(t = {}) {
   };
 }
 
+// export async function listTopping(params = {}) {
+//   try {
+//     const res = await apiConfig.get("/topping", { params });
+//     const arr = res?.result ?? res?.data ?? [];
+//     return Array.isArray(arr) ? arr.map(normalizeTopping) : [];
+//   } catch (err) {
+//     console.error("❌ Lỗi khi load danh sách topping:", err);
+//     throw err;
+//   }
+// }
+
 export async function listTopping(params = {}) {
   try {
     const res = await apiConfig.get("/topping", { params });
-    const arr = res?.result ?? res?.data ?? [];
-    return Array.isArray(arr) ? arr.map(normalizeTopping) : [];
+    console.log("📦 Raw topping response:", res);
+
+    // 🧠 Trường hợp BE trả về mảng trực tiếp hoặc object bọc 'result'
+    const arr = Array.isArray(res)
+      ? res
+      : Array.isArray(res?.result)
+      ? res.result
+      : Array.isArray(res?.data?.result)
+      ? res.data.result
+      : [];
+
+    console.log("✅ Parsed topping array:", arr);
+
+    return arr.map(normalizeTopping);
   } catch (err) {
     console.error("❌ Lỗi khi load danh sách topping:", err);
     throw err;
