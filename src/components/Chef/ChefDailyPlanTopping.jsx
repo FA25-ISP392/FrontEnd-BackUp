@@ -79,62 +79,112 @@ export default function ChefDailyPlanTopping({
     setQuantities((prev) => ({ ...prev, [key]: parsed }));
   };
 
+  const isApprovedStatus = (s) => s === true || s === 1;
+
   // ✅ PHIÊN BẢN CHỈ DÙNG POST /daily-plans/batch
   const handleSubmitAll = async () => {
     if (!staffId) {
-      // 🔽 SỬA: Dùng modal lỗi
       setErrorMessage("Không xác định được Staff ID. Vui lòng đăng nhập lại!");
       return;
     }
 
-    // 🔍 Chỉ lấy những topping có thay đổi hoặc chưa có plan
-    const selected = Object.entries(quantities)
-      .filter(([_, qty]) => qty > 0)
+    // gom các mục có qty > 0 thành candidate
+    const candidates = Object.entries(quantities)
+      .filter(([_, qty]) => Number(qty) > 0)
       .map(([key, qty]) => {
-        const [type, id] = key.split("_");
+        const [type, idStr] = key.split("_");
+        const id = Number(idStr);
         const existingPlan = plans.find(
-          (p) => p.itemId === Number(id) && p.itemType === type,
+          (p) => p.itemId === id && p.itemType === type,
         );
+        return { id, type, qty: Number(qty), existingPlan };
+      });
 
-        // Nếu chưa có plan -> gửi tạo mới
+    if (candidates.length === 0) {
+      setErrorMessage("Không có thay đổi nào cần gửi!");
+      return;
+    }
+
+    // ✅ Rule kiểm tra: nếu đã duyệt thì không được giảm xuống nhỏ hơn số đã duyệt
+    const invalidLower = candidates.filter(
+      ({ existingPlan, qty }) =>
+        existingPlan &&
+        isApprovedStatus(existingPlan.status) &&
+        Number(qty) < Number(existingPlan.plannedQuantity),
+    );
+
+    if (invalidLower.length > 0) {
+      const names = invalidLower
+        .map(({ id }) => toppings.find((t) => t.id === id)?.name || `ID ${id}`)
+        .join(", ");
+      setErrorMessage(
+        `Không thể gửi số lượng nhỏ hơn số đã duyệt trước đó cho: ${names}.`,
+      );
+      return;
+    }
+
+    // Tạo payload theo rule:
+    // - Chưa có plan: tạo mới
+    // - Có plan CHƯA duyệt: nếu đổi số thì cập nhật
+    // - Có plan ĐÃ duyệt:
+    //     + nếu bằng nhau: bỏ qua
+    //     + nếu lớn hơn: CHO PHÉP cập nhật
+    const payload = candidates
+      .map(({ id, type, qty, existingPlan }) => {
         if (!existingPlan) {
           return {
-            itemId: Number(id),
+            itemId: id,
             itemType: type,
-            plannedQuantity: Number(qty),
+            plannedQuantity: qty,
             planDate: today,
             staffId,
           };
         }
 
-        // Nếu có plan nhưng số lượng thay đổi thì gửi cập nhật
-        if (existingPlan.plannedQuantity !== Number(qty)) {
-          return {
-            itemId: Number(id),
-            itemType: type,
-            plannedQuantity: Number(qty),
-            planDate: today,
-            staffId,
-          };
-        }
+        const approved = isApprovedStatus(existingPlan.status);
+        const approvedQty = Number(existingPlan.plannedQuantity);
+        console.log(approvedQty);
 
-        // Nếu không đổi thì bỏ qua
-        return null;
+        if (approved) {
+          if (Number(qty) === approvedQty) return null; // không đổi
+          if (Number(qty) > approvedQty) {
+            // ✅ cho phép tăng
+            return {
+              itemId: id,
+              itemType: type,
+              plannedQuantity: Number(qty),
+              planDate: today,
+              staffId,
+            };
+          }
+          // qty < approvedQty đã bị chặn ở invalidLower phía trên
+          return null;
+        } else {
+          // pending/chưa duyệt → cho sửa nếu khác
+          if (Number(qty) !== Number(existingPlan.plannedQuantity)) {
+            return {
+              itemId: id,
+              itemType: type,
+              plannedQuantity: Number(qty),
+              planDate: today,
+              staffId,
+            };
+          }
+          return null;
+        }
       })
-      .filter(Boolean); // Bỏ null ra
+      .filter(Boolean);
 
-    if (selected.length === 0) {
-      // 🔽 SỬA: Dùng modal lỗi
+    if (payload.length === 0) {
       setErrorMessage("Không có thay đổi nào cần gửi!");
       return;
     }
 
     setLoading(true);
     try {
-      console.log("📦 [POST] Gửi batch daily plan (chỉ thay đổi):", selected);
-      await createDailyPlansBatch(selected);
+      console.log("📦 [POST] Gửi batch daily plan:", payload);
+      await createDailyPlansBatch(payload);
 
-      // 🔽 SỬA: Dùng modal thành công
       setSuccessMessage("Gửi kế hoạch topping thành công!");
 
       const refreshed = await listDailyPlans();
@@ -144,13 +194,13 @@ export default function ChefDailyPlanTopping({
       setPlans(todayPlans);
     } catch (err) {
       console.error("❌ Lỗi gửi kế hoạch topping:", err);
-      if (err?.response?.data?.code === 4005)
-        // 🔽 SỬA: Dùng modal lỗi
+      if (err?.response?.data?.code === 4005) {
         setErrorMessage(
           "Một số topping đã được duyệt, không thể cập nhật lại.",
         );
-      // 🔽 SỬA: Dùng modal lỗi
-      else setErrorMessage("Gửi kế hoạch topping thất bại!");
+      } else {
+        setErrorMessage("Gửi kế hoạch topping thất bại!");
+      }
     } finally {
       setLoading(false);
     }

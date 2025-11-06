@@ -44,7 +44,7 @@ export default function ChefDailyPlan({
           (p) =>
             p.planDate === today &&
             p.staffId === staffId &&
-            p.itemType === ITEM_TYPES.DISH
+            p.itemType === ITEM_TYPES.DISH,
         );
 
         const mapped = {};
@@ -75,66 +75,130 @@ export default function ChefDailyPlan({
   };
 
   // ✅ Gửi batch POST /daily-plans/batch
+  // Chuẩn hoá trạng thái duyệt (vì BE có thể trả về true / 1 / "APPROVED" ...)
+  const isApprovedStatus = (s) =>
+    s === true ||
+    s === 1 ||
+    s === "APPROVED" ||
+    s === "approved" ||
+    s === "APPROVE" ||
+    s === "approve";
+
   const handleSubmitAll = async () => {
     if (!staffId) {
-      // 🔽 SỬA: Dùng modal lỗi
       setErrorMessage("Không xác định được Staff ID. Vui lòng đăng nhập lại!");
       return;
     }
 
-    // 🔍 Chỉ lấy những món có thay đổi hoặc chưa có plan
-    const selected = Object.entries(quantities)
-      .filter(([_, qty]) => qty > 0)
+    // 🔹 Lấy danh sách món có số lượng > 0
+    const candidates = Object.entries(quantities)
+      .filter(([_, qty]) => Number(qty) > 0)
       .map(([id, qty]) => {
-        const existingPlan = plans.find(
-          (p) => p.itemId === Number(id) && p.itemType === ITEM_TYPES.DISH
-        );
+        const dishId = Number(id);
+        const existingPlan = plans.find((p) => {
+          const planType = String(p.itemType || "").toUpperCase();
+          return (
+            p.itemId === dishId &&
+            planType === String(ITEM_TYPES.DISH).toUpperCase()
+          );
+        });
+        return { dishId, qty: Number(qty), existingPlan };
+      });
 
-        if (!existingPlan) {
-          // ✅ Món mới
-          return {
-            itemId: Number(id),
-            itemType: ITEM_TYPES.DISH,
-            plannedQuantity: Number(qty),
-            planDate: today,
-            staffId,
-          };
-        }
-
-        if (existingPlan.plannedQuantity !== Number(qty)) {
-          // ✅ Món cũ thay đổi plannedQuantity
-          return {
-            itemId: Number(id),
-            itemType: ITEM_TYPES.DISH,
-            plannedQuantity: Number(qty),
-            planDate: today,
-            staffId,
-          };
-        }
-
-        return null;
-      })
-      .filter(Boolean);
-
-    if (selected.length === 0) {
-      // 🔽 SỬA: Dùng modal lỗi
+    if (candidates.length === 0) {
       setErrorMessage("Không có thay đổi nào cần gửi!");
       return;
     }
 
+    // 🔍 Kiểm tra nếu plan đã duyệt và số mới < số cũ => báo lỗi
+    const invalidLower = candidates.filter(
+      ({ existingPlan, qty }) =>
+        existingPlan &&
+        isApprovedStatus(existingPlan.status) &&
+        qty < Number(existingPlan.plannedQuantity),
+    );
+
+    if (invalidLower.length > 0) {
+      const names = invalidLower
+        .map(
+          ({ dishId }) =>
+            dishes.find((d) => d.id === dishId)?.name || `ID ${dishId}`,
+        )
+        .join(", ");
+      setErrorMessage(
+        `Không thể gửi số lượng nhỏ hơn số đã duyệt trước đó cho: ${names}.`,
+      );
+      return;
+    }
+
+    // ✅ Tạo payload gửi lên
+    const payload = candidates
+      .map(({ dishId, qty, existingPlan }) => {
+        if (!existingPlan) {
+          // món chưa có plan -> tạo mới
+          return {
+            itemId: dishId,
+            itemType: ITEM_TYPES.DISH,
+            plannedQuantity: qty,
+            planDate: today,
+            staffId,
+          };
+        }
+
+        const approved = isApprovedStatus(existingPlan.status);
+        const approvedQty = Number(existingPlan.plannedQuantity);
+
+        if (approved) {
+          if (qty === approvedQty) return null; // không đổi
+          if (qty > approvedQty) {
+            // ✅ Cho phép tăng nếu đã duyệt
+            return {
+              itemId: dishId,
+              itemType: ITEM_TYPES.DISH,
+              plannedQuantity: qty,
+              planDate: today,
+              staffId,
+            };
+          }
+          // nhỏ hơn đã bị chặn phía trên
+          return null;
+        } else {
+          // pending/chưa duyệt → cho phép thay đổi nếu khác
+          if (qty !== Number(existingPlan.plannedQuantity)) {
+            return {
+              itemId: dishId,
+              itemType: ITEM_TYPES.DISH,
+              plannedQuantity: qty,
+              planDate: today,
+              staffId,
+            };
+          }
+          return null;
+        }
+      })
+      .filter(Boolean);
+
+    if (payload.length === 0) {
+      setErrorMessage("Không có thay đổi nào cần gửi!");
+      return;
+    }
+
+    // 📨 Gửi API
     setLoading(true);
     try {
-      await createDailyPlansBatch(selected);
+      console.log("📦 [POST] Gửi batch daily plan:", payload);
+      await createDailyPlansBatch(payload);
       setSuccessMessage("Gửi kế hoạch món ăn thành công!");
 
+      // Refresh lại kế hoạch hôm nay
       const refreshed = await listDailyPlans();
       const todayPlans = (refreshed || []).filter(
-        (p) => p.planDate === today && p.staffId === staffId
+        (p) => (p.planDate || "").startsWith(today) && p.staffId === staffId,
       );
       setPlans(todayPlans);
     } catch (err) {
       console.error("❌ Lỗi gửi kế hoạch món ăn:", err);
-      setErrorMessage("Gửi kế hoạch thất bại!");
+      setErrorMessage("Gửi kế hoạch món ăn thất bại!");
     } finally {
       setLoading(false);
     }
@@ -142,7 +206,7 @@ export default function ChefDailyPlan({
 
   const getPlanStatus = (dishId) => {
     const plan = plans.find(
-      (p) => p.itemId === dishId && p.itemType === ITEM_TYPES.DISH
+      (p) => p.itemId === dishId && p.itemType === ITEM_TYPES.DISH,
     );
     if (!plan) return null;
     if (plan.status === false) return "pending";
