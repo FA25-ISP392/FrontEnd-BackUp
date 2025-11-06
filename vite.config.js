@@ -7,7 +7,7 @@ export default defineConfig({
     proxy: {
       "/api": {
         // target: "https://backend-79cz.onrender.com",
-        target: "https://api-monngon88.purintech.id.vn",
+        target: "https://api-monngon88.purintech.id.vn/",
         // target: "https://backend2-production-00a1.up.railway.app",
         // target: "https://backend-production-0865.up.railway.app",
         changeOrigin: true,
