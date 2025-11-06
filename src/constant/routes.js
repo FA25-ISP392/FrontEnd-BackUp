@@ -1,4 +1,3 @@
-// src/routes.js
 export const APP_ORIGIN =
   import.meta.env.VITE_PUBLIC_ORIGIN ||
   (import.meta.env.PROD
@@ -30,7 +29,6 @@ export const STAFF_ROUTES = {
   SERVE_HISTORY: "/staff/lichsuphucvu",
 };
 
-// ✅ ADMIN
 export const ADMIN_BASE = "/admin";
 export const ADMIN_ROUTES = {
   OVERVIEW: "/admin/tongquan",
@@ -38,7 +36,6 @@ export const ADMIN_ROUTES = {
   ACCOUNTS: "/admin/taikhoan",
 };
 
-// ✅ MANAGER
 export const MANAGER_BASE = "/manager";
 export const MANAGER_ROUTES = {
   BOOKING: "/manager/quanlydatban",
@@ -51,27 +48,23 @@ export const MANAGER_ROUTES = {
 export const VERIFY_EMAIL = "/verify-email";
 export const VERIFY_EMAIL_URL = joinUrl(APP_ORIGIN, VERIFY_EMAIL);
 
-// ✅ Ép đăng nhập cho các route cần auth
 export const NEED_AUTH = [
   HOME_ROUTES.HISTORY,
   HOME_ROUTES.EDIT,
   HOME_ROUTES.PAYMENT_HISTORY,
   HOME_ROUTES.ORDER_HISTORY,
 
-  // Staff
   STAFF_ROUTES.TABLE_LAYOUT,
   STAFF_ROUTES.OVERVIEW,
   STAFF_ROUTES.SERVE_BOARD,
   STAFF_ROUTES.SERVE_HISTORY,
 
-  // Manager
   MANAGER_ROUTES.BOOKING,
   MANAGER_ROUTES.DISH,
   MANAGER_ROUTES.TOPPING,
   MANAGER_ROUTES.DAILY_PLAN,
   MANAGER_ROUTES.DAILY_MENU,
 
-  // Admin
   ADMIN_ROUTES.OVERVIEW,
   ADMIN_ROUTES.INVOICES,
   ADMIN_ROUTES.ACCOUNTS,

@@ -1,14 +1,8 @@
 import { Navigate } from "react-router-dom";
-import {
-  isAuthenticated,
-  getCurrentRole,
-  getToken,
-  parseJWT,
-} from "../../lib/auth";
+import { isAuthenticated, getCurrentRole } from "../../lib/auth";
 
 export default function ProtectedRoute({ children, allowedRoles }) {
   const authed = isAuthenticated();
-  const token = getToken();
   const role = getCurrentRole();
 
   if (!authed) return <Navigate to="/" replace />;

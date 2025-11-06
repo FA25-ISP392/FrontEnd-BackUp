@@ -4,7 +4,6 @@ export function useOrderWorkflow(initialOrders = []) {
   const [orders, setOrders] = useState(initialOrders);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  // Thuật toán cập nhật trạng thái đơn hàng
   const updateOrderStatus = (orderId, newStatus) => {
     setOrders((prevOrders) =>
       prevOrders.map((order) => {

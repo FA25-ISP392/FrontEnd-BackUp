@@ -11,14 +11,12 @@ export default function StaffRestaurantTableLayout({
 }) {
   return (
     <div className="relative w-full h-[60vh] bg-black/20 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-white/10">
-      {/* Cửa vào */}
       <div className="absolute inset-y-0 left-0 w-6 bg-green-900/50 rounded-r-md shadow-md">
         <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-90 text-white font-bold text-sm tracking-wider whitespace-nowrap">
           Cửa Vào
         </span>
       </div>
 
-      {/* Khu vực bếp */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-2/5 h-16 bg-black/30 rounded-t-xl shadow-md flex items-center justify-center border border-white/10">
         <span className="font-semibold text-neutral-300">Khu Vực Bếp</span>
       </div>
@@ -62,7 +60,6 @@ export default function StaffRestaurantTableLayout({
         );
       })}
 
-      {/* Chú thích */}
       <div className="absolute bottom-3 left-6 px-3 py-2 rounded-lg bg-black/30 backdrop-blur-sm border border-white/10 shadow-sm text-[12px] text-neutral-300">
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-1.5">

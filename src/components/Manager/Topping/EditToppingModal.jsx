@@ -18,7 +18,6 @@ export default function EditToppingModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Khi click Sửa topping → tự đổ dữ liệu vào form
   useEffect(() => {
     if (editingItem) {
       setForm({
@@ -47,7 +46,6 @@ export default function EditToppingModal({
 
     try {
       if (editingItem?.id) {
-        // Cập nhật topping
         const updated = await updateTopping(editingItem.id, {
           name: form.name,
           price: Number(form.price),
@@ -56,12 +54,11 @@ export default function EditToppingModal({
         });
         setToppings((prev) =>
           prev.map((t) =>
-            t.id === editingItem.id ? updated.result ?? updated : t,
-          ),
+            t.id === editingItem.id ? updated.result ?? updated : t
+          )
         );
         alert("Cập nhật topping thành công!");
       } else {
-        // Thêm mới topping
         const created = await createTopping({
           name: form.name,
           price: Number(form.price),
@@ -104,7 +101,6 @@ export default function EditToppingModal({
           </button>
         </div>
 
-        {/* Form */}
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">
@@ -152,7 +148,6 @@ export default function EditToppingModal({
           {error && <p className="text-red-500 text-sm">{error}</p>}
         </div>
 
-        {/* Buttons */}
         <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={() => {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { X, Trash2, Users, ChevronLeft, ChevronRight } from "lucide-react"; // 👈 ĐÃ THÊM ICON
+import { X, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { getBookingHistoryPaged, cancelBooking } from "../../lib/apiBooking";
 import ConfirmCancelModal from "./ConfirmCancelModal";
 
@@ -49,7 +49,6 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  // paging state
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(6);
   const [pageInfo, setPageInfo] = useState({
@@ -61,7 +60,6 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
     last: true,
   });
 
-  // confirm-cancel modal state
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmItem, setConfirmItem] = useState(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
@@ -131,7 +129,6 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
     }
   };
 
-  // 🔽 HÀM BUILD TRANG ĐẸP HƠN
   const { totalPages, totalElements, first, last } = pageInfo;
   const pageSize = size;
 
@@ -151,7 +148,6 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
 
   const from = totalElements === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, totalElements);
-  // 🔼 HẾT HÀM BUILD TRANG
 
   if (!isOpen) return null;
 
@@ -198,7 +194,6 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
                     <tbody className="divide-y">
                       {items.map((b, i) => {
                         const st = String(b.status || "PENDING").toUpperCase();
-                        // Cho phép hủy khi còn "Chờ duyệt" hoặc "Đã đặt" (tùy chính sách)
                         const cancellable =
                           st === "PENDING" || st === "APPROVED";
                         return (

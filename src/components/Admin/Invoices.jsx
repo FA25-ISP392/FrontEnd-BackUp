@@ -39,9 +39,7 @@ function StatusPill({ status, label }) {
       ? "bg-red-100 text-red-800"
       : "bg-amber-100 text-amber-800";
   return (
-    <span
-      className={`px-2.5 py-1 rounded-full text-xs font-bold ${styles}`} // 👈 Thêm font-bold, py-1
-    >
+    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${styles}`}>
       {vi}
     </span>
   );

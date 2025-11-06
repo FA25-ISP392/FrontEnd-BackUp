@@ -173,7 +173,6 @@ export default function BookingForm({
           guests={form.guests}
         />
 
-        {/* === THÊM noValidate VÀO FORM === */}
         <form onSubmit={submit} className="space-y-4" noValidate>
           {!isLoggedIn && (
             <div

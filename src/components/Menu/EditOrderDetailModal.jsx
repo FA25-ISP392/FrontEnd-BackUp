@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { X, Minus, Plus, Save, PackagePlus, Edit2 } from "lucide-react"; // 👈 Thêm icon
+import { X, Minus, Plus, Save, PackagePlus, Edit2 } from "lucide-react";
 import { updateOrderDetail } from "../../lib/apiOrderDetail";
 import { getDish } from "../../lib/apiDish";
 
@@ -39,7 +39,6 @@ export default function EditOrderDetailModal({
           toppingName: o.toppingName ?? o.name ?? "",
           price: Number(o.price ?? o.toppingPrice ?? 0),
           calories: Number(o.calories ?? o.calo ?? 0),
-          // Giả lập trạng thái hết hàng (nếu backend có)
           isAvailable: (o.remainingQuantity ?? 1) > 0,
         }));
 
@@ -92,11 +91,9 @@ export default function EditOrderDetailModal({
     }
   };
 
-  // === 💅 Giao diện mới 💅 ===
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
         <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-5 text-white flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
@@ -117,9 +114,7 @@ export default function EditOrderDetailModal({
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-6 space-y-5 max-h-[calc(90vh-160px)] overflow-y-auto">
-          {/* Toppings */}
           {allToppings.length > 0 && (
             <div>
               <label className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -199,7 +194,6 @@ export default function EditOrderDetailModal({
             </div>
           )}
 
-          {/* Ghi chú */}
           <div>
             <label className="block text-sm font-semibold text-gray-800 mb-2">
               Ghi chú (Tuỳ chọn)
@@ -214,7 +208,6 @@ export default function EditOrderDetailModal({
           </div>
         </div>
 
-        {/* Footer */}
         <div className="p-5 border-t border-neutral-200 flex items-center justify-end gap-3 bg-neutral-50">
           <button
             type="button"

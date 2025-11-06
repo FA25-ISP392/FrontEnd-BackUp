@@ -140,7 +140,6 @@ export default function OrdersManagement({
 
   const Column = ({ title, colorBox, emptyIcon, emptyText, children }) => (
     <div className="bg-black/20 backdrop-blur-sm rounded-2xl shadow-lg border border-white/10 flex flex-col">
-      {/* sticky header */}
       <div
         className={`p-6 border-b border-white/10 sticky top-0 bg-black/30 backdrop-blur-sm z-10 rounded-t-2xl`}
       >
@@ -154,7 +153,6 @@ export default function OrdersManagement({
         </div>
       </div>
 
-      {/* scrollable list: cao ~5 card */}
       <div
         className="
           p-6 space-y-4 overflow-y-auto

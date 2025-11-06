@@ -1,7 +1,6 @@
 import { X, CreditCard, CheckCircle, ShoppingBag } from "lucide-react";
 import { useMemo } from "react";
 
-// Helper format tiền
 const fmtVND = (n = 0) =>
   new Intl.NumberFormat("vi-VN", {
     style: "currency",
@@ -9,7 +8,6 @@ const fmtVND = (n = 0) =>
     maximumFractionDigits: 0,
   }).format(Number(n) || 0);
 
-// Helper tính tổng tiền (chỉ tính các món đã được phục vụ)
 const sumTotal = (items = []) =>
   items
     .filter((it) => String(it.status).toUpperCase() === "SERVED")
@@ -22,12 +20,11 @@ const sumTotal = (items = []) =>
 export default function PaymentSidebar({
   isOpen,
   onClose,
-  items = [], // Đây là orderDetails
+  items = [],
   onRequestPayment,
 }) {
   if (!isOpen) return null;
 
-  // Lọc ra các món đã phục vụ (SERVED) để thanh toán
   const servedItems = useMemo(
     () => items.filter((it) => String(it.status).toUpperCase() === "SERVED"),
     [items]
@@ -37,16 +34,13 @@ export default function PaymentSidebar({
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
         onClick={onClose}
       />
 
-      {/* Sidebar Content */}
       <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out">
         <div className="flex flex-col h-full">
-          {/* Header */}
           <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 text-white shadow-md">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -69,7 +63,6 @@ export default function PaymentSidebar({
             </div>
           </div>
 
-          {/* Danh sách món */}
           <div className="flex-1 overflow-y-auto p-6 bg-neutral-50">
             {servedItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-neutral-500">
@@ -106,7 +99,6 @@ export default function PaymentSidebar({
             )}
           </div>
 
-          {/* Footer (Tổng tiền và Nút) */}
           {servedItems.length > 0 && (
             <div className="border-t border-neutral-200 p-6 bg-white shadow-inner-top">
               <div className="flex items-baseline justify-between mb-4">

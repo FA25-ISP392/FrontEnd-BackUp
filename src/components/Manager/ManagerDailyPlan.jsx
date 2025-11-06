@@ -23,7 +23,6 @@ export default function ManagerDailyPlan() {
     confirmColor: "bg-red-600 hover:bg-red-700",
   });
 
-  // Tự động đóng modal thông báo
   useEffect(() => {
     if (successMessage) {
       const timer = setTimeout(() => setSuccessMessage(""), 3000);
@@ -151,7 +150,6 @@ export default function ManagerDailyPlan() {
         </div>
       )}
 
-      {/* MODAL XÁC NHẬN (CONFIRM) */}
       {confirmModal.isOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
           <div className="bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-white/20">
@@ -196,7 +194,6 @@ export default function ManagerDailyPlan() {
         </div>
       )}
 
-      {/* --- 🔽 MODAL THÔNG BÁO (ĐÃ SỬA) 🔽 --- */}
       {successMessage && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <div className="bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-green-500/50">
@@ -237,7 +234,6 @@ export default function ManagerDailyPlan() {
           </div>
         </div>
       )}
-      {/* --- 🔼 HẾT MODAL THÔNG BÁO 🔼 --- */}
     </div>
   );
 }

@@ -1,4 +1,3 @@
-// src/components/Manager/ManagerSidebar.jsx
 import { NavLink } from "react-router-dom";
 import {
   BarChart3,

@@ -120,7 +120,6 @@ export default function ResetPasswordSidebar({
                     </div>
                   </div>
 
-                  {/* giống Forgot: chỉ disable khi loading */}
                   <button
                     type="submit"
                     disabled={isLoading}

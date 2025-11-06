@@ -15,7 +15,7 @@ export default function DishRequestsManagement({
   onApproveRequest,
   onRejectRequest,
 }) {
-  const [filter, setFilter] = useState("all"); // all, pending, approved, rejected
+  const [filter, setFilter] = useState("all");
 
   const filteredRequests = requests.filter((request) => {
     if (filter === "all") return true;
@@ -77,7 +77,6 @@ export default function DishRequestsManagement({
         </div>
       </div>
 
-      {/* Filter Tabs */}
       <div className="flex gap-2 mb-6">
         {[
           { key: "all", label: "Tất cả", count: requests.length },
@@ -120,7 +119,6 @@ export default function DishRequestsManagement({
         ))}
       </div>
 
-      {/* Summary Alert */}
       {requests.filter((r) => r.status === "pending").length > 0 && (
         <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-4 mb-6 border border-orange-200">
           <div className="flex items-center gap-3 mb-2">
@@ -136,7 +134,6 @@ export default function DishRequestsManagement({
         </div>
       )}
 
-      {/* Requests List */}
       <div className="space-y-4">
         {filteredRequests.length === 0 ? (
           <div className="text-center py-12">
@@ -164,7 +161,7 @@ export default function DishRequestsManagement({
                   <div className="flex items-center gap-4">
                     <div
                       className={`w-12 h-12 bg-gradient-to-br ${getStatusColor(
-                        request.status,
+                        request.status
                       )} rounded-lg flex items-center justify-center`}
                     >
                       <StatusIcon className="h-6 w-6 text-white" />
@@ -183,7 +180,7 @@ export default function DishRequestsManagement({
                   </div>
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${getStatusColor(
-                      request.status,
+                      request.status
                     )} text-white`}
                   >
                     {getStatusText(request.status)}
@@ -222,7 +219,7 @@ export default function DishRequestsManagement({
                     </div>
                     <p className="font-semibold text-gray-900">
                       {new Date(
-                        request.createdAt || Date.now(),
+                        request.createdAt || Date.now()
                       ).toLocaleTimeString("vi-VN")}
                     </p>
                   </div>
@@ -272,7 +269,6 @@ export default function DishRequestsManagement({
         )}
       </div>
 
-      {/* Summary Stats */}
       <div className="mt-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[

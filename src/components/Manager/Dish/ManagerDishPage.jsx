@@ -28,7 +28,6 @@ import {
   deleteDishTopping,
 } from "../../../lib/apiDishTopping";
 
-/* ===================== Helpers ===================== */
 const CATEGORIES = [
   "Pizza",
   "Mì ý",
@@ -46,13 +45,11 @@ const fmtVND = (n) =>
     maximumFractionDigits: 0,
   }).format(Number(n || 0));
 
-/* ===================== Modal (Giao diện "wow") ===================== */
 function Modal({ open, title, children, onClose }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-lg flex items-center justify-center p-4">
       <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden border border-white/20">
-        {/* Header Gradient đồng bộ với Manager */}
         <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white rounded-t-2xl">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-lg">{title}</h3>
@@ -64,7 +61,6 @@ function Modal({ open, title, children, onClose }) {
             </button>
           </div>
         </div>
-        {/* Content cuộn được */}
         <div className="max-h-[calc(90vh-100px)] overflow-y-auto">
           <div className="p-6">{children}</div>
         </div>
@@ -73,7 +69,6 @@ function Modal({ open, title, children, onClose }) {
   );
 }
 
-/* ===================== Form (Giao diện "wow") ===================== */
 function DishForm({ initial, onSubmit, saving, onClose }) {
   const [form, setForm] = useState({
     dishName: initial?.name || "",
@@ -287,7 +282,6 @@ function DishForm({ initial, onSubmit, saving, onClose }) {
   );
 }
 
-// Helper mới cho Modal "Xem chi tiết"
 function DetailRow({ label, children }) {
   return (
     <div>
@@ -299,7 +293,6 @@ function DetailRow({ label, children }) {
   );
 }
 
-/* ===================== Trang chính ===================== */
 export default function ManagerDishPage() {
   const [dishes, setDishes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -319,14 +312,12 @@ export default function ManagerDishPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  // 👈 === PHẦN THÊM MỚI 1: State cho modal xác nhận ===
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     title: "",
     message: "",
     onConfirm: () => {},
   });
-  // ==========================================================
 
   useEffect(() => {
     if (successMessage) {
@@ -410,7 +401,6 @@ export default function ManagerDishPage() {
     try {
       setSaving(true);
       const updated = await updateDish(editingDish.id, form);
-      const normalized = normalizeDish(updated?.result ?? updated);
 
       const oldToppings = editingDish.optionalToppings || [];
       if (Array.isArray(oldToppings) && oldToppings.length > 0) {
@@ -451,7 +441,6 @@ export default function ManagerDishPage() {
     }
   };
 
-  // 👈 === PHẦN SỬA 2: Hàm mở modal xác nhận ===
   const handleDeleteDish = (dish) => {
     if (!dish || !dish.id) return;
     setConfirmModal({
@@ -464,7 +453,6 @@ export default function ManagerDishPage() {
     });
   };
 
-  // 👈 === PHẦN SỬA 3: Hàm thực thi việc xoá ===
   const _executeDelete = async (id) => {
     setConfirmModal({ isOpen: false });
     try {
@@ -476,7 +464,6 @@ export default function ManagerDishPage() {
       setErrorMessage("Không thể xoá món ăn!");
     }
   };
-  // ==========================================================
 
   return (
     <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
@@ -546,7 +533,6 @@ export default function ManagerDishPage() {
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
-                  {/* 👈 === PHẦN SỬA 4: Cập nhật onClick === */}
                   <button
                     onClick={() => handleDeleteDish(d)}
                     className="text-neutral-400 hover:text-red-400 p-1 rounded-lg hover:bg-red-900/50"
@@ -554,7 +540,6 @@ export default function ManagerDishPage() {
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
-                  {/* ======================================= */}
                 </div>
               </div>
               <p className="mt-2 text-neutral-300 text-sm line-clamp-2">
@@ -590,7 +575,6 @@ export default function ManagerDishPage() {
         </div>
       )}
 
-      {/* Modal tạo món */}
       <Modal
         open={openCreate}
         onClose={() => setOpenCreate(false)}
@@ -603,7 +587,6 @@ export default function ManagerDishPage() {
         />
       </Modal>
 
-      {/* Modal chỉnh sửa món */}
       <Modal
         open={openEdit}
         onClose={() => {
@@ -623,7 +606,6 @@ export default function ManagerDishPage() {
         />
       </Modal>
 
-      {/* Modal xem chi tiết (ĐÃ "WOW" HƠN) */}
       <Modal
         open={openDetail}
         onClose={() => {
@@ -699,7 +681,6 @@ export default function ManagerDishPage() {
         )}
       </Modal>
 
-      {/* 👈 === PHẦN SỬA 5: Thêm JSX của Modal Xác nhận Xoá === */}
       {confirmModal.isOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
           <div className="bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-white/20">
@@ -731,9 +712,7 @@ export default function ManagerDishPage() {
           </div>
         </div>
       )}
-      {/* ========================================================== */}
 
-      {/* Modal Thông báo (Thành công/Lỗi) */}
       {successMessage && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
           <div className="bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-green-500/50">
@@ -778,7 +757,6 @@ export default function ManagerDishPage() {
   );
 }
 
-/* ===================== Input Components (Đã "wow" hơn) ===================== */
 const inputClass =
   "form-input-enhanced !bg-white/80 !border-neutral-300 !text-neutral-900 placeholder:!text-neutral-400 focus:!ring-orange-500";
 const labelClass = "block text-sm font-medium text-neutral-700 mb-2";

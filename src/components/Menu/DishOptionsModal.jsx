@@ -39,10 +39,8 @@ export default function DishOptionsModal({
     0
   );
 
-  // === SỬA: Tính toán giá/calo cho 1 đơn vị ===
   const finalUnitPrice = basePrice + toppingsTotalPrice;
   const finalUnitCalo = baseCalo + toppingsTotalCalo;
-  // === SỬA: Tính toán tổng tiền (nhân số lượng) ===
   const totalPrice = finalUnitPrice * quantity;
   const totalCalories = finalUnitCalo * quantity;
 
@@ -52,8 +50,8 @@ export default function DishOptionsModal({
       selectedToppings,
       quantity,
       notes,
-      totalPrice: finalUnitPrice, // 👈 Gửi giá của 1 đơn vị
-      totalCalories: finalUnitCalo, // 👈 Gửi calo của 1 đơn vị
+      totalPrice: finalUnitPrice,
+      totalCalories: finalUnitCalo,
     };
     onAddToCart(dishWithOptions);
     onClose();
@@ -62,7 +60,6 @@ export default function DishOptionsModal({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        {/* === SỬA: Header === */}
         <div className="bg-gradient-to-r from-orange-500 to-red-500 p-5 text-white flex justify-between items-start">
           <div>
             <h2 className="text-2xl font-bold">{dish.dishName || dish.name}</h2>
@@ -76,10 +73,8 @@ export default function DishOptionsModal({
           </button>
         </div>
 
-        {/* === SỬA: Layout 2 cột === */}
         <div className="flex-1 overflow-y-auto">
           <div className="grid grid-cols-1 md:grid-cols-2">
-            {/* Cột trái: Hình ảnh & Mô tả */}
             <div className="p-6 border-r border-neutral-200">
               <div className="relative w-full h-64 rounded-xl overflow-hidden shadow-lg mb-4">
                 {imageUrl && !imageError ? (
@@ -110,7 +105,6 @@ export default function DishOptionsModal({
               </div>
             </div>
 
-            {/* Cột phải: Tuỳ chọn */}
             <div className="p-6 space-y-5">
               {toppings.length > 0 && (
                 <div>
@@ -220,7 +214,6 @@ export default function DishOptionsModal({
           </div>
         </div>
 
-        {/* === SỬA: Footer dính (sticky) === */}
         <div className="p-5 border-t border-neutral-200 bg-white/80 backdrop-blur-sm">
           <div className="flex justify-between items-center">
             <div className="flex flex-col">

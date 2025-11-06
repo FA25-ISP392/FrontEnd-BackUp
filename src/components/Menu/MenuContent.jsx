@@ -2,7 +2,6 @@ import { Target, Zap, Heart, ImageOff } from "lucide-react";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 
-// === Card Món Ăn (Giữ nguyên) ===
 const DishCard = ({ dish, onDishSelect }) => {
   const {
     name,
@@ -77,12 +76,11 @@ const DishCard = ({ dish, onDishSelect }) => {
     </div>
   );
 };
-// === HẾT CARD MÓN ĂN ===
 
 export default function MenuContent({
   activeMenuTab,
-  filteredDishes, // Đây là danh sách TẤT CẢ món ăn
-  dishSuggests, // Đây là danh sách các món GỢI Ý (mảng 12 món)
+  filteredDishes,
+  dishSuggests,
   onDishSelect,
   caloriesConsumed,
   estimatedCalories,
@@ -99,14 +97,12 @@ export default function MenuContent({
 
   const canShowCalorie = isPersonalized || caloriesConsumed > 0;
 
-  // dishesToShow chỉ dùng cho tab "Tất Cả"
   const dishesToShow = [...filteredDishes].sort((a, b) => {
     const remainA = a.remainingQuantity > 0 ? 1 : 0;
     const remainB = b.remainingQuantity > 0 ? 1 : 0;
     return remainB - remainA;
   });
 
-  // categoriesWithSuggest chỉ còn 2 tab
   const categoriesWithSuggest = [
     { id: "all", name: "Tất Cả" },
     ...(dishSuggests && dishSuggests.length > 0
@@ -114,8 +110,6 @@ export default function MenuContent({
       : []),
   ];
 
-  // === 💖 BẮT ĐẦU SỬA THEO YÊU CẦU 💖 ===
-  // Định nghĩa thứ tự sắp xếp mong muốn
   const CATEGORY_ORDER = [
     "Pizza",
     "Mì ý",
@@ -125,7 +119,6 @@ export default function MenuContent({
     "Tráng miệng",
   ];
 
-  // Lấy tất cả các category CÓ TRONG MÓN ĂN (dùng tên hiển thị, vd: "Pizza")
   const allCategoriesInMenu = dishesToShow.reduce((acc, dish) => {
     if (dish.category && !acc.includes(dish.category)) {
       acc.push(dish.category);
@@ -133,31 +126,23 @@ export default function MenuContent({
     return acc;
   }, []);
 
-  // Sắp xếp các category theo thứ tự mong muốn
   const sortedCategories = allCategoriesInMenu.sort((a, b) => {
     const indexA = CATEGORY_ORDER.indexOf(a);
     const indexB = CATEGORY_ORDER.indexOf(b);
-
-    // Nếu cả hai đều có trong danh sách_order -> sắp xếp theo danh sách
     if (indexA !== -1 && indexB !== -1) {
       return indexA - indexB;
     }
-    // Nếu chỉ A có trong danh sách -> A lên trước
     if (indexA !== -1) {
       return -1;
     }
-    // Nếu chỉ B có trong danh sách -> B lên trước
     if (indexB !== -1) {
       return 1;
     }
-    // Nếu cả hai đều không có -> sắp xếp theo alphabet
     return a.localeCompare(b);
   });
-  // === 💖 KẾT THÚC SỬA 💖 ===
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* ====================== THEO DÕI CALO (STICKY) ====================== */}
       {canShowCalorie && (
         <div
           className="
@@ -191,27 +176,27 @@ export default function MenuContent({
                 if (percentRaw > 115) {
                   message = "Bạn đã vượt calo cho bữa này!";
                   messageColor = "text-red-600";
-                  pathColor = "#dc2626"; // red-600
+                  pathColor = "#dc2626";
                   textColor = "#dc2626";
                 } else if (percentRaw >= 90) {
                   message = "Tuyệt vời, bạn đã gần đạt mục tiêu bữa ăn!";
                   messageColor = "text-green-600";
-                  pathColor = "#16a34a"; // green-600
+                  pathColor = "#16a34a";
                   textColor = "#16a34a";
                 } else if (percentRaw >= 60) {
                   message = "Cố lên, sắp hoàn thành mục tiêu rồi!";
                   messageColor = "text-orange-600";
-                  pathColor = "#ea580c"; // orange-600
+                  pathColor = "#ea580c";
                   textColor = "#ea580c";
                 } else if (caloriesConsumed > 0) {
                   message = "Một khởi đầu tốt, tiếp tục nào!";
                   messageColor = "text-blue-600";
-                  pathColor = "#2563eb"; // blue-600
+                  pathColor = "#2563eb";
                   textColor = "#2563eb";
                 } else {
                   message = "Hãy bắt đầu thêm món để theo dõi calo.";
                   messageColor = "text-neutral-500";
-                  pathColor = "#6b7280"; // gray-500
+                  pathColor = "#6b7280";
                   textColor = "#6b7280";
                 }
 
@@ -225,7 +210,7 @@ export default function MenuContent({
                           styles={buildStyles({
                             textColor: textColor,
                             pathColor: pathColor,
-                            trailColor: "#f3f4f6", // gray-100
+                            trailColor: "#f3f4f6",
                             textSize: "20px",
                             strokeLinecap: "round",
                           })}
@@ -269,7 +254,6 @@ export default function MenuContent({
         </div>
       )}
 
-      {/* ====================== MỤC TIÊU ====================== */}
       {isPersonalized === "all" && (
         <div className="bg-white rounded-2xl p-6 shadow-lg border border-neutral-200 mb-8">
           <h3 className="text-lg font-bold text-neutral-900 mb-4 text-center">
@@ -299,7 +283,6 @@ export default function MenuContent({
         </div>
       )}
 
-      {/* ====================== THANH TAB ====================== */}
       <div className="mb-8 overflow-x-auto pb-2">
         <div className="flex items-center gap-3 w-max">
           {categoriesWithSuggest.map((cat) => {
@@ -324,16 +307,10 @@ export default function MenuContent({
         </div>
       </div>
 
-      {/* ====================== DANH MỤC MÓN ĂN ====================== */}
       {activeMenuTab === "all" ? (
-        // === 💖 SỬA PHẦN RENDER TAB "TẤT CẢ" 💖 ===
         (() => {
-          // Sử dụng `sortedCategories` đã được sắp xếp
           return sortedCategories.map((catName) => {
-            // 👇 SỬA LỖI: Chỉ lọc theo `d.category` (tên hiển thị)
-            // vì `catName` chính là tên hiển thị (VD: "Pizza")
             const dishes = dishesToShow.filter((d) => d.category === catName);
-            // 👆 HẾT SỬA LỖI
             if (dishes.length === 0) return null;
 
             return (

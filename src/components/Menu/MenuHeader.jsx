@@ -18,7 +18,6 @@ export default function MenuHeader({
 }) {
   const activeCount = (pendingCount || 0) + (preparingCount || 0);
 
-  // === TÁI SỬ DỤNG CLASS CHO CÁC NÚT ===
   const buttonClass =
     "relative flex items-center space-x-2 px-4 py-2 rounded-full text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5";
 
@@ -41,7 +40,6 @@ export default function MenuHeader({
           </div>
 
           <div className="flex items-center space-x-3">
-            {/* === 1. NÚT MENU GỢI Ý (Giữ nguyên) === */}
             {showPersonalizeButton && (
               <button
                 onClick={onPersonalize}
@@ -52,12 +50,10 @@ export default function MenuHeader({
               </button>
             )}
 
-            {/* === 2. NÚT TRẠNG THÁI ĐƠN (Sửa màu) === */}
             <button
               onClick={onViewStatus}
               className={`${buttonClass} bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600`}
             >
-              {/* Đổi icon sang màu trắng */}
               <ListChecks className="h-5 w-5 text-white" />
               <span className="font-medium text-sm">Trạng thái đơn</span>
               {activeCount > 0 && (
@@ -67,12 +63,10 @@ export default function MenuHeader({
               )}
             </button>
 
-            {/* === 3. NÚT GIỎ HÀNG (Sửa màu) === */}
             <button
               onClick={onViewOrders}
               className={`${buttonClass} bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600`}
             >
-              {/* Đổi icon sang màu trắng */}
               <ShoppingCart className="h-5 w-5 text-white" />
               <span className="font-medium text-sm">Giỏ Hàng</span>
               {cartItemCount > 0 && (

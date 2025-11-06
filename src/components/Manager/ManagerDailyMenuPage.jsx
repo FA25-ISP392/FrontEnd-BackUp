@@ -3,7 +3,7 @@ import ManagerDailyApprovedDishes from "./ManagerDailyApprovedDishes";
 import ManagerDailyApprovedToppings from "./ManagerDailyApprovedToppings";
 
 export default function ManagerDailyMenuPage() {
-  const [activeTab, setActiveTab] = useState("dish"); // dish | topping
+  const [activeTab, setActiveTab] = useState("dish");
 
   return (
     <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
@@ -11,7 +11,6 @@ export default function ManagerDailyMenuPage() {
         Món Trong Ngày (Đã Duyệt)
       </h2>
 
-      {/* Tabs */}
       <div className="flex gap-2 mb-6">
         <button
           onClick={() => setActiveTab("dish")}
@@ -35,7 +34,6 @@ export default function ManagerDailyMenuPage() {
         </button>
       </div>
 
-      {/* Nội dung tab */}
       {activeTab === "dish" ? (
         <ManagerDailyApprovedDishes />
       ) : (

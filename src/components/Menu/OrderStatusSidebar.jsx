@@ -1,5 +1,4 @@
-import { X, Trash2, Edit, ListChecks } from "lucide-react"; // 👈 Sửa icon
-
+import { X, Trash2, Edit, ListChecks } from "lucide-react";
 const STATUS_LABEL = {
   pending: "Chờ nấu",
   preparing: "Đang nấu",
@@ -7,7 +6,7 @@ const STATUS_LABEL = {
   cancelled: "Đã hủy",
   done: "Đã nấu xong",
 };
-// === SỬA: Dùng màu viền (border) thay vì màu nền ===
+
 const STATUS_STYLE = {
   pending: "border-yellow-500 bg-yellow-50 text-yellow-700 border-l-4",
   preparing:
@@ -64,7 +63,6 @@ export default function OrderStatusSidebar({
       />
       <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-white shadow-2xl z-50">
         <div className="flex flex-col h-full">
-          {/* === SỬA: Header (Đổi sang màu Xanh Biển) === */}
           <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-6 text-white flex items-center justify-between shadow-md">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
@@ -100,7 +98,6 @@ export default function OrderStatusSidebar({
                 const canChangeQty = st === "pending";
 
                 return (
-                  // === SỬA: Card item đẹp hơn ===
                   <div
                     key={`${it.orderDetailId}-group`}
                     className={`relative bg-white rounded-xl p-4 shadow-lg ${badge}`}
@@ -142,7 +139,6 @@ export default function OrderStatusSidebar({
                     )}
 
                     <div className="mt-3 pt-3 border-t border-neutral-200 flex items-center justify-between">
-                      {/* === SỬA: Nút Sửa/Xoá === */}
                       <div className="flex items-center gap-2">
                         <button
                           disabled={!isEditable}
@@ -170,7 +166,6 @@ export default function OrderStatusSidebar({
                         </button>
                       </div>
 
-                      {/* === SỬA: Nút Tăng/Giảm === */}
                       <div className="flex items-center gap-2">
                         <button
                           disabled={!isEditable || g.count <= 1}

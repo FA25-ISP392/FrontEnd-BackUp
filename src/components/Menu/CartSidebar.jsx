@@ -4,7 +4,7 @@ export default function CartSidebar({
   isOpen,
   onClose,
   cart,
-  cartItemCount, // 👈 Prop mới để sửa lỗi
+  cartItemCount,
   onUpdateQuantity,
   onRemoveItem,
   onOrderFood,
@@ -52,7 +52,6 @@ export default function CartSidebar({
 
       <div className="fixed right-0 top-0 h-full w-full max-w-lg bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out">
         <div className="flex flex-col h-full">
-          {/* === SỬA: Header (Đổi sang màu Cam/Đỏ) === */}
           <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white shadow-md">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -61,7 +60,6 @@ export default function CartSidebar({
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold">Giỏ hàng</h2>
-                  {/* Sửa ở đây: dùng cartItemCount */}
                   <p className="text-orange-100 text-sm">{cartItemCount} món</p>
                 </div>
               </div>
@@ -172,12 +170,10 @@ export default function CartSidebar({
                 <span className="text-lg font-bold text-neutral-900">
                   Tổng cộng:
                 </span>
-                {/* === SỬA: Tổng tiền (Đổi sang màu Cam/Đỏ) === */}
                 <span className="text-3xl font-bold text-orange-600">
                   {formatVND(totalAmount)}
                 </span>
               </div>
-              {/* === SỬA: Nút (Đổi sang màu Cam/Đỏ) === */}
               <button
                 onClick={onOrderFood}
                 className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-xl font-bold text-lg hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-orange-500/30 transform hover:-translate-y-0.5"

@@ -29,7 +29,6 @@ export default function AdminCharts({
 }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-      {/* Revenue Chart */}
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -99,7 +98,6 @@ export default function AdminCharts({
         </div>
       </div>
 
-      {/* Dish Sales Chart */}
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">

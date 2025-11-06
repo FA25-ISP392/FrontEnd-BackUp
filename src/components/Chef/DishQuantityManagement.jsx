@@ -4,8 +4,6 @@ import {
   Minus,
   Send,
   Clock,
-  CheckCircle,
-  XCircle,
   UtensilsCrossed,
   Calendar,
 } from "lucide-react";
@@ -23,7 +21,6 @@ export default function DishQuantityManagement({ dishes, onSubmitRequest }) {
 
   const handleSubmitRequest = (dishId) => {
     setLoadingId(dishId);
-    // Simulate API call
     setTimeout(() => {
       const request = {
         dishId,
@@ -55,7 +52,6 @@ export default function DishQuantityManagement({ dishes, onSubmitRequest }) {
         </div>
       </div>
 
-      {/* Date Header */}
       <div className="bg-black/20 rounded-xl p-4 mb-6 border border-white/10">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
@@ -76,7 +72,6 @@ export default function DishQuantityManagement({ dishes, onSubmitRequest }) {
             key={dish.id}
             className="bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:shadow-md transition-all duration-300 group"
           >
-            {/* Dish Info */}
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-gradient-to-br from-orange-900/30 to-red-900/30 rounded-lg flex items-center justify-center">
                 <UtensilsCrossed className="h-6 w-6 text-orange-400" />
@@ -92,7 +87,6 @@ export default function DishQuantityManagement({ dishes, onSubmitRequest }) {
               </div>
             </div>
 
-            {/* Quantity Control */}
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm font-medium text-neutral-300">
                 Số lượng:
@@ -117,7 +111,6 @@ export default function DishQuantityManagement({ dishes, onSubmitRequest }) {
               </div>
             </div>
 
-            {/* Submit Request */}
             <button
               onClick={() => handleSubmitRequest(dish.id)}
               disabled={!quantities[dish.id] || loadingId === dish.id}
@@ -136,7 +129,6 @@ export default function DishQuantityManagement({ dishes, onSubmitRequest }) {
               )}
             </button>
 
-            {/* Status Indicator */}
             {quantities[dish.id] > 0 && (
               <div className="mt-3 bg-blue-900/20 border border-blue-500/30 rounded-lg p-2">
                 <div className="flex items-center gap-2 text-sm text-blue-300">
@@ -149,7 +141,6 @@ export default function DishQuantityManagement({ dishes, onSubmitRequest }) {
         ))}
       </div>
 
-      {/* Instructions */}
       <div className="mt-6 bg-black/20 rounded-xl p-4 border border-white/10">
         <div className="flex items-start gap-3">
           <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">

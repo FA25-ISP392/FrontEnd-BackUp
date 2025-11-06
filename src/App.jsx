@@ -1,4 +1,3 @@
-// src/App.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./layout/MainLayout.jsx";
 import Login from "./pages/Login.jsx";
@@ -19,7 +18,6 @@ import NotFoundPage from "./pages/NotFoundPage.jsx";
 export default function App() {
   return (
     <Routes>
-      {/* PUBLIC */}
       <Route path="/" element={<Login />} />
       <Route path="/menu" element={<Menu />} />
       <Route path="/home/*" element={<Home />} />
@@ -28,7 +26,6 @@ export default function App() {
       <Route path="/payment/cancel" element={<PaymentFail />} />
       <Route path="/auth/callback" element={<GoogleCallback />} />
 
-      {/* STAFF */}
       <Route
         path="/staff/*"
         element={
@@ -67,7 +64,6 @@ export default function App() {
         }
       />
 
-      {/* ADMIN: có /* để nhận các route con */}
       <Route
         path="/admin/*"
         element={
@@ -93,7 +89,6 @@ export default function App() {
         }
       />
 
-      {/* CHEF */}
       <Route
         path="/chef"
         element={
@@ -113,7 +108,6 @@ export default function App() {
         }
       />
 
-      {/* MANAGER */}
       <Route
         path="/manager/*"
         element={

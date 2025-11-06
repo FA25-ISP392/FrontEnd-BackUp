@@ -1,4 +1,3 @@
-// src/components/Admin/AdminSidebar.jsx
 import { NavLink } from "react-router-dom";
 import { BarChart3, Users, FileText, Shield } from "lucide-react";
 import { ADMIN_ROUTES } from "../../constant/routes";

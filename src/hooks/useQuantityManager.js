@@ -1,15 +1,10 @@
 import { useState, useMemo } from "react";
 
-/**
- * Hook quản lý số lượng món ăn và yêu cầu
- * Trích xuất từ DishQuantityManagement.jsx
- */
 export function useQuantityManager(dishes = [], onSubmitRequest) {
   const [quantities, setQuantities] = useState({});
   const [loadingId, setLoadingId] = useState(null);
   const [requestHistory, setRequestHistory] = useState([]);
 
-  // Thuật toán thay đổi số lượng
   const handleQuantityChange = (dishId, delta) => {
     setQuantities((prev) => ({
       ...prev,
@@ -17,7 +12,6 @@ export function useQuantityManager(dishes = [], onSubmitRequest) {
     }));
   };
 
-  // Thuật toán set số lượng trực tiếp
   const setQuantity = (dishId, quantity) => {
     setQuantities((prev) => ({
       ...prev,
@@ -25,7 +19,6 @@ export function useQuantityManager(dishes = [], onSubmitRequest) {
     }));
   };
 
-  // Thuật toán batch set nhiều món
   const batchSetQuantities = (quantityMap) => {
     setQuantities((prev) => {
       const next = { ...prev };
@@ -36,7 +29,6 @@ export function useQuantityManager(dishes = [], onSubmitRequest) {
     });
   };
 
-  // Thuật toán gửi yêu cầu
   const handleSubmitRequest = async (dishId) => {
     const dish = dishes.find((d) => d.id === dishId);
     const requestedQuantity = quantities[dishId] || 0;
@@ -46,7 +38,6 @@ export function useQuantityManager(dishes = [], onSubmitRequest) {
     setLoadingId(dishId);
 
     try {
-      // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const request = {
@@ -59,18 +50,15 @@ export function useQuantityManager(dishes = [], onSubmitRequest) {
         timestamp: new Date().toISOString(),
         chefName: "Chef User",
         category: dish.category,
-        estimatedCost: dish.price * requestedQuantity * 0.6, // Giả sử cost = 60% price
+        estimatedCost: dish.price * requestedQuantity * 0.6,
       };
 
-      // Thêm vào lịch sử
       setRequestHistory((prev) => [request, ...prev]);
 
-      // Callback to parent
       if (onSubmitRequest) {
         onSubmitRequest(request);
       }
 
-      // Reset quantity sau khi gửi thành công
       setQuantities((prev) => ({ ...prev, [dishId]: 0 }));
     } catch (error) {
       console.error("Error submitting request:", error);
@@ -79,7 +67,6 @@ export function useQuantityManager(dishes = [], onSubmitRequest) {
     }
   };
 
-  // Thuật toán gửi nhiều yêu cầu cùng lúc
   const batchSubmitRequests = async (dishIds) => {
     const validRequests = dishIds.filter(
       (dishId) => quantities[dishId] > 0 && dishes.find((d) => d.id === dishId)
@@ -101,7 +88,6 @@ export function useQuantityManager(dishes = [], onSubmitRequest) {
     return results;
   };
 
-  // Thuật toán phân tích yêu cầu
   const requestAnalysis = useMemo(() => {
     const totalRequests = requestHistory.length;
     const pendingRequests = requestHistory.filter(
@@ -123,7 +109,6 @@ export function useQuantityManager(dishes = [], onSubmitRequest) {
       0
     );
 
-    // Phân tích theo ngày
     const today = new Date().toISOString().split("T")[0];
     const todayRequests = requestHistory.filter((req) => req.date === today);
 
@@ -146,12 +131,10 @@ export function useQuantityManager(dishes = [], onSubmitRequest) {
     };
   }, [requestHistory]);
 
-  // Thuật toán gợi ý số lượng dựa trên lịch sử
   const getSuggestedQuantity = (dishId) => {
     const dish = dishes.find((d) => d.id === dishId);
     if (!dish) return 0;
 
-    // Lấy lịch sử yêu cầu của món này trong 30 ngày qua
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const recentRequests = requestHistory.filter(
       (req) =>
@@ -161,7 +144,6 @@ export function useQuantityManager(dishes = [], onSubmitRequest) {
     );
 
     if (recentRequests.length === 0) {
-      // Nếu không có lịch sử, gợi ý dựa trên category
       const categoryDefaults = {
         main: 20,
         appetizer: 15,
@@ -172,19 +154,16 @@ export function useQuantityManager(dishes = [], onSubmitRequest) {
       return categoryDefaults[dish.category] || 10;
     }
 
-    // Tính trung bình số lượng đã được approve
     const avgQuantity =
       recentRequests.reduce((sum, req) => sum + req.requestedQuantity, 0) /
       recentRequests.length;
     return Math.round(avgQuantity);
   };
 
-  // Thuật toán tối ưu hóa yêu cầu
   const optimizeRequests = (budget = 1000) => {
     const currentQuantities = { ...quantities };
     const suggestions = [];
 
-    // Sắp xếp món theo tỷ lệ profit/cost
     const dishProfitability = dishes
       .map((dish) => {
         const estimatedCost = dish.price * 0.6;
@@ -229,12 +208,10 @@ export function useQuantityManager(dishes = [], onSubmitRequest) {
     };
   };
 
-  // Thuật toán clear tất cả quantities
   const clearAllQuantities = () => {
     setQuantities({});
   };
 
-  // Thuật toán copy quantities từ template
   const applyTemplate = (template) => {
     setQuantities(template);
   };

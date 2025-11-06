@@ -34,7 +34,6 @@ export default function VisionSection() {
 
   return (
     <section className="py-20 bg-gradient-to-br from-neutral-50 via-blue-50 to-indigo-50 relative overflow-hidden">
-      {/* Background decorations */}
       <div className="absolute top-0 left-0 w-full h-full">
         <div className="absolute top-20 left-20 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 right-20 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl"></div>
@@ -42,7 +41,6 @@ export default function VisionSection() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Header */}
         <div className="text-center mb-16 animate-fade-in-up">
           <h2 className="text-4xl md:text-5xl font-bold text-neutral-900 mb-6">
             Tầm nhìn của chúng tôi

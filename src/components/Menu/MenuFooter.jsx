@@ -5,7 +5,6 @@ export default function MenuFooter() {
     <footer className="bg-white text-neutral-700 py-16 border-t border-neutral-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-          {/* Cột 1 - Thông tin nhà hàng */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-lg">
@@ -30,7 +29,6 @@ export default function MenuFooter() {
             </div>
           </div>
 
-          {/* Cột 2 - Thông tin liên hệ */}
           <div className="space-y-4">
             <h4 className="text-lg font-semibold text-neutral-900">
               Thông tin liên hệ
@@ -50,12 +48,11 @@ export default function MenuFooter() {
               </div>
               <div className="flex items-center space-x-3">
                 <Clock className="h-5 w-5 text-orange-500 flex-shrink-0" />
-                <span className="text-sm">10:00 - 22:00 (Hàng ngày)</span>
+                <span className="text-sm">10:00 - 23:00 (Hàng ngày)</span>
               </div>
             </div>
           </div>
 
-          {/* Cột 3 - Liên kết nhanh */}
           <div className="space-y-4">
             <h4 className="text-lg font-semibold text-neutral-900">
               Liên kết nhanh

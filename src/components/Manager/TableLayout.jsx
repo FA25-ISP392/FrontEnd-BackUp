@@ -1,4 +1,3 @@
-// components/Manager/TableLayout.jsx
 import { Table } from "lucide-react";
 
 export default function TableLayout({

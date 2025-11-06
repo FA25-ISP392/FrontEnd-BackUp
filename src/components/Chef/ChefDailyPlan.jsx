@@ -8,7 +8,6 @@ import {
 } from "../../lib/apiDailyPlan";
 import { Plus, Minus, Clock, CheckCircle, Send } from "lucide-react";
 
-// 🔽 THÊM MỚI: Nhận props
 export default function ChefDailyPlan({
   setSuccessMessage = () => {},
   setErrorMessage = () => {},
@@ -74,15 +73,12 @@ export default function ChefDailyPlan({
     setQuantities((prev) => ({ ...prev, [dishId]: parsed }));
   };
 
-  // ✅ Gửi batch POST /daily-plans/batch
   const handleSubmitAll = async () => {
     if (!staffId) {
-      // 🔽 SỬA: Dùng modal lỗi
       setErrorMessage("Không xác định được Staff ID. Vui lòng đăng nhập lại!");
       return;
     }
 
-    // 🔍 Chỉ lấy những món có thay đổi hoặc chưa có plan
     const selected = Object.entries(quantities)
       .filter(([_, qty]) => qty > 0)
       .map(([id, qty]) => {
@@ -91,7 +87,6 @@ export default function ChefDailyPlan({
         );
 
         if (!existingPlan) {
-          // ✅ Món mới
           return {
             itemId: Number(id),
             itemType: ITEM_TYPES.DISH,
@@ -102,7 +97,6 @@ export default function ChefDailyPlan({
         }
 
         if (existingPlan.plannedQuantity !== Number(qty)) {
-          // ✅ Món cũ thay đổi plannedQuantity
           return {
             itemId: Number(id),
             itemType: ITEM_TYPES.DISH,
@@ -117,7 +111,6 @@ export default function ChefDailyPlan({
       .filter(Boolean);
 
     if (selected.length === 0) {
-      // 🔽 SỬA: Dùng modal lỗi
       setErrorMessage("Không có thay đổi nào cần gửi!");
       return;
     }

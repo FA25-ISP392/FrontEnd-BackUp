@@ -1,4 +1,3 @@
-// src/pages/Admin.jsx
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import AdminSidebar from "../components/Admin/AdminSidebar";
@@ -11,24 +10,21 @@ import { updateStaff, deleteStaff, listStaffPaging } from "../lib/apiStaff";
 import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
 import { listPaymentsPaging } from "../lib/apiPayment";
 import AdminDishStatistics from "../components/Admin/AdminDishStatistics";
-// const normalizeStaff tạm
 const normalizeStaff = (raw) => raw || {};
 
 function resolveSectionFromPath(pathname = "") {
   if (pathname.includes("/admin/hoadon")) return "invoices";
   if (pathname.includes("/admin/taikhoan")) return "accounts";
-  return "overview"; // /admin/tongquan (hoặc fallback)
+  return "overview";
 }
 
 export default function Admin() {
   const location = useLocation();
 
-  // ===== STATE CHÍNH =====
   const [adminName, setAdminName] = useState("");
   const [activeSection, setActiveSection] = useState(
     resolveSectionFromPath(location.pathname)
   );
-  const [revenuePeriod, setRevenuePeriod] = useState("day");
   const [isEditingAccount, setIsEditingAccount] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [deletingIds, setDeletingIds] = useState(new Set());
@@ -42,7 +38,6 @@ export default function Admin() {
     autoSave: true,
   });
 
-  // ===== ACCOUNT =====
   const [accounts, setAccounts] = useState([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [accountsError, setAccountsError] = useState("");
@@ -55,7 +50,6 @@ export default function Admin() {
     totalElements: 0,
   });
 
-  // ===== INVOICES =====
   const [invoices, setInvoices] = useState([]);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
   const [invoiceError, setInvoiceError] = useState("");
@@ -68,18 +62,15 @@ export default function Admin() {
     totalElements: 0,
   });
 
-  // ===== STATS =====
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [statsLoading, setStatsLoading] = useState(true);
   const [cashRevenueToday, setCashRevenueToday] = useState(0);
   const [bankRevenueToday, setBankRevenueToday] = useState(0);
 
-  // ===== Cập nhật activeSection khi URL đổi =====
   useEffect(() => {
     setActiveSection(resolveSectionFromPath(location.pathname));
   }, [location.pathname]);
 
-  // ===== ADMIN NAME =====
   useEffect(() => {
     const loadName = async () => {
       try {
@@ -103,13 +94,11 @@ export default function Admin() {
     loadName();
   }, []);
 
-  // ===== RESET PAGE KHI ĐỔI TAB =====
   useEffect(() => {
     if (activeSection === "accounts") setPage(1);
     if (activeSection === "invoices") setInvPage(1);
   }, [activeSection]);
 
-  // ===== LOAD ACCOUNTS =====
   useEffect(() => {
     if (activeSection !== "accounts") return;
     let cancelled = false;
@@ -136,7 +125,6 @@ export default function Admin() {
     };
   }, [activeSection, page, size]);
 
-  // ===== LOAD INVOICES =====
   useEffect(() => {
     if (activeSection !== "invoices") return;
     let cancelled = false;
@@ -171,7 +159,6 @@ export default function Admin() {
     };
   }, [activeSection, invPage, invSize]);
 
-  // ===== ACTIONS ACCOUNT =====
   const refetchAccounts = async (toPage = page) => {
     setLoadingAccounts(true);
     try {
@@ -286,7 +273,7 @@ export default function Admin() {
           year: now.getFullYear(),
         };
         const [revenueRes, accountInfo, invoiceInfo] = await Promise.all([
-          getRevenueSummary(revenueParams), //
+          getRevenueSummary(revenueParams),
           listStaffPaging({ page: 1, size: 1 }),
           listPaymentsPaging({ page: 0, size: 1 }),
         ]);

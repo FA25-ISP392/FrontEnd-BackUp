@@ -3,7 +3,7 @@ import ManagerDailyPlan from "./ManagerDailyPlan";
 import ManagerToppingPlan from "./ManagerToppingPlan";
 
 export default function ManagerDailyPlanPage() {
-  const [activeTab, setActiveTab] = useState("dish"); // dish | topping
+  const [activeTab, setActiveTab] = useState("dish");
 
   return (
     <div className="p-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20">
@@ -11,7 +11,6 @@ export default function ManagerDailyPlanPage() {
         Kế Hoạch Trong Ngày
       </h2>
 
-      {/* Tabs */}
       <div className="flex gap-2 mb-6">
         <button
           onClick={() => setActiveTab("dish")}
@@ -35,7 +34,6 @@ export default function ManagerDailyPlanPage() {
         </button>
       </div>
 
-      {/* Nội dung tab */}
       {activeTab === "dish" ? <ManagerDailyPlan /> : <ManagerToppingPlan />}
     </div>
   );
