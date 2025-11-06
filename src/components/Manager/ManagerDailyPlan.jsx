@@ -43,7 +43,8 @@ export default function ManagerDailyPlan() {
       try {
         const allPlans = await listDailyPlans();
         const todayPlans = (allPlans || []).filter(
-          (p) => p.planDate === today && p.status === false
+          (p) =>
+            p.planDate === today && p.status === false && p.itemType === "DISH",
         );
         setPlans(todayPlans);
       } catch (err) {
