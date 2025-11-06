@@ -9,6 +9,7 @@ import PaymentSidebar from "../components/Menu/PaymentSidebar";
 import DishOptionsModal from "../components/Menu/DishOptionsModal";
 import OrderStatusSidebar from "../components/Menu/OrderStatusSidebar";
 import { getSuggestedMenu } from "../lib/apiSuggestion";
+import AIChatBubble from "../components/Menu/AIChatBubble"; // <-- Bổ sung
 import {
   createOrder,
   getOrderById,
@@ -97,6 +98,7 @@ export default function Menu() {
   const [tableId, setTableId] = useState(null);
   const [customerId, setCustomerId] = useState(null);
   const [customerName, setCustomerName] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [orderId, setOrderId] = usePersistedState("currentOrderId", null);
   const [menuDishes, setMenuDishes] = useState([]);
   const [activeMenuTab, setActiveMenuTab] = useState("all");
@@ -109,11 +111,11 @@ export default function Menu() {
   // const [estimatedCalories, setEstimatedCalories] = useState(null); // DÒNG GỐC
   const [isPersonalized, setIsPersonalized] = usePersistedState(
     "isPersonalized",
-    false
+    false,
   );
   const [estimatedCalories, setEstimatedCalories] = usePersistedState(
     "estimatedCalories",
-    null
+    null,
   );
   // 👈 === HẾT FIX ===
 
@@ -122,7 +124,7 @@ export default function Menu() {
   const [cart, setCart] = usePersistedState("shoppingCart", []);
   const [caloriesConsumed, setCaloriesConsumed] = usePersistedState(
     "caloriesConsumed",
-    0
+    0,
   );
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [orderDetails, setOrderDetails] = useState([]);
@@ -165,6 +167,7 @@ export default function Menu() {
     const storedTableId = sessionStorage.getItem("customerTableId");
     if (storedTableId) setTableId(storedTableId);
     const user = readAuthUser();
+    setIsLoggedIn(!!user);
     const cid =
       user?.customerId ?? user?.id ?? sessionStorage.getItem("customerId");
     if (cid != null) {
@@ -239,28 +242,28 @@ export default function Menu() {
     })();
   }, []);
   const filteredDishes = menuDishes.filter(
-    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name)
+    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name),
   );
   const { personalizationForm, setPersonalizationForm, personalizedDishes } =
     useMenuPersonalization(filteredDishes);
   const addToCart = (item) => {
     const noteKey = item.notes || "";
     const existingItem = cart.find(
-      (it) => it.id === item.id && (it.notes || "") === noteKey
+      (it) => it.id === item.id && (it.notes || "") === noteKey,
     );
     if (existingItem) {
       setCart((prev) =>
         prev.map((it) =>
           it.id === item.id && (it.notes || "") === noteKey
             ? { ...it, quantity: it.quantity + (item.quantity ?? 1) }
-            : it
-        )
+            : it,
+        ),
       );
     } else {
       setCart((prev) => [...prev, { ...item }]);
     }
     setCaloriesConsumed(
-      (prev) => prev + (item.totalCalories || item.calories || 0)
+      (prev) => prev + (item.totalCalories || item.calories || 0),
     );
   };
   const updateCartQuantity = (itemId, newQuantity) => {
@@ -273,11 +276,11 @@ export default function Menu() {
       const diff = newQuantity - item.quantity;
       setCart((prev) =>
         prev.map((it) =>
-          it.id === itemId ? { ...it, quantity: newQuantity } : it
-        )
+          it.id === itemId ? { ...it, quantity: newQuantity } : it,
+        ),
       );
       setCaloriesConsumed(
-        (prev) => prev + diff * (item.totalCalories || item.calories)
+        (prev) => prev + diff * (item.totalCalories || item.calories),
       );
     }
   };
@@ -286,7 +289,7 @@ export default function Menu() {
     if (item) {
       setCart((prev) => prev.filter((it) => it.id !== itemId));
       setCaloriesConsumed(
-        (prev) => prev - (item.totalCalories || item.calories) * item.quantity
+        (prev) => prev - (item.totalCalories || item.calories) * item.quantity,
       );
     }
   };
@@ -301,7 +304,7 @@ export default function Menu() {
       setIsOrderFoodOpen(true);
     } catch (err) {
       setOrderFoodErrorMessage(
-        err?.message || "Gọi món thất bại. Vui lòng thử lại."
+        err?.message || "Gọi món thất bại. Vui lòng thử lại.",
       );
       setIsOrderFoodErrorOpen(true);
     }
@@ -466,9 +469,38 @@ export default function Menu() {
       // 1. Fetch dữ liệu MỚI (nhưng chưa set state)
       const newData = await getOrderDetailsByOrderId(orderId);
 
+      useEffect(() => {
+        const updateAuthState = () => {
+          const user = readAuthUser();
+          const loggedIn = !!user;
+          setIsLoggedIn(loggedIn);
+
+          const cid = user?.customerId ?? user?.id;
+          if (cid) {
+            setCustomerId(String(cid));
+            sessionStorage.setItem("customerId", String(cid));
+          }
+
+          const name = getDisplayName(user);
+          if (name) setCustomerName(name);
+        };
+
+        updateAuthState(); // chạy ngay khi vào trang
+        const interval = setInterval(updateAuthState, 1000); // check mỗi 1s
+        window.addEventListener("auth:changed", updateAuthState);
+        window.addEventListener("storage", updateAuthState);
+
+        return () => {
+          clearInterval(interval);
+          window.removeEventListener("auth:changed", updateAuthState);
+          window.removeEventListener("storage", updateAuthState);
+        };
+      }, []);
+      console.log("💬 Props:", { isLoggedIn, customerId });
+
       // 2. Tìm món vừa được sửa trong dữ liệu mới
       const editedItem = newData.find(
-        (item) => item.orderDetailId === editingDetail.orderDetailId
+        (item) => item.orderDetailId === editingDetail.orderDetailId,
       );
 
       // 3. Tính calo MỚI
@@ -513,7 +545,7 @@ export default function Menu() {
       }
     } catch (err) {
       setErrorMessage(
-        err?.message || "Không mở được thanh toán. Vui lòng thử lại."
+        err?.message || "Không mở được thanh toán. Vui lòng thử lại.",
       );
       setIsErrorOpen(true);
     }
@@ -550,7 +582,7 @@ export default function Menu() {
       setSuggestedMenu([]);
       await updateCustomerPersonalization(customerId, customerUpdatePayload);
       const suggestionsResponse = await getSuggestedMenu(
-        suggestionCreationPayload
+        suggestionCreationPayload,
       );
 
       const flatList = Array.isArray(suggestionsResponse)
@@ -558,7 +590,7 @@ export default function Menu() {
             [r.drink, r.salad, r.mainCourse, r.dessert]
               .filter(Boolean)
               // Chuẩn hóa món ăn ngay tại đây
-              .map((dish) => normalizeDish(dish))
+              .map((dish) => normalizeDish(dish)),
           )
         : [];
 
@@ -574,14 +606,14 @@ export default function Menu() {
       // ✨===============================✨
 
       setSuccessMessage(
-        "Cá nhân hóa thành công! Thực đơn gợi ý mới đã được tạo."
+        "Cá nhân hóa thành công! Thực đơn gợi ý mới đã được tạo.",
       );
       setIsSuccessOpen(true);
     } catch (err) {
       console.error("❌ Lỗi cá nhân hóa:", err);
       setErrorMessage(
         err?.response?.data?.message ||
-          "Lỗi khi cập nhật hồ sơ hoặc lấy thực đơn gợi ý."
+          "Lỗi khi cập nhật hồ sơ hoặc lấy thực đơn gợi ý.",
       );
       setIsErrorOpen(true);
     }
@@ -605,11 +637,11 @@ export default function Menu() {
   function notifyPaymentStaff({ tableId, orderId, total, paymentId }) {
     const payload = { tableId, orderId, total, paymentId, ts: Date.now() };
     window.dispatchEvent(
-      new CustomEvent("table:callPayment", { detail: payload })
+      new CustomEvent("table:callPayment", { detail: payload }),
     );
     localStorage.setItem(
       `signal:callPayment:${payload.ts}`,
-      JSON.stringify(payload)
+      JSON.stringify(payload),
     );
   }
   function notifyCallStaff({ tableId, orderId }) {
@@ -627,7 +659,7 @@ export default function Menu() {
     } catch {}
     localStorage.setItem(
       `signal:callStaff:${payload.ts}`,
-      JSON.stringify(payload)
+      JSON.stringify(payload),
     );
   }
   function cleanupAndExit() {
@@ -745,6 +777,22 @@ export default function Menu() {
       setIsPersonalizationOpen(true);
     }
   }, [mode, customerId]);
+
+  useEffect(() => {
+    const syncAuth = () => {
+      const u = readAuthUser();
+      setIsLoggedIn(!!u);
+    };
+
+    syncAuth();
+    window.addEventListener("auth:changed", syncAuth);
+    window.addEventListener("storage", syncAuth);
+
+    return () => {
+      window.removeEventListener("auth:changed", syncAuth);
+      window.removeEventListener("storage", syncAuth);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
@@ -873,7 +921,7 @@ export default function Menu() {
               } catch (e) {
                 console.warn(
                   "⚠️ Không lấy được topping, đặt rỗng:",
-                  e?.message
+                  e?.message,
                 );
                 fullDish = { ...fullDish, optionalToppings: [] };
               }
@@ -951,6 +999,10 @@ export default function Menu() {
         onConfirm={confirmState.onYes}
         onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
       />
+
+      {/* ===== TÍCH HỢP AI CHAT BUBBLE MỚI (Luôn ở dưới cùng) ===== */}
+      <AIChatBubble customerId={customerId} isLoggedIn={isLoggedIn} />
+      {/* ===== HẾT AI CHAT BUBBLE MỚI ===== */}
 
       {/* === KHỐI MODAL ĐÃ SỬA GIAO DIỆN === */}
 
