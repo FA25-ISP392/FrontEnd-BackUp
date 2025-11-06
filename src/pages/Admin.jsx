@@ -28,16 +28,6 @@ export default function Admin() {
   const [isEditingAccount, setIsEditingAccount] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [deletingIds, setDeletingIds] = useState(new Set());
-  const [settings, setSettings] = useState({
-    theme: "light",
-    language: "vi",
-    currency: "USD",
-    emailNotif: true,
-    pushNotif: false,
-    compactSidebar: false,
-    autoSave: true,
-  });
-
   const [accounts, setAccounts] = useState([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [accountsError, setAccountsError] = useState("");
