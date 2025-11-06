@@ -740,45 +740,6 @@ export default function Menu() {
   }, [orderId]);
   // === HẾT LOGIC GỐC ===
 
-  // === PHẦN RENDER (Return) ===
-  if (showModeSelection) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-orange-50 to-red-100">
-        <div className="bg-white shadow-xl rounded-2xl p-8 text-center max-w-md w-full">
-          <h2 className="text-2xl font-bold mb-4 text-neutral-900">
-            Chào mừng bạn đến với nhà hàng!
-          </h2>
-          <p className="text-neutral-600 mb-6">
-            Vui lòng chọn cách bạn dùng bữa hôm nay:
-          </p>
-          <div className="flex flex-col space-y-4">
-            <button
-              onClick={() => {
-                sessionStorage.setItem(MODE_KEY, "group");
-                setMode("group");
-                setShowModeSelection(false);
-                window.location.reload();
-              }}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-semibold hover:from-amber-500 hover:to-orange-600 transition"
-            >
-              Tôi đi nhóm
-            </button>
-            <button
-              onClick={() => {
-                sessionStorage.setItem(MODE_KEY, "solo");
-                setMode("solo");
-                setShowModeSelection(false);
-                window.location.reload();
-              }}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-green-500 text-white font-semibold hover:from-emerald-500 hover:to-green-600 transition"
-            >
-              Tôi đi một mình
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
   useEffect(() => {
     if (mode === "solo" && customerId && !suggestedMenu) {
       setIsPersonalizationOpen(true);
@@ -787,6 +748,48 @@ export default function Menu() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
+      {/* === MODAL CHỌN CHẾ ĐỘ (ĐÃ SỬA) === */}
+      {showModeSelection && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4">
+          {/* Backdrop mờ */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+
+          {/* Box nội dung */}
+          <div className="bg-white shadow-xl rounded-2xl p-8 text-center max-w-md w-full relative z-10 animate-fade-in-up">
+            <h2 className="text-2xl font-bold mb-4 text-neutral-900">
+              Chào mừng bạn đến với nhà hàng!
+            </h2>
+            <p className="text-neutral-600 mb-6">
+              Vui lòng chọn cách bạn dùng bữa hôm nay:
+            </p>
+            <div className="flex flex-col space-y-4">
+              <button
+                onClick={() => {
+                  sessionStorage.setItem(MODE_KEY, "group");
+                  setMode("group");
+                  setShowModeSelection(false);
+                  // window.location.reload(); // Bỏ reload
+                }}
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-semibold hover:from-amber-500 hover:to-orange-600 transition transform hover:scale-105"
+              >
+                Tôi đi nhóm
+              </button>
+              <button
+                onClick={() => {
+                  sessionStorage.setItem(MODE_KEY, "solo");
+                  setMode("solo");
+                  setShowModeSelection(false);
+                  // window.location.reload(); // Bỏ reload
+                }}
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-green-500 text-white font-semibold hover:from-emerald-500 hover:to-green-600 transition transform hover:scale-105"
+              >
+                Tôi đi một mình
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <MenuHeader
         cartItemCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
         onPersonalize={() => {
