@@ -30,25 +30,35 @@ export const STAFF_ROUTES = {
   SERVE_HISTORY: "/staff/lichsuphucvu",
 };
 
-// ✅ Thêm nhóm MANAGER
+// ✅ ADMIN
+export const ADMIN_BASE = "/admin";
+export const ADMIN_ROUTES = {
+  OVERVIEW: "/admin/tongquan",
+  INVOICES: "/admin/hoadon",
+  ACCOUNTS: "/admin/taikhoan",
+};
+
+// ✅ MANAGER
 export const MANAGER_BASE = "/manager";
 export const MANAGER_ROUTES = {
-  BOOKING: "/manager/quanlydatban", // Quản Lý Đặt Bàn
-  DISH: "/manager/monan", // Món Ăn
-  TOPPING: "/manager/thanhphanmon", // Thành phần món
-  DAILY_PLAN: "/manager/kehoachtrongngay", // Kế Hoạch Trong Ngày
-  DAILY_MENU: "/manager/montrongngay", // Món Trong Ngày
+  BOOKING: "/manager/quanlydatban",
+  DISH: "/manager/monan",
+  TOPPING: "/manager/thanhphanmon",
+  DAILY_PLAN: "/manager/kehoachtrongngay",
+  DAILY_MENU: "/manager/montrongngay",
 };
 
 export const VERIFY_EMAIL = "/verify-email";
 export const VERIFY_EMAIL_URL = joinUrl(APP_ORIGIN, VERIFY_EMAIL);
 
-// ✅ Bổ sung các route Manager vào NEED_AUTH để ép đăng nhập
+// ✅ Ép đăng nhập cho các route cần auth
 export const NEED_AUTH = [
   HOME_ROUTES.HISTORY,
   HOME_ROUTES.EDIT,
   HOME_ROUTES.PAYMENT_HISTORY,
   HOME_ROUTES.ORDER_HISTORY,
+
+  // Staff
   STAFF_ROUTES.TABLE_LAYOUT,
   STAFF_ROUTES.OVERVIEW,
   STAFF_ROUTES.SERVE_BOARD,
@@ -60,6 +70,11 @@ export const NEED_AUTH = [
   MANAGER_ROUTES.TOPPING,
   MANAGER_ROUTES.DAILY_PLAN,
   MANAGER_ROUTES.DAILY_MENU,
+
+  // Admin
+  ADMIN_ROUTES.OVERVIEW,
+  ADMIN_ROUTES.INVOICES,
+  ADMIN_ROUTES.ACCOUNTS,
 ];
 
 export const TABLE_LOGIN_ROUTES = {

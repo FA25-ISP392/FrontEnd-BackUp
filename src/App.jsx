@@ -19,6 +19,7 @@ import NotFoundPage from "./pages/NotFoundPage.jsx";
 export default function App() {
   return (
     <Routes>
+      {/* PUBLIC */}
       <Route path="/" element={<Login />} />
       <Route path="/menu" element={<Menu />} />
       <Route path="/home/*" element={<Home />} />
@@ -66,9 +67,9 @@ export default function App() {
         }
       />
 
-      {/* ADMIN */}
+      {/* ADMIN: có /* để nhận các route con */}
       <Route
-        path="/admin"
+        path="/admin/*"
         element={
           <ProtectedRoute allowedRoles={["ADMIN"]}>
             <MainLayout
@@ -80,7 +81,13 @@ export default function App() {
               }}
               showFooter={false}
             >
-              <Admin />
+              <Routes>
+                <Route index element={<Navigate to="tongquan" replace />} />
+                <Route path="tongquan" element={<Admin />} />
+                <Route path="hoadon" element={<Admin />} />
+                <Route path="taikhoan" element={<Admin />} />
+                <Route path="*" element={<Navigate to="tongquan" replace />} />
+              </Routes>
             </MainLayout>
           </ProtectedRoute>
         }
@@ -106,7 +113,7 @@ export default function App() {
         }
       />
 
-      {/* MANAGER: có /* để nhận các route con */}
+      {/* MANAGER */}
       <Route
         path="/manager/*"
         element={

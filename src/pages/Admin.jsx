@@ -1,23 +1,33 @@
+// src/pages/Admin.jsx
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import AdminSidebar from "../components/Admin/AdminSidebar";
 import AdminStatsCards from "../components/Admin/AdminStatsCards";
 import AdminInvoices from "../components/Admin/Invoices";
 import AdminAccountManagement from "../components/Admin/AccountManagement";
 import AdminEditAccountModal from "../components/Admin/EditAccountModal";
 import { getRevenueSummary } from "../lib/apiStatistics";
-
 import { updateStaff, deleteStaff, listStaffPaging } from "../lib/apiStaff";
 import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
 import { listPaymentsPaging } from "../lib/apiPayment";
 import AdminDishStatistics from "../components/Admin/AdminDishStatistics";
-import { mockAdminRevenueData, mockAdminDishSalesData } from "../lib/adminData";
-
-// ✅ Tránh lỗi nếu chưa có import normalizeStaff ở nơi khác
+// const normalizeStaff tạm
 const normalizeStaff = (raw) => raw || {};
 
+function resolveSectionFromPath(pathname = "") {
+  if (pathname.includes("/admin/hoadon")) return "invoices";
+  if (pathname.includes("/admin/taikhoan")) return "accounts";
+  return "overview"; // /admin/tongquan (hoặc fallback)
+}
+
 export default function Admin() {
+  const location = useLocation();
+
+  // ===== STATE CHÍNH =====
   const [adminName, setAdminName] = useState("");
-  const [activeSection, setActiveSection] = useState("overview");
+  const [activeSection, setActiveSection] = useState(
+    resolveSectionFromPath(location.pathname)
+  );
   const [revenuePeriod, setRevenuePeriod] = useState("day");
   const [isEditingAccount, setIsEditingAccount] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -32,7 +42,7 @@ export default function Admin() {
     autoSave: true,
   });
 
-  // ==== ACCOUNT STATES ====
+  // ===== ACCOUNT =====
   const [accounts, setAccounts] = useState([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [accountsError, setAccountsError] = useState("");
@@ -45,7 +55,7 @@ export default function Admin() {
     totalElements: 0,
   });
 
-  // ==== INVOICE STATES ====
+  // ===== INVOICES =====
   const [invoices, setInvoices] = useState([]);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
   const [invoiceError, setInvoiceError] = useState("");
@@ -58,13 +68,18 @@ export default function Admin() {
     totalElements: 0,
   });
 
-  // ==== STATS STATES (CHO CARD) ====
+  // ===== STATS =====
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [statsLoading, setStatsLoading] = useState(true);
-  const [cashRevenueToday, setCashRevenueToday] = useState(0); // ✅ mới
-  const [bankRevenueToday, setBankRevenueToday] = useState(0); // ✅ mới
+  const [cashRevenueToday, setCashRevenueToday] = useState(0);
+  const [bankRevenueToday, setBankRevenueToday] = useState(0);
 
-  // ==== ADMIN NAME ====
+  // ===== Cập nhật activeSection khi URL đổi =====
+  useEffect(() => {
+    setActiveSection(resolveSectionFromPath(location.pathname));
+  }, [location.pathname]);
+
+  // ===== ADMIN NAME =====
   useEffect(() => {
     const loadName = async () => {
       try {
@@ -80,13 +95,7 @@ export default function Admin() {
           const d = token ? parseJWT(token) : null;
           username = d?.username || "";
         }
-        if (!username) {
-          setAdminName("Admin");
-          return;
-        }
-        // const profile = await findStaffByUsername(username);
-        // setAdminName(profile?.name || "Admin");
-        setAdminName(cached?.fullName || "Admin"); // Fallback
+        setAdminName(cached?.fullName || username || "Admin");
       } catch {
         setAdminName("Admin");
       }
@@ -94,17 +103,16 @@ export default function Admin() {
     loadName();
   }, []);
 
-  // ==== RESET PAGE KHI ĐỔI TAB ====
+  // ===== RESET PAGE KHI ĐỔI TAB =====
   useEffect(() => {
     if (activeSection === "accounts") setPage(1);
     if (activeSection === "invoices") setInvPage(1);
   }, [activeSection]);
 
-  // ==== LOAD ACCOUNTS ====
+  // ===== LOAD ACCOUNTS =====
   useEffect(() => {
     if (activeSection !== "accounts") return;
     let cancelled = false;
-
     (async () => {
       setLoadingAccounts(true);
       setAccountsError("");
@@ -123,23 +131,21 @@ export default function Admin() {
         if (!cancelled) setLoadingAccounts(false);
       }
     })();
-
     return () => {
       cancelled = true;
     };
   }, [activeSection, page, size]);
 
-  // ==== LOAD INVOICES (CÓ PHÂN TRANG) ====
+  // ===== LOAD INVOICES =====
   useEffect(() => {
     if (activeSection !== "invoices") return;
     let cancelled = false;
-
     (async () => {
       setLoadingInvoices(true);
       setInvoiceError("");
       try {
         const { items, pageInfo } = await listPaymentsPaging({
-          page: invPage - 1, // backend 0-based
+          page: invPage - 1,
           size: invSize,
         });
         if (!cancelled) {
@@ -160,13 +166,12 @@ export default function Admin() {
         if (!cancelled) setLoadingInvoices(false);
       }
     })();
-
     return () => {
       cancelled = true;
     };
   }, [activeSection, invPage, invSize]);
 
-  // ==== ACCOUNT ACTIONS ====
+  // ===== ACTIONS ACCOUNT =====
   const refetchAccounts = async (toPage = page) => {
     setLoadingAccounts(true);
     try {
@@ -181,7 +186,6 @@ export default function Admin() {
   const updateAccount = async (data) => {
     const staffId = data?.staffId ?? data?.id;
     if (!staffId) return;
-
     const payload = [
       "fullName",
       "email",
@@ -189,19 +193,18 @@ export default function Admin() {
       "dob",
       "role",
       "password",
-    ].reduce((object, key) => {
-      let value = data[key];
-      if (value === "" || value === undefined || value === null) return object;
-      if (key === "role") value = String(value).toUpperCase();
-      object[key] = value;
-      return object;
+    ].reduce((o, k) => {
+      let v = data[k];
+      if (v === "" || v == null) return o;
+      if (k === "role") v = String(v).toUpperCase();
+      o[k] = v;
+      return o;
     }, {});
-
     try {
       const response = await updateStaff(staffId, payload);
       const updated = normalizeStaff(response?.result ?? response);
       setAccounts((prev) =>
-        prev.map((arr) => (arr.id === staffId ? { ...arr, ...updated } : arr))
+        prev.map((a) => (a.id === staffId ? { ...a, ...updated } : a))
       );
     } catch (err) {
       const data = err?.response?.data || err?.data || {};
@@ -209,7 +212,7 @@ export default function Admin() {
       const message =
         (Array.isArray(list) &&
           list
-            .map((arrs) => arrs?.defaultMessage || arrs?.message)
+            .map((x) => x?.defaultMessage || x?.message)
             .filter(Boolean)
             .join(" | ")) ||
         data?.message ||
@@ -222,27 +225,26 @@ export default function Admin() {
 
   const deleteAccount = async (staffId) => {
     if (!staffId) return;
-    const targetDelete = accounts.find(
-      (arr) => Number(arr.staffId) === Number(staffId)
-    );
-    if (!targetDelete) return;
+    const target = accounts.find((a) => Number(a.staffId) === Number(staffId));
+    if (!target) return;
     const me = getCurrentUser() || {};
     const meUsername = String(me.username || "").toLowerCase();
     const isSelf =
-      String(targetDelete.username || "").toLowerCase() === meUsername ||
-      Number(targetDelete.accountId) === Number(me.accountId) ||
-      Number(targetDelete.staffId) === Number(me.staffId || me.id);
+      String(target.username || "").toLowerCase() === meUsername ||
+      Number(target.accountId) === Number(me.accountId) ||
+      Number(target.staffId) === Number(me.staffId || me.id);
     if (isSelf) {
       alert("Không thể xoá tài khoản đang đăng nhập.");
       return;
     }
-    const findStaffId = Number(targetDelete.staffId);
+    const findStaffId = Number(target.staffId);
     if (!findStaffId) {
       alert("Không tìm thấy StaffId để thực hiện tác vụ.");
       return;
     }
+
     const prev = accounts;
-    setDeletingIds((set) => new Set(set).add(findStaffId));
+    setDeletingIds((s) => new Set(s).add(findStaffId));
     setAccounts((cur) => cur.filter((acc) => Number(acc.id) !== findStaffId));
     try {
       await deleteStaff(findStaffId);
@@ -264,18 +266,17 @@ export default function Admin() {
         "Xoá thất bại.";
       alert(message);
     } finally {
-      setDeletingIds((set) => {
-        const next = new Set(set);
-        next.delete(findStaffId);
-        return next;
+      setDeletingIds((s) => {
+        const n = new Set(s);
+        n.delete(findStaffId);
+        return n;
       });
     }
   };
 
-  // 🧾 Lấy stats cho Card (Doanh thu, Tổng TK, Tổng HĐ)
+  // ===== OVERVIEW CARDS =====
   useEffect(() => {
     if (activeSection !== "overview") return;
-
     const fetchOverviewStats = async () => {
       setStatsLoading(true);
       try {
@@ -285,14 +286,11 @@ export default function Admin() {
           month: now.getMonth() + 1,
           year: now.getFullYear(),
         };
-
         const [revenueRes, accountInfo, invoiceInfo] = await Promise.all([
           getRevenueSummary(revenueParams),
           listStaffPaging({ page: 1, size: 1 }),
           listPaymentsPaging({ page: 0, size: 1 }),
         ]);
-
-        // ✅ Map linh hoạt theo field backend
         const cash = Number(
           revenueRes?.cashRevenueToday ??
             revenueRes?.cash ??
@@ -310,11 +308,9 @@ export default function Admin() {
             ? revenueRes.totalRevenue
             : cash + bank
         );
-
         setCashRevenueToday(cash);
         setBankRevenueToday(bank);
         setTotalRevenue(total);
-
         if (accountInfo?.pageInfo) setPageInfo(accountInfo.pageInfo);
         if (invoiceInfo?.pageInfo) setInvPageInfo(invoiceInfo.pageInfo);
       } catch (err) {
@@ -326,16 +322,11 @@ export default function Admin() {
         setStatsLoading(false);
       }
     };
-
     fetchOverviewStats();
-
     const timer = setInterval(() => {
       const now = new Date();
-      if (now.getHours() === 0 && now.getMinutes() < 5) {
-        fetchOverviewStats();
-      }
+      if (now.getHours() === 0 && now.getMinutes() < 5) fetchOverviewStats();
     }, 60000);
-
     return () => clearInterval(timer);
   }, [activeSection]);
 
@@ -348,17 +339,16 @@ export default function Admin() {
         return (
           <>
             <AdminStatsCards
-              loading={statsLoading} // ✅ dùng đúng biến
-              totalRevenue={totalRevenue} // ✅ tổng từ API/fallback
-              cashRevenueToday={cashRevenueToday} // ✅ mới
-              bankRevenueToday={bankRevenueToday} // ✅ mới
+              loading={statsLoading}
+              totalRevenue={totalRevenue}
+              cashRevenueToday={cashRevenueToday}
+              bankRevenueToday={bankRevenueToday}
               totalAccounts={totalAccounts}
               totalInvoices={totalInvoices}
             />
             <AdminDishStatistics />
           </>
         );
-
       case "accounts":
         return (
           <AdminAccountManagement
@@ -375,7 +365,6 @@ export default function Admin() {
             currentUser={getCurrentUser()}
           />
         );
-
       case "invoices":
         if (loadingInvoices)
           return <div className="p-6 text-white">Đang tải hóa đơn…</div>;
@@ -389,7 +378,6 @@ export default function Admin() {
             page={invPage}
           />
         );
-
       default:
         return null;
     }
@@ -398,12 +386,7 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-indigo-900">
       <div className="flex">
-        <AdminSidebar
-          activeSection={activeSection}
-          setActiveSection={setActiveSection}
-          compact={settings.compactSidebar}
-        />
-
+        <AdminSidebar />
         <main className="flex-1 p-8 md:p-10">
           <div className="mb-10 animate-fade-in-up">
             <h1 className="text-4xl font-extrabold text-white shadow-text-lg mb-2">
@@ -413,7 +396,6 @@ export default function Admin() {
               Quản lý hệ thống nhà hàng hiệu quả với dashboard thông minh
             </p>
           </div>
-
           <div
             className="animate-fade-in-up"
             style={{ animationDelay: "100ms" }}
