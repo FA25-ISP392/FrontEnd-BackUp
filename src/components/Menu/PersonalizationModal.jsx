@@ -1,7 +1,6 @@
-import { X, Save, User, Activity, Target } from "lucide-react"; // 👈 Thêm icon
+import { X, Save, User, Activity, Target } from "lucide-react";
 import { useMemo } from "react";
 
-// ÁNH XẠ DỮ LIỆU TỪ FE SANG BE
 const FE_TO_BE_DISH_TYPE = {
   lose: "FAT_LOSS",
   maintain: "STAY_FIT",
@@ -15,7 +14,6 @@ const FE_TO_BE_ACTIVITY_LEVEL = {
   very_active: "EXTRA_ACTIVE",
 };
 
-// === SỬA: Component Slider đẹp hơn ===
 const InfoSlider = ({ label, value, min, max, step = 1, unit, onChange }) => (
   <div>
     <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -31,13 +29,11 @@ const InfoSlider = ({ label, value, min, max, step = 1, unit, onChange }) => (
       step={step}
       value={value}
       onChange={onChange}
-      // === SỬA LỖI TẠI ĐÂY: Đổi "range-thumb" thành "slider" ===
       className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer slider"
     />
   </div>
 );
 
-// === SỬA: Component Nút Radio đẹp hơn ===
 const OptionGroup = ({ options, selected, onSelect, name }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
     {options.map((opt) => (
@@ -149,9 +145,7 @@ export default function PersonalizationModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      {/* === SỬA: Tăng max-w-3xl === */}
       <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        {/* ===== Header ===== */}
         <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -174,9 +168,7 @@ export default function PersonalizationModal({
           </div>
         </div>
 
-        {/* ===== Form ===== */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
-          {/* ===== Thông tin cơ bản ===== */}
           <div className="mb-6">
             <h3 className="text-lg font-bold mb-4 text-neutral-900 flex items-center gap-2">
               <User className="w-5 h-5 text-purple-600" />
@@ -273,7 +265,6 @@ export default function PersonalizationModal({
             </div>
           </div>
 
-          {/* ===== Mức vận động ===== */}
           <div className="mb-6">
             <h3 className="text-lg font-bold mb-4 text-neutral-900 flex items-center gap-2">
               <Activity className="w-5 h-5 text-purple-600" />
@@ -289,7 +280,6 @@ export default function PersonalizationModal({
             />
           </div>
 
-          {/* ===== Mục tiêu cá nhân ===== */}
           <div className="mb-6">
             <h3 className="text-lg font-bold mb-4 text-neutral-900 flex items-center gap-2">
               <Target className="w-5 h-5 text-purple-600" />
@@ -306,7 +296,6 @@ export default function PersonalizationModal({
           </div>
         </form>
 
-        {/* ===== Footer / Kết quả ===== */}
         <div className="p-6 border-t border-neutral-200 bg-white/80 backdrop-blur-sm">
           <div className="flex items-center justify-between">
             <div className="text-center">
@@ -337,7 +326,7 @@ export default function PersonalizationModal({
             )}
             <button
               type="submit"
-              onClick={handleSubmit} // 👈 Gắn submit vào đây
+              onClick={handleSubmit}
               className="flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-bold text-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-purple-500/30 transform hover:-translate-y-0.5"
             >
               <Save className="h-5 w-5" />

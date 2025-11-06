@@ -88,7 +88,6 @@ export function useMenuPersonalization(allDishes = []) {
       else score += 10;
     }
 
-    // Điểm theo giá trị dinh dưỡng
     if (dish.protein && dish.protein > 15) score += 10;
     if (dish.fiber && dish.fiber > 5) score += 10;
     if (dish.vitamins && dish.vitamins.length > 0) score += 5;

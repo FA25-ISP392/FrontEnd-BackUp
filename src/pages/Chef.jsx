@@ -2,15 +2,12 @@ import { useState, useEffect } from "react";
 import ChefSidebar from "../components/Chef/ChefSidebar";
 import OrdersManagement from "../components/Chef/OrdersManagement";
 import DishQuantityManagement from "../components/Chef/DishQuantityManagement";
-import { mockChefDishes } from "../lib/chefData";
 import { getCurrentUser } from "../lib/auth";
 import ChefDailyPlan from "../components/Chef/ChefDailyPlan";
 import ChefDailyDishes from "../components/Chef/ChefDailyDishes";
 import ChefDailyPlanTopping from "../components/Chef/ChefDailyPlanTopping";
 import ChefDailyToppings from "../components/Chef/ChefDailyToppings";
-// 🔽 THÊM MỚI: Import icon
 import { History, CheckCircle, AlertTriangle } from "lucide-react";
-
 import {
   getOrderDetailsByStatus,
   updateOrderDetailStatus,
@@ -19,7 +16,6 @@ import {
 export default function Chef() {
   const [chefName, setChefName] = useState("");
   const [activeSection, setActiveSection] = useState("overview");
-  const [dishes, setDishes] = useState(mockChefDishes);
   const [dishRequests, setDishRequests] = useState([]);
   const [pending, setPending] = useState([]);
   const [preparing, setPreparing] = useState([]);
@@ -33,7 +29,6 @@ export default function Chef() {
   const [isErrorOpen, setIsErrorOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // 🔽 THÊM MỚI: useEffect để tự động đóng modal
   useEffect(() => {
     let timer;
     if (isSuccessOpen) {

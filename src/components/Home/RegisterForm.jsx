@@ -41,7 +41,6 @@ export default function RegisterForm({ onSwitchToLogin }) {
     }
 
     setFormRegister((prev) => ({ ...prev, [name]: next }));
-    // Xóa lỗi khi người dùng bắt đầu nhập
     if (fieldErrs[name]) {
       setFieldErrs((prev) => ({ ...prev, [name]: "" }));
     }

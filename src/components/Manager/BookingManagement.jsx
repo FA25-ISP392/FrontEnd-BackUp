@@ -431,7 +431,6 @@ export default function BookingManagement({
                 Trước
               </button>
 
-              {/* 🔽 PHẦN ĐÃ SỬA: Tách logic class ra ngoài 🔽 */}
               <div className="flex items-center gap-1">
                 {buildPages().map((p, i) => {
                   if (p === "…") {
@@ -466,7 +465,6 @@ export default function BookingManagement({
                   );
                 })}
               </div>
-              {/* 🔼 HẾT PHẦN SỬA 🔼 */}
 
               <button
                 onClick={() =>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   listToppingPaging,
   searchToppingByName,
@@ -49,7 +49,7 @@ export default function ToppingContainer() {
         setLoading(false);
       }
     },
-    [loadToppings],
+    [loadToppings]
   );
 
   return (

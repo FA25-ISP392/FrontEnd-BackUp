@@ -8,7 +8,6 @@ import {
 } from "../../lib/apiDailyPlan";
 import { Plus, Minus, Clock, CheckCircle, Send } from "lucide-react";
 
-// 🔽 THÊM MỚI: Nhận props
 export default function ChefDailyPlan({
   setSuccessMessage = () => {},
   setErrorMessage = () => {},

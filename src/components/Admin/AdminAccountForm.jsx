@@ -444,7 +444,7 @@ export default function AdminAccountForm({
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 btn-submit-enhanced py-3" // 👈 Class mới
+              className="flex-1 btn-submit-enhanced py-3"
             >
               <Save className="h-4 w-4 inline-block mr-2" />
               {saving ? "Đang tạo..." : "Tạo nhân sự"}

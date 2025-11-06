@@ -41,21 +41,9 @@ export default function AdminDishStatistics() {
   };
 
   const COLORS = {
-    CASH: "#3B82F6", // Blue-500
-    BANK_TRANSFER: "#8B5CF6", // Purple-500
+    CASH: "#3B82F6",
+    BANK_TRANSFER: "#8B5CF6",
   };
-
-  // Màu sắc cho biểu đồ tròn món ăn
-  const PIE_COLORS = [
-    "#FF6B6B", // Red
-    "#4ECDC4", // Teal
-    "#45B7D1", // Light Blue
-    "#96CEB4", // Greenish
-    "#FFEAA7", // Light Yellow
-    "#ff9f43", // Orange
-    "#ee5253", // Dark Red
-    "#0abde3", // Cyan
-  ];
 
   const fetchData = async () => {
     if (!year) return;
@@ -99,7 +87,6 @@ export default function AdminDishStatistics() {
 
   return (
     <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20 mt-8">
-      {/* Bộ lọc ngày tháng năm */}
       <div className="flex flex-wrap items-end gap-4 mb-6">
         <div className="w-24">
           <label className="block text-sm text-indigo-200 mb-1">Ngày</label>
@@ -143,9 +130,7 @@ export default function AdminDishStatistics() {
       {loading ? (
         <p className="text-indigo-200 text-center py-4">Đang tải dữ liệu...</p>
       ) : (
-        // --- BỐ CỤC ĐÃ HOÁN ĐỔI ---
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* 🔴 Món bán chậm nhất (Bar Chart) - HÀNG 1, CỘT 1 */}
           <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/10">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-orange-500 rounded-lg flex items-center justify-center">
@@ -206,7 +191,7 @@ export default function AdminDishStatistics() {
                       dataKey="totalSold"
                       fill="url(#gradientWorstSelling)"
                       radius={[4, 4, 0, 0]}
-                      animationBegin={800} // Bắt đầu animation sau 800ms
+                      animationBegin={800}
                       animationDuration={1500}
                       animationEasing="ease-out"
                     />
@@ -236,7 +221,6 @@ export default function AdminDishStatistics() {
             )}
           </div>
 
-          {/* 🟢 Biểu đồ Doanh thu (Pie Chart) - HÀNG 1, CỘT 2 */}
           <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/10">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-cyan-500 rounded-lg flex items-center justify-center">
@@ -298,7 +282,6 @@ export default function AdminDishStatistics() {
             )}
           </div>
 
-          {/* 🟣 Món bán chạy nhất (Bar Chart) - HÀNG 2 (Full width) */}
           <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/10 lg:col-span-2">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
@@ -357,7 +340,7 @@ export default function AdminDishStatistics() {
                       dataKey="totalSold"
                       fill="url(#gradientBestSelling)"
                       radius={[4, 4, 0, 0]}
-                      animationBegin={1200} // Bắt đầu animation sau cùng
+                      animationBegin={1200}
                       animationDuration={1500}
                       animationEasing="ease-out"
                     />

@@ -2,7 +2,7 @@ import { X, AlertTriangle, CalendarClock, Users, Table } from "lucide-react";
 
 export default function ConfirmCancelModal({
   open = false,
-  booking = null, // { id, seat, bookingDate, assignedTableId }
+  booking = null,
   disabled = false,
   onClose = () => {},
   onConfirm = async () => {},

@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-import { getRevenueSummary } from "../../lib/apiStatistics";
 import { Coins, Banknote, CreditCard, Users, FileText } from "lucide-react";
 
 export default function AdminStatsCards({
@@ -10,7 +8,6 @@ export default function AdminStatsCards({
   totalAccounts,
   totalInvoices,
 }) {
-  // 👉 Hàm định dạng tiền VND
   const fmtVND = (n) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -20,7 +17,6 @@ export default function AdminStatsCards({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-      {/* 🟨 Card 1: Doanh Thu Hôm Nay */}
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20 hover:border-white/40 transition-all transform hover:scale-105">
         <div className="flex items-center justify-between mb-4">
           <p className="text-base font-medium text-blue-200">
@@ -41,7 +37,6 @@ export default function AdminStatsCards({
               {fmtVND(totalRevenue)}
             </p>
 
-            {/* 💰 Chi tiết tiền mặt & chuyển khoản */}
             <div className="flex flex-col gap-1 text-sm text-gray-200">
               <div className="flex items-center gap-2">
                 <Banknote className="h-4 w-4 text-yellow-400" />
@@ -60,7 +55,6 @@ export default function AdminStatsCards({
         )}
       </div>
 
-      {/* 🟪 Card 2: Tổng Tài Khoản */}
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20 hover:border-white/40 transition-all transform hover:scale-105">
         <div className="flex items-center justify-between mb-4">
           <p className="text-base font-medium text-purple-200">
@@ -82,7 +76,6 @@ export default function AdminStatsCards({
         )}
       </div>
 
-      {/* 🟩 Card 3: Tổng Hóa Đơn */}
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20 hover:border-white/40 transition-all transform hover:scale-105">
         <div className="flex items-center justify-between mb-4">
           <p className="text-base font-medium text-emerald-200">Tổng Hóa Đơn</p>

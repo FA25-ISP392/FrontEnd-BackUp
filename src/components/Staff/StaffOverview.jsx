@@ -1,4 +1,4 @@
-import { Table, Users, Clock } from "lucide-react"; // Bỏ DollarSign
+import { Table, Users, Clock } from "lucide-react";
 
 export default function StaffOverview({ tables = [] }) {
   const servingTables = tables.filter(
@@ -35,7 +35,7 @@ export default function StaffOverview({ tables = [] }) {
     {
       title: "Gọi Thanh Toán",
       value: callPaymentCount,
-      icon: null, // Bỏ icon ở đây
+      icon: null,
       color: "text-blue-200",
       gradient: "from-blue-500 to-cyan-500",
     },
@@ -57,14 +57,11 @@ export default function StaffOverview({ tables = [] }) {
               <div
                 className={`w-10 h-10 bg-gradient-to-br ${stat.gradient} rounded-xl flex items-center justify-center shadow-lg`}
               >
-                {/* === THAY ĐỔI Ở ĐÂY === */}
-                {/* Kiểm tra nếu là 'Gọi Thanh Toán' thì hiện text "VND", nếu không thì hiện Icon */}
                 {stat.title === "Gọi Thanh Toán" ? (
                   <span className="text-sm font-bold text-white">VND</span>
                 ) : (
                   <Icon className="h-5 w-5 text-white" />
                 )}
-                {/* === HẾT THAY ĐỔI === */}
               </div>
             </div>
             <p className="text-4xl font-extrabold text-white shadow-text">

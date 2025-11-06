@@ -1,4 +1,3 @@
-// src/App.jsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./layout/MainLayout.jsx";
 import Login from "./pages/Login.jsx";
@@ -27,7 +26,6 @@ export default function App() {
       <Route path="/payment/cancel" element={<PaymentFail />} />
       <Route path="/auth/callback" element={<GoogleCallback />} />
 
-      {/* STAFF */}
       <Route
         path="/staff/*"
         element={
@@ -66,9 +64,8 @@ export default function App() {
         }
       />
 
-      {/* ADMIN */}
       <Route
-        path="/admin"
+        path="/admin/*"
         element={
           <ProtectedRoute allowedRoles={["ADMIN"]}>
             <MainLayout
@@ -80,13 +77,18 @@ export default function App() {
               }}
               showFooter={false}
             >
-              <Admin />
+              <Routes>
+                <Route index element={<Navigate to="tongquan" replace />} />
+                <Route path="tongquan" element={<Admin />} />
+                <Route path="hoadon" element={<Admin />} />
+                <Route path="taikhoan" element={<Admin />} />
+                <Route path="*" element={<Navigate to="tongquan" replace />} />
+              </Routes>
             </MainLayout>
           </ProtectedRoute>
         }
       />
 
-      {/* CHEF */}
       <Route
         path="/chef"
         element={
@@ -106,7 +108,6 @@ export default function App() {
         }
       />
 
-      {/* MANAGER: có /* để nhận các route con */}
       <Route
         path="/manager/*"
         element={

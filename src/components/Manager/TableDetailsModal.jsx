@@ -1,4 +1,4 @@
-import { X, Clock, CheckCircle, XCircle, Save } from "lucide-react";
+import { X, Clock, CheckCircle } from "lucide-react";
 
 export default function TableDetailsModal({
   selectedTable,

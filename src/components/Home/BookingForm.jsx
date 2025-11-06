@@ -5,7 +5,7 @@ import {
   approveBookingWithTable,
   listBookingsByTableDate,
 } from "../../lib/apiBooking";
-import { LogIn } from "lucide-react";
+import { LogIn, AlertTriangle } from "lucide-react";
 
 const LEAD_MINUTES = 30;
 
@@ -71,6 +71,10 @@ export default function BookingForm({
         e.date = "Không thể đặt bàn cho ngày trong quá khứ.";
       } else if (when < lead) {
         e.time = `Giờ đặt phải cách hiện tại ít nhất ${LEAD_MINUTES} phút.`;
+      }
+
+      if (hh < 10 || hh > 23 || (hh === 23 && mm > 0)) {
+        e.time = "Giờ đặt bàn chỉ từ 10:00 đến 23:00.";
       }
     }
     const n = Number(form.guests) || 1;
@@ -169,7 +173,7 @@ export default function BookingForm({
           guests={form.guests}
         />
 
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit} className="space-y-4" noValidate>
           {!isLoggedIn && (
             <div
               className="p-4 bg-orange-50 border border-orange-200 rounded-lg flex items-center justify-between gap-4 cursor-pointer"
@@ -206,7 +210,12 @@ export default function BookingForm({
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
             {fieldErrs.date && (
-              <p className="text-xs text-red-600 mt-1">{fieldErrs.date}</p>
+              <div className="flex items-center gap-1.5 mt-1.5 p-2 rounded-md bg-red-50 border border-red-200">
+                <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                <p className="text-xs text-red-700 font-medium">
+                  {fieldErrs.date}
+                </p>
+              </div>
             )}
           </div>
 
@@ -219,10 +228,17 @@ export default function BookingForm({
               name="time"
               value={form.time}
               onChange={onChange}
+              min="10:00"
+              max="23:00"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
             {fieldErrs.time && (
-              <p className="text-xs text-red-600 mt-1">{fieldErrs.time}</p>
+              <div className="flex items-center gap-1.5 mt-1.5 p-2 rounded-md bg-red-50 border border-red-200">
+                <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                <p className="text-xs text-red-700 font-medium">
+                  {fieldErrs.time}
+                </p>
+              </div>
             )}
           </div>
 
@@ -240,7 +256,12 @@ export default function BookingForm({
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
             />
             {fieldErrs.guests && (
-              <p className="text-xs text-red-600 mt-1">{fieldErrs.guests}</p>
+              <div className="flex items-center gap-1.5 mt-1.5 p-2 rounded-md bg-red-50 border border-red-200">
+                <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                <p className="text-xs text-red-700 font-medium">
+                  {fieldErrs.guests}
+                </p>
+              </div>
             )}
           </div>
 

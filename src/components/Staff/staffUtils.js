@@ -1,13 +1,7 @@
-// =======================
-// Staff Utilities (pure)
-// =======================
-
-// --- Constants / flags ---
 export const RESERVE_WINDOW_MINUTES = 10;
 export const RESERVE_PAST_WINDOW_MINUTES = 15;
 export const DEBUG_LOG = import.meta.env.DEV;
 
-// --- Time & formatting ---
 export function isWithinWindow(
   bookingISO,
   now = new Date(),
@@ -42,7 +36,6 @@ export function parseNumber(s) {
   return Number.isFinite(num) ? num : 0;
 }
 
-// --- Table status mapping ---
 export function getTableStatusBadge(status) {
   switch (status) {
     case "serving":
@@ -82,7 +75,6 @@ export function getTableStatusClass(status) {
   }
 }
 
-// --- Capacity label theo số bàn (quy ước của bạn) ---
 export function getCapacityLabel(tableNumber) {
   const n = Number(tableNumber || 0);
   if (n >= 1 && n <= 2) return "2 khách";
@@ -92,23 +84,13 @@ export function getCapacityLabel(tableNumber) {
   return null;
 }
 
-// --- RNG & math helpers ---
 export function seedRand01(seed) {
-  // deterministic 0..1
   const x = Math.sin(Number(seed) || 0) * 10000;
   return x - Math.floor(x);
 }
 export const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 export const pctToNum = (s) => Number(String(s).replace("%", ""));
 
-// --- Bố trí bàn tự động (trả ra list style {left, top, transform}) ---
-/**
- * buildPositions(count, options?)
- * options:
- *  - margin (default 12)
- *  - bottomReserved (default 18)
- *  - jitter (default 2)  // dao động nhẹ cho tự nhiên
- */
 export function buildPositions(count, options = {}) {
   const margin = options.margin ?? 12;
   const bottomReserved = options.bottomReserved ?? 18;
@@ -180,7 +162,6 @@ export function buildPositions(count, options = {}) {
   });
 }
 
-// --- Phân loại món đã phục vụ theo "hôm nay" (hỗ trợ ServeBoard/History) ---
 export function splitServedByToday(list = [], tz = "vi-VN") {
   const today = new Date().toISOString().split("T")[0];
   const servedToday = [];

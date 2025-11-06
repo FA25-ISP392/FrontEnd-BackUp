@@ -1,6 +1,6 @@
-import { X, Calendar, Users, Phone, Mail, Clock } from "lucide-react";
+import { X } from "lucide-react";
 import { useState, useEffect } from "react";
-import { fmtVNDateTime, normalizeISOFromAPI } from "../../lib/datetimeBooking";
+import { normalizeISOFromAPI } from "../../lib/datetimeBooking";
 
 export default function TableBookingsModal({
   isOpen,
@@ -26,7 +26,6 @@ export default function TableBookingsModal({
           if (dateCompare !== 0) return dateCompare;
           return dateA.getTime() - dateB.getTime();
         } else {
-          // Sắp xếp theo thời gian
           return dateA.getTime() - dateB.getTime();
         }
       });
@@ -35,38 +34,6 @@ export default function TableBookingsModal({
   }, [table, bookings, sortBy]);
 
   if (!isOpen || !table) return null;
-
-  const getStatusColor = (status) => {
-    switch (status?.toUpperCase()) {
-      case "PENDING":
-        return "bg-yellow-100 text-yellow-800";
-      case "APPROVED":
-        return "bg-green-100 text-green-800";
-      case "REJECTED":
-      case "REJECT":
-        return "bg-red-100 text-red-800";
-      case "CANCELLED":
-        return "bg-neutral-200 text-neutral-700";
-      default:
-        return "bg-neutral-100 text-neutral-600";
-    }
-  };
-
-  const getStatusText = (status) => {
-    switch (status?.toUpperCase()) {
-      case "PENDING":
-        return "Chờ duyệt";
-      case "APPROVED":
-        return "Đã duyệt";
-      case "REJECTED":
-      case "REJECT":
-        return "Từ chối";
-      case "CANCELLED":
-        return "Đã hủy";
-      default:
-        return "Không xác định";
-    }
-  };
 
   function addHoursToDate(isoString, hours = 2) {
     if (!isoString) return "";
@@ -86,7 +53,6 @@ export default function TableBookingsModal({
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
       <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl max-w-7xl w-full max-h-[90vh] overflow-hidden border border-orange-200">
-        {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div>
@@ -108,7 +74,6 @@ export default function TableBookingsModal({
           </div>
         </div>
 
-        {/* Controls */}
         <div className="bg-gradient-to-r from-neutral-50 to-orange-50 px-6 py-4 border-b border-neutral-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -292,9 +257,8 @@ export default function TableBookingsModal({
                 </div>
               </div>
 
-              {/* Danh sách booking */}
               <div className="space-y-3">
-                {sortedBookings.map((booking, index) => {
+                {sortedBookings.map((booking) => {
                   return (
                     <div
                       key={booking.id}

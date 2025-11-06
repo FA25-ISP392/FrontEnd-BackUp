@@ -6,7 +6,7 @@ export default function ManagerDailyApprovedDishes() {
   const [approvedPlans, setApprovedPlans] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const today = new Date().toISOString().split("T")[0]; // yyyy-MM-dd
+  const today = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     const fetchApprovedDishes = async () => {
@@ -40,7 +40,6 @@ export default function ManagerDailyApprovedDishes() {
   return (
     <div className="p-0">
       {" "}
-      {/* Đã xóa p-6 và nền */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-white">
           Món Trong Ngày (Đã Duyệt)
@@ -75,10 +74,10 @@ export default function ManagerDailyApprovedDishes() {
               </p>
 
               <p className="text-xs text-neutral-400 mt-1">
-                👨‍🍳 Người lập: {p.staffName || "Không rõ"}
+                Người lập: {p.staffName || "Không rõ"}
               </p>
               <p className="text-xs text-neutral-400">
-                ✅ Người duyệt: {p.approverName || "Manager"}
+                Người duyệt: {p.approverName || "Manager"}
               </p>
             </div>
           ))}

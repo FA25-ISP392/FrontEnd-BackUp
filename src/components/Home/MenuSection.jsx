@@ -16,10 +16,8 @@ export default function MenuSection() {
         const now = new Date();
         const year = now.getFullYear();
 
-        // 🔹 Lấy món bán chạy nhất năm (bỏ month)
         const best = await getBestSellingDishes({ year, limit: 5 });
 
-        // 🔹 Lấy chi tiết từng món
         const detailed = await Promise.all(
           best.map(async (b) => {
             try {
@@ -32,7 +30,7 @@ export default function MenuSection() {
                 totalSold: b.totalSold,
               };
             }
-          }),
+          })
         );
 
         setFeatured(detailed.slice(0, 3));
@@ -47,7 +45,6 @@ export default function MenuSection() {
     fetchDishes();
   }, []);
 
-  // Tự động slide
   useEffect(() => {
     if (featured.length === 0) return;
     const timer = setInterval(() => {
@@ -72,7 +69,6 @@ export default function MenuSection() {
 
   return (
     <section className="py-20 bg-gradient-to-br from-white via-orange-50 to-red-50 relative overflow-hidden">
-      {/* Decor */}
       <div className="absolute top-0 left-0 w-full h-full">
         <div className="absolute top-20 left-20 w-64 h-64 bg-orange-500/5 rounded-full blur-3xl"></div>
         <div className="absolute bottom-20 right-20 w-80 h-80 bg-red-500/5 rounded-full blur-3xl"></div>
@@ -89,7 +85,6 @@ export default function MenuSection() {
           </p>
         </div>
 
-        {/* 🌟 Món ăn nổi bật */}
         <div className="relative mb-16 animate-fade-in-up">
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-white/20">
             <div className="flex items-center justify-between mb-6">
@@ -112,7 +107,6 @@ export default function MenuSection() {
               </div>
             </div>
 
-            {/* Slider */}
             <div className="relative overflow-hidden rounded-2xl">
               <div
                 className="flex transition-transform duration-500 ease-in-out"
@@ -151,7 +145,6 @@ export default function MenuSection() {
               </div>
             </div>
 
-            {/* Indicator */}
             <div className="flex justify-center gap-2 mt-6">
               {featured.map((_, i) => (
                 <button
@@ -168,7 +161,6 @@ export default function MenuSection() {
           </div>
         </div>
 
-        {/* 🔥 Các món phải thử */}
         <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-white/20">
           <h3 className="text-2xl font-bold text-neutral-900 mb-8 text-center">
             Các món phải thử
@@ -199,7 +191,6 @@ export default function MenuSection() {
         </div>
       </div>
 
-      {/* ✅ Modal xem chi tiết (đặt bên trong section để render cùng) */}
       {selectedDish && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
           <div className="bg-white rounded-2xl max-w-3xl w-full p-8 relative shadow-2xl">

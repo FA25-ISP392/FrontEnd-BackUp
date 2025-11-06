@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Plus,
   Edit,
@@ -61,7 +61,6 @@ export default function ToppingManagement({
 
   return (
     <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
@@ -77,7 +76,6 @@ export default function ToppingManagement({
           </div>
         </div>
 
-        {/* Search Box + Add Button */}
         <div className="flex items-center gap-3">
           <div className="relative">
             <input
@@ -113,7 +111,6 @@ export default function ToppingManagement({
         </div>
       </div>
 
-      {/* Topping List Table */}
       <div className="bg-black/20 backdrop-blur-sm rounded-2xl shadow-lg border border-white/10 overflow-hidden">
         {/* Header */}
         <div className="bg-black/30 px-6 py-4 border-b border-white/10">
@@ -126,7 +123,6 @@ export default function ToppingManagement({
           </div>
         </div>
 
-        {/* Body */}
         <div className="divide-y divide-white/10">
           {loading ? (
             <div className="p-6 text-indigo-200">
@@ -178,7 +174,6 @@ export default function ToppingManagement({
         </div>
       </div>
 
-      {/* Pagination */}
       {!loading && !isSearching && pageInfo?.totalPages > 1 && (
         <div className="flex justify-center items-center gap-4 mt-6">
           <button

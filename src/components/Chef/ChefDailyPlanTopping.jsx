@@ -8,7 +8,6 @@ import {
 } from "../../lib/apiDailyPlan";
 import { Plus, Minus, Clock, CheckCircle, Send } from "lucide-react";
 
-// 🔽 THÊM MỚI: Nhận props
 export default function ChefDailyPlanTopping({
   setSuccessMessage = () => {},
   setErrorMessage = () => {},
@@ -41,13 +40,12 @@ export default function ChefDailyPlanTopping({
           listTopping(),
           listDailyPlans(),
         ]);
-        console.log("✅ Topping List:", toppingList);
 
         const todayPlans = (planList || []).filter(
           (p) =>
             p.planDate === today &&
             p.staffId === staffId &&
-            p.itemType === ITEM_TYPES.TOPPING,
+            p.itemType === ITEM_TYPES.TOPPING
         );
 
         const mapped = {};
@@ -81,7 +79,8 @@ export default function ChefDailyPlanTopping({
 
   const isApprovedStatus = (s) => s === true || s === 1;
 
-  // ✅ PHIÊN BẢN CHỈ DÙNG POST /daily-plans/batch
+
+
   const handleSubmitAll = async () => {
     if (!staffId) {
       setErrorMessage("Không xác định được Staff ID. Vui lòng đăng nhập lại!");
@@ -174,6 +173,7 @@ export default function ChefDailyPlanTopping({
         }
       })
       .filter(Boolean);
+      .filter(Boolean);
 
     if (payload.length === 0) {
       setErrorMessage("Không có thay đổi nào cần gửi!");
@@ -186,17 +186,16 @@ export default function ChefDailyPlanTopping({
       await createDailyPlansBatch(payload);
 
       setSuccessMessage("Gửi kế hoạch topping thành công!");
-
       const refreshed = await listDailyPlans();
       const todayPlans = (refreshed || []).filter(
-        (p) => p.planDate === today && p.staffId === staffId,
+        (p) => p.planDate === today && p.staffId === staffId
       );
       setPlans(todayPlans);
     } catch (err) {
       console.error("❌ Lỗi gửi kế hoạch topping:", err);
       if (err?.response?.data?.code === 4005) {
         setErrorMessage(
-          "Một số topping đã được duyệt, không thể cập nhật lại.",
+          "Một số topping đã được duyệt, không thể cập nhật lại."
         );
       } else {
         setErrorMessage("Gửi kế hoạch topping thất bại!");
@@ -226,7 +225,7 @@ export default function ChefDailyPlanTopping({
           const qty = quantities[key] || 0;
           const status = getPlanStatus(t.id, ITEM_TYPES.TOPPING);
           const plan = plans.find(
-            (p) => p.itemId === t.id && p.itemType === ITEM_TYPES.TOPPING,
+            (p) => p.itemId === t.id && p.itemType === ITEM_TYPES.TOPPING
           );
 
           return (
