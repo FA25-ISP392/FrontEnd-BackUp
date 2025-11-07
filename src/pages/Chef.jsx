@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom"; // ✅ đồng bộ section theo URL
 import ChefSidebar from "../components/Chef/ChefSidebar";
 import OrdersManagement from "../components/Chef/OrdersManagement";
 import DishQuantityManagement from "../components/Chef/DishQuantityManagement";
@@ -13,9 +14,26 @@ import {
   updateOrderDetailStatus,
 } from "../lib/apiOrderDetail";
 
+// Map URL -> section
+function resolveSectionFromPath(pathname = "") {
+  if (pathname.includes("/chef/lichsudonmon")) return "orderHistory";
+  if (pathname.includes("/chef/kehoachtrongngay")) return "dailyPlan";
+  if (pathname.includes("/chef/montrongngay")) return "dailyDishes";
+  // /chef/quanlydonmon và còn lại
+  return "overview";
+}
+
 export default function Chef() {
+  const location = useLocation();
+
   const [chefName, setChefName] = useState("");
-  const [activeSection, setActiveSection] = useState("overview");
+  const [activeSection, setActiveSection] = useState(
+    resolveSectionFromPath(location.pathname)
+  );
+
+  // tránh ReferenceError cho phần DishQuantityManagement
+  const [dishes, setDishes] = useState([]);
+
   const [dishRequests, setDishRequests] = useState([]);
   const [pending, setPending] = useState([]);
   const [preparing, setPreparing] = useState([]);
@@ -29,6 +47,12 @@ export default function Chef() {
   const [isErrorOpen, setIsErrorOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Đồng bộ section khi URL thay đổi
+  useEffect(() => {
+    setActiveSection(resolveSectionFromPath(location.pathname));
+  }, [location.pathname]);
+
+  // Auto-hide success modal
   useEffect(() => {
     let timer;
     if (isSuccessOpen) {
@@ -40,6 +64,7 @@ export default function Chef() {
     return () => clearTimeout(timer);
   }, [isSuccessOpen]);
 
+  // Auto-hide error modal
   useEffect(() => {
     let timer;
     if (isErrorOpen) {
@@ -51,17 +76,17 @@ export default function Chef() {
     return () => clearTimeout(timer);
   }, [isErrorOpen]);
 
-  // 🔽 THÊM MỚI: Wrapper functions để set state
+  // Helpers hiển thị modal
   const showSuccess = (message) => {
     setSuccessMessage(message);
     setIsSuccessOpen(true);
   };
-
   const showError = (message) => {
     setErrorMessage(message);
     setIsErrorOpen(true);
   };
-  // (Các useEffect và hàm fetchAllOrders giữ nguyên)
+
+  // Lấy tên người dùng
   useEffect(() => {
     const u = getCurrentUser();
     const name =
@@ -74,6 +99,7 @@ export default function Chef() {
     setChefName(name || "Chef");
   }, []);
 
+  // Tải dữ liệu đơn món
   const fetchAllOrders = async () => {
     setError(null);
     try {
@@ -103,8 +129,8 @@ export default function Chef() {
         }
       }
 
-      setPending(pendingData);
-      setPreparing(preparingData);
+      setPending(pendingData || []);
+      setPreparing(preparingData || []);
       setReadyToday(readyForToday);
       setHistoricalReady(readyForPast);
     } catch (err) {
@@ -121,34 +147,38 @@ export default function Chef() {
     return () => clearInterval(intervalId);
   }, []);
 
+  // Cập nhật trạng thái món
   const handleUpdateStatus = async (orderDetailId, newStatus) => {
     try {
       const itemToMove =
         pending.find((o) => o.orderDetailId === orderDetailId) ||
         preparing.find((o) => o.orderDetailId === orderDetailId);
       if (!itemToMove) return;
+
       setPending((prev) =>
         prev.filter((o) => o.orderDetailId !== orderDetailId)
       );
       setPreparing((prev) =>
         prev.filter((o) => o.orderDetailId !== orderDetailId)
       );
+
       const updatedItem = { ...itemToMove, status: newStatus };
       if (newStatus === "PREPARING") {
         setPreparing((prev) => [updatedItem, ...prev]);
       } else if (newStatus === "DONE" || newStatus === "SERVED") {
         setReadyToday((prev) => [updatedItem, ...prev]);
       }
+
       await updateOrderDetailStatus(orderDetailId, itemToMove, newStatus);
     } catch (err) {
       console.error(`Lỗi cập nhật món ${orderDetailId}:`, err);
-      // 🔽 SỬA: Dùng modal lỗi
       showError(`Cập nhật thất bại: ${err.message}. Đang tải lại...`);
       setIsLoading(true);
       fetchAllOrders();
     }
   };
 
+  // Demo gửi yêu cầu số lượng món (giữ nguyên cách bạn đang dùng)
   const submitDishRequest = (request) => {
     const newRequest = {
       ...request,
@@ -157,9 +187,9 @@ export default function Chef() {
       status: "pending",
     };
     setDishRequests((prev) => [...prev, newRequest]);
-    console.log("Dish request submitted:", newRequest);
   };
 
+  // Render theo section
   const renderContent = () => {
     switch (activeSection) {
       case "overview":
@@ -223,7 +253,6 @@ export default function Chef() {
                       </span>
                     </div>
 
-                    {/* === KHỐI ĐÃ SỬA === */}
                     {Array.isArray(od.toppings) && od.toppings.length > 0 && (
                       <div className="text-xs text-neutral-400 mt-1 pt-1 border-t border-white/10">
                         <span className="font-medium text-neutral-200">
@@ -283,7 +312,6 @@ export default function Chef() {
                 Topping
               </button>
             </div>
-            {/* 🔽 SỬA: Truyền props thông báo xuống */}
             {subTab === "dish" ? (
               <ChefDailyPlan
                 setSuccessMessage={showSuccess}
@@ -323,30 +351,7 @@ export default function Chef() {
                 Topping
               </button>
             </div>
-
             {subTab === "dish" ? <ChefDailyDishes /> : <ChefDailyToppings />}
-          </div>
-        );
-
-      case "invoices":
-        return (
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
-            <h3 className="text-xl font-bold text-white mb-4">
-              Quản Lý Hóa Đơn
-            </h3>
-            <p className="text-indigo-200">
-              Chức năng quản lý hóa đơn sẽ được phát triển...
-            </p>
-          </div>
-        );
-
-      case "settings":
-        return (
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
-            <h3 className="text-xl font-bold text-white mb-4">Cài Đặt</h3>
-            <p className="text-indigo-200">
-              Chức năng cài đặt sẽ được phát triển...
-            </p>
           </div>
         );
 
@@ -362,7 +367,6 @@ export default function Chef() {
           activeSection={activeSection}
           setActiveSection={setActiveSection}
         />
-
         <main className="flex-1 p-6">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-white shadow-text-lg mb-2">
@@ -372,7 +376,6 @@ export default function Chef() {
               Quản lý bếp hiệu quả với dashboard thông minh
             </p>
           </div>
-
           {renderContent()}
         </main>
       </div>

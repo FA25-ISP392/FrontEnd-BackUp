@@ -90,7 +90,7 @@ export default function App() {
       />
 
       <Route
-        path="/chef"
+        path="/chef/*"
         element={
           <ProtectedRoute allowedRoles={["CHEF"]}>
             <MainLayout
@@ -102,7 +102,17 @@ export default function App() {
               }}
               showFooter={false}
             >
-              <Chef />
+              <Routes>
+                <Route index element={<Navigate to="quanlydonmon" replace />} />
+                <Route path="quanlydonmon" element={<Chef />} />
+                <Route path="lichsudonmon" element={<Chef />} />
+                <Route path="kehoachtrongngay" element={<Chef />} />
+                <Route path="montrongngay" element={<Chef />} />
+                <Route
+                  path="*"
+                  element={<Navigate to="quanlydonmon" replace />}
+                />
+              </Routes>
             </MainLayout>
           </ProtectedRoute>
         }

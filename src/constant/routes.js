@@ -45,6 +45,14 @@ export const MANAGER_ROUTES = {
   DAILY_MENU: "/manager/montrongngay",
 };
 
+export const CHEF_BASE = "/chef";
+export const CHEF_ROUTES = {
+  ORDER_MANAGEMENT: "/chef/quanlydonmon",
+  ORDER_HISTORY: "/chef/lichsudonmon",
+  DAILY_PLAN: "/chef/kehoachtrongngay",
+  DAILY_MENU: "/chef/montrongngay",
+};
+
 export const VERIFY_EMAIL = "/verify-email";
 export const VERIFY_EMAIL_URL = joinUrl(APP_ORIGIN, VERIFY_EMAIL);
 
@@ -68,6 +76,11 @@ export const NEED_AUTH = [
   ADMIN_ROUTES.OVERVIEW,
   ADMIN_ROUTES.INVOICES,
   ADMIN_ROUTES.ACCOUNTS,
+
+  CHEF_ROUTES.ORDER_MANAGEMENT,
+  CHEF_ROUTES.ORDER_HISTORY,
+  CHEF_ROUTES.DAILY_PLAN,
+  CHEF_ROUTES.DAILY_MENU,
 ];
 
 export const TABLE_LOGIN_ROUTES = {
