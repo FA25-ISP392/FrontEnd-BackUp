@@ -28,8 +28,9 @@ export default function StaffRestaurantTableLayout({
           <button
             key={table.id}
             onClick={() => onTableClick(table)}
+            //===== Gọi ra hàm getTableStatusClass để hiển thị màu sắc =====
             className={`absolute w-24 h-24 rounded-xl transform transition-all duration-300 shadow-lg flex flex-col items-center justify-center cursor-pointer hover:scale-105 hover:shadow-2xl
-            ${getTableStatusClass(table.status)}
+            ${getTableStatusClass(table.status)} 
             ${
               selectedTable?.id === table.id
                 ? "ring-4 ring-blue-400 shadow-blue-500/30 ring-offset-2 ring-offset-gray-900 scale-105"

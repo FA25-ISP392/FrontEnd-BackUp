@@ -2,6 +2,7 @@ export const RESERVE_WINDOW_MINUTES = 10;
 export const RESERVE_PAST_WINDOW_MINUTES = 15;
 export const DEBUG_LOG = import.meta.env.DEV;
 
+//===== Kiểm tra xem với đơn Đặt Bàn được duyệt để thể hiện ra =====
 export function isWithinWindow(
   bookingISO,
   now = new Date(),
@@ -62,6 +63,7 @@ export function getTableStatusText(status) {
   }
 }
 
+//===== Nếu tìm thấy đúng đơn Đặt Bàn trong khung giờ trc và sau sẽ render màu sắc =====
 export function getTableStatusClass(status) {
   switch (status) {
     case "serving":

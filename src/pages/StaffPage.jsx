@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, AlertTriangle, History, Users } from "lucide-react"; // Đã thêm Users
+import { CheckCircle, AlertTriangle, History } from "lucide-react";
 import StaffSidebar from "../components/Staff/StaffSidebar";
 import StaffRestaurantTableLayout from "../components/Staff/StaffRestaurantTableLayout";
 import StaffTableInfoLayout from "../components/Staff/StaffTableInfoLayout";
@@ -56,19 +56,25 @@ export default function StaffPage({ section = "tableLayout" }) {
 
   useEffect(() => {
     let timer;
+    //===== Hàm gọi ra lấy số bàn =====
     async function hydrate() {
+      //===== Gọi đến hàm lấy ra danh sách 8 Bàn =====
       const rawTables = await listTables();
       const sorted = [...rawTables].sort(
         (a, b) => (a.number || a.id) - (b.number || b.id)
       );
       const now = new Date();
+      //===== Gọi hàm để đi qua mỗi bàn với biến t =====
       const hydrated = await Promise.all(
         sorted.slice(0, 8).map(async (t) => {
           const tableId = t.id;
           try {
+            //===== Từ mỗi bàn đó lấy ra danh sách Đặt Bàn ứng với mỗi bàn =====
             const bookings = await listBookingsByTableDate(tableId, now);
             const active = bookings.find(
               (b) =>
+                //===== Chỉ lấy ra các đơn Đặt Bàn nào Đã Duyệt để tiếp nhận =====
+                //===== Gọi hàm isWithinWindow để xử lý =====
                 b.status === "APPROVED" && isWithinWindow(b.bookingDate, now)
             );
             let nextStatus = t.status ?? "empty";
@@ -90,7 +96,6 @@ export default function StaffPage({ section = "tableLayout" }) {
         })
       );
 
-      if (DEBUG_LOG) console.log("[STAFF] tables hydrated for UI:", hydrated);
       setTables((prev) => {
         const mapPrev = new Map(prev.map((t) => [String(t.id), t]));
         return hydrated.map((t) => {

@@ -22,7 +22,9 @@ export const normalizeTable = (t = {}) => {
   return { id, tableId: id, name, number, capacity, status, isAvailable };
 };
 
+//===== Hàm lấy ra danh sách Bàn =====
 export async function listTables() {
+  //===== Lấy endpoint GET để lấy hết bàn ra =====
   const res = await apiConfig.get("/tables", {
     params: { page: 0, size: 1000 },
   });

@@ -78,11 +78,13 @@ export default function StaffTableDetailModal({
                     <p className="text-sm text-orange-300 font-medium">
                       Số khách
                     </p>
+                    //===== Lấy ra thông tin về số người mà bàn đã Đặt =====
                     <p className="font-bold text-orange-200 text-lg">
                       {table.guests} người
                     </p>
                   </div>
                   <div className="bg-black/20 p-3 rounded-lg border border-orange-500/20">
+                    //==== Lấy ra thời gian ứng với đơn Đặt =====
                     <p className="text-sm text-orange-300 font-medium">
                       Thời gian đặt
                     </p>
