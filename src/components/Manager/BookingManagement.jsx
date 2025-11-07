@@ -1,8 +1,7 @@
-import { Check, X, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { fmtVNDateTime } from "../../lib/datetimeBooking";
 import TableLayout from "./TableLayout";
-import TableAssignmentModal from "./TableAssignmentModal";
 import TableBookingsModal from "./TableBookingsModal";
 import ConfirmCancelModal from "../Home/ConfirmCancelModal";
 import { listBookingsByTableDate, cancelBooking } from "../../lib/apiBooking";
@@ -11,20 +10,13 @@ export default function BookingManagement({
   bookings = [],
   setBookings,
   loading = false,
-  deletingIds = new Set(),
   page = 1,
   pageInfo = { page: 1, size: 6, totalPages: 1, totalElements: 0 },
   onPageChange = () => {},
-  onApprove,
-  onReject,
   tables = [],
-  onAssignTable,
   statusFilter = "ALL",
   onStatusChange = () => {},
 }) {
-  const [confirmingId, setConfirmingId] = useState(null);
-  const [showTableAssignment, setShowTableAssignment] = useState(false);
-  const [selectedBooking, setSelectedBooking] = useState(null);
   const [selectedTableId, setSelectedTableId] = useState(null);
   const [showTableBookings, setShowTableBookings] = useState(false);
   const [selectedTable, setSelectedTable] = useState(null);
@@ -70,33 +62,7 @@ export default function BookingManagement({
   const from = totalElements === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, totalElements);
 
-  const handleApprove = (booking) => {
-    setSelectedBooking(booking);
-    setShowTableAssignment(true);
-  };
-
-  const handleAssignTable = async (bookingId, tableId) => {
-    try {
-      await onAssignTable?.(bookingId, tableId);
-      setBookings((prev) =>
-        prev.map((b) =>
-          b.id === bookingId
-            ? { ...b, status: "APPROVED", assignedTableId: tableId }
-            : b
-        )
-      );
-      setShowTableAssignment(false);
-      setSelectedBooking(null);
-    } catch (error) {
-      console.error("Lỗi khi gán bàn:", error);
-      alert(
-        error.response?.data?.message ||
-          error.message ||
-          "Không thể gán bàn cho đơn đặt."
-      );
-    }
-  };
-
+  //===== Ấn Vào từng Bàn để xem đơn Đặt Bàn =====
   const handleTableClick = (tableId) => {
     setSelectedTableId(tableId);
     const table = tables.find((t) => t.id === tableId);
@@ -104,20 +70,6 @@ export default function BookingManagement({
       setSelectedTable(table);
       setShowTableBookings(true);
       fetchTableBookings(table.id, tableBookingsDate);
-    }
-  };
-
-  const handleReject = async (bookingId) => {
-    try {
-      setBookings((prev) =>
-        prev.map((b) => (b.id === bookingId ? { ...b, status: "REJECT" } : b))
-      );
-      await onReject?.(bookingId);
-    } catch (error) {
-      console.error("Lỗi khi từ chối đặt bàn:", error);
-      setBookings((prev) =>
-        prev.map((b) => (b.id === bookingId ? { ...b, status: "PENDING" } : b))
-      );
     }
   };
 
@@ -130,10 +82,12 @@ export default function BookingManagement({
     setBookingToCancel(null);
   };
 
+  //===== Xử lý việc Hủy Đơn =====
   const handleConfirmCancel = async () => {
     if (!bookingToCancel) return;
     setIsCancelling(true);
     try {
+      //===== Gọi hàm hủy đơn Đặt Bàn =====
       await cancelBooking(bookingToCancel.id);
       setBookings((prev) =>
         prev.map((b) =>
@@ -330,30 +284,12 @@ export default function BookingManagement({
                     </div>
 
                     <div className="col-span-1 flex gap-1 items-center justify-center">
-                      {status === "PENDING" && (
-                        <>
-                          <button
-                            onClick={() => handleApprove(b)}
-                            className="p-1.5 text-green-400 hover:bg-green-900/50 rounded-lg transition"
-                            title="Duyệt"
-                          >
-                            <Check className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleReject(b.id)}
-                            className="p-1.5 text-red-400 hover:bg-red-900/50 rounded-lg transition"
-                            title="Từ chối"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </>
-                      )}
-
-                      {status === "APPROVED" && (
+                      {(status === "PENDING" || status === "APPROVED") && (
                         <button
+                          //===== Gọi hàm để Hủy Đơn =====
                           onClick={() => handleOpenCancelModal(b)}
                           className="p-1.5 text-red-400 hover:bg-red-900/50 rounded-lg transition"
-                          title="Hủy đơn (Khách không đến)"
+                          title="Hủy đơn"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -496,17 +432,6 @@ export default function BookingManagement({
           </div>
         </div>
       </div>
-
-      <TableAssignmentModal
-        isOpen={showTableAssignment}
-        onClose={() => {
-          setShowTableAssignment(false);
-          setSelectedBooking(null);
-        }}
-        booking={selectedBooking}
-        tables={tables}
-        onAssignTable={handleAssignTable}
-      />
 
       <TableBookingsModal
         isOpen={showTableBookings}

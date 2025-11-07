@@ -49,6 +49,7 @@ function normalizeStatusFilter(status) {
   return set;
 }
 
+//===== Lấy danh sách Đặt Bàn (có phân trang từ BE) =====
 export async function listBookingsPaging({
   page = 1,
   size = 6,
@@ -59,6 +60,7 @@ export async function listBookingsPaging({
     setStatusPage !== "ALL"
       ? `/booking/status/${encodeURIComponent(setStatusPage)}`
       : "/booking";
+  //===== Lấy endpoint GET để lấy được danh sách Đặt Bàn =====
   const res = await apiConfig.get(endpoint, {
     params: { page: page - 1, size },
   });

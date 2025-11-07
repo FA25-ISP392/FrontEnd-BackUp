@@ -1,8 +1,6 @@
-// pages/Manager.jsx
 import { useState, useEffect, useCallback } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import ManagerSidebar from "../components/Manager/ManagerSidebar";
-import TablesManagement from "../components/Manager/TablesManagement";
 import TableDetailsModal from "../components/Manager/TableDetailsModal";
 import EditToppingModal from "../components/Manager/Topping/EditToppingModal";
 import ToppingManagement from "../components/Manager/Topping/ToppingManagement";
@@ -11,15 +9,10 @@ import ManagerDailyPlanPage from "../components/Manager/ManagerDailyPlanPage";
 import ManagerDailyMenuPage from "../components/Manager/ManagerDailyMenuPage";
 import { listToppingPaging, searchToppingByName } from "../lib/apiTopping";
 
-import {
-  listBookingsPaging,
-  rejectBooking,
-  approveBookingWithTable,
-} from "../lib/apiBooking";
+import { listBookingsPaging } from "../lib/apiBooking";
 import { getCurrentUser, getToken, parseJWT } from "../lib/auth";
 import { findStaffByUsername } from "../lib/apiStaff";
 import BookingManagement from "../components/Manager/BookingManagement";
-import TableLayout from "../components/Manager/TableLayout";
 import { listTables } from "../lib/apiTable";
 
 export default function Manager() {
@@ -61,7 +54,6 @@ export default function Manager() {
 
   const isAt = (slug) => location.pathname.startsWith(`/manager/${slug}`);
 
-  // Load manager name
   useEffect(() => {
     const loadName = async () => {
       try {
@@ -90,7 +82,7 @@ export default function Manager() {
     loadName();
   }, []);
 
-  // Load bookings khi ở trang Quản Lý Đặt Bàn
+  //===== Load bookings khi ở trang Quản Lý Đặt Bàn =====
   useEffect(() => {
     if (!isAt("quanlydatban")) return;
     let cancelled = false;
@@ -98,6 +90,7 @@ export default function Manager() {
       setLoadingBookings(true);
       setBookingsError("");
       try {
+        //===== Gọi hàm lấy ra danh sách Đặt Bàn =====
         const { items, pageInfo } = await listBookingsPaging({
           page: bookingPage,
           size: bookingSize,
@@ -192,48 +185,6 @@ export default function Manager() {
     [loadToppings]
   );
 
-  // Reject booking
-  const handleReject = async (id) => {
-    setBookings((prev) =>
-      prev.map((x) => (x.id === id ? { ...x, status: "REJECT" } : x))
-    );
-    try {
-      await rejectBooking(id);
-    } catch (err) {
-      setBookings((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, status: "PENDING" } : x))
-      );
-      alert(err?.message || "Từ chối thất bại");
-    }
-  };
-
-  // Approve booking
-  const handleAssignTable = async (bookingId, tableId) => {
-    try {
-      await approveBookingWithTable(bookingId, tableId);
-      setBookings((prev) =>
-        prev.map((b) =>
-          b.id === bookingId
-            ? { ...b, status: "APPROVED", assignedTableId: tableId }
-            : b
-        )
-      );
-      setTables((prev) =>
-        prev.map((t) =>
-          t.id === tableId
-            ? { ...t, status: "reserved", isAvailable: false }
-            : t
-        )
-      );
-    } catch (error) {
-      alert(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Không thể gán bàn cho đơn đặt."
-      );
-    }
-  };
-
   // Update table order
   const updateOrderStatus = (tableId, updatedOrder) => {
     setTables((prevTables) =>
@@ -261,16 +212,13 @@ export default function Manager() {
             )}
           </div>
 
-          {/* Nested routes cho trang Manager */}
           <div
             className="animate-fade-in-up"
             style={{ animationDelay: "100ms" }}
           >
             <Routes>
-              {/* index -> /manager => chuyển sang /manager/quanlydatban */}
               <Route index element={<Navigate to="quanlydatban" replace />} />
 
-              {/* /manager/quanlydatban */}
               <Route
                 path="quanlydatban"
                 element={
@@ -282,9 +230,7 @@ export default function Manager() {
                     page={bookingPage}
                     pageInfo={bookingPageInfo}
                     onPageChange={setBookingPage}
-                    onReject={handleReject}
                     tables={tables}
-                    onAssignTable={handleAssignTable}
                     statusFilter={statusFilter}
                     onStatusChange={(v) => {
                       setBookingPage(1);
@@ -294,10 +240,8 @@ export default function Manager() {
                 }
               />
 
-              {/* /manager/monan */}
               <Route path="monan" element={<ManagerDishPage />} />
 
-              {/* /manager/topping */}
               <Route
                 path="thanhphanmon"
                 element={
@@ -315,16 +259,13 @@ export default function Manager() {
                 }
               />
 
-              {/* /manager/kehoachtrongngay */}
               <Route
                 path="kehoachtrongngay"
                 element={<ManagerDailyPlanPage />}
               />
 
-              {/* /manager/montrongngay */}
               <Route path="montrongngay" element={<ManagerDailyMenuPage />} />
 
-              {/* fallback */}
               <Route
                 path="*"
                 element={<Navigate to="quanlydatban" replace />}
@@ -334,14 +275,12 @@ export default function Manager() {
         </main>
       </div>
 
-      {/* Table modal */}
       <TableDetailsModal
         selectedTable={selectedTable}
         setSelectedTable={setSelectedTable}
         updateOrderStatus={updateOrderStatus}
       />
 
-      {/* Topping modal */}
       <EditToppingModal
         isEditingTopping={isEditingTopping}
         setIsEditingTopping={setIsEditingTopping}
