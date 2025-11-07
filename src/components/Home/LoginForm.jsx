@@ -8,6 +8,7 @@ export default function LoginForm({
   onSwitchToRegister,
   onForgotPassword,
 }) {
+  //===== Khách Hàng Điền username, pasword =====
   const [formData, setFormData] = useState({
     username: "",
     password: "",

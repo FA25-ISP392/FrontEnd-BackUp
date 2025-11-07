@@ -92,6 +92,7 @@ export default function Home() {
     };
   }, []);
 
+  //===== Các Sự Kiện Khi Khách Hàng Ấn Sẽ Ứng Với 1 Cái Render Case Phía Dưới =====
   const modal = useMemo(() => {
     const p = location.pathname;
     if (p === HOME_ROUTES.ABOUT) return "about";
@@ -224,7 +225,6 @@ export default function Home() {
             >
               Về Chúng Tôi
             </button>
-
             {!isLoggedIn && (
               <button
                 onClick={() => open(HOME_ROUTES.LOGIN)}
@@ -237,7 +237,7 @@ export default function Home() {
                 Đăng Nhập
               </button>
             )}
-
+            //===== Bắt Sự Kiện Khách Hàng Ấn Vào Nút Đặt Bàn =====
             <button
               onClick={() => open(HOME_ROUTES.BOOKING)}
               className={`transition-all duration-200 transform hover:-translate-y-0.5 active:scale-95 active:shadow-inner px-3 py-1 rounded-lg ${
@@ -248,7 +248,6 @@ export default function Home() {
             >
               Đặt Bàn
             </button>
-
             <button
               onClick={() => {
                 menuRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -257,11 +256,11 @@ export default function Home() {
             >
               Món phải thử
             </button>
-
             <UserAccountDropdown
               isLoggedIn={isLoggedIn}
               userInfo={userInfo}
               onLogout={handleLogout}
+              //===== Khách Hàng muốn xem Lịch Sử Đặt Bàn thì sẽ bắt sự kiến đó =====
               onBookingHistoryClick={handleBookingHistoryClick}
               onEditAccountClick={handleEditAccountClick}
               onCloseEditAccount={closeToHome}
@@ -363,7 +362,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* ===== MODAL "VỀ CHÚNG TÔI" ĐÃ SỬA ===== */}
       {modal === "about" && (
         <div className="fixed inset-0 z-50 transition-opacity duration-300">
           <div className="absolute inset-0 bg-black/40" onClick={closeToHome} />
@@ -411,7 +409,6 @@ export default function Home() {
           </div>
         </div>
       )}
-      {/* ===== HẾT MODAL ĐÃ SỬA ===== */}
 
       {(modal === "login" || modal === "register") && (
         <div className="fixed inset-0 z-50 transition-opacity duration-300">

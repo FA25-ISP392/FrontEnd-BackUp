@@ -43,7 +43,7 @@ export default function ConfirmCancelModal({
           <div className="p-5 text-sm text-neutral-800 space-y-3">
             <p>
               Bạn chắc chắn muốn <b>hủy đơn đặt bàn</b> này? Hành động này sẽ
-              đổi trạng thái đơn thành <b>CANCELLED</b>.
+              đổi trạng thái đơn thành <b>Đã Hủy</b>.
             </p>
 
             <div className="rounded-xl border bg-neutral-50 px-4 py-3 space-y-2">

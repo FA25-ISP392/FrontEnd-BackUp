@@ -1,4 +1,4 @@
-import { apiLoginCustomer } from "../lib/auth";
+import { apiLoginCustomer } from "../lib/auth"; //Gọi từ auth
 import { useState, useCallback } from "react";
 
 export function useCustomerLogin() {

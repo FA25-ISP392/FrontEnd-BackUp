@@ -1,6 +1,7 @@
 import apiConfig from "../api/apiConfig";
 import { buildISOFromVN, normalizeISOFromAPI } from "../lib/datetimeBooking";
 
+//==== Khởi Tạo Đơn Đặt Bàn với Trạng Thái là Chờ Duyệt =====
 export async function createBooking({ date, time, guests, preferredTable }) {
   if (!localStorage.getItem("token")) {
     throw new Error("Bạn cần đăng nhập trước khi đặt bàn.");
@@ -15,6 +16,7 @@ export async function createBooking({ date, time, guests, preferredTable }) {
   };
 
   if (import.meta.env.DEV) console.log("POST /booking payload:", payload);
+  //===== Lấy endpoint POST để khởi tạo đơn Đặt Bàn =====
   return apiConfig.post("/booking", payload);
 }
 
@@ -101,6 +103,7 @@ export const rejectBooking = async (id) => {
   return normalizeBooking(res?.result ?? res);
 };
 
+//===== Khi Ghi Nhận về Đơn Đặt Bàn đã được khởi tạo rồi chuyển trạng thái sang Đã Duyệt =====
 export async function approveBookingWithTable(bookingId, tableId) {
   if (!bookingId || !tableId)
     throw new Error("Thiếu bookingId hoặc tableId khi duyệt bàn.");
@@ -108,6 +111,7 @@ export async function approveBookingWithTable(bookingId, tableId) {
   const id = Number(bookingId);
   const tId = Number(tableId);
   try {
+    //===== Lấy endpoint PUT để cập nhật trạng thái đơn Đặt Bàn =====
     return await apiConfig.put(`/booking/${id}/approved`, { tableId: tId });
   } catch (err1) {
     const code = err1?.response?.status;
@@ -184,8 +188,10 @@ export async function listBookingsByTableDate(tableId, date) {
   }
 }
 
+//===== Hủy đơn Đặt Bàn (đổi trạng thái) =====
 export async function cancelBooking(id) {
   if (!id) throw new Error("Thiếu bookingId.");
+  //===== Lấy endpoint PUT để đổi trạng thái đơn Đặt Bàn =====
   const res = await apiConfig.put(`/booking/${id}/cancel`, {});
   return normalizeBooking(res?.result ?? res);
 }
@@ -219,12 +225,14 @@ export async function getBookingHistory(customerId) {
   return list.map(normalizeBooking);
 }
 
+//==== Lấy ra danh sách Đặt Bàn của khách hàng (đã có paging từ BE) =====
 export async function getBookingHistoryPaged({
   customerId,
   page = 1,
   size = 6,
 }) {
   if (!customerId) throw new Error("Thiếu customerId.");
+  //===== Lấy endpoint GET để lấy danh sách =====
   const res = await apiConfig.get(`/booking/customer/${customerId}`, {
     params: { page: Math.max(0, page - 1), size },
   });

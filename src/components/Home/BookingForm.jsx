@@ -22,7 +22,7 @@ const ALL_TABLES = [
 
 export default function BookingForm({
   onSubmit,
-  isLoggedIn,
+  isLoggedIn, //state này được truyền từ Home.jxs vào (khi chưa đăng nhập = false)
   onLoginRequest,
   initialData,
 }) {
@@ -93,6 +93,7 @@ export default function BookingForm({
       const results = [];
       for (const tb of ALL_TABLES) {
         if (tb.seats < guests) continue;
+        //===== Gọi API để kiểm tra bàn ứng theo useEffect về thông tin mà khách đã nhập =====
         const list = await listBookingsByTableDate(tb.id, date);
         const overlap = list.some((b) => {
           const st = String(b.status || "").toUpperCase();
@@ -102,6 +103,7 @@ export default function BookingForm({
         });
         if (!overlap) results.push({ id: tb.id, seats: tb.seats });
       }
+
       setAvailableTables(results);
       if (!results.find((x) => String(x.id) === String(form.tableId))) {
         setForm((s) => ({ ...s, tableId: "" }));
@@ -111,6 +113,7 @@ export default function BookingForm({
     }
   };
 
+  //===== Xác nhận lại thông tin sau mỗi lần thay đổi =====
   useEffect(() => {
     recomputeAvailable(form.date, form.time, form.guests);
   }, [form.date, form.time, form.guests]);
@@ -124,6 +127,7 @@ export default function BookingForm({
     setFieldErrs((s) => ({ ...s, [name]: "" }));
   };
 
+  //===== Khách Hàng Chưa Đăng Nhập Mà Ấn Submit Sẽ Kiểm Tra !isLoggedIn =====
   const submit = async (e) => {
     e.preventDefault();
     if (loading) return;
@@ -138,6 +142,7 @@ export default function BookingForm({
       return;
     }
 
+    //===== Những bàn nào không trùng và đủ chỗ sẽ được đưa vào state =====
     let pickedId = form.tableId;
     if (!pickedId && availableTables.length === 1)
       pickedId = availableTables[0].id;
@@ -146,6 +151,7 @@ export default function BookingForm({
       return;
     }
 
+    //==== Gọi hàm khởi tạo đơn Đặt Bàn =====
     try {
       setLoading(true);
       const res = await createBooking({
@@ -155,6 +161,7 @@ export default function BookingForm({
         preferredTable: pickedId,
       });
       const bookingId = res?.result?.bookingId ?? res?.bookingId ?? res?.id;
+      //===== Khi khởi tạo xong gọi hàm để chuyển trạng thái đơn Đặt Bàn ======
       await approveBookingWithTable(bookingId, pickedId);
       onSubmit?.({ ...form, tableId: pickedId, bookingId });
     } catch (err) {
@@ -172,7 +179,8 @@ export default function BookingForm({
           time={form.time}
           guests={form.guests}
         />
-
+        //===== Khi Chưa Đăng Nhập Ấn Submit Sẽ Hiển Thị Thông Báo Và Cho Quay
+        Về Đăng Nhập =====
         <form onSubmit={submit} className="space-y-4" noValidate>
           {!isLoggedIn && (
             <div
@@ -196,7 +204,6 @@ export default function BookingForm({
               </button>
             </div>
           )}
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Ngày đặt bàn
@@ -218,7 +225,6 @@ export default function BookingForm({
               </div>
             )}
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Giờ đặt bàn
@@ -241,7 +247,6 @@ export default function BookingForm({
               </div>
             )}
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Số lượng khách: {form.guests}
@@ -264,7 +269,6 @@ export default function BookingForm({
               </div>
             )}
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Chọn bàn {scanning ? "(đang quét...)" : ""}
@@ -298,7 +302,8 @@ export default function BookingForm({
               ))}
             </select>
           </div>
-
+          //===== Khách hàng chọn một bàn từ danh sách availableTable và nhấn
+          Đặt Bàn =====
           <button
             type="submit"
             disabled={loading}

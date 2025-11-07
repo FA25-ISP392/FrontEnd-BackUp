@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 
 const KEY = "booking:draft";
 
+//===== Khi khách hàng điền thông tin mà chưa đăng nhập thì gọi hàm này để lưu vào localStorage =====
 function saveBookingDraft(draft) {
   localStorage.setItem(KEY, JSON.stringify(draft));
   window.dispatchEvent(new Event("booking:draft:changed"));

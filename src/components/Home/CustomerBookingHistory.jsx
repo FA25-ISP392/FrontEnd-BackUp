@@ -84,6 +84,7 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
       setLoading(true);
       setErr("");
       try {
+        //===== Gọi ra hàm lấy được lịch sử Đặt Bàn của khách hàng =====
         const { items, pageInfo } = await getBookingHistoryPaged({
           customerId,
           page,
@@ -225,6 +226,7 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
                                   }`}
                                 title="Hủy đơn đặt bàn"
                               >
+                                //===== Hủy Đơn =====
                                 <Trash2 className="w-4 h-4" />
                                 Hủy đơn
                               </button>
