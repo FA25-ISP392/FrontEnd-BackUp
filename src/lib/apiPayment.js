@@ -83,7 +83,9 @@ export async function createPayment({ orderId, method = "BANK_TRANSFER" }) {
   return normalizePayment(res?.result ?? res);
 }
 
+//===== Lấy ra Payment được tạo dựa trên paymentId =====
 export async function getPaymentById(id) {
+  //===== Lấy endpoint GET để lấy =====
   const res = await apiConfig.get(`/payment/${id}`);
   return normalizePayment(res?.result ?? res);
 }

@@ -108,11 +108,13 @@ export default function StaffPaymentModal({ open, onClose, table }) {
 
     let stopped = false;
 
+    //===== Hàm xử lý và theo dỏi trạng thái Thanh Toán của KH =====
     const checkOnce = async () => {
       try {
         const p = await getPaymentById(paymentId);
         const st = String(p.status || "").toUpperCase();
 
+        //===== Nếu đã Thanh Toán thì tiến hành callBack trả về =====
         if (["COMPLETED", "PAID", "SUCCESS"].includes(st)) {
           if (!stopped) {
             onClose?.({ paid: true, method: "QR" });
@@ -174,6 +176,7 @@ export default function StaffPaymentModal({ open, onClose, table }) {
     }
   }
 
+  //===== Hàm xử lý khi Staff chọn Thanh Toán = QR =====
   async function handleBankTransfer() {
     if (!paymentId) {
       onClose?.({
@@ -184,9 +187,12 @@ export default function StaffPaymentModal({ open, onClose, table }) {
     }
     setLoading(true);
     try {
+      //===== Gọi hàm để lấy ra Thanh Toán dựa trên Id =====
       const p = await getPaymentById(paymentId);
       if (p.checkoutUrl) window.open(p.checkoutUrl, "_blank", "noopener");
+      //===== Sau khi gọi hàm thì sẽ checkoutURL =====
       setCheckoutUrl(p.checkoutUrl || "");
+      //===== Đưa vào QR code =====
       setQr(p.qrCode || "");
     } catch (e) {
       onClose?.({

@@ -621,6 +621,7 @@ export default function Menu() {
       JSON.stringify(payload)
     );
   }
+
   function cleanupAndExit() {
     try {
       pollStopRef.current = true;
@@ -647,6 +648,8 @@ export default function Menu() {
     } catch {}
     window.location.replace("/home");
   }
+
+  //===== Hàm bên Menu.jsx khi KH đã Thanh Toán xong =====
   function handlePaidSuccess() {
     if (paidLockedRef.current) return;
     paidLockedRef.current = true;
@@ -687,6 +690,7 @@ export default function Menu() {
       thanksTimerRef.current = null;
     };
   }, [paidSuccessOpen]);
+
   useEffect(() => {
     if (!orderId) return;
     pollStopRef.current = false;
