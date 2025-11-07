@@ -46,6 +46,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
     }
   };
 
+  //===== Hàm validate các trường input mà người dùng nhập vào =====
   function validateCreate(value) {
     const errs = {};
     const cleaned = {
@@ -228,6 +229,7 @@ export default function RegisterForm({ onSwitchToLogin }) {
     setFormMsg("");
     setFieldErrs({});
 
+    //===== Kiểm tra các lỗi validate và hiển thị thông báo qua setFieldErrs =====
     const { errs, cleaned } = validateCreate(formRegister);
     if (Object.keys(errs).length) {
       setFieldErrs(errs);
@@ -237,12 +239,14 @@ export default function RegisterForm({ onSwitchToLogin }) {
 
     try {
       setLoading(true);
+      //===== Nếu đã oke thì gọi hàm tạo mới tài khoản =====
       await createCustomer(cleaned);
       setFormMsg(
         "Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản trước khi đăng nhập."
       );
     } catch (err) {
       console.error(err);
+      //===== Nếu có lỗi về checkDuplicate thì hiển thị thông báo =====
       const { fieldErrors, message } = parseBackendError(err);
 
       if (Object.keys(fieldErrors).length) {

@@ -47,6 +47,7 @@ export async function findCustomerByUsername(username) {
   }
 }
 
+//===== Tạo mới tài khoản cho khách hàng =====
 export async function createCustomer(form) {
   const payload = compact({
     username: form.username,
@@ -57,6 +58,7 @@ export async function createCustomer(form) {
     role: "CUSTOMER",
   });
 
+  //===== Lấy endpoint POST để tạo mới tài khoản khách hàng =====
   const res = await apiConfig.post("/customer", payload);
   const data = res?.result ?? res;
   return normalizeCustomer(data);
