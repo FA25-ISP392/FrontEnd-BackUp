@@ -4,7 +4,7 @@ function toDatetimeText(raw) {
   if (!raw) return "-";
   const s = String(raw).trim();
   const m = s.match(
-    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::\d{2})?(?:\.\d+)?/,
+    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::\d{2})?(?:\.\d+)?/
   );
   if (m) return `${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}`;
   return s;
@@ -13,7 +13,7 @@ function addHoursText(raw, offsetHours = 7) {
   if (!raw) return "-";
   const s = String(raw).trim();
   const m = s.match(
-    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::\d{2})?(?:\.\d+)?/,
+    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::\d{2})?(?:\.\d+)?/
   );
   if (!m) return toDatetimeText(s);
   const y = Number(m[1]);
@@ -25,9 +25,9 @@ function addHoursText(raw, offsetHours = 7) {
   const shifted = new Date(baseMs + offsetHours * 60 * 60 * 1000);
   const pad = (n) => String(n).padStart(2, "0");
   const out = `${shifted.getUTCFullYear()}-${pad(
-    shifted.getUTCMonth() + 1,
+    shifted.getUTCMonth() + 1
   )}-${pad(shifted.getUTCDate())} ${pad(shifted.getUTCHours())}:${pad(
-    shifted.getUTCMinutes(),
+    shifted.getUTCMinutes()
   )}`;
   return out;
 }
@@ -71,12 +71,14 @@ export const normalizePayment = (p = {}) => {
   };
 };
 
+//===== Tạo ra paymentId ứng với orderId kèm theo method =====
 export async function createPayment({ orderId, method = "BANK_TRANSFER" }) {
   if (!orderId) throw new Error("Thiếu orderId.");
   const payload = {
     orderId: Number(orderId),
     method: String(method).toUpperCase(),
   };
+  //===== Lấy endpoint POST để khởi tạo =====
   const res = await apiConfig.post("/payment", payload);
   return normalizePayment(res?.result ?? res);
 }

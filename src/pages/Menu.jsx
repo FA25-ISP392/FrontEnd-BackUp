@@ -483,6 +483,7 @@ export default function Menu() {
     }
   };
 
+  //===== Hàm xử lý khi KH mở tab Thanh Toán =====
   const handleOpenPayment = async () => {
     try {
       if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
@@ -490,7 +491,9 @@ export default function Menu() {
         setIsNotServedErrorOpen(true);
         return;
       }
+      //===== Gọi hàm để lấy các món ứng với trạng thái =====
       const details = await getOrderDetailsByOrderId(orderId);
+      //===== Chỉ khi các món là Served thì mới được mở lên tab Thanh Toán =====
       const notServedItem = details.find((d) => d.status !== "SERVED");
       if (notServedItem) {
         setIsNotServedErrorOpen(true);
@@ -568,12 +571,16 @@ export default function Menu() {
     }
   };
 
+  //===== Hàm xử lý khi KH ấn vào Gọi nhân viên thanh toán =====
   const handleRequestPayment = async () => {
     try {
       if (!orderId) throw new Error("Chưa có orderId.");
       const total = sumTotal(paymentItems);
+      //===== Gọi hàm để tạo ra paymentId để tiến hành thanh toán =====
       const p = await createPayment({ orderId, method: "BANK_TRANSFER" });
       sessionStorage.setItem("paymentId", String(p.id || ""));
+      //===== Gửi yêu cầu đến giao diện bàn của Staff =====
+      //===== Khi gửi kèm theo số bàn, số đơn, tổng tiền và paymentId đã tạo ở trên =====
       notifyPaymentStaff({ tableId, orderId, total, paymentId: p.id });
       setIsPaymentOpen(false);
       setIsCallStaffOpen(true);
@@ -582,11 +589,15 @@ export default function Menu() {
       setIsErrorOpen(true);
     }
   };
+
+  //===== Hàm xử lý khi gửi thông báo thanh toán đến giao diện bàn của Staff =====
   function notifyPaymentStaff({ tableId, orderId, total, paymentId }) {
     const payload = { tableId, orderId, total, paymentId, ts: Date.now() };
+    //===== Gửi một sự kiện trong nội bộ tab trình duyệt =====
     window.dispatchEvent(
       new CustomEvent("table:callPayment", { detail: payload })
     );
+    //===== Ghi 1 key vào localStorage và sẽ lắng nghe sự thay đổi này ở các tab của Staff =====
     localStorage.setItem(
       `signal:callPayment:${payload.ts}`,
       JSON.stringify(payload)

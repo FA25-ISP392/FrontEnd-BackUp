@@ -30,6 +30,7 @@ export default function PaymentSidebar({
     [items]
   );
 
+  //===== Tính tổng tiền từ các món ăn có Status = Served =====
   const totalAmount = useMemo(() => sumTotal(servedItems), [servedItems]);
 
   return (
@@ -110,6 +111,7 @@ export default function PaymentSidebar({
                 </span>
               </div>
               <button
+                //===== Bắt sự kiện khách gọi thanh toán, truyền props qua Menu.jsx =====
                 onClick={onRequestPayment}
                 className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-xl font-bold text-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-green-500/30 transform hover:-translate-y-0.5"
               >

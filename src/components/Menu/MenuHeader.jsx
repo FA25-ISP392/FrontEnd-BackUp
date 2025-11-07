@@ -77,6 +77,7 @@ export default function MenuHeader({
             </button>
 
             <button
+              //===== Gọi hàm khi ấn vào nút Thanh Toán chuyển props về Menu.jsx =====
               onClick={onCheckout}
               className={`${buttonClass} px-5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700`}
             >
