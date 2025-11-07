@@ -175,6 +175,7 @@ export default function CartSidebar({
                 </span>
               </div>
               <button
+                //===== Bắt sự kiện khách hàng ấn Gọi Món =====
                 onClick={onOrderFood}
                 className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 rounded-xl font-bold text-lg hover:from-orange-600 hover:to-red-600 transition-all duration-300 shadow-lg hover:shadow-orange-500/30 transform hover:-translate-y-0.5"
               >

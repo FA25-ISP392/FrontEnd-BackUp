@@ -44,6 +44,7 @@ export default function DishOptionsModal({
   const totalPrice = finalUnitPrice * quantity;
   const totalCalories = finalUnitCalo * quantity;
 
+  //===== Hàm xử lý việc chọn món vào giỏ hàng =====
   const handleAddToCart = () => {
     const dishWithOptions = {
       ...dish,
@@ -53,6 +54,7 @@ export default function DishOptionsModal({
       totalPrice: finalUnitPrice,
       totalCalories: finalUnitCalo,
     };
+    //===== Đưa các món được chọn vào giỏ hàng =====
     onAddToCart(dishWithOptions);
     onClose();
   };

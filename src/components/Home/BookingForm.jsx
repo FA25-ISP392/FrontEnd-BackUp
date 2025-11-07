@@ -179,10 +179,10 @@ export default function BookingForm({
           time={form.time}
           guests={form.guests}
         />
-        //===== Khi Chưa Đăng Nhập Ấn Submit Sẽ Hiển Thị Thông Báo Và Cho Quay
-        Về Đăng Nhập =====
+
         <form onSubmit={submit} className="space-y-4" noValidate>
           {!isLoggedIn && (
+            //===== Khi Chưa Đăng Nhập Ấn Submit Sẽ Hiển Thị Thông Báo Và Cho Quay Về Đăng Nhập =====
             <div
               className="p-4 bg-orange-50 border border-orange-200 rounded-lg flex items-center justify-between gap-4 cursor-pointer"
               onClick={() => onLoginRequest?.(form)}
@@ -302,10 +302,9 @@ export default function BookingForm({
               ))}
             </select>
           </div>
-          //===== Khách hàng chọn một bàn từ danh sách availableTable và nhấn
-          Đặt Bàn =====
           <button
             type="submit"
+            //===== Khách hàng chọn một bàn từ danh sách availableTable và nhấn Đặt Bàn =====
             disabled={loading}
             className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
           >

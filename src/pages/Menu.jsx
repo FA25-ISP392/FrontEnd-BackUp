@@ -9,14 +9,13 @@ import PaymentSidebar from "../components/Menu/PaymentSidebar";
 import DishOptionsModal from "../components/Menu/DishOptionsModal";
 import OrderStatusSidebar from "../components/Menu/OrderStatusSidebar";
 import { getSuggestedMenu } from "../lib/apiSuggestion";
-import AIChatBubble from "../components/Menu/AIChatBubble"; // <-- Bổ sung
+import AIChatBubble from "../components/Menu/AIChatBubble";
 import {
   createOrder,
   getOrderById,
   getOrderDetailsByOrderId,
 } from "../lib/apiOrder";
 import { useMenuPersonalization } from "../hooks";
-// 👈 === SỬA 1: Thêm normalizeDish VÀO ĐÂY ===
 import { listDish, getDish, normalizeDish } from "../lib/apiDish";
 import { updateCustomerPersonalization } from "../lib/apiCustomer";
 import { getToppingsByDishId } from "../lib/apiDishTopping";
@@ -30,11 +29,6 @@ import { createPayment, getPaymentById } from "../lib/apiPayment";
 import ConfirmDialog from "../common/ConfirmDialog";
 import usePersistedState from "../hooks/usePersistedState";
 
-// ... (Toàn bộ logic state và helper functions của bạn được giữ nguyên) ...
-// (Giữ nguyên từ dòng 30 đến 450)
-
-// === GỐC: TỪ DÒNG 30 ĐẾN 450 CỦA BẠN ===
-const PERSONAL_KEY = (cid) => `personalization:${cid}`;
 const MODE_KEY = "menuMode";
 const applyGoal = (cals, goal) => {
   if (typeof cals !== "number" || !isFinite(cals)) return null;
@@ -55,26 +49,19 @@ const getDisplayName = (u) =>
 const sumTotal = (items = []) =>
   items.reduce((s, it) => s + Number(it.totalPrice ?? it.price ?? 0), 0);
 
-// 👈 === FIX MỚI (PHẦN 1/6): Thêm hàm helper tính calo chính xác ===
-// Hàm này sẽ tính calo của món + TẤT CẢ topping đi kèm
 const getCaloriesFromDetail = (detail) => {
   if (!detail) return 0;
 
-  // 1. Calo cơ bản của món ăn (API trả về trong 'calories' hoặc 'calo')
   const baseCals = detail.calories || detail.calo || 0;
 
-  // 2. Calo của tất cả topping
   const toppingCals = (detail.toppings || []).reduce((sum, topping) => {
-    // API có thể trả về calo trong 'calories' hoặc 'calo'
     const toppingCal = topping.calories || topping.calo || 0;
     const quantity = topping.quantity || 1;
     return sum + toppingCal * quantity;
   }, 0);
 
-  // Trả về tổng calo
   return baseCals + toppingCals;
 };
-// 👈 === HẾT FIX MỚI (PHẦN 1/6) ===
 
 export default function Menu() {
   const [suggestedMenu, setSuggestedMenu] = useState(() => {
@@ -105,40 +92,32 @@ export default function Menu() {
   const [selectedDish, setSelectedDish] = useState(null);
   const [isDishOptionsOpen, setIsDishOptionsOpen] = useState(false);
   const [isPersonalizationOpen, setIsPersonalizationOpen] = useState(false);
-
-  // 👈 === FIX VẤN ĐỀ 2 (PHẦN 1/2) ===
-  // const [isPersonalized, setIsPersonalized] = useState(false); // DÒNG GỐC
-  // const [estimatedCalories, setEstimatedCalories] = useState(null); // DÒNG GỐC
   const [isPersonalized, setIsPersonalized] = usePersistedState(
     "isPersonalized",
-    false,
+    false
   );
   const [estimatedCalories, setEstimatedCalories] = usePersistedState(
     "estimatedCalories",
-    null,
+    null
   );
-  // 👈 === HẾT FIX ===
 
   const [baseCalories, setBaseCalories] = useState(null);
   const [dailyCalories, setDailyCalories] = useState(null);
+  //===== Đưa món ăn chọn vào giỏ hàng =====
   const [cart, setCart] = usePersistedState("shoppingCart", []);
+  //===== Đưa món ăn vào giỏ hàng rồi cộng calo vào thanh calo luôn =====
   const [caloriesConsumed, setCaloriesConsumed] = usePersistedState(
     "caloriesConsumed",
-    0,
+    0
   );
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [orderDetails, setOrderDetails] = useState([]);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingDetail, setEditingDetail] = useState(null);
-
-  // 👈 === FIX MỚI (PHẦN 2/6): Thêm state để lưu calo CŨ khi sửa ===
   const [editingDetailCalories, setEditingDetailCalories] = useState(0);
-  // 👈 === HẾT FIX MỚI (PHẦN 2/6) ===
-
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [paymentItems, setPaymentItems] = useState([]);
-  const [paymentMethod, setPaymentMethod] = useState("cash");
   const [isCallStaffOpen, setIsCallStaffOpen] = useState(false);
   const [isOrderFoodOpen, setIsOrderFoodOpen] = useState(false);
   const [isDeleteSuccessOpen, setIsDeleteSuccessOpen] = useState(false);
@@ -196,6 +175,8 @@ export default function Menu() {
   const initialMode = sessionStorage.getItem(MODE_KEY);
   const [mode, setMode] = useState(initialMode);
   const [showModeSelection, setShowModeSelection] = useState(!initialMode);
+
+  //===== Hàm xử lý orderId đảm bảo có =====
   useEffect(() => {
     const ready = Boolean(customerId) && Boolean(tableId);
     if (!ready) return;
@@ -207,6 +188,7 @@ export default function Menu() {
     sessionStorage.setItem(idemKey, "1");
     (async () => {
       try {
+        //===== Gọi hàm tạo ra order tổng cho đơn hàng =====
         const order = await createOrder({ customerId, tableId });
         if (order?.orderId) {
           setOrderId(String(order.orderId));
@@ -223,6 +205,7 @@ export default function Menu() {
       return [];
     }
   })();
+
   useEffect(() => {
     (async () => {
       try {
@@ -242,28 +225,28 @@ export default function Menu() {
     })();
   }, []);
   const filteredDishes = menuDishes.filter(
-    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name),
+    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name)
   );
   const { personalizationForm, setPersonalizationForm, personalizedDishes } =
     useMenuPersonalization(filteredDishes);
   const addToCart = (item) => {
     const noteKey = item.notes || "";
     const existingItem = cart.find(
-      (it) => it.id === item.id && (it.notes || "") === noteKey,
+      (it) => it.id === item.id && (it.notes || "") === noteKey
     );
     if (existingItem) {
       setCart((prev) =>
         prev.map((it) =>
           it.id === item.id && (it.notes || "") === noteKey
             ? { ...it, quantity: it.quantity + (item.quantity ?? 1) }
-            : it,
-        ),
+            : it
+        )
       );
     } else {
       setCart((prev) => [...prev, { ...item }]);
     }
     setCaloriesConsumed(
-      (prev) => prev + (item.totalCalories || item.calories || 0),
+      (prev) => prev + (item.totalCalories || item.calories || 0)
     );
   };
   const updateCartQuantity = (itemId, newQuantity) => {
@@ -276,11 +259,11 @@ export default function Menu() {
       const diff = newQuantity - item.quantity;
       setCart((prev) =>
         prev.map((it) =>
-          it.id === itemId ? { ...it, quantity: newQuantity } : it,
-        ),
+          it.id === itemId ? { ...it, quantity: newQuantity } : it
+        )
       );
       setCaloriesConsumed(
-        (prev) => prev + diff * (item.totalCalories || item.calories),
+        (prev) => prev + diff * (item.totalCalories || item.calories)
       );
     }
   };
@@ -289,14 +272,17 @@ export default function Menu() {
     if (item) {
       setCart((prev) => prev.filter((it) => it.id !== itemId));
       setCaloriesConsumed(
-        (prev) => prev - (item.totalCalories || item.calories) * item.quantity,
+        (prev) => prev - (item.totalCalories || item.calories) * item.quantity
       );
     }
   };
+
+  //===== Hàm xử lý khi ấn Gọi Món =====
   const handleOrderFood = async () => {
     try {
       if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
       if (!cart.length) throw new Error("Giỏ hàng đang trống.");
+      //===== Gọi hàm để tạo ra OrderDetail =====
       await createOrderDetailsFromCart(orderId, cart);
       setIsCartOpen(false);
       setCart([]);
@@ -304,11 +290,12 @@ export default function Menu() {
       setIsOrderFoodOpen(true);
     } catch (err) {
       setOrderFoodErrorMessage(
-        err?.message || "Gọi món thất bại. Vui lòng thử lại.",
+        err?.message || "Gọi món thất bại. Vui lòng thử lại."
       );
       setIsOrderFoodErrorOpen(true);
     }
   };
+
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   async function fetchOrderDetailsFromOrder() {
     if (!orderId) return;
@@ -329,13 +316,10 @@ export default function Menu() {
     return () => clearInterval(timer);
   }, [isStatusOpen, orderId]);
 
-  // 👈 SỬA: Tính toán số lượng món đang chờ và đang nấu
   const { pendingCount, preparingCount } = useMemo(() => {
     let pending = 0;
     let preparing = 0;
     const groups = new Map();
-
-    // Nhóm các orderDetail lại (vì 1 món SL 2 sẽ là 2 orderDetail)
     for (const item of orderDetails) {
       const key = `${item.dishId}|${item.note}|${(item.toppings || [])
         .map((t) => t.toppingId)
@@ -344,15 +328,12 @@ export default function Menu() {
         groups.set(key, { status: String(item.status || "").toUpperCase() });
       }
     }
-
-    // Đếm số lượng nhóm theo trạng thái
     for (const [key, group] of groups.entries()) {
       if (group.status === "PENDING") pending++;
       if (group.status === "PREPARING") preparing++;
     }
     return { pendingCount: pending, preparingCount: preparing };
   }, [orderDetails]);
-  // ----------------------------------------------------
 
   const handleIncGroup = async (group) => {
     const st = String(group?.sample?.status || "").toLowerCase();
@@ -372,10 +353,9 @@ export default function Menu() {
           quantity: t.quantity ?? 1,
         })) || [],
     });
-    // Tăng calo ngay lập tức
-    const itemCalories = getCaloriesFromDetail(group.sample); // Dùng helper
+
+    const itemCalories = getCaloriesFromDetail(group.sample);
     setCaloriesConsumed((prev) => prev + itemCalories);
-    // Fetch lại
     await fetchOrderDetailsFromOrder();
   };
   const handleDecGroup = async (group) => {
@@ -391,11 +371,8 @@ export default function Menu() {
             await deleteOrderDetail(idToDelete);
             await fetchOrderDetailsFromOrder();
             setIsDeleteSuccessOpen(true);
-
-            // 👈 === FIX MỚI (PHẦN 3/6): Dùng helper để trừ calo CHÍNH XÁC ===
             const itemCalories = getCaloriesFromDetail(group.sample);
             setCaloriesConsumed((prev) => Math.max(0, prev - itemCalories));
-            // 👈 === HẾT FIX MỚI ===
           } catch (e) {
             setErrorMessage(e?.message || "Huỷ món thất bại.");
             setIsErrorOpen(true);
@@ -409,11 +386,8 @@ export default function Menu() {
         await deleteOrderDetail(idToDelete);
         await fetchOrderDetailsFromOrder();
         setIsDeleteSuccessOpen(true);
-
-        // 👈 === FIX MỚI (PHẦN 4/6): Dùng helper để trừ calo CHÍNH XÁC ===
         const itemCalories = getCaloriesFromDetail(group.sample);
         setCaloriesConsumed((prev) => Math.max(0, prev - itemCalories));
-        // 👈 === HẾT FIX MỚI ===
       } catch (e) {
         setErrorMessage(e?.message || "Xoá món thất bại.");
         setIsErrorOpen(true);
@@ -433,11 +407,8 @@ export default function Menu() {
           await deleteOrderDetail(detail.orderDetailId);
           await fetchOrderDetailsFromOrder();
           setIsDeleteSuccessOpen(true);
-
-          // 👈 === FIX MỚI (PHẦN 5/6): Dùng helper để trừ calo CHÍNH XÁC ===
           const itemCalories = getCaloriesFromDetail(detail);
           setCaloriesConsumed((prev) => Math.max(0, prev - itemCalories));
-          // 👈 === HẾT FIX MỚI ===
         } catch (e) {
           setErrorMessage(e?.message || "Xoá món thất bại.");
           setIsErrorOpen(true);
@@ -448,25 +419,19 @@ export default function Menu() {
     });
   };
 
-  // 👈 === FIX MỚI (PHẦN 6/6): Cập nhật logic Sửa và Mở Sửa ===
   const handleOpenEdit = (detail) => {
     const st = String(detail?.status || "").toLowerCase();
     if (st !== "pending") return;
-
-    // 1. Lưu lại calo CŨ trước khi mở modal
     const oldCalories = getCaloriesFromDetail(detail);
     setEditingDetailCalories(oldCalories);
-
-    // 2. Mở modal
     setEditingDetail(detail);
     setIsEditOpen(true);
   };
 
   const handleEdited = async () => {
-    if (!orderId || !editingDetail) return; // Thoát nếu không có thông tin
+    if (!orderId || !editingDetail) return;
 
     try {
-      // 1. Fetch dữ liệu MỚI (nhưng chưa set state)
       const newData = await getOrderDetailsByOrderId(orderId);
 
       useEffect(() => {
@@ -485,8 +450,8 @@ export default function Menu() {
           if (name) setCustomerName(name);
         };
 
-        updateAuthState(); // chạy ngay khi vào trang
-        const interval = setInterval(updateAuthState, 1000); // check mỗi 1s
+        updateAuthState();
+        const interval = setInterval(updateAuthState, 1000);
         window.addEventListener("auth:changed", updateAuthState);
         window.addEventListener("storage", updateAuthState);
 
@@ -496,33 +461,21 @@ export default function Menu() {
           window.removeEventListener("storage", updateAuthState);
         };
       }, []);
-      console.log("💬 Props:", { isLoggedIn, customerId });
-
-      // 2. Tìm món vừa được sửa trong dữ liệu mới
       const editedItem = newData.find(
-        (item) => item.orderDetailId === editingDetail.orderDetailId,
+        (item) => item.orderDetailId === editingDetail.orderDetailId
       );
-
-      // 3. Tính calo MỚI
       const newCalories = getCaloriesFromDetail(editedItem);
-      // 4. Lấy calo CŨ (đã lưu từ lúc handleOpenEdit)
       const oldCalories = editingDetailCalories;
-
-      // 5. Tính chênh lệch và cập nhật calo tổng
       const diff = newCalories - oldCalories;
       setCaloriesConsumed((prev) => Math.max(0, prev + diff));
-
-      // 6. Cập nhật danh sách và reset state
       setOrderDetails(newData);
-      setEditingDetailCalories(0); // Reset calo cũ
-      setEditingDetail(null); // Reset món đang sửa
+      setEditingDetailCalories(0);
+      setEditingDetail(null);
     } catch (err) {
       console.error("Lỗi khi cập nhật chi tiết món:", err);
-      // Nếu lỗi, fetch lại bình thường
       await fetchOrderDetailsFromOrder();
     }
   };
-  // 👈 === HẾT FIX MỚI ===
 
   const handleOpenPayment = async () => {
     try {
@@ -545,7 +498,7 @@ export default function Menu() {
       }
     } catch (err) {
       setErrorMessage(
-        err?.message || "Không mở được thanh toán. Vui lòng thử lại.",
+        err?.message || "Không mở được thanh toán. Vui lòng thử lại."
       );
       setIsErrorOpen(true);
     }
@@ -556,7 +509,6 @@ export default function Menu() {
     setEstimatedCalories(applyGoal(base, goalId));
   };
 
-  // 👈 === SỬA HÀM NÀY ===
   const handlePersonalizationSubmit = async ({
     customerUpdatePayload,
     suggestionCreationPayload,
@@ -568,29 +520,24 @@ export default function Menu() {
       return;
     }
 
-    // ================== THÊM VALIDATION ==================
-    // Kiểm tra xem `goal` trong `suggestionCreationPayload` có tồn tại không
-    // (nó sẽ là `undefined` nếu `personalizationForm.goal` là chuỗi rỗng)
     if (!suggestionCreationPayload.goal) {
       setErrorMessage("Vui lòng chọn 'Mục tiêu cá nhân' của bạn.");
       setIsErrorOpen(true);
-      return; // Dừng lại, không gọi API
+      return;
     }
-    // ================== HẾT VALIDATION ==================
 
     try {
       setSuggestedMenu([]);
       await updateCustomerPersonalization(customerId, customerUpdatePayload);
       const suggestionsResponse = await getSuggestedMenu(
-        suggestionCreationPayload,
+        suggestionCreationPayload
       );
 
       const flatList = Array.isArray(suggestionsResponse)
         ? suggestionsResponse.flatMap((r) =>
             [r.drink, r.salad, r.mainCourse, r.dessert]
               .filter(Boolean)
-              // Chuẩn hóa món ăn ngay tại đây
-              .map((dish) => normalizeDish(dish)),
+              .map((dish) => normalizeDish(dish))
           )
         : [];
 
@@ -600,25 +547,20 @@ export default function Menu() {
       setEstimatedCalories(dailyCalories);
       setIsPersonalized(true);
       setIsPersonalizationOpen(false);
-
-      // ✨====== DÒNG BẠN YÊU CẦU ======✨
       setActiveMenuTab("suggested");
-      // ✨===============================✨
-
       setSuccessMessage(
-        "Cá nhân hóa thành công! Thực đơn gợi ý mới đã được tạo.",
+        "Cá nhân hóa thành công! Thực đơn gợi ý mới đã được tạo."
       );
       setIsSuccessOpen(true);
     } catch (err) {
       console.error("❌ Lỗi cá nhân hóa:", err);
       setErrorMessage(
         err?.response?.data?.message ||
-          "Lỗi khi cập nhật hồ sơ hoặc lấy thực đơn gợi ý.",
+          "Lỗi khi cập nhật hồ sơ hoặc lấy thực đơn gợi ý."
       );
       setIsErrorOpen(true);
     }
   };
-  // 👈 === HẾT SỬA HÀM NÀY ===
 
   const handleRequestPayment = async () => {
     try {
@@ -637,11 +579,11 @@ export default function Menu() {
   function notifyPaymentStaff({ tableId, orderId, total, paymentId }) {
     const payload = { tableId, orderId, total, paymentId, ts: Date.now() };
     window.dispatchEvent(
-      new CustomEvent("table:callPayment", { detail: payload }),
+      new CustomEvent("table:callPayment", { detail: payload })
     );
     localStorage.setItem(
       `signal:callPayment:${payload.ts}`,
-      JSON.stringify(payload),
+      JSON.stringify(payload)
     );
   }
   function notifyCallStaff({ tableId, orderId }) {
@@ -659,7 +601,7 @@ export default function Menu() {
     } catch {}
     localStorage.setItem(
       `signal:callStaff:${payload.ts}`,
-      JSON.stringify(payload),
+      JSON.stringify(payload)
     );
   }
   function cleanupAndExit() {
@@ -673,12 +615,8 @@ export default function Menu() {
       setSuggestedMenu([]);
       localStorage.removeItem("suggestedMenu");
       localStorage.removeItem(`personalization:${customerId}`);
-
-      // 👈 === FIX VẤN ĐỀ 2 (PHẦN 2/2) ===
       localStorage.removeItem("isPersonalized");
       localStorage.removeItem("estimatedCalories");
-      // 👈 === HẾT FIX ===
-
       sessionStorage.clear();
       const keysToRemove = ["user", "accessToken", "token", "hidden_dishes"];
       keysToRemove.forEach((k) => localStorage.removeItem(k));
@@ -770,7 +708,6 @@ export default function Menu() {
       pollTimerRef.current = null;
     };
   }, [orderId]);
-  // === HẾT LOGIC GỐC ===
 
   useEffect(() => {
     if (mode === "solo" && customerId && !suggestedMenu) {
@@ -796,13 +733,9 @@ export default function Menu() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-orange-50 to-red-50">
-      {/* === MODAL CHỌN CHẾ ĐỘ (ĐÃ SỬA) === */}
       {showModeSelection && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4">
-          {/* Backdrop mờ */}
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-
-          {/* Box nội dung */}
           <div className="bg-white shadow-xl rounded-2xl p-8 text-center max-w-md w-full relative z-10 animate-fade-in-up">
             <h2 className="text-2xl font-bold mb-4 text-neutral-900">
               Chào mừng bạn đến với nhà hàng!
@@ -816,7 +749,6 @@ export default function Menu() {
                   sessionStorage.setItem(MODE_KEY, "group");
                   setMode("group");
                   setShowModeSelection(false);
-                  // window.location.reload(); // Bỏ reload
                 }}
                 className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-semibold hover:from-amber-500 hover:to-orange-600 transition transform hover:scale-105"
               >
@@ -827,7 +759,6 @@ export default function Menu() {
                   sessionStorage.setItem(MODE_KEY, "solo");
                   setMode("solo");
                   setShowModeSelection(false);
-                  // window.location.reload(); // Bỏ reload
                 }}
                 className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-400 to-green-500 text-white font-semibold hover:from-emerald-500 hover:to-green-600 transition transform hover:scale-105"
               >
@@ -854,7 +785,6 @@ export default function Menu() {
         tableId={tableId}
         customerId={customerId}
         showPersonalizeButton={mode === "solo"}
-        // 👈 SỬA: Truyền 2 props này xuống Header
         pendingCount={pendingCount}
         preparingCount={preparingCount}
       />
@@ -863,7 +793,6 @@ export default function Menu() {
         <div className="bg-white shadow-md border-b border-neutral-200/80 animate-fade-in-up">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-              {/* Chào mừng */}
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-lg">
                   <User className="w-5 h-5 text-white" />
@@ -876,7 +805,6 @@ export default function Menu() {
                 </div>
               </div>
 
-              {/* Thông tin bàn & đơn */}
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-full px-4 py-2">
                   <Table className="w-4 h-4 text-blue-600" />
@@ -921,7 +849,7 @@ export default function Menu() {
               } catch (e) {
                 console.warn(
                   "⚠️ Không lấy được topping, đặt rỗng:",
-                  e?.message,
+                  e?.message
                 );
                 fullDish = { ...fullDish, optionalToppings: [] };
               }
@@ -1000,13 +928,8 @@ export default function Menu() {
         onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
       />
 
-      {/* ===== TÍCH HỢP AI CHAT BUBBLE MỚI (Luôn ở dưới cùng) ===== */}
       <AIChatBubble customerId={customerId} isLoggedIn={isLoggedIn} />
-      {/* ===== HẾT AI CHAT BUBBLE MỚI ===== */}
 
-      {/* === KHỐI MODAL ĐÃ SỬA GIAO DIỆN === */}
-
-      {/* Modal Thông báo chung (Success) */}
       {(isSuccessOpen ||
         isCallStaffOpen ||
         isOrderFoodOpen ||
@@ -1056,7 +979,6 @@ export default function Menu() {
         </div>
       )}
 
-      {/* Modal Thông báo chung (Error) */}
       {(isErrorOpen || isNotServedErrorOpen || isOrderFoodErrorOpen) && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
@@ -1097,7 +1019,6 @@ export default function Menu() {
         </div>
       )}
 
-      {/* Modal Cảm ơn khi thanh toán */}
       {paidSuccessOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center">

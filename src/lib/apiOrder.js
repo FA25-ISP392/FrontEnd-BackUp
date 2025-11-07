@@ -8,14 +8,15 @@ export const normalizeOrder = (o = {}) => ({
   tableId: Number(o.tableId ?? o.table?.tableId ?? 0) || null,
   orderDate: o.orderDate ?? o.createdAt ?? null,
   status: String(o.status || "PENDING").toUpperCase(),
-  total: Number(o.totalPrice ?? 0), // Modal sẽ dùng tên này
+  total: Number(o.totalPrice ?? 0),
   grandTotal: Number(o.totalPrice ?? 0),
-  paid: o.paid ?? false, // 👈 DÒNG NÀY QUAN TRỌNG ĐÃ ĐƯỢC THÊM
+  paid: o.paid ?? false,
   orderDetails: Array.isArray(o.orderDetails)
     ? o.orderDetails.map(normalizeOrderDetail)
     : [],
 });
 
+//===== Hàm tạo ra Order mới cho đơn hàng tổng =====
 export async function createOrder({ customerId, tableId }) {
   if (!customerId || isNaN(Number(customerId))) {
     throw new Error("Thiếu hoặc sai customerId.");
@@ -29,6 +30,7 @@ export async function createOrder({ customerId, tableId }) {
     tableId: Number(tableId),
     orderDate: new Date().toISOString(),
   };
+  //===== Lấy endpoint POST để tạo đơn hàng mới =====
   const res = await apiConfig.post("/orders", payload);
   return normalizeOrder(res?.result ?? res);
 }
@@ -51,21 +53,14 @@ export async function getOrderDetailsByOrderId(orderId) {
   return order.orderDetails || [];
 }
 
-//  HÀM MỚI BỊ THIẾU CỦA BẠN ĐÂY
 export async function getOrderHistoryPaged({ customerId, page = 1, size = 6 }) {
   if (!customerId) throw new Error("Thiếu customerId.");
-
-  // Gọi API GET /orders/customer/{customerId} (đã thấy trong OrdersController.java)
   const res = await apiConfig.get(`/orders/customer/${customerId}`, {
-    params: { page: Math.max(0, page - 1), size }, // Backend Java Pageable 0-indexed
+    params: { page: Math.max(0, page - 1), size },
   });
-
-  const result = res?.result ?? res; // Lấy data từ ApiResponse
+  const result = res?.result ?? res;
   const list = Array.isArray(result?.content) ? result.content : [];
-
-  // Dùng normalizeOrder (đã được cập nhật trường 'paid' ở trên)
   const data = list.map(normalizeOrder);
-
   const totalElements = result?.totalElements ?? data.length;
   const totalPages =
     result?.totalPages ?? Math.max(1, Math.ceil(totalElements / size));
@@ -75,7 +70,7 @@ export async function getOrderHistoryPaged({ customerId, page = 1, size = 6 }) {
   return {
     items: data,
     pageInfo: {
-      page: number + 1, // Trả về page 1-indexed cho frontend
+      page: number + 1,
       size: sizePage,
       totalPages,
       totalElements,

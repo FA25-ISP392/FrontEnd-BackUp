@@ -27,6 +27,7 @@ export const normalizeOrderDetail = (d = {}) => {
   };
 };
 
+//===== Hàm tạo ra OrderDetailId =====
 export async function createOrderDetail({
   orderId,
   dishId,
@@ -46,10 +47,12 @@ export async function createOrderDetail({
     })),
   };
 
+  //===== Lấy endpoint POST tạo ra OrderDetail =====
   const res = await apiConfig.post("/order-details", payload);
   return normalizeOrderDetail(res?.result ?? res);
 }
 
+//===== Hàm xử lý khi ấn Gọi Món và sinh ra orderDetailId =====
 export async function createOrderDetailsFromCart(orderId, cart = []) {
   if (!orderId) throw new Error("Thiếu orderId để ghi chi tiết đơn.");
   const results = [];
@@ -61,6 +64,7 @@ export async function createOrderDetailsFromCart(orderId, cart = []) {
       : [];
 
     for (let i = 0; i < times; i++) {
+      //===== Gọi đến hàm Tạo orderDetailId =====
       const od = await createOrderDetail({
         orderId,
         dishId: item.id ?? item.dishId,

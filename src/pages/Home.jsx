@@ -238,8 +238,8 @@ export default function Home() {
                 Đăng Nhập
               </button>
             )}
-            //===== Bắt Sự Kiện Khách Hàng Ấn Vào Nút Đặt Bàn =====
             <button
+              //===== Bắt Sự Kiện Khách Hàng Ấn Vào Nút Đặt Bàn =====
               onClick={() => open(HOME_ROUTES.BOOKING)}
               className={`transition-all duration-200 transform hover:-translate-y-0.5 active:scale-95 active:shadow-inner px-3 py-1 rounded-lg ${
                 isScrolled
@@ -257,6 +257,7 @@ export default function Home() {
             >
               Món phải thử
             </button>
+
             <UserAccountDropdown
               isLoggedIn={isLoggedIn}
               userInfo={userInfo}
