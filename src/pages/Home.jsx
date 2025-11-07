@@ -122,6 +122,7 @@ export default function Home() {
   }, [searchParams, modal]);
 
   const resetToken = searchParams.get("token");
+  //===== Hàm xử lý khi ResetPasswordSidebar mở ra =====
   const isResetOpen = Boolean(resetToken);
   const closeReset = () => {
     setSearchParams(
@@ -271,7 +272,6 @@ export default function Home() {
           </nav>
         </div>
       </header>
-
       <div className="pt-0">
         {" "}
         <HeroSection />
@@ -280,7 +280,6 @@ export default function Home() {
           <MenuSection />
         </div>
       </div>
-
       <section className="py-20 bg-gradient-to-br from-neutral-50 to-neutral-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -335,7 +334,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {modal === "booking" && (
         <div className="fixed inset-0 z-50 transition-opacity duration-300">
           <div className="absolute inset-0 bg-black/40" onClick={closeToHome} />
@@ -361,7 +359,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
       {modal === "about" && (
         <div className="fixed inset-0 z-50 transition-opacity duration-300">
           <div className="absolute inset-0 bg-black/40" onClick={closeToHome} />
@@ -409,7 +406,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
       {(modal === "login" || modal === "register") && (
         <div className="fixed inset-0 z-50 transition-opacity duration-300">
           <div className="absolute inset-0 bg-black/40" onClick={closeToHome} />
@@ -443,7 +439,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
       {modal === "forgot" && (
         <ForgotPasswordSidebar
           isOpen
@@ -451,7 +446,7 @@ export default function Home() {
           onBackToLogin={() => open(HOME_ROUTES.LOGIN)}
         />
       )}
-
+      //===== Render ra ResetPasswordSidebar =====
       {isResetOpen && (
         <ResetPasswordSidebar
           isOpen
@@ -460,7 +455,6 @@ export default function Home() {
           token={resetToken}
         />
       )}
-
       {modal === "history" && (
         <CustomerBookingHistory
           isOpen
@@ -468,15 +462,12 @@ export default function Home() {
           userInfo={userInfo}
         />
       )}
-
       {modal === "payment_history" && (
         <PaymentHistoryModal isOpen onClose={closeToHome} userInfo={userInfo} />
       )}
-
       {modal === "order_history" && (
         <OrderHistoryModal isOpen onClose={closeToHome} userInfo={userInfo} />
       )}
-
       {isBookingSuccessOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
@@ -502,7 +493,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
       {isLoginRequiredOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">

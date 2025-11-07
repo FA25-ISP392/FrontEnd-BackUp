@@ -8,7 +8,6 @@ export default function ForgotPasswordSidebar({
   onBackToLogin,
 }) {
   const [email, setEmail] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const {
     forgotPassword,
     isLoading,
@@ -18,9 +17,11 @@ export default function ForgotPasswordSidebar({
     clearSuccess,
   } = useForgotPassword();
 
+  //===== Khi người dùng ấn submit =====
   const handleSubmit = async (event) => {
     event.preventDefault();
     clearError();
+    //===== Gọi hàm xử lý trong hooks =====
     await forgotPassword(email);
   };
 

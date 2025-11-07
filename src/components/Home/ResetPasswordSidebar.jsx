@@ -16,6 +16,7 @@ export default function ResetPasswordSidebar({
   const { resetPassword, isLoading, error, success, clearError, clearSuccess } =
     useResetPassword();
 
+  //===== Gọi hàm xử lý trong hooks và gửi kèm theo token, pass mới và pass confirm =====
   const handleSubmit = async (e) => {
     e.preventDefault();
     clearError();

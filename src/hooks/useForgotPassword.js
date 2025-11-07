@@ -11,6 +11,7 @@ export function useForgotPassword() {
   const clearError = () => setError("");
   const clearSuccess = () => setSuccess(false);
 
+  //===== Hàm xử lý quên pass =====
   const forgotPassword = async (rawEmail) => {
     const email = String(rawEmail || "").trim();
     if (!email) {
@@ -27,6 +28,7 @@ export function useForgotPassword() {
     setSuccess(false);
 
     try {
+      //===== Lấy endpoint POST để tạo ra mật khẩu mới =====
       await apiConfig.post("/auth/forgot-password", null, {
         params: { email },
       });

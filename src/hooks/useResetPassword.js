@@ -12,6 +12,7 @@ export function useResetPassword() {
   const clearError = () => setError("");
   const clearSuccess = () => setSuccess(false);
 
+  //===== Hàm xử lý khi nhận được token, pass mới và pass confirm =====
   const resetPassword = async (token, newPassword, confirmPassword) => {
     const pw = String(newPassword || "");
     const cf = String(confirmPassword || "");
@@ -38,6 +39,7 @@ export function useResetPassword() {
     setSuccess(false);
 
     try {
+      //===== Lấy endpoint POST để tiến hành làm lại pass =====
       await apiConfig.post("/auth/reset-password", {
         token,
         newPassword: pw,

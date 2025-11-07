@@ -108,6 +108,7 @@ export default function LoginForm({
           </div>
           <div className="mt-2 text-left">
             <button
+              //===== Bắt sự kiện khách hàng chọn Quên Mật Khẩu =====
               onClick={onForgotPassword}
               className="text-sm text-orange-600 hover:text-orange-700 font-medium transition-all duration-300 hover:underline"
             >
