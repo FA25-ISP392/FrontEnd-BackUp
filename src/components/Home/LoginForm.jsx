@@ -34,15 +34,19 @@ export default function LoginForm({
     });
   };
 
+  //===== Hàm xử lý Login Google =====
   const handleGoogleLogin = () => {
     if (isGoogleLoading) return;
     setGoogleLoading(true);
     try {
+      //===== Đoc đường dẫn =====
       const base = String(apiConfig?.defaults?.baseURL || "");
+      //===== Tạo URL đầy đủ rồi gửi về phía BE =====
       const authUrl = new URL(
         `${base.replace(/\/$/, "")}/oauth2/authorization/google`,
         window.location.origin
       ).toString();
+      //===== Chuyển hướng người dùng đến BE và BE chuyển hướng qua phía Google =====
       window.location.href = authUrl;
     } catch (e) {
       console.error(e);
@@ -134,6 +138,7 @@ export default function LoginForm({
         <div className="mt-6">
           <button
             type="button"
+            //===== Bắt sự kiện Khách Hàng ấn vào nút Đăng Nhập bằng Google =====
             onClick={handleGoogleLogin}
             disabled={isGoogleLoading}
             className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all duration-300"

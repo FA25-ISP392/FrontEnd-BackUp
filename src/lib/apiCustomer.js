@@ -3,8 +3,8 @@ import apiConfig from "../api/apiConfig";
 const compact = (obj) =>
   Object.fromEntries(
     Object.entries(obj).filter(
-      ([_, value]) => value !== "" && value !== null && value !== undefined,
-    ),
+      ([_, value]) => value !== "" && value !== null && value !== undefined
+    )
   );
 
 export const normalizeCustomer = (cus = {}) => ({
@@ -17,10 +17,12 @@ export const normalizeCustomer = (cus = {}) => ({
   role: cus.role || "CUSTOMER",
 });
 
+//===== Lấy ra danh sách thông tin khách hàng trong DB =====
 export async function findCustomerByUsername(username) {
   if (!username) return null;
   try {
     const encodedUsername = encodeURIComponent(username);
+    //===== Lấy endpoint GET để lấy ra danh sách =====
     const res = await apiConfig.get(`/customer/by-username/${encodedUsername}`);
     const data = res?.result ?? res;
     if (data && (data.customerId || data.id)) {
@@ -28,7 +30,7 @@ export async function findCustomerByUsername(username) {
     } else {
       console.warn(
         "API returned success but no customer data for username:",
-        username,
+        username
       );
       return null;
     }
@@ -82,15 +84,19 @@ export async function changeCustomerPassword(customerId, newPassword) {
   return updateCustomer(customerId, { password: newPassword });
 }
 
+//===== Kiểm trang thông tin khách hàng trong DB =====
 export async function ensureCustomerForUser({
   username,
   fullName,
   email,
   phone,
 }) {
+  //===== Gọi hàm để lấy danh sách thông tin khách hàng trong DB =====
   const existed = await findCustomerByUsername(username);
   if (existed?.customerId) return existed;
   const payload = { username, fullName, email, phone };
+  //===== Nếu tài khoản đó chưa có thông tin ĐÃ đăng nhập thì sẽ tạo mới =====
+  //===== Lấy endpoint POST tạo mới tài khoản =====
   const res = await apiConfig.post("/customer", payload);
   const data = res?.result ?? res;
   return normalizeCustomer(data);
@@ -102,10 +108,7 @@ export async function updateCustomerPersonalization(customerId, form = {}) {
   const body = compact({
     height: form.height != null ? Number(form.height) : undefined,
     weight: form.weight != null ? Number(form.weight) : undefined,
-    // FIX: Đọc form.sex (true/false)
-    // Cần kiểm tra !== undefined để không loại bỏ giá trị false
     sex: form.sex !== undefined ? Boolean(form.sex) : undefined,
-    // FIX: Đọc form.portion (integer)
     portion: form.portion != null ? Number(form.portion) : undefined,
   });
 
