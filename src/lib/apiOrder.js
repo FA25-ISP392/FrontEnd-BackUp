@@ -35,8 +35,10 @@ export async function createOrder({ customerId, tableId }) {
   return normalizeOrder(res?.result ?? res);
 }
 
+//===== Hàm xử lý lấy ra các món theo OrderId =====
 export async function getOrderById(orderId) {
   if (!orderId) throw new Error("Thiếu orderId.");
+  //===== Lấy endpoint GET để lấy ra danh sách các món =====
   const res = await apiConfig.get(`/orders/${orderId}`);
   const raw = res?.result ?? res;
   const order = normalizeOrder(raw);
@@ -48,7 +50,9 @@ export async function getOrderById(orderId) {
   return { ...order, orderDetails: normalizedDetails };
 }
 
+//===== Hàm lấy ra tất cả các món theo OrderId tổng =====
 export async function getOrderDetailsByOrderId(orderId) {
+  //===== Gọi hàm để lấy ra theo OrderId =====
   const order = await getOrderById(orderId);
   return order.orderDetails || [];
 }

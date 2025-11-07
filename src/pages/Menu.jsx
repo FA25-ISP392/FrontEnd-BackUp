@@ -297,6 +297,8 @@ export default function Menu() {
   };
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  //===== Hàm lấy ra tất cả các món ứng theo từng Status =====
   async function fetchOrderDetailsFromOrder() {
     if (!orderId) return;
     try {
@@ -304,9 +306,13 @@ export default function Menu() {
       setOrderDetails(data);
     } catch (err) {}
   }
+
+  //===== Hàm lấy ra trạng thái món ứng theo món khách gọi =====
   useEffect(() => {
     if (isStatusOpen) fetchOrderDetailsFromOrder();
   }, [isStatusOpen, orderId]);
+
+  //===== Hàm laasty ra trạng thái món theo mỗi 5 giây =====
   useEffect(() => {
     let timer;
     if (isStatusOpen) {
