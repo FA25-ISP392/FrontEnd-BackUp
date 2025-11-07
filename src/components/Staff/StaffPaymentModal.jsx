@@ -140,12 +140,6 @@ export default function StaffPaymentModal({ open, onClose, table }) {
     };
   }, [open, paymentId, onClose]);
 
-  function openCashForm() {
-    setView("cash");
-    setCashError("");
-    setCashInput((v) => (v ? v : String(displayTotal || "")));
-  }
-
   function goBack() {
     setView("default");
     setCashError("");
@@ -155,6 +149,7 @@ export default function StaffPaymentModal({ open, onClose, table }) {
   const change = Math.max(0, cashReceived - Number(displayTotal || 0));
   const notEnough = cashReceived < Number(displayTotal || 0);
 
+  //===== Hàm gọi khi đã xác nhận Thanh Toán = Tiền Mặt =====
   async function confirmCashPayment() {
     if (!orderId) return;
     if (notEnough) {
@@ -164,6 +159,7 @@ export default function StaffPaymentModal({ open, onClose, table }) {
     setLoading(true);
     setCashError("");
     try {
+      //===== Gọi hàm tạo ra Payment mới =====
       await createPayment({ orderId, method: "CASH" });
       onClose?.({ paid: true, method: "CASH" });
     } catch (e) {
@@ -174,6 +170,13 @@ export default function StaffPaymentModal({ open, onClose, table }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  //===== Hàm xử lý khi Staff chọn Thanh Toán = Tiền Mặt =====
+  function openCashForm() {
+    setView("cash");
+    setCashError("");
+    setCashInput((v) => (v ? v : String(displayTotal || "")));
   }
 
   //===== Hàm xử lý khi Staff chọn Thanh Toán = QR =====
