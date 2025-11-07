@@ -226,7 +226,6 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
                                   }`}
                                 title="Hủy đơn đặt bàn"
                               >
-                                //===== Hủy Đơn =====
                                 <Trash2 className="w-4 h-4" />
                                 Hủy đơn
                               </button>
