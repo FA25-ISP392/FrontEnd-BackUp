@@ -77,9 +77,11 @@ export async function createOrderDetailsFromCart(orderId, cart = []) {
   return results;
 }
 
+//===== Hàm xử lý việc lấy ra món ứng theo từng Status =====
 export async function getOrderDetailsByStatus(status) {
   if (!status) throw new Error("Cần cung cấp trạng thái (status)");
   const formattedStatus = String(status).toUpperCase();
+  //===== Lấy endpoint GET để lấy ra danh sách món theo từng status =====
   const res = await apiConfig.get(`/order-details/status/${formattedStatus}`);
   if (Array.isArray(res)) {
     return res.map(normalizeOrderDetail);
@@ -90,6 +92,7 @@ export async function getOrderDetailsByStatus(status) {
   return [];
 }
 
+//===== Hàm xử lý việc thay đổi Status món ăn cho Bếp =====
 export async function updateOrderDetailStatus(
   orderDetailId,
   itemToUpdate,
@@ -103,6 +106,7 @@ export async function updateOrderDetailStatus(
     orderDetailId: Number(orderDetailId),
     status: formattedStatus,
   };
+  //===== Lấy endpoint PUT để thay đổi Status từng món =====
   const res = await apiConfig.put(
     `/order-details/${Number(orderDetailId)}`,
     payload

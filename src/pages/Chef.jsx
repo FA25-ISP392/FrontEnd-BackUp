@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom"; // ✅ đồng bộ section theo URL
+import { useLocation } from "react-router-dom";
 import ChefSidebar from "../components/Chef/ChefSidebar";
 import OrdersManagement from "../components/Chef/OrdersManagement";
 import DishQuantityManagement from "../components/Chef/DishQuantityManagement";
@@ -14,12 +14,10 @@ import {
   updateOrderDetailStatus,
 } from "../lib/apiOrderDetail";
 
-// Map URL -> section
 function resolveSectionFromPath(pathname = "") {
   if (pathname.includes("/chef/lichsudonmon")) return "orderHistory";
   if (pathname.includes("/chef/kehoachtrongngay")) return "dailyPlan";
   if (pathname.includes("/chef/montrongngay")) return "dailyDishes";
-  // /chef/quanlydonmon và còn lại
   return "overview";
 }
 
@@ -30,10 +28,7 @@ export default function Chef() {
   const [activeSection, setActiveSection] = useState(
     resolveSectionFromPath(location.pathname)
   );
-
-  // tránh ReferenceError cho phần DishQuantityManagement
   const [dishes, setDishes] = useState([]);
-
   const [dishRequests, setDishRequests] = useState([]);
   const [pending, setPending] = useState([]);
   const [preparing, setPreparing] = useState([]);
@@ -47,12 +42,10 @@ export default function Chef() {
   const [isErrorOpen, setIsErrorOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Đồng bộ section khi URL thay đổi
   useEffect(() => {
     setActiveSection(resolveSectionFromPath(location.pathname));
   }, [location.pathname]);
 
-  // Auto-hide success modal
   useEffect(() => {
     let timer;
     if (isSuccessOpen) {
@@ -64,7 +57,6 @@ export default function Chef() {
     return () => clearTimeout(timer);
   }, [isSuccessOpen]);
 
-  // Auto-hide error modal
   useEffect(() => {
     let timer;
     if (isErrorOpen) {
@@ -76,7 +68,6 @@ export default function Chef() {
     return () => clearTimeout(timer);
   }, [isErrorOpen]);
 
-  // Helpers hiển thị modal
   const showSuccess = (message) => {
     setSuccessMessage(message);
     setIsSuccessOpen(true);
@@ -99,10 +90,11 @@ export default function Chef() {
     setChefName(name || "Chef");
   }, []);
 
-  // Tải dữ liệu đơn món
+  //===== Tải dữ liệu đơn món =====
   const fetchAllOrders = async () => {
     setError(null);
     try {
+      //===== Gọi ra hàm để lấy các món ứng theo Status =====
       const [pendingData, preparingData, doneData, servedData] =
         await Promise.all([
           getOrderDetailsByStatus("PENDING"),
@@ -141,13 +133,14 @@ export default function Chef() {
     }
   };
 
+  //===== Lấy ra tất cả Order với Status = PENDING cứ 10 giây 1 lần =====
   useEffect(() => {
     fetchAllOrders();
     const intervalId = setInterval(fetchAllOrders, 10000);
     return () => clearInterval(intervalId);
   }, []);
 
-  // Cập nhật trạng thái món
+  //===== Cập nhật trạng thái món =====
   const handleUpdateStatus = async (orderDetailId, newStatus) => {
     try {
       const itemToMove =
@@ -178,7 +171,6 @@ export default function Chef() {
     }
   };
 
-  // Demo gửi yêu cầu số lượng món (giữ nguyên cách bạn đang dùng)
   const submitDishRequest = (request) => {
     const newRequest = {
       ...request,
@@ -189,7 +181,6 @@ export default function Chef() {
     setDishRequests((prev) => [...prev, newRequest]);
   };
 
-  // Render theo section
   const renderContent = () => {
     switch (activeSection) {
       case "overview":
