@@ -29,15 +29,11 @@ export default function StaffPage({ section = "tableLayout" }) {
   const [selectedTable, setSelectedTable] = useState(null);
   const [tables, setTables] = useState([]);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-
-  // ServeBoard state
   const [readyOrders, setReadyOrders] = useState([]);
   const [servedOrders, setServedOrders] = useState([]);
   const [historicalServed, setHistoricalServed] = useState([]);
   const [serveLoading, setServeLoading] = useState(false);
   const [serveError, setServeError] = useState("");
-
-  // Noti modals
   const [showSuccessModal, setShowSuccessModal] = useState("");
   const [showErrorModal, setShowErrorModal] = useState("");
 
@@ -286,6 +282,7 @@ export default function StaffPage({ section = "tableLayout" }) {
     };
   }, []);
 
+  //===== Hàm để xử lý lấy ra tất cả các món có Status = DONE & SERVED =====
   async function loadServeBoards() {
     try {
       setServeError("");
@@ -319,6 +316,7 @@ export default function StaffPage({ section = "tableLayout" }) {
     }
   }
 
+  //===== Lấy ra các món Stauts là DONE để hiển thị bên trang StaffPage =====
   useEffect(() => {
     if (activeSection === "serveBoard" || activeSection === "serveHistory") {
       loadServeBoards();
@@ -339,6 +337,7 @@ export default function StaffPage({ section = "tableLayout" }) {
     }
   }, [showErrorModal]);
 
+  //===== Hàm đổi Status món sang Served (Đã Phục Vụ) =====
   const handleServe = async (od) => {
     try {
       await updateOrderDetailStatus(od.orderDetailId, od, "SERVED");
