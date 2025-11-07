@@ -126,6 +126,7 @@ export default function StaffTableDetailModal({
 
           <div className="mt-6 flex gap-3 p-4 border-t border-white/10">
             <button
+              //===== Bắt sự kiên nhân viên ấn xử lý Thanh Toán =====
               onClick={onOpenPayment}
               className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2 font-medium"
             >

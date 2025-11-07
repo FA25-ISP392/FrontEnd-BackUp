@@ -122,8 +122,10 @@ export async function updateCustomerPersonalization(customerId, form = {}) {
   return res?.result ?? res;
 }
 
+//===== Lấy ra KH =====
 export async function getCustomerDetail(customerId) {
   if (!customerId) throw new Error("Thiếu customerId");
+  //===== Lấy endpoint để lấy ra KH =====
   const res = await apiConfig.get(`/customer/${customerId}`);
   return res?.result ?? res;
 }

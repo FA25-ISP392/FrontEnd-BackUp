@@ -116,6 +116,7 @@ export default function StaffPage({ section = "tableLayout" }) {
 
   useEffect(() => {
     let timer;
+    //===== Hàm liên tục rà soát việc KH gọi Thanh Toán cứ 5 giây 1 lần  =====
     async function hydratePayments() {
       try {
         const pays = await getPayments();
@@ -164,8 +165,10 @@ export default function StaffPage({ section = "tableLayout" }) {
   }, []);
 
   useEffect(() => {
+    //===== Hàm xử lý việc ghi nhận thông báo khách gọi Thanh Toán =====
     function applyCallPayment({ tableId, orderId, total, paymentId } = {}) {
-      if (!tableId || !paymentId) return;
+      if (!tableId || !paymentId) return; //Tìm đúng bàn
+      //===== Tìm đúng bàn mà khách gọi Thanh Toán, hiển thị thông báo =====
       setTables((prev) =>
         prev.map((t) =>
           String(t.id) === String(tableId)
@@ -183,9 +186,11 @@ export default function StaffPage({ section = "tableLayout" }) {
       applyCallPayment(e.detail);
     }
 
+    //===== Lấy ra key mà KH đã gửi lưu trong localStorage =====
     function onStorage(ev) {
       if (!ev.key?.startsWith("signal:callPayment:")) return;
       try {
+        //===== Gọi hàm để tiến hành xử lý =====
         const payload = JSON.parse(ev.newValue || "{}");
         applyCallPayment(payload);
         localStorage.removeItem(ev.key);

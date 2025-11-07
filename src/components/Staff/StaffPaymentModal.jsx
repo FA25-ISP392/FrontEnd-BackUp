@@ -29,6 +29,7 @@ export default function StaffPaymentModal({ open, onClose, table }) {
   );
   const paymentId = useMemo(() => table?.pendingPayment?.id, [table]);
 
+  //===== Hàm xử lý khi ấn Xử Lý Thanh Toán =====
   useEffect(() => {
     if (!open) {
       setQr("");
@@ -45,10 +46,11 @@ export default function StaffPaymentModal({ open, onClose, table }) {
       if (!orderId) return;
       setLoading(true);
       try {
+        //===== Gọi ra hàm để lấy những món thuộc orderId
         const o = await getOrderById(orderId);
-
         if (!o.customerName && o.customerId) {
           try {
+            //===== Gọi ra hàm để lấy KH =====
             const cus = await getCustomerDetail(o.customerId);
             o.customerName = cus?.fullName || cus?.username || cus?.email || "";
           } catch {
@@ -64,9 +66,7 @@ export default function StaffPaymentModal({ open, onClose, table }) {
             } catch {}
           }
         }
-
         setOrder(o);
-
         const details =
           Array.isArray(o?.orderDetails) && o.orderDetails.length
             ? o.orderDetails
