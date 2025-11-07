@@ -37,6 +37,7 @@ export function parseNumber(s) {
   return Number.isFinite(num) ? num : 0;
 }
 
+//===== Nếu tìm thấy đúng các bàn có khách tới gọi món sẽ render màu sắc =====
 export function getTableStatusBadge(status) {
   switch (status) {
     case "serving":

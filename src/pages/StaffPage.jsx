@@ -92,6 +92,7 @@ export default function StaffPage({ section = "tableLayout" }) {
         })
       );
 
+      //===== Lấy ra trạng thái bàn ứng với việc Đặt Bàn và có Khách =====
       setTables((prev) => {
         const mapPrev = new Map(prev.map((t) => [String(t.id), t]));
         return hydrated.map((t) => {
@@ -177,9 +178,11 @@ export default function StaffPage({ section = "tableLayout" }) {
         )
       );
     }
+
     function handleCallPayment(e) {
       applyCallPayment(e.detail);
     }
+
     function onStorage(ev) {
       if (!ev.key?.startsWith("signal:callPayment:")) return;
       try {
@@ -252,6 +255,7 @@ export default function StaffPage({ section = "tableLayout" }) {
         })
       );
     }
+
     function scanLocalSignals() {
       try {
         for (let i = 0; i < localStorage.length; i++) {
