@@ -425,6 +425,7 @@ export default function Menu() {
     });
   };
 
+  //===== Hàm xử lý sửa món trong OrderStatusSidebar =====
   const handleOpenEdit = (detail) => {
     const st = String(detail?.status || "").toLowerCase();
     if (st !== "pending") return;
@@ -434,10 +435,12 @@ export default function Menu() {
     setIsEditOpen(true);
   };
 
+  //===== Hàm khi tiến hành sửa món =====
   const handleEdited = async () => {
     if (!orderId || !editingDetail) return;
 
     try {
+      //===== Gọi hàm xử lý sửa món =====
       const newData = await getOrderDetailsByOrderId(orderId);
 
       useEffect(() => {
