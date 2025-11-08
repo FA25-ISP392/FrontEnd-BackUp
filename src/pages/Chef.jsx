@@ -162,6 +162,7 @@ export default function Chef() {
         setReadyToday((prev) => [updatedItem, ...prev]);
       }
 
+      //===== Gọi hàm update status món =====
       await updateOrderDetailStatus(orderDetailId, itemToMove, newStatus);
     } catch (err) {
       console.error(`Lỗi cập nhật món ${orderDetailId}:`, err);
