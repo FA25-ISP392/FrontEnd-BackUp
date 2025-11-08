@@ -48,7 +48,7 @@ export default function VerifyEmail() {
       )}
       {status === "error" && (
         <p className="text-red-600 font-semibold">
-          ❌ Liên kết không hợp lệ hoặc đã hết hạn.
+          Liên kết không hợp lệ hoặc đã hết hạn.
         </p>
       )}
     </div>
