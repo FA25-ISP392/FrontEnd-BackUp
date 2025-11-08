@@ -155,6 +155,7 @@ export async function apiLogin({ username, password }) {
 
 //===== Gọi Hàm Này Để Tiến Hành lưu JWT và giải mã Token
 export async function apiLoginCustomer({ username, password }) {
+  //===== Lấy endpoint POST để tiến hành đăng nhập =====
   const data = await apiConfig.post("/auth/token", { username, password });
   const token =
     data?.token || data?.accessToken || data?.id_token || data?.result?.token;

@@ -115,10 +115,13 @@ export default function CustomerBookingHistory({ isOpen, onClose, userInfo }) {
     setConfirmItem(booking);
     setConfirmOpen(true);
   };
+
+  //===== Hàm xử lý hủy đơn đặt bàn =====
   const doCancel = async () => {
     if (!confirmItem?.id) return;
     try {
       setConfirmBusy(true);
+      //===== Gọi hàm xử lý việc hủy đơn =====
       await cancelBooking(confirmItem.id);
       setConfirmOpen(false);
       setConfirmItem(null);

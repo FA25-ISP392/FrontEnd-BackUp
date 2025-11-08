@@ -129,6 +129,7 @@ export async function approveBookingWithTable(bookingId, tableId) {
   }
 }
 
+//===== Hàm xử lý các đơn đặt theo bàn =====
 export async function listBookingsByTableDate(tableId, date) {
   if (!tableId) throw new Error("Thiếu tableId.");
   const dayStr = new Date(date || Date.now()).toISOString().slice(0, 10);
@@ -161,6 +162,7 @@ export async function listBookingsByTableDate(tableId, date) {
     };
   };
   try {
+    //===== Lấy endpoint GET để lấy danh sách =====
     const res = await apiConfig.get("/booking/by_tableDate", {
       params: { tableId: Number(tableId), date: dayStr },
     });

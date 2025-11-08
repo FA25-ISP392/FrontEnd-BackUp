@@ -161,6 +161,7 @@ export default function Home() {
     setIsLoginRequiredOpen(true);
   };
 
+  //===== Hàm xử lý khi đăng nhập xong =====
   const handleLoginSubmit = () => {
     const tableId = sessionStorage.getItem("currentTableId");
     try {

@@ -22,7 +22,7 @@ const ALL_TABLES = [
 
 export default function BookingForm({
   onSubmit,
-  isLoggedIn, //state này được truyền từ Home.jxs vào (khi chưa đăng nhập = false)
+  isLoggedIn, //state này được truyền từ Home.jsx vào (khi chưa đăng nhập = false)
   onLoginRequest,
   initialData,
 }) {
@@ -154,6 +154,7 @@ export default function BookingForm({
     //==== Gọi hàm khởi tạo đơn Đặt Bàn =====
     try {
       setLoading(true);
+      //===== Gọi hàm xử lý tạo đơn đặt bàn =====
       const res = await createBooking({
         date: form.date,
         time: form.time,

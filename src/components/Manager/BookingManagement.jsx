@@ -32,6 +32,7 @@ export default function BookingManagement({
   const [bookingToCancel, setBookingToCancel] = useState(null);
   const [isCancelling, setIsCancelling] = useState(false);
 
+  //===== Lấy ra danh sách đặt bàn ứng theo từng bàn =====
   async function fetchTableBookings(tableId, dateStr) {
     setLoadingTableBookings(true);
     try {

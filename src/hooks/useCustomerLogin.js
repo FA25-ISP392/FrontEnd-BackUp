@@ -21,6 +21,7 @@ export function useCustomerLogin() {
 
       setLoading(true);
       try {
+        //===== Gọi hàm xử lý đăng nhập =====
         const { token, user } = await apiLoginCustomer({
           username: u,
           password: p,
