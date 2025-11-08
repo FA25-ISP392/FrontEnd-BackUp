@@ -280,7 +280,7 @@ export default function Menu() {
   //===== Hàm xử lý khi ấn Gọi Món =====
   const handleOrderFood = async () => {
     try {
-      if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
+      if (!orderId) throw new Error("Chưa có mã đơn.");
       if (!cart.length) throw new Error("Giỏ hàng đang trống.");
       //===== Gọi hàm để tạo ra OrderDetail =====
       await createOrderDetailsFromCart(orderId, cart);
