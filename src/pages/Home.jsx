@@ -171,7 +171,8 @@ export default function Home() {
     } catch (err) {}
     if (tableId) {
       sessionStorage.setItem("customerTableId", tableId);
-      navigate("/menu");
+      // navigate("/menu");
+      navigate("/menu", { replace: true });
       return;
     }
 

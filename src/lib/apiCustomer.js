@@ -3,8 +3,8 @@ import apiConfig from "../api/apiConfig";
 const compact = (obj) =>
   Object.fromEntries(
     Object.entries(obj).filter(
-      ([_, value]) => value !== "" && value !== null && value !== undefined,
-    ),
+      ([_, value]) => value !== "" && value !== null && value !== undefined
+    )
   );
 
 export const normalizeCustomer = (cus = {}) => ({
@@ -28,7 +28,7 @@ export async function findCustomerByUsername(username) {
     } else {
       console.warn(
         "API returned success but no customer data for username:",
-        username,
+        username
       );
       return null;
     }

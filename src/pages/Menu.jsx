@@ -111,11 +111,11 @@ export default function Menu() {
   // const [estimatedCalories, setEstimatedCalories] = useState(null); // DÒNG GỐC
   const [isPersonalized, setIsPersonalized] = usePersistedState(
     "isPersonalized",
-    false,
+    false
   );
   const [estimatedCalories, setEstimatedCalories] = usePersistedState(
     "estimatedCalories",
-    null,
+    null
   );
   // 👈 === HẾT FIX ===
 
@@ -124,7 +124,7 @@ export default function Menu() {
   const [cart, setCart] = usePersistedState("shoppingCart", []);
   const [caloriesConsumed, setCaloriesConsumed] = usePersistedState(
     "caloriesConsumed",
-    0,
+    0
   );
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [orderDetails, setOrderDetails] = useState([]);
@@ -149,6 +149,7 @@ export default function Menu() {
   const [successMessage, setSuccessMessage] = useState("");
   const [isErrorOpen, setIsErrorOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isTableInUseOpen, setIsTableInUseOpen] = useState(false);
   const [confirmState, setConfirmState] = useState({
     open: false,
     title: "",
@@ -212,6 +213,26 @@ export default function Menu() {
           setOrderId(String(order.orderId));
         }
       } catch (err) {
+        // sessionStorage.removeItem(idemKey);
+        const rawMsg =
+          err?.response?.data?.message ||
+          err?.data?.message ||
+          err?.message ||
+          "";
+        const code = err?.response?.data?.code || err?.data?.code;
+        const inUse =
+          code === 3004 ||
+          /already\s*being\s*served|table.*(in|is)\s*use/i.test(rawMsg);
+        if (inUse) {
+          try {
+            clearTableSession();
+            sessionStorage.removeItem(idemKey);
+            setOrderId(null);
+          } catch {}
+          setIsTableInUseOpen(true); // 👈 mở modal giao diện
+          return;
+        }
+        // lỗi khác
         sessionStorage.removeItem(idemKey);
       }
     })();
@@ -242,28 +263,28 @@ export default function Menu() {
     })();
   }, []);
   const filteredDishes = menuDishes.filter(
-    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name),
+    (dish) => dish.isAvailable && !hiddenNames.includes(dish.name)
   );
   const { personalizationForm, setPersonalizationForm, personalizedDishes } =
     useMenuPersonalization(filteredDishes);
   const addToCart = (item) => {
     const noteKey = item.notes || "";
     const existingItem = cart.find(
-      (it) => it.id === item.id && (it.notes || "") === noteKey,
+      (it) => it.id === item.id && (it.notes || "") === noteKey
     );
     if (existingItem) {
       setCart((prev) =>
         prev.map((it) =>
           it.id === item.id && (it.notes || "") === noteKey
             ? { ...it, quantity: it.quantity + (item.quantity ?? 1) }
-            : it,
-        ),
+            : it
+        )
       );
     } else {
       setCart((prev) => [...prev, { ...item }]);
     }
     setCaloriesConsumed(
-      (prev) => prev + (item.totalCalories || item.calories || 0),
+      (prev) => prev + (item.totalCalories || item.calories || 0)
     );
   };
   const updateCartQuantity = (itemId, newQuantity) => {
@@ -276,11 +297,11 @@ export default function Menu() {
       const diff = newQuantity - item.quantity;
       setCart((prev) =>
         prev.map((it) =>
-          it.id === itemId ? { ...it, quantity: newQuantity } : it,
-        ),
+          it.id === itemId ? { ...it, quantity: newQuantity } : it
+        )
       );
       setCaloriesConsumed(
-        (prev) => prev + diff * (item.totalCalories || item.calories),
+        (prev) => prev + diff * (item.totalCalories || item.calories)
       );
     }
   };
@@ -289,7 +310,7 @@ export default function Menu() {
     if (item) {
       setCart((prev) => prev.filter((it) => it.id !== itemId));
       setCaloriesConsumed(
-        (prev) => prev - (item.totalCalories || item.calories) * item.quantity,
+        (prev) => prev - (item.totalCalories || item.calories) * item.quantity
       );
     }
   };
@@ -304,7 +325,7 @@ export default function Menu() {
       setIsOrderFoodOpen(true);
     } catch (err) {
       setOrderFoodErrorMessage(
-        err?.message || "Gọi món thất bại. Vui lòng thử lại.",
+        err?.message || "Gọi món thất bại. Vui lòng thử lại."
       );
       setIsOrderFoodErrorOpen(true);
     }
@@ -500,7 +521,7 @@ export default function Menu() {
 
       // 2. Tìm món vừa được sửa trong dữ liệu mới
       const editedItem = newData.find(
-        (item) => item.orderDetailId === editingDetail.orderDetailId,
+        (item) => item.orderDetailId === editingDetail.orderDetailId
       );
 
       // 3. Tính calo MỚI
@@ -524,6 +545,13 @@ export default function Menu() {
   };
   // 👈 === HẾT FIX MỚI ===
 
+  function clearTableSession() {
+    try {
+      const keys = ["currentTableId", "customerTableId", "paymentId", MODE_KEY];
+      keys.forEach((k) => sessionStorage.removeItem(k));
+    } catch {}
+  }
+
   const handleOpenPayment = async () => {
     try {
       if (!orderId) throw new Error("Chưa có mã đơn (orderId).");
@@ -545,7 +573,7 @@ export default function Menu() {
       }
     } catch (err) {
       setErrorMessage(
-        err?.message || "Không mở được thanh toán. Vui lòng thử lại.",
+        err?.message || "Không mở được thanh toán. Vui lòng thử lại."
       );
       setIsErrorOpen(true);
     }
@@ -582,7 +610,7 @@ export default function Menu() {
       setSuggestedMenu([]);
       await updateCustomerPersonalization(customerId, customerUpdatePayload);
       const suggestionsResponse = await getSuggestedMenu(
-        suggestionCreationPayload,
+        suggestionCreationPayload
       );
 
       const flatList = Array.isArray(suggestionsResponse)
@@ -590,7 +618,7 @@ export default function Menu() {
             [r.drink, r.salad, r.mainCourse, r.dessert]
               .filter(Boolean)
               // Chuẩn hóa món ăn ngay tại đây
-              .map((dish) => normalizeDish(dish)),
+              .map((dish) => normalizeDish(dish))
           )
         : [];
 
@@ -606,14 +634,14 @@ export default function Menu() {
       // ✨===============================✨
 
       setSuccessMessage(
-        "Cá nhân hóa thành công! Thực đơn gợi ý mới đã được tạo.",
+        "Cá nhân hóa thành công! Thực đơn gợi ý mới đã được tạo."
       );
       setIsSuccessOpen(true);
     } catch (err) {
       console.error("❌ Lỗi cá nhân hóa:", err);
       setErrorMessage(
         err?.response?.data?.message ||
-          "Lỗi khi cập nhật hồ sơ hoặc lấy thực đơn gợi ý.",
+          "Lỗi khi cập nhật hồ sơ hoặc lấy thực đơn gợi ý."
       );
       setIsErrorOpen(true);
     }
@@ -637,11 +665,11 @@ export default function Menu() {
   function notifyPaymentStaff({ tableId, orderId, total, paymentId }) {
     const payload = { tableId, orderId, total, paymentId, ts: Date.now() };
     window.dispatchEvent(
-      new CustomEvent("table:callPayment", { detail: payload }),
+      new CustomEvent("table:callPayment", { detail: payload })
     );
     localStorage.setItem(
       `signal:callPayment:${payload.ts}`,
-      JSON.stringify(payload),
+      JSON.stringify(payload)
     );
   }
   function notifyCallStaff({ tableId, orderId }) {
@@ -659,7 +687,7 @@ export default function Menu() {
     } catch {}
     localStorage.setItem(
       `signal:callStaff:${payload.ts}`,
-      JSON.stringify(payload),
+      JSON.stringify(payload)
     );
   }
   function cleanupAndExit() {
@@ -679,7 +707,8 @@ export default function Menu() {
       localStorage.removeItem("estimatedCalories");
       // 👈 === HẾT FIX ===
 
-      sessionStorage.clear();
+      // sessionStorage.clear();
+      clearTableSession();
       const keysToRemove = ["user", "accessToken", "token", "hidden_dishes"];
       keysToRemove.forEach((k) => localStorage.removeItem(k));
       Object.keys(localStorage).forEach((k) => {
@@ -921,7 +950,7 @@ export default function Menu() {
               } catch (e) {
                 console.warn(
                   "⚠️ Không lấy được topping, đặt rỗng:",
-                  e?.message,
+                  e?.message
                 );
                 fullDish = { ...fullDish, optionalToppings: [] };
               }
@@ -1000,13 +1029,8 @@ export default function Menu() {
         onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
       />
 
-      {/* ===== TÍCH HỢP AI CHAT BUBBLE MỚI (Luôn ở dưới cùng) ===== */}
       <AIChatBubble customerId={customerId} isLoggedIn={isLoggedIn} />
-      {/* ===== HẾT AI CHAT BUBBLE MỚI ===== */}
 
-      {/* === KHỐI MODAL ĐÃ SỬA GIAO DIỆN === */}
-
-      {/* Modal Thông báo chung (Success) */}
       {(isSuccessOpen ||
         isCallStaffOpen ||
         isOrderFoodOpen ||
@@ -1093,6 +1117,33 @@ export default function Menu() {
                 Đã hiểu
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Bàn đang được phục vụ (table in use) */}
+      {isTableInUseOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="h-8 w-8 text-orange-600" />
+            </div>
+            <h3 className="text-xl font-bold text-neutral-900 mb-2">
+              Bàn đang được phục vụ
+            </h3>
+            <p className="text-neutral-600 mb-6">
+              Bàn này hiện đang được khách khác sử dụng. Vui lòng chọn bàn khác
+              hoặc liên hệ nhân viên để hỗ trợ.
+            </p>
+            <button
+              onClick={() => {
+                setIsTableInUseOpen(false);
+                window.location.replace("/home");
+              }}
+              className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-medium"
+            >
+              Quay về trang chính
+            </button>
           </div>
         </div>
       )}
