@@ -349,6 +349,7 @@ export default function StaffPage({ section = "tableLayout" }) {
   //===== Hàm đổi Status món sang Served (Đã Phục Vụ) =====
   const handleServe = async (od) => {
     try {
+      //===== Gọi hàm để xử lý update status món ăn =====
       await updateOrderDetailStatus(od.orderDetailId, od, "SERVED");
       loadServeBoards();
     } catch (e) {
