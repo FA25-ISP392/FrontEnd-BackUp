@@ -55,7 +55,8 @@ export default function ToppingManagement({
   };
 
   const handleDelete = (id) => {
-    if (!window.confirm("Bạn có chắc muốn xoá topping này không?")) return;
+    if (!window.confirm("Bạn có chắc muốn xoá thành phần món ăn này không?"))
+      return;
     setToppings((prev) => prev.filter((t) => t.id !== id));
   };
 
@@ -68,10 +69,10 @@ export default function ToppingManagement({
           </div>
           <div>
             <h3 className="text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-              Quản Lý Topping
+              Quản Lý Thành Phần Món Ăn
             </h3>
             <p className="text-sm text-indigo-200">
-              Quản lý các loại topping cho món ăn
+              Quản lý các loại thành phần món ăn
             </p>
           </div>
         </div>
@@ -82,7 +83,7 @@ export default function ToppingManagement({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Tìm topping theo tên..."
+              placeholder="Tìm thành phần món ăn theo tên..."
               className="pl-9 pr-8 py-2 rounded-xl border border-white/30 bg-white/10 text-white placeholder-indigo-300 focus:ring-2 focus:ring-emerald-400 outline-none text-sm w-64"
             />
             <Search
@@ -106,7 +107,7 @@ export default function ToppingManagement({
             className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 font-medium flex items-center gap-2 transform hover:scale-105"
           >
             <Plus className="h-4 w-4" />
-            Thêm Topping
+            Thêm Thành Phần Món Ăn
           </button>
         </div>
       </div>
@@ -115,7 +116,7 @@ export default function ToppingManagement({
         {/* Header */}
         <div className="bg-black/30 px-6 py-4 border-b border-white/10">
           <div className="grid grid-cols-6 gap-4 text-sm font-semibold text-indigo-200">
-            <div>Tên topping</div>
+            <div>Tên thành phần món</div>
             <div>Giá</div>
             <div>Calories</div>
             <div>Gram</div>
@@ -131,8 +132,8 @@ export default function ToppingManagement({
           ) : toppings.length === 0 ? (
             <div className="p-6 text-indigo-200 italic">
               {isSearching && searchTerm.trim()
-                ? `Không tìm thấy topping nào với từ khóa "${searchTerm}".`
-                : "Chưa có topping nào."}
+                ? `Không tìm thấy thành phần món ăn nào với từ khóa "${searchTerm}".`
+                : "Chưa có thành phần món ăn nào."}
             </div>
           ) : (
             toppings.map((topping) => (

@@ -57,7 +57,7 @@ export default function ChefDailyPlanTopping({
         setPlans(todayPlans);
         setQuantities(mapped);
       } catch (err) {
-        console.error("❌ Lỗi khi tải kế hoạch topping:", err);
+        console.error("❌ Lỗi khi tải kế hoạch thành phần món ăn:", err);
       }
     })();
   }, [staffId, today]);
@@ -182,20 +182,20 @@ export default function ChefDailyPlanTopping({
       console.log("📦 [POST] Gửi batch daily plan:", payload);
       await createDailyPlansBatch(payload);
 
-      setSuccessMessage("Gửi kế hoạch topping thành công!");
+      setSuccessMessage("Gửi kế hoạch thành phần món ăn thành công!");
       const refreshed = await listDailyPlans();
       const todayPlans = (refreshed || []).filter(
         (p) => p.planDate === today && p.staffId === staffId,
       );
       setPlans(todayPlans);
     } catch (err) {
-      console.error("❌ Lỗi gửi kế hoạch topping:", err);
+      console.error("❌ Lỗi gửi kế hoạch thành phần món ăn:", err);
       if (err?.response?.data?.code === 4005) {
         setErrorMessage(
-          "Một số topping đã được duyệt, không thể cập nhật lại.",
+          "Một số thành phần món ăn đã được duyệt, không thể cập nhật lại.",
         );
       } else {
-        setErrorMessage("Gửi kế hoạch topping thất bại!");
+        setErrorMessage("Gửi kế hoạch thành phần món ăn thất bại!");
       }
     } finally {
       setLoading(false);
@@ -213,7 +213,7 @@ export default function ChefDailyPlanTopping({
   return (
     <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
       <h3 className="text-xl font-bold mb-6 text-white">
-        Lên Kế Hoạch Topping Trong Ngày
+        Lên Kế Hoạch Thành Phần Món Ăn Trong Ngày
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
@@ -292,11 +292,11 @@ export default function ChefDailyPlanTopping({
         className="w-full py-3 rounded-xl text-white font-semibold text-lg bg-gradient-to-r from-blue-500 to-cyan-500 hover:opacity-90 transition-all"
       >
         {loading ? (
-          "Đang gửi kế hoạch topping..."
+          "Đang gửi kế hoạch thành phần món ăn..."
         ) : (
           <>
             <Send className="inline w-5 h-5 mr-2" />
-            Gửi kế hoạch topping
+            Gửi kế hoạch thành phần món ăn
           </>
         )}
       </button>

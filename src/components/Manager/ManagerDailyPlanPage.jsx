@@ -30,7 +30,7 @@ export default function ManagerDailyPlanPage() {
               : "bg-white/80 text-neutral-600 hover:bg-white hover:text-neutral-900"
           }`}
         >
-          Topping
+          Thành Phần Món Ăn
         </button>
       </div>
 

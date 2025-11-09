@@ -14,8 +14,8 @@ export default function ChefDailyToppings() {
           (p) =>
             p.status === true &&
             p.planDate === today &&
-            p.itemType === "TOPPING"
-        )
+            p.itemType === "TOPPING",
+        ),
       );
     })();
   }, []);
@@ -23,7 +23,7 @@ export default function ChefDailyToppings() {
   return (
     <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
       <h3 className="text-xl font-bold mb-4 text-white">
-        Topping Trong Ngày (Đã Được Duyệt)
+        Thành Phần Món Ăn Trong Ngày (Đã Được Duyệt)
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {approvedPlans.map((p) => (

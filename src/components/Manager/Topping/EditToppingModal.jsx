@@ -38,7 +38,7 @@ export default function EditToppingModal({
 
   const handleSave = async () => {
     if (!form.name || !form.price) {
-      setError("Tên topping và giá là bắt buộc");
+      setError("Tên thành công món ăn và giá là bắt buộc");
       return;
     }
     setSaving(true);
@@ -54,10 +54,10 @@ export default function EditToppingModal({
         });
         setToppings((prev) =>
           prev.map((t) =>
-            t.id === editingItem.id ? updated.result ?? updated : t
-          )
+            t.id === editingItem.id ? updated.result ?? updated : t,
+          ),
         );
-        alert("Cập nhật topping thành công!");
+        alert("Cập nhật thành phần món ăn thành công!");
       } else {
         const created = await createTopping({
           name: form.name,
@@ -68,13 +68,13 @@ export default function EditToppingModal({
         });
 
         setToppings((prev) => [...prev, created.result ?? created]);
-        alert("Thêm topping thành công!");
+        alert("Thêm thành phần món ăn thành công!");
       }
       setIsEditingTopping(false);
       setEditingItem(null);
     } catch (err) {
       console.error(err);
-      setError(err.message || "Lỗi khi lưu topping");
+      setError(err.message || "Lỗi khi lưu thành phần món ăn");
     } finally {
       setSaving(false);
     }
@@ -88,7 +88,9 @@ export default function EditToppingModal({
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-neutral-800">
-            {editingItem ? "Chỉnh sửa topping" : "Thêm topping mới"}
+            {editingItem
+              ? "Chỉnh sửa thành phần món ăn"
+              : "Thêm thành phần món ăn mới"}
           </h2>
           <button
             onClick={() => {
@@ -104,7 +106,7 @@ export default function EditToppingModal({
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">
-              Tên topping
+              Tên thành phần món ăn
             </label>
             <input
               type="text"

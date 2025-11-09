@@ -13,7 +13,7 @@ export default function ManagerDailyApprovedToppings() {
         (p) =>
           p.planDate === today &&
           (p.status === true || p.status === 1) &&
-          p.itemType === "TOPPING"
+          p.itemType === "TOPPING",
       );
       setApprovedPlans(filtered);
     };
@@ -25,7 +25,7 @@ export default function ManagerDailyApprovedToppings() {
       {" "}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-white">
-          Topping Trong Ngày (Đã Duyệt)
+          Thành Phần Món Ăn Trong Ngày (Đã Duyệt)
         </h2>
         <span className="text-gray-400 text-sm">
           Ngày {today.split("-").reverse().join("/")}

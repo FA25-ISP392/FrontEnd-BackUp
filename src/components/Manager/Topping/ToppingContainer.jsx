@@ -21,7 +21,7 @@ export default function ToppingContainer() {
       setToppings(res.content);
       setPageInfo(res.pageInfo);
     } catch (err) {
-      console.error("❌ Lỗi khi load topping:", err);
+      console.error("❌ Lỗi khi load thành phần món ăn:", err);
     } finally {
       setLoading(false);
     }
@@ -44,12 +44,12 @@ export default function ToppingContainer() {
         setToppings(data);
         setPageInfo({ totalPages: 1 });
       } catch (err) {
-        console.error("❌ Lỗi tìm topping:", err);
+        console.error("❌ Lỗi tìm thành phần món ăn:", err);
       } finally {
         setLoading(false);
       }
     },
-    [loadToppings]
+    [loadToppings],
   );
 
   return (

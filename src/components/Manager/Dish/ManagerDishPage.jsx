@@ -235,7 +235,7 @@ function DishForm({ initial, onSubmit, saving, onClose }) {
 
       <div>
         <label className="text-sm font-medium text-neutral-700 mb-2 block">
-          Chọn topping đi kèm (Optional)
+          Chọn thành phần món ăn đi kèm (Tuỳ chọn)
         </label>
         <div className="flex flex-wrap gap-2 max-h-[120px] overflow-y-auto p-3 bg-white/50 border border-neutral-200 rounded-xl">
           {allToppings.length > 0 ? (
@@ -255,7 +255,7 @@ function DishForm({ initial, onSubmit, saving, onClose }) {
             ))
           ) : (
             <span className="text-sm text-neutral-500 italic">
-              Chưa có topping nào được tạo.
+              Chưa có thành phần món ăn nào được tạo.
             </span>
           )}
         </div>
@@ -379,7 +379,7 @@ export default function ManagerDishPage() {
       const newId = dish?.dishId || dish?.id;
 
       const toppingIds = (form.toppings || []).map((t) =>
-        typeof t === "object" ? t.toppingId || t.id : Number(t)
+        typeof t === "object" ? t.toppingId || t.id : Number(t),
       );
 
       if (toppingIds.length > 0) {
@@ -406,13 +406,13 @@ export default function ManagerDishPage() {
       if (Array.isArray(oldToppings) && oldToppings.length > 0) {
         await Promise.all(
           oldToppings.map((t) =>
-            deleteDishTopping(editingDish.id, t.toppingId || t.id)
-          )
+            deleteDishTopping(editingDish.id, t.toppingId || t.id),
+          ),
         );
       }
 
       const toppingIds = (form.toppings || []).map((t) =>
-        typeof t === "object" ? t.toppingId || t.id : Number(t)
+        typeof t === "object" ? t.toppingId || t.id : Number(t),
       );
       if (toppingIds.length > 0) {
         await addDishToppingsBatch(editingDish.id, toppingIds);
@@ -655,7 +655,7 @@ export default function ManagerDishPage() {
             </div>
             <div className="pt-2 border-t border-neutral-200">
               <strong className="text-sm font-medium text-neutral-700 block mb-2">
-                Toppings đi kèm:
+                Thành phần món ăn đi kèm:
               </strong>
               <div className="pl-4">
                 {detailDish.optionalToppings?.length > 0 ? (
@@ -668,7 +668,7 @@ export default function ManagerDishPage() {
                   </ul>
                 ) : (
                   <p className="text-neutral-500 italic">
-                    Không có topping nào.
+                    Không có thành phần món ăn nào.
                   </p>
                 )}
               </div>

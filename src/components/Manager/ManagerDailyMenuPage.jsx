@@ -30,7 +30,7 @@ export default function ManagerDailyMenuPage() {
               : "bg-black/20 text-neutral-300 hover:bg-black/30 hover:text-white"
           }`}
         >
-          Topping
+          Thành Phần Món Ăn
         </button>
       </div>
 
