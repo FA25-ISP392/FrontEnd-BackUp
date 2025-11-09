@@ -111,6 +111,7 @@ export default function StaffPaymentModal({ open, onClose, table }) {
     //===== Hàm xử lý và theo dỏi trạng thái Thanh Toán của KH =====
     const checkOnce = async () => {
       try {
+        //===== Gọi hàm lấy ra payment của KH =====
         const p = await getPaymentById(paymentId);
         const st = String(p.status || "").toUpperCase();
 
@@ -320,6 +321,7 @@ export default function StaffPaymentModal({ open, onClose, table }) {
             <div className="grid grid-cols-2 gap-3">
               <button
                 disabled={loading}
+                //===== Bắt sự kiện Staff chọn Cash =====
                 onClick={openCashForm}
                 className="py-3 rounded-xl bg-green-600 text-white hover:bg-green-700 disabled:opacity-60 flex items-center justify-center gap-2"
               >
@@ -333,6 +335,7 @@ export default function StaffPaymentModal({ open, onClose, table }) {
 
               <button
                 disabled={loading}
+                //===== Bắt sự kiện Staff chọn QR =====
                 onClick={handleBankTransfer}
                 className="py-3 rounded-xl bg-green-600 text-white hover:bg-green-700 disabled:opacity-60 flex items-center justify-center gap-2"
               >
