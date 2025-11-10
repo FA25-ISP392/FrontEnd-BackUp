@@ -4,6 +4,8 @@ import {
   Package,
   Loader,
   AlertTriangle,
+  Table, // <-- Đã thêm
+  Hash, // <-- Đã thêm
 } from "lucide-react";
 
 export default function ServeBoard({
@@ -48,15 +50,30 @@ export default function ServeBoard({
       <div
         className={`bg-gradient-to-r ${head.bg} rounded-xl p-4 border ${head.border} hover:shadow-md transition-all duration-300`}
       >
-        <div className="flex items-center justify-between mb-2">
+        {/* --- START: PHẦN ĐÃ THIẾT KẾ LẠI --- */}
+        <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
             <Utensils className={`h-5 w-5 ${head.iconColor}`} />
-            <span className="font-semibold text-white">{od.dishName}</span>
+            <span className="font-bold text-white text-lg">{od.dishName}</span>
           </div>
-          <span className="text-xs text-neutral-400 font-mono">
+          <span className="text-xs text-neutral-400 font-mono flex-shrink-0 ml-2">
             #{od.orderDetailId}
           </span>
         </div>
+
+        <div className="flex items-center gap-4 mb-3 -mt-1">
+          <div className="flex items-center gap-1.5">
+            <Table className="h-4 w-4 text-neutral-400" />
+            <span className="text-sm font-medium text-white">
+              Bàn {od.tableId}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Hash className="h-4 w-4 text-neutral-400" />
+            <span className="text-sm text-neutral-300">Đơn #{od.orderId}</span>
+          </div>
+        </div>
+        {/* --- END: PHẦN ĐÃ THIẾT KẾ LẠI --- */}
 
         <div className="text-sm text-neutral-300 mb-2">
           Ghi chú: {od.note || "Không có"}

@@ -5,7 +5,7 @@ import {
   approveBookingWithTable,
   listBookingsByTableDate,
 } from "../../lib/apiBooking";
-import { LogIn, AlertTriangle } from "lucide-react";
+import { LogIn, AlertTriangle, Clock } from "lucide-react";
 
 const LEAD_MINUTES = 30;
 
@@ -91,8 +91,19 @@ export default function BookingForm({
     try {
       const when = new Date(`${date}T${time}`);
       const results = [];
+      const g = Number(guests); // Số khách
+
       for (const tb of ALL_TABLES) {
-        if (tb.seats < guests) continue;
+        const s = Number(tb.seats); // Sức chứa của bàn
+
+        // --- START: SỬA LOGIC LỌC BÀN ---
+        // Yêu cầu: Số khách phải khớp với sức chứa của bàn
+        if (g <= 2 && s !== 2) continue;
+        else if (g > 2 && g <= 4 && s !== 4) continue;
+        else if (g > 4 && g <= 6 && s !== 6) continue;
+        else if (g > 6 && g <= 8 && s !== 8) continue;
+        // --- END: SỬA LOGIC LỌC BÀN ---
+
         const list = await listBookingsByTableDate(tb.id, date);
         const overlap = list.some((b) => {
           const st = String(b.status || "").toUpperCase();
@@ -240,6 +251,13 @@ export default function BookingForm({
                 </p>
               </div>
             )}
+          </div>
+
+          <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <Clock className="w-4 h-4 text-blue-600 flex-shrink-0" />
+            <p className="text-xs text-blue-700 font-medium">
+              Thời gian sử dụng bàn tối đa là 2 tiếng.
+            </p>
           </div>
 
           <div>

@@ -28,7 +28,7 @@ export default function Chef() {
 
   const [chefName, setChefName] = useState("");
   const [activeSection, setActiveSection] = useState(
-    resolveSectionFromPath(location.pathname),
+    resolveSectionFromPath(location.pathname)
   );
 
   // tránh ReferenceError cho phần DishQuantityManagement
@@ -117,7 +117,7 @@ export default function Chef() {
 
       const byId = new Map();
       [...(doneData || []), ...(servedData || [])].forEach((it) =>
-        byId.set(it.orderDetailId, it),
+        byId.set(it.orderDetailId, it)
       );
       const allReadyAndServed = Array.from(byId.values());
 
@@ -156,10 +156,10 @@ export default function Chef() {
       if (!itemToMove) return;
 
       setPending((prev) =>
-        prev.filter((o) => o.orderDetailId !== orderDetailId),
+        prev.filter((o) => o.orderDetailId !== orderDetailId)
       );
       setPreparing((prev) =>
-        prev.filter((o) => o.orderDetailId !== orderDetailId),
+        prev.filter((o) => o.orderDetailId !== orderDetailId)
       );
 
       const updatedItem = { ...itemToMove, status: newStatus };
@@ -262,7 +262,7 @@ export default function Chef() {
                           .map((t) =>
                             t.quantity > 1
                               ? `${t.toppingName} x${t.quantity}`
-                              : t.toppingName,
+                              : t.toppingName
                           )
                           .join(", ")}
                       </div>

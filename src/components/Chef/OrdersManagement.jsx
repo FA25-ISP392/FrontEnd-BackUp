@@ -5,6 +5,8 @@ import {
   Loader,
   AlertTriangle,
   Package,
+  Table, // <-- Thêm icon Table
+  Hash, // <-- Thêm icon Hash
 } from "lucide-react";
 
 export default function OrdersManagement({
@@ -71,14 +73,32 @@ export default function OrdersManagement({
         className={`${c.bg} rounded-xl p-4 border ${c.border} hover:shadow-md transition-all duration-300 flex flex-col justify-between`}
       >
         <div>
-          <div className="flex items-center justify-between mb-3">
+          {/* --- START: PHẦN ĐÃ THIẾT KẾ LẠI --- */}
+          <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-2">
               {c.icon}
-              <span className="font-bold text-white">{order.dishName}</span>
+              <span className="font-bold text-white text-lg">
+                {order.dishName}
+              </span>
             </div>
-            <span className="text-xs text-neutral-400 font-mono">
-              #{order.orderDetailId}
+            <span className="text-xs text-neutral-400 font-mono flex-shrink-0 ml-2">
+              {order.orderDetailId}
             </span>
+          </div>
+
+          <div className="flex items-center gap-4 mb-3 -mt-1">
+            <div className="flex items-center gap-1.5">
+              <Table className="h-4 w-4 text-neutral-400" />
+              <span className="text-sm font-medium text-white">
+                Bàn {order.tableId}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Hash className="h-4 w-4 text-neutral-400" />
+              <span className="text-sm text-neutral-300">
+                Đơn {order.orderId}
+              </span>
+            </div>
           </div>
 
           <div className="mb-3">
@@ -211,7 +231,7 @@ export default function OrdersManagement({
         <Column
           title={<span className="text-blue-400">Đang Chuẩn Bị</span>}
           colorBox="bg-gradient-to-br from-blue-500 to-cyan-500"
-          emptyIcon={<ChefHat className="h-8 w-8 text-blue-400" />}
+          emptyIcon={<ChefHat className="h-8 w-8 text-blue-40cm" />}
           emptyText="Không có đơn đang chuẩn bị"
         >
           {preparingOrders.map((order) => (

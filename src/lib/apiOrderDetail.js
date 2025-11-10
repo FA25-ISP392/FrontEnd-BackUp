@@ -14,6 +14,7 @@ export const normalizeOrderDetail = (d = {}) => {
   return {
     orderDetailId: Number(d.orderDetailId ?? d.id),
     orderId: Number(d.orderId ?? 0),
+    tableId: Number(d.tableId ?? 0),
     dishId: Number(d.dishId ?? 0),
     dishName: d.dishName ?? d.name ?? "",
     status: String(d.status || "PENDING").toUpperCase(),
