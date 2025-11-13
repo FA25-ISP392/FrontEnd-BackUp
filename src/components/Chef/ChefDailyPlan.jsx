@@ -51,7 +51,7 @@ export default function ChefDailyPlan({
           mapped[p.itemId] = p.plannedQuantity ?? 0;
         });
 
-        setDishes(dishList || []);
+        setDishes([...dishList].reverse());
         setPlans(todayPlans);
         setQuantities(mapped);
       } catch (err) {
