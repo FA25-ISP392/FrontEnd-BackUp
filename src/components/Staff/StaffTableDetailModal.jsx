@@ -82,7 +82,7 @@ export default function StaffTableDetailModal({
                       {table.bookingInfo?.customerName || "Đang tải..."}
                     </p>
                   </div>
-
+                  //---
                   <div className="bg-black/20 p-3 rounded-lg border border-orange-500/20">
                     <p className="text-sm text-orange-300 font-medium">
                       Số điện thoại
@@ -91,7 +91,6 @@ export default function StaffTableDetailModal({
                       {table.bookingInfo?.customerPhone || "Không rõ"}
                     </p>
                   </div>
-
                   <div className="bg-black/20 p-3 rounded-lg border border-orange-500/20">
                     <p className="text-sm text-orange-300 font-medium">
                       Số khách
@@ -100,7 +99,6 @@ export default function StaffTableDetailModal({
                       {table.guests} người
                     </p>
                   </div>
-
                   <div className="bg-black/20 p-3 rounded-lg border border-orange-500/20">
                     <p className="text-sm text-orange-300 font-medium">
                       Thời gian đặt
