@@ -84,6 +84,7 @@ export default function StaffPage({ section = "tableLayout" }) {
               orderTime: active
                 ? hhmm(active.bookingDate)
                 : t.orderTime ?? null,
+              bookingInfo: active || null,
             };
           } catch (e) {
             if (DEBUG_LOG)

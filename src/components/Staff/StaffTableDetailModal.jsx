@@ -76,12 +76,31 @@ export default function StaffTableDetailModal({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-black/20 p-3 rounded-lg border border-orange-500/20">
                     <p className="text-sm text-orange-300 font-medium">
+                      Khách hàng
+                    </p>
+                    <p className="font-bold text-orange-200 text-lg truncate">
+                      {table.bookingInfo?.customerName || "Đang tải..."}
+                    </p>
+                  </div>
+
+                  <div className="bg-black/20 p-3 rounded-lg border border-orange-500/20">
+                    <p className="text-sm text-orange-300 font-medium">
+                      Số điện thoại
+                    </p>
+                    <p className="font-bold text-orange-200 text-lg">
+                      {table.bookingInfo?.customerPhone || "Không rõ"}
+                    </p>
+                  </div>
+
+                  <div className="bg-black/20 p-3 rounded-lg border border-orange-500/20">
+                    <p className="text-sm text-orange-300 font-medium">
                       Số khách
                     </p>
                     <p className="font-bold text-orange-200 text-lg">
                       {table.guests} người
                     </p>
                   </div>
+
                   <div className="bg-black/20 p-3 rounded-lg border border-orange-500/20">
                     <p className="text-sm text-orange-300 font-medium">
                       Thời gian đặt
