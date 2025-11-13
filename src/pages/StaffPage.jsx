@@ -42,6 +42,7 @@ export default function StaffPage({ section = "tableLayout" }) {
   const [showErrorModal, setShowErrorModal] = useState("");
 
   const [staffName, setStaffName] = useState("");
+  const [staffId, setStaffId] = useState(null);
   useEffect(() => {
     const u = getCurrentUser();
     const name =
@@ -52,6 +53,8 @@ export default function StaffPage({ section = "tableLayout" }) {
       u?.displayName ||
       u?.username;
     setStaffName(name || "Staff");
+    const id = u?.staff_id || u?.staffId || u?.id;
+    setStaffId(id);
   }, []);
 
   useEffect(() => {
@@ -336,7 +339,7 @@ export default function StaffPage({ section = "tableLayout" }) {
 
   const handleServe = async (od) => {
     try {
-      await updateOrderDetailStatus(od.orderDetailId, od, "SERVED");
+      await updateOrderDetailStatus(od.orderDetailId, od, "SERVED", staffId);
       loadServeBoards();
     } catch (e) {
       setShowErrorModal(e?.message || "Cập nhật trạng thái thất bại.");

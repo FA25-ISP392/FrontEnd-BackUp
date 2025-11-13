@@ -25,6 +25,8 @@ export const normalizeOrderDetail = (d = {}) => {
     totalPrice: lineTotal,
     lineTotal,
     orderDate: d.orderDate ?? null,
+    staffId: Number(d.staffId ?? 0),
+    staffName: d.staffName ?? null,
   };
 };
 
@@ -87,23 +89,61 @@ export async function getOrderDetailsByStatus(status) {
   return [];
 }
 
+// export async function updateOrderDetailStatus(
+//   orderDetailId,
+//   itemToUpdate,
+//   newStatus
+// ) {
+//   if (!orderDetailId) throw new Error("Cần cung cấp orderDetailId");
+//   if (!itemToUpdate) throw new Error("Cần cung cấp item object để cập nhật");
+//   if (!newStatus) throw new Error("Cần cung cấp trạng thái mới (newStatus)");
+//   const formattedStatus = String(newStatus).toUpperCase();
+//   const payload = {
+//     orderDetailId: Number(orderDetailId),
+//     status: formattedStatus,
+//   };
+//   const res = await apiConfig.put(
+//     `/order-details/${Number(orderDetailId)}`,
+//     payload
+//   );
+//   return normalizeOrderDetail(res?.result ?? res);
+// }
+
 export async function updateOrderDetailStatus(
   orderDetailId,
   itemToUpdate,
-  newStatus
+  newStatus,
+  staffId // <-- THÊM THAM SỐ staffId
 ) {
   if (!orderDetailId) throw new Error("Cần cung cấp orderDetailId");
   if (!itemToUpdate) throw new Error("Cần cung cấp item object để cập nhật");
   if (!newStatus) throw new Error("Cần cung cấp trạng thái mới (newStatus)");
+
+  // (Optional) Thêm kiểm tra staffId
+  if (!staffId) {
+    console.warn(
+      "Không có staffId khi cập nhật trạng thái. API có thể thất bại."
+    );
+    // Bạn có thể throw lỗi ở đây nếu muốn:
+    // throw new Error("Thiếu staffId của nhân viên.");
+  }
+
   const formattedStatus = String(newStatus).toUpperCase();
+
+  // --- CẬP NHẬT PAYLOAD ĐỂ GỬI ĐI ---
   const payload = {
     orderDetailId: Number(orderDetailId),
     status: formattedStatus,
+    staffId: Number(staffId), // <-- THÊM DÒNG NÀY
   };
+  // ---------------------------------
+
   const res = await apiConfig.put(
     `/order-details/${Number(orderDetailId)}`,
     payload
   );
+
+  // Hàm này sẽ parse response trả về, bao gồm cả staffName (nhờ normalizeOrderDetail)
   return normalizeOrderDetail(res?.result ?? res);
 }
 

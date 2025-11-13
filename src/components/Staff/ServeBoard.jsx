@@ -4,8 +4,9 @@ import {
   Package,
   Loader,
   AlertTriangle,
-  Table, // <-- Đã thêm
-  Hash, // <-- Đã thêm
+  Table,
+  Hash,
+  UserCheck,
 } from "lucide-react";
 
 export default function ServeBoard({
@@ -50,14 +51,13 @@ export default function ServeBoard({
       <div
         className={`bg-gradient-to-r ${head.bg} rounded-xl p-4 border ${head.border} hover:shadow-md transition-all duration-300`}
       >
-        {/* --- START: PHẦN ĐÃ THIẾT KẾ LẠI --- */}
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
             <Utensils className={`h-5 w-5 ${head.iconColor}`} />
             <span className="font-bold text-white text-lg">{od.dishName}</span>
           </div>
           <span className="text-xs text-neutral-400 font-mono flex-shrink-0 ml-2">
-            #{od.orderDetailId}
+            {od.orderDetailId}
           </span>
         </div>
 
@@ -70,10 +70,9 @@ export default function ServeBoard({
           </div>
           <div className="flex items-center gap-1.5">
             <Hash className="h-4 w-4 text-neutral-400" />
-            <span className="text-sm text-neutral-300">Đơn #{od.orderId}</span>
+            <span className="text-sm text-neutral-300">Đơn {od.orderId}</span>
           </div>
         </div>
-        {/* --- END: PHẦN ĐÃ THIẾT KẾ LẠI --- */}
 
         <div className="text-sm text-neutral-300 mb-2">
           Ghi chú: {od.note || "Không có"}
@@ -103,8 +102,12 @@ export default function ServeBoard({
             Phục Vụ
           </button>
         ) : (
-          <div className="mt-3 text-center text-sm text-green-400 font-medium">
-            Đã phục vụ
+          <div className="mt-4 flex items-center justify-center gap-2 text-center text-sm text-neutral-300 font-medium">
+            <UserCheck className="h-4 w-4 text-green-400" />
+            <span>Phục vụ bởi:</span>
+            <span className="font-bold text-white">
+              {od.staffName || "Không rõ"}
+            </span>
           </div>
         )}
       </div>
