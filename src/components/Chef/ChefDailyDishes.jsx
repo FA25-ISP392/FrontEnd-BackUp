@@ -10,10 +10,14 @@ export default function ChefDailyDishes() {
       const res = await listDailyPlans();
       const today = new Date().toISOString().split("T")[0];
       setApprovedPlans(
-        res.filter(
-          (p) =>
-            p.status === true && p.planDate === today && p.itemType === "DISH"
-        )
+        [...res]
+          .filter(
+            (p) =>
+              p.status === true &&
+              p.planDate === today &&
+              p.itemType === "DISH",
+          )
+          .reverse(),
       );
     })();
   }, []);
