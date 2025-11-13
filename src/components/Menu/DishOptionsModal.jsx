@@ -27,16 +27,16 @@ export default function DishOptionsModal({
   const basePrice = dish.price ?? 0;
   const baseCalo = dish.calo ?? dish.calories ?? 0;
   const toppings = [...(dish.optionalToppings ?? [])].sort(
-    (a, b) => (a.remainingQuantity <= 0) - (b.remainingQuantity <= 0)
+    (a, b) => (a.remainingQuantity <= 0) - (b.remainingQuantity <= 0),
   );
 
   const toppingsTotalPrice = selectedToppings.reduce(
     (sum, t) => sum + (t.price || 0),
-    0
+    0,
   );
   const toppingsTotalCalo = selectedToppings.reduce(
     (sum, t) => sum + (t.calories || t.calo || 0),
-    0
+    0,
   );
 
   const finalUnitPrice = basePrice + toppingsTotalPrice;
@@ -114,7 +114,7 @@ export default function DishOptionsModal({
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
                     {toppings.map((t) => {
                       const checked = selectedToppings.some(
-                        (x) => x.toppingId === t.toppingId
+                        (x) => x.toppingId === t.toppingId,
                       );
                       const isOutOfStock = t.remainingQuantity <= 0;
 
@@ -133,11 +133,11 @@ export default function DishOptionsModal({
                             setSelectedToppings((prev) => {
                               if (!Array.isArray(prev)) prev = [];
                               const exists = prev.some(
-                                (x) => x.toppingId === t.toppingId
+                                (x) => x.toppingId === t.toppingId,
                               );
                               return exists
                                 ? prev.filter(
-                                    (x) => x.toppingId !== t.toppingId
+                                    (x) => x.toppingId !== t.toppingId,
                                   )
                                 : [...prev, t];
                             });
@@ -158,6 +158,9 @@ export default function DishOptionsModal({
                             />
                             <span className="font-medium text-neutral-800">
                               {t.name}{" "}
+                              <span className="text-xs text-neutral-500">
+                                ({t.calories ?? t.calo ?? 0} cal)
+                              </span>
                               {isOutOfStock && (
                                 <span className="text-sm text-red-500 font-medium">
                                   (Tạm hết)

@@ -130,6 +130,7 @@ export default function EditToppingModal({
             <label className="block text-sm font-medium mb-1">Calories</label>
             <input
               type="number"
+              inputMode="decimal"
               name="calories"
               value={form.calories}
               onChange={handleChange}

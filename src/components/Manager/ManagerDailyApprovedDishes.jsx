@@ -12,16 +12,16 @@ export default function ManagerDailyApprovedDishes() {
     const fetchApprovedDishes = async () => {
       setLoading(true);
       try {
-        const allPlans = await listDailyPlans();
+        const res = await listDailyPlans();
 
-        const approvedToday = (allPlans || []).filter(
-          (p) =>
-            p.itemType === "DISH" &&
-            p.planDate === today &&
-            (p.status === true || p.status === 1)
-        );
-
-        approvedToday.sort((a, b) => a.itemName.localeCompare(b.itemName));
+        const approvedToday = (res || [])
+          .filter(
+            (p) =>
+              p.itemType === "DISH" &&
+              p.planDate === today &&
+              (p.status === true || p.status === 1),
+          )
+          .reverse(); // ✅ đảo ngược thứ tự (mới nhất lên đầu)
 
         setApprovedPlans(approvedToday);
       } catch (err) {
@@ -33,13 +33,13 @@ export default function ManagerDailyApprovedDishes() {
 
     fetchApprovedDishes();
 
+    // 🔁 Tự refresh mỗi 30 giây
     const interval = setInterval(fetchApprovedDishes, 30000);
     return () => clearInterval(interval);
   }, [today]);
 
   return (
-    <div className="p-0">
-      {" "}
+    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-white">
           Món Trong Ngày (Đã Duyệt)
@@ -48,6 +48,7 @@ export default function ManagerDailyApprovedDishes() {
           Ngày {today.split("-").reverse().join("/")}
         </span>
       </div>
+
       {loading ? (
         <p className="text-indigo-200 text-center">Đang tải dữ liệu...</p>
       ) : approvedPlans.length === 0 ? (
@@ -58,8 +59,8 @@ export default function ManagerDailyApprovedDishes() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {approvedPlans.map((p) => (
             <div
-              key={p.planId}
-              className="bg-green-900/30 rounded-xl p-4 shadow-lg border border-green-500/30 hover:shadow-xl transition-all"
+              key={p.planId || p.id}
+              className="bg-green-900/30 border border-green-500/30 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all"
             >
               <div className="flex justify-between items-center mb-2">
                 <h4 className="font-semibold text-white">{p.itemName}</h4>
