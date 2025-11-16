@@ -31,7 +31,7 @@ const sidebarItems = [
   },
   {
     id: "montrongngay",
-    label: "Món Trong Ngày",
+    label: "Số Lượng Món Còn Lại",
     icon: CheckCircle,
     to: MANAGER_ROUTES.DAILY_MENU,
   },

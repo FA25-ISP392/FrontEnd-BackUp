@@ -29,7 +29,7 @@ const items = [
   },
   {
     id: "dailyDishes",
-    label: "Món Trong Ngày",
+    label: "Số Lượng Món Còn Lại",
     icon: UtensilsCrossed,
     to: CHEF_ROUTES.DAILY_MENU,
   },
