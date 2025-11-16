@@ -68,7 +68,7 @@ export default function ManagerDailyApprovedDishes() {
               </div>
 
               <p className="text-sm text-neutral-300">
-                Số lượng dự kiến:{" "}
+                Số lượng còn lại:{" "}
                 <span className="font-semibold text-white">
                   {p.plannedQuantity}
                 </span>
