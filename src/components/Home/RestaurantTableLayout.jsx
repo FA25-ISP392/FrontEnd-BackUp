@@ -59,9 +59,21 @@ export default function RestaurantTableLayout({ date, time, guests = 1 }) {
   const base =
     "w-16 h-16 border-2 rounded-lg flex items-center justify-center text-sm font-semibold shadow-md";
   const style = (tb) => {
-    const notEnough = (tb.seats || 0) < (Number(guests) || 1);
+    const g = Number(guests) || 1;
+    const s = tb.seats || 0;
+    let isUnsuitable = false;
+    if (g <= 2 && s !== 2) {
+      isUnsuitable = true;
+    } else if (g > 2 && g <= 4 && s !== 4) {
+      isUnsuitable = true;
+    } else if (g > 4 && g <= 6 && s !== 6) {
+      isUnsuitable = true;
+    } else if (g > 6 && g <= 8 && s !== 8) {
+      isUnsuitable = true;
+    }
     const busy = !!busyMap[tb.id];
-    if (notEnough) return `${base} bg-gray-100 border-gray-300 text-gray-400`;
+    if (isUnsuitable)
+      return `${base} bg-gray-100 border-gray-300 text-gray-400`;
     if (busy) return `${base} bg-red-50 border-red-300 text-red-700`;
     return `${base} bg-green-50 border-green-300 text-green-700`;
   };
